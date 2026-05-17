@@ -193,23 +193,26 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 accent-[#35a8f5]"
-                />
-                Remember me
-              </label>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) =>
+                  setRememberMe(e.target.checked)
+                }
+                className="h-4 w-4 accent-[#35a8f5]"
+              />
 
-              <Link
-                href="/forgot-password"
-                className="text-sm font-bold text-primary-blue"
-              >
-                Forgot password?
-              </Link>
-            </div>
+              Remember me
+            </label>
+
+            <Link
+              href="/forgot-password"
+              className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
             <button
               disabled={loading}
