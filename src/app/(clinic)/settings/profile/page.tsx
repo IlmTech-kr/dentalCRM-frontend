@@ -2,15 +2,15 @@
 
 import { Camera, Mail, Phone, Save, User } from "lucide-react";
 import { useRef, useState } from "react";
+import React from "react";
 
-// ✅ IMPORT REACT QUERY HOOKS
+// ✅ IMPORT REACT QUERY HOOKS - CORRECT PATH
 import {
   useGetProfile,
   useUpdateProfile,
 } from "@/src/features/users/hooks/useUser";
 
 import type { UserProfile } from "@/src/types/user.types";
-import React from "react";
 
 export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -19,33 +19,35 @@ export default function ProfilePage() {
   const { data: profileData, isLoading, error: loadError } = useGetProfile();
   const updateMutation = useUpdateProfile();
 
+  // ✅ Initialize with all UserProfile fields
   const [profile, setProfile] = useState<UserProfile>({
+    id: profileData?.id || "",
     email: profileData?.email || "",
     firstName: profileData?.firstName || "",
     lastName: profileData?.lastName || "",
     phoneNumber: profileData?.phoneNumber || "",
     avatarUrl: profileData?.avatarUrl || "",
+    status: profileData?.status || "ACTIVE",
+    roles: profileData?.roles || [],
   });
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Sync profile data when loaded
-  const handleProfileLoad = () => {
+  // ✅ Sync profile data when loaded - includes all fields
+  React.useEffect(() => {
     if (profileData) {
       setProfile({
+        id: profileData.id || "",
         email: profileData.email || "",
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
         phoneNumber: profileData.phoneNumber || "",
         avatarUrl: profileData.avatarUrl || "",
+        status: profileData.status || "ACTIVE",
+        roles: profileData.roles || [],
       });
     }
-  };
-
-  // Call on mount and when profileData changes
-  React.useEffect(() => {
-    handleProfileLoad();
   }, [profileData]);
 
   async function saveProfile(e: React.FormEvent<HTMLFormElement>) {
@@ -55,7 +57,7 @@ export default function ProfilePage() {
       setMessage("");
       setError("");
 
-      // ✅ USE MUTATION
+      // ✅ USE MUTATION - only send editable fields
       await updateMutation.mutateAsync({
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -89,10 +91,11 @@ export default function ProfilePage() {
 
     const url = URL.createObjectURL(file);
 
-    setProfile({
-      ...profile,
+    // ✅ Use functional update to preserve all fields
+    setProfile((prev) => ({
+      ...prev,
       avatarUrl: url,
-    });
+    }));
 
     setError("");
   }
@@ -167,6 +170,18 @@ export default function ProfilePage() {
                 {profile.firstName} {profile.lastName}
               </h1>
               <p className="text-text-light">{profile.email}</p>
+              {profile.roles && profile.roles.length > 0 && (
+                <div className="mt-2 flex gap-2">
+                  {profile.roles.map((role) => (
+                    <span
+                      key={role}
+                      className="inline-block rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700"
+                    >
+                      {formatRole(role)}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -182,13 +197,13 @@ export default function ProfilePage() {
           {(error || updateMutation.error || loadError) && (
             <div className="mb-5 rounded-2xl bg-red-50 p-4 text-red-600 flex items-center gap-3 border border-red-200">
               <div className="text-lg">✕</div>
-              {error || 
-               (updateMutation.error instanceof Error 
-                 ? updateMutation.error.message 
-                 : "Failed to update profile") ||
-               (loadError instanceof Error 
-                 ? loadError.message 
-                 : "Failed to load profile")}
+              {error ||
+                (updateMutation.error instanceof Error
+                  ? updateMutation.error.message
+                  : "Failed to update profile") ||
+                (loadError instanceof Error
+                  ? loadError.message
+                  : "Failed to load profile")}
             </div>
           )}
 
@@ -199,10 +214,10 @@ export default function ProfilePage() {
               icon={<User size={18} />}
               value={profile.firstName}
               onChange={(value) =>
-                setProfile({
-                  ...profile,
+                setProfile((prev) => ({
+                  ...prev,
                   firstName: value,
-                })
+                }))
               }
               disabled={updateMutation.isPending}
             />
@@ -212,10 +227,10 @@ export default function ProfilePage() {
               icon={<User size={18} />}
               value={profile.lastName}
               onChange={(value) =>
-                setProfile({
-                  ...profile,
+                setProfile((prev) => ({
+                  ...prev,
                   lastName: value,
-                })
+                }))
               }
               disabled={updateMutation.isPending}
             />
@@ -225,10 +240,10 @@ export default function ProfilePage() {
               icon={<Phone size={18} />}
               value={profile.phoneNumber || ""}
               onChange={(value) =>
-                setProfile({
-                  ...profile,
+                setProfile((prev) => ({
+                  ...prev,
                   phoneNumber: value,
-                })
+                }))
               }
               disabled={updateMutation.isPending}
             />
@@ -298,4 +313,16 @@ function ProfileInput({
       </div>
     </div>
   );
+}
+
+/**
+ * Format role name for display
+ * SUPER_ADMIN → Super Admin
+ * CLINIC_ADMIN → Clinic Admin
+ */
+function formatRole(role: string): string {
+  return role
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }

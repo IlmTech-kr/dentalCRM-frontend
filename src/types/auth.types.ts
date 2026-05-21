@@ -42,5 +42,6 @@ export interface AuthUser {
   lastName: string;
   email: string;
   roles: UserRole[];
+  avatarUrl?: string;
   status?: "ACTIVE" | "INACTIVE" | "BLOCKED";
 }

@@ -8,13 +8,22 @@ interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
 
+  // Setters
   setUser: (user: AuthUser) => void;
   setSubDomain: (subDomain: string) => void;
   setAccessToken: (token: string) => void;
   logout: () => void;
+
+  // ✅ NEW: Helper methods for roles
+  hasRole: (role: string) => boolean;
+  getPrimaryRole: () => string | null;
+  isAdmin: () => boolean;
+  isClinicAdmin: () => boolean;
+  isDoctor: () => boolean;
+  isAssistant: () => boolean;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   subDomain:
     typeof window !== "undefined"
@@ -58,5 +67,41 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken: null,
       isAuthenticated: false,
     });
+  },
+
+  // ✅ NEW: Check if user has specific role
+  hasRole: (role: string) => {
+    const { user } = get();
+    return user?.roles?.includes(role as any) || false;
+  },
+
+  // ✅ NEW: Get primary (first) role
+  getPrimaryRole: () => {
+    const { user } = get();
+    return user?.roles?.[0] || null;
+  },
+
+  // ✅ NEW: Check if SUPER_ADMIN
+  isAdmin: () => {
+    const { user } = get();
+    return user?.roles?.includes("SUPER_ADMIN") || false;
+  },
+
+  // ✅ NEW: Check if CLINIC_ADMIN
+  isClinicAdmin: () => {
+    const { user } = get();
+    return user?.roles?.includes("CLINIC_ADMIN") || false;
+  },
+
+  // ✅ NEW: Check if DOCTOR
+  isDoctor: () => {
+    const { user } = get();
+    return user?.roles?.includes("DOCTOR") || false;
+  },
+
+  // ✅ NEW: Check if ASSISTANT
+  isAssistant: () => {
+    const { user } = get();
+    return user?.roles?.includes("ASSISTANT") || false;
   },
 }));

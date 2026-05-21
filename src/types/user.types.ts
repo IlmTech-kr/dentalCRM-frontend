@@ -1,4 +1,6 @@
 export type UserProfile = {
+  status: string;
+  roles: never[];
   id?: string;
   email: string;
   firstName: string;
