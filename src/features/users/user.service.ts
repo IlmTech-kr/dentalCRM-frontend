@@ -1,3 +1,4 @@
+// File: src/features/user/user.service.ts
 import { tenantHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
@@ -5,12 +6,19 @@ import type {
   UpdateProfilePayload,
   ChangePasswordPayload,
 } from "@/src/types/user.types";
+import { AxiosError } from "axios";
 
+/**
+ * Get subdomain from localStorage
+ */
 function getSubdomain(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("subDomain") || "";
 }
 
+/**
+ * Get current user profile
+ */
 export async function getMe(): Promise<UserProfile> {
   try {
     const subDomain = getSubdomain();
@@ -29,6 +37,9 @@ export async function getMe(): Promise<UserProfile> {
   }
 }
 
+/**
+ * Update current user profile
+ */
 export async function updateMe(
   payload: UpdateProfilePayload
 ): Promise<UserProfile> {
@@ -48,10 +59,19 @@ export async function updateMe(
     return response.data;
   } catch (error) {
     console.error("Failed to update profile:", error);
-    throw new Error("Failed to update profile");
+    
+    if (error instanceof AxiosError) {
+      const message = error.response?.data?.message || "Failed to update profile";
+      throw new Error(message);
+    }
+    
+    throw error;
   }
 }
 
+/**
+ * Change password for current user
+ */
 export async function changePassword(
   payload: ChangePasswordPayload
 ): Promise<void> {
@@ -66,6 +86,12 @@ export async function changePassword(
     await http.put(ENDPOINTS.users.changePassword, payload);
   } catch (error) {
     console.error("Failed to change password:", error);
-    throw new Error("Failed to change password");
+    
+    if (error instanceof AxiosError) {
+      const message = error.response?.data?.message || "Failed to change password";
+      throw new Error(message);
+    }
+    
+    throw error;
   }
 }

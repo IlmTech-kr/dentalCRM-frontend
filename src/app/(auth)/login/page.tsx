@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Lock, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
-import { login } from "@/src/features/auth/auth.service";
+import { useLogin } from "@/src/features/auth/hooks/useAuth";
 
 function getSubDomain() {
   if (typeof window === "undefined") return "";
@@ -31,7 +31,9 @@ export default function LoginPage() {
 
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  // ✅ USE REACT QUERY HOOK
+  const loginMutation = useLogin();
 
   useEffect(() => {
     const saved = localStorage.getItem("savedLogin");
@@ -59,9 +61,8 @@ export default function LoginPage() {
     }
 
     try {
-      setLoading(true);
-
-      await login({
+      // ✅ USE MUTATION
+      await loginMutation.mutateAsync({
         email: form.email,
         password: form.password,
         subDomain,
@@ -80,10 +81,9 @@ export default function LoginPage() {
       }
 
       window.location.href = `http://${subDomain}.localhost:3000/dashboard`;
-    } catch {
-      alert("Login failed");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // ✅ ERROR HANDLED BY MUTATION
+      console.error("Login error:", error);
     }
   }
 
@@ -137,6 +137,17 @@ export default function LoginPage() {
             Login to your clinic dashboard
           </p>
 
+          {/* ✅ ERROR MESSAGE FROM MUTATION */}
+          {loginMutation.error && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 border border-red-200">
+              <p className="text-sm text-red-700 font-semibold">
+                {loginMutation.error instanceof Error
+                  ? loginMutation.error.message
+                  : "Login failed. Please try again."}
+              </p>
+            </div>
+          )}
+
           <div className="mt-8 space-y-5">
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-600">
@@ -157,6 +168,7 @@ export default function LoginPage() {
                       email: e.target.value,
                     })
                   }
+                  disabled={loginMutation.isPending}
                 />
               </div>
             </div>
@@ -180,12 +192,14 @@ export default function LoginPage() {
                       password: e.target.value,
                     })
                   }
+                  disabled={loginMutation.isPending}
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
+                  disabled={loginMutation.isPending}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
                 </button>
@@ -193,32 +207,32 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) =>
-                  setRememberMe(e.target.checked)
-                }
-                className="h-4 w-4 accent-[#35a8f5]"
-              />
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 accent-[#35a8f5]"
+                  disabled={loginMutation.isPending}
+                />
 
-              Remember me
-            </label>
+                Remember me
+              </label>
 
-            <Link
-              href="/forgot-password"
-              className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark"
-            >
-              Forgot Password?
-            </Link>
-          </div>
+              <Link
+                href="/forgot-password"
+                className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark"
+              >
+                Forgot Password?
+              </Link>
+            </div>
 
+            {/* ✅ USE MUTATION STATE */}
             <button
-              disabled={loading}
-              className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:opacity-60"
+              disabled={loginMutation.isPending || !form.email || !form.password}
+              className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loginMutation.isPending ? "Signing in..." : "Sign In"}
             </button>
           </div>
 

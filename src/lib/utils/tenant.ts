@@ -1,3 +1,4 @@
+// utils/tenatn.ts
 export function getSubdomainFromHost(
   host: string | null
 ): string | null {

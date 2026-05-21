@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Mail,
@@ -10,47 +10,45 @@ import {
   AlertCircle,
   Loader,
 } from "lucide-react";
+import { useForgotPassword } from "@/src/features/auth/hooks/useAuth";
 
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
+function getSubDomain() {
+  if (typeof window === "undefined") return "";
+
+  const host = window.location.hostname;
+
+  if (host.includes(".localhost")) {
+    return host.split(".")[0];
+  }
+
+  const parts = host.split(".");
+
+  if (parts.length >= 3) {
+    return parts[0];
+  }
+
+  return "";
+}
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
   const [resendCountdown, setResendCountdown] = useState(0);
 
+  // ✅ USE REACT QUERY HOOK
+  const forgotPasswordMutation = useForgotPassword();
+
   const isValidEmailInput = isValidEmail(email);
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
-    e.preventDefault();
-
-    if (!email.trim()) {
-      setError("Please enter your email");
-      return;
-    }
-
-    if (!isValidEmailInput) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-
-      setSuccess(true);
-      setAttemptCount(attemptCount + 1);
-      setResendCountdown(60);
-
-      // Start countdown timer
+  // Handle countdown timer
+  useEffect(() => {
+    if (resendCountdown > 0) {
       const interval = setInterval(() => {
         setResendCountdown((prev) => {
           if (prev <= 1) {
@@ -60,25 +58,51 @@ export default function ForgotPasswordPage() {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to send reset link. Please try again.";
-      
-      setError(errorMessage);
+
+      return () => clearInterval(interval);
+    }
+  }, [resendCountdown]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!email.trim()) {
+      return;
+    }
+
+    if (!isValidEmailInput) {
+      return;
+    }
+
+    const subDomain = getSubDomain();
+
+    if (!subDomain) {
+      alert("Clinic subdomain not found");
+      return;
+    }
+
+    try {
+      // ✅ USE MUTATION
+      await forgotPasswordMutation.mutateAsync({
+        email: email.trim(),
+        subDomain,
+      });
+
+      setSuccess(true);
       setAttemptCount(attemptCount + 1);
-    } finally {
-      setLoading(false);
+      setResendCountdown(60);
+    } catch (error) {
+      // ✅ ERROR HANDLED BY MUTATION
+      console.error("Forgot password error:", error);
     }
   }
 
   function handleReset() {
     setSuccess(false);
     setEmail("");
-    setError("");
     setAttemptCount(0);
     setResendCountdown(0);
+    forgotPasswordMutation.reset();
   }
 
   return (
@@ -168,13 +192,18 @@ export default function ForgotPasswordPage() {
                 send a password reset link
               </p>
 
-              {error && (
+              {/* ✅ ERROR MESSAGE FROM MUTATION */}
+              {forgotPasswordMutation.error && (
                 <div className="mt-5 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-600 flex items-start gap-3 border border-red-200">
                   <AlertCircle
                     size={18}
                     className="flex-shrink-0 mt-0.5"
                   />
-                  <div className="flex-1">{error}</div>
+                  <div className="flex-1">
+                    {forgotPasswordMutation.error instanceof Error
+                      ? forgotPasswordMutation.error.message
+                      : "Failed to send reset link. Please try again."}
+                  </div>
                 </div>
               )}
 
@@ -185,7 +214,7 @@ export default function ForgotPasswordPage() {
 
                 <div
                   className={`flex h-14 items-center gap-3 rounded-2xl border transition-colors ${
-                    error
+                    forgotPasswordMutation.error
                       ? "border-red-300 bg-red-50"
                       : isValidEmailInput && email
                         ? "border-green-300 bg-green-50"
@@ -195,7 +224,7 @@ export default function ForgotPasswordPage() {
                   <Mail
                     size={20}
                     className={
-                      error
+                      forgotPasswordMutation.error
                         ? "text-red-400"
                         : isValidEmailInput && email
                           ? "text-green-400"
@@ -208,12 +237,12 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setError("");
+                      forgotPasswordMutation.reset();
                     }}
                     placeholder="admin@clinic.com"
-                    className="w-full bg-transparent outline-none placeholder-slate-400"
+                    className="w-full bg-transparent outline-none placeholder-slate-400 disabled:opacity-50"
                     autoComplete="email"
-                    disabled={loading}
+                    disabled={forgotPasswordMutation.isPending}
                   />
 
                   {isValidEmailInput && email && (
@@ -237,16 +266,17 @@ export default function ForgotPasswordPage() {
                 )}
               </div>
 
+              {/* ✅ SUBMIT BUTTON WITH MUTATION STATE */}
               <button
                 type="submit"
                 disabled={
-                  loading ||
+                  forgotPasswordMutation.isPending ||
                   !email ||
                   !isValidEmailInput
                 }
                 className="mt-6 h-14 w-full rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? (
+                {forgotPasswordMutation.isPending ? (
                   <>
                     <Loader
                       size={18}
@@ -337,6 +367,7 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
 
+              {/* ✅ RESEND BUTTON WITH COUNTDOWN */}
               <button
                 type="button"
                 onClick={handleReset}

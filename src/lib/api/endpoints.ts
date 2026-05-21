@@ -4,7 +4,7 @@ export const ENDPOINTS = {
     login: "/api/auth/login",
     refresh: "/api/auth/refresh",
     invites: "/api/auth/invites",
-
+    // ✅ FIXED: Consistent endpoint paths
     forgotPassword: "/api/v1/auth/forgot-password",
     resetPassword: "/api/v1/auth/reset-password",
   },
@@ -12,6 +12,11 @@ export const ENDPOINTS = {
   users: {
     me: "/api/v1/users/me",
     changePassword: "/api/v1/users/me/change-password",
+  },
+
+  patients: {
+    list: "/api/dental/patients",
+    byId: (id: string) => `/api/dental/patients/${id}`,
   },
 
   admin: {

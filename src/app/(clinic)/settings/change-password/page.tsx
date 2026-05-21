@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Save, CheckCircle, AlertCircle } from "lucide-react";
-import { changePassword } from "@/src/features/auth/user.service";
+import { useChangePassword } from "@/src/features/users/hooks/useUser";
 
 interface PasswordForm {
   currentPassword: string;
@@ -16,9 +16,7 @@ interface ValidationError {
 }
 
 export default function ChangePasswordPage() {
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -31,6 +29,9 @@ export default function ChangePasswordPage() {
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+
+  // ✅ USE REACT QUERY HOOK
+  const changePasswordMutation = useChangePassword();
 
   // Password strength checker
   function getPasswordStrength(password: string): {
@@ -84,16 +85,14 @@ export default function ChangePasswordPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage("");
-    setError("");
 
     if (!validateForm()) {
       return;
     }
 
     try {
-      setLoading(true);
-
-      await changePassword({
+      // ✅ USE MUTATION
+      await changePasswordMutation.mutateAsync({
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
@@ -109,15 +108,9 @@ export default function ChangePasswordPage() {
 
       // Clear success message after 4 seconds
       setTimeout(() => setMessage(""), 4000);
-    } catch (err) {
-      console.error("Error changing password:", err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : "Failed to change password. Please try again."
-      );
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // ✅ ERROR HANDLED BY MUTATION
+      console.error("Error changing password:", error);
     }
   }
 
@@ -160,12 +153,16 @@ export default function ChangePasswordPage() {
             </div>
           )}
 
-          {/* Error Message */}
-          {error && (
+          {/* ✅ ERROR MESSAGE FROM MUTATION */}
+          {changePasswordMutation.error && (
             <div className="mb-6 rounded-2xl bg-red-50 p-4 flex items-start gap-4 border border-red-200 animate-in slide-in-from-top">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-red-700">{error}</p>
+                <p className="font-semibold text-red-700">
+                  {changePasswordMutation.error instanceof Error
+                    ? changePasswordMutation.error.message
+                    : "Failed to change password"}
+                </p>
               </div>
             </div>
           )}
@@ -184,6 +181,7 @@ export default function ChangePasswordPage() {
               }}
               error={getFieldError("currentPassword")}
               placeholder="Enter your current password"
+              disabled={changePasswordMutation.isPending}
             />
 
             {/* New Password with Strength Indicator */}
@@ -199,6 +197,7 @@ export default function ChangePasswordPage() {
                 }}
                 error={getFieldError("newPassword")}
                 placeholder="Create a strong password"
+                disabled={changePasswordMutation.isPending}
               />
 
               {/* Password Strength Meter */}
@@ -260,17 +259,18 @@ export default function ChangePasswordPage() {
               }}
               error={getFieldError("confirmPassword")}
               placeholder="Re-enter your new password"
+              disabled={changePasswordMutation.isPending}
             />
 
-            {/* Submit Button */}
+            {/* ✅ SUBMIT BUTTON WITH MUTATION STATE */}
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={loading || !form.currentPassword || !form.newPassword || !form.confirmPassword}
+                disabled={changePasswordMutation.isPending || !form.currentPassword || !form.newPassword || !form.confirmPassword}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                {loading ? "Updating..." : "Update Password"}
+                {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
               </button>
             </div>
 
@@ -321,6 +321,7 @@ interface PasswordInputProps {
   error?: string;
   placeholder?: string;
   success?: boolean;
+  disabled?: boolean;
 }
 
 function PasswordInput({
@@ -332,6 +333,7 @@ function PasswordInput({
   error,
   placeholder,
   success,
+  disabled,
 }: PasswordInputProps) {
   return (
     <div>
@@ -340,7 +342,7 @@ function PasswordInput({
       </label>
 
       <div
-        className={`flex h-12 items-center gap-3 rounded-2xl border px-4 transition-all ${
+        className={`flex h-12 items-center gap-3 rounded-2xl border px-4 transition-all disabled:opacity-50 ${
           error
             ? "border-red-200 bg-red-50"
             : success
@@ -361,19 +363,21 @@ function PasswordInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || "Enter password"}
-          className="w-full bg-transparent outline-none placeholder:text-slate-400"
+          className="w-full bg-transparent outline-none placeholder:text-slate-400 disabled:opacity-50"
+          disabled={disabled}
         />
 
         <button
           type="button"
           onClick={onToggle}
-          className={`flex-shrink-0 transition-colors ${
+          className={`flex-shrink-0 transition-colors disabled:opacity-50 ${
             error
               ? "text-red-600 hover:text-red-700"
               : success
               ? "text-green-600 hover:text-green-700"
               : "text-slate-400 hover:text-primary-blue"
           }`}
+          disabled={disabled}
         >
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

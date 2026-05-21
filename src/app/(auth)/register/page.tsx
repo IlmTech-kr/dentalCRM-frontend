@@ -11,12 +11,14 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { registerClinic } from "@/src/features/auth/auth.service";
+import { useRegisterClinic } from "@/src/features/auth/hooks/useAuth";
 
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // ✅ USE REACT QUERY HOOK
+  const registerMutation = useRegisterClinic();
 
   const [form, setForm] = useState({
     firstName: "",
@@ -41,9 +43,8 @@ export default function RegisterPage() {
     }
 
     try {
-      setLoading(true);
-
-      await registerClinic({
+      // ✅ USE MUTATION
+      await registerMutation.mutateAsync({
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
@@ -53,10 +54,9 @@ export default function RegisterPage() {
       });
 
       window.location.href = `http://${form.subDomain}.localhost:3000/login`;
-    } catch {
-      alert("Registration failed");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // ✅ ERROR HANDLED BY MUTATION
+      console.error("Registration error:", error);
     }
   }
 
@@ -106,6 +106,17 @@ export default function RegisterPage() {
             Start managing your clinic digitally
           </p>
 
+          {/* ✅ ERROR MESSAGE FROM MUTATION */}
+          {registerMutation.error && (
+            <div className="mt-3 rounded-lg bg-red-50 p-3 border border-red-200">
+              <p className="text-sm text-red-700 font-semibold">
+                {registerMutation.error instanceof Error
+                  ? registerMutation.error.message
+                  : "Registration failed. Please try again."}
+              </p>
+            </div>
+          )}
+
           <div className="mt-4 space-y-2">
             <Input
               label="First Name"
@@ -113,6 +124,7 @@ export default function RegisterPage() {
               value={form.firstName}
               onChange={(v) => setForm({ ...form, firstName: v })}
               placeholder="Ali"
+              disabled={registerMutation.isPending}
             />
 
             <Input
@@ -121,6 +133,7 @@ export default function RegisterPage() {
               value={form.lastName}
               onChange={(v) => setForm({ ...form, lastName: v })}
               placeholder="Karimov"
+              disabled={registerMutation.isPending}
             />
 
             <Input
@@ -129,6 +142,7 @@ export default function RegisterPage() {
               value={form.email}
               onChange={(v) => setForm({ ...form, email: v })}
               placeholder="admin@clinic1.com"
+              disabled={registerMutation.isPending}
             />
 
             <PasswordInput
@@ -138,6 +152,7 @@ export default function RegisterPage() {
               show={showPassword}
               onToggle={() => setShowPassword((prev) => !prev)}
               onChange={(v) => setForm({ ...form, password: v })}
+              disabled={registerMutation.isPending}
             />
 
             <PasswordInput
@@ -147,6 +162,7 @@ export default function RegisterPage() {
               show={showConfirmPassword}
               onToggle={() => setShowConfirmPassword((prev) => !prev)}
               onChange={(v) => setForm({ ...form, confirmPassword: v })}
+              disabled={registerMutation.isPending}
             />
 
             {form.confirmPassword && !passwordsMatch && (
@@ -167,6 +183,7 @@ export default function RegisterPage() {
               value={form.clinicName}
               onChange={(v) => setForm({ ...form, clinicName: v })}
               placeholder="Dental Smile Clinic"
+              disabled={registerMutation.isPending}
             />
 
             <div>
@@ -178,7 +195,7 @@ export default function RegisterPage() {
                 <Building2 size={18} className="text-slate-400" />
 
                 <input
-                  className="w-full bg-transparent text-sm outline-none"
+                  className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
                   placeholder="clinic1"
                   value={form.subDomain}
                   onChange={(e) =>
@@ -187,17 +204,19 @@ export default function RegisterPage() {
                       subDomain: e.target.value.toLowerCase().trim(),
                     })
                   }
+                  disabled={registerMutation.isPending}
                 />
 
                 <span className="text-sm text-slate-400">.localhost</span>
               </div>
             </div>
 
+            {/* ✅ USE MUTATION STATE */}
             <button
-              disabled={loading}
-              className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:opacity-60"
+              disabled={registerMutation.isPending || !form.firstName || !form.email || !form.password || !form.clinicName || !form.subDomain}
+              className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating..." : "Create Clinic"}
+              {registerMutation.isPending ? "Creating..." : "Create Clinic"}
             </button>
           </div>
 
@@ -219,12 +238,14 @@ function Input({
   value,
   onChange,
   placeholder,
+  disabled,
 }: {
   label: string;
   icon: React.ReactNode;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -232,14 +253,15 @@ function Input({
         {label}
       </label>
 
-      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
+      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4 disabled:opacity-50">
         <span className="text-slate-400">{icon}</span>
 
         <input
-          className="w-full bg-transparent text-sm outline-none"
+          className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
         />
       </div>
     </div>
@@ -253,6 +275,7 @@ function PasswordInput({
   placeholder,
   show,
   onToggle,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -260,6 +283,7 @@ function PasswordInput({
   placeholder: string;
   show: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -272,16 +296,18 @@ function PasswordInput({
 
         <input
           type={show ? "text" : "password"}
-          className="w-full bg-transparent text-sm outline-none"
+          className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
         />
 
         <button
           type="button"
           onClick={onToggle}
-          className="text-slate-400 transition hover:text-[#35a8f5]"
+          className="text-slate-400 transition hover:text-[#35a8f5] disabled:opacity-50"
+          disabled={disabled}
         >
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

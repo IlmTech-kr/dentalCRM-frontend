@@ -1,67 +1,62 @@
 "use client";
 
 import { Camera, Mail, Phone, Save, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-import { getMe, updateMe } from "@/src/features/auth/user.service";
+// ✅ IMPORT REACT QUERY HOOKS
+import {
+  useGetProfile,
+  useUpdateProfile,
+} from "@/src/features/users/hooks/useUser";
+
 import type { UserProfile } from "@/src/types/user.types";
+import React from "react";
 
 export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  // ✅ USE REACT QUERY HOOKS
+  const { data: profileData, isLoading, error: loadError } = useGetProfile();
+  const updateMutation = useUpdateProfile();
+
+  const [profile, setProfile] = useState<UserProfile>({
+    email: profileData?.email || "",
+    firstName: profileData?.firstName || "",
+    lastName: profileData?.lastName || "",
+    phoneNumber: profileData?.phoneNumber || "",
+    avatarUrl: profileData?.avatarUrl || "",
+  });
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const [profile, setProfile] = useState<UserProfile>({
-    email: "",
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    avatarUrl: "",
-  });
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      setError("");
-      setMessage("");
-
-      const data = await getMe();
-
+  // Sync profile data when loaded
+  const handleProfileLoad = () => {
+    if (profileData) {
       setProfile({
-        email: data.email || "",
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
-        phoneNumber: data.phoneNumber || "",
-        avatarUrl: data.avatarUrl || "",
+        email: profileData.email || "",
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        phoneNumber: profileData.phoneNumber || "",
+        avatarUrl: profileData.avatarUrl || "",
       });
-    } catch (err) {
-      console.error("Error loading profile:", err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : "Failed to load profile. Please try refreshing the page."
-      );
-    } finally {
-      setLoading(false);
     }
-  }
+  };
+
+  // Call on mount and when profileData changes
+  React.useEffect(() => {
+    handleProfileLoad();
+  }, [profileData]);
 
   async function saveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
-      setSaving(true);
       setMessage("");
       setError("");
 
-      await updateMe({
+      // ✅ USE MUTATION
+      await updateMutation.mutateAsync({
         firstName: profile.firstName,
         lastName: profile.lastName,
         phoneNumber: profile.phoneNumber,
@@ -72,13 +67,7 @@ export default function ProfilePage() {
       setTimeout(() => setMessage(""), 4000);
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : "Failed to update profile. Please try again."
-      );
-    } finally {
-      setSaving(false);
+      // ✅ ERROR HANDLED BY MUTATION
     }
   }
 
@@ -104,7 +93,7 @@ export default function ProfilePage() {
       ...profile,
       avatarUrl: url,
     });
-    
+
     setError("");
   }
 
@@ -113,7 +102,8 @@ export default function ProfilePage() {
     profile.email?.[0]?.toUpperCase() ||
     "U";
 
-  if (loading) {
+  // ✅ USE QUERY LOADING STATE
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="rounded-3xl bg-white shadow-sm">
@@ -188,11 +178,17 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Error Message */}
-          {error && (
+          {/* ✅ ERROR MESSAGE FROM MUTATION OR QUERY */}
+          {(error || updateMutation.error || loadError) && (
             <div className="mb-5 rounded-2xl bg-red-50 p-4 text-red-600 flex items-center gap-3 border border-red-200">
               <div className="text-lg">✕</div>
-              {error}
+              {error || 
+               (updateMutation.error instanceof Error 
+                 ? updateMutation.error.message 
+                 : "Failed to update profile") ||
+               (loadError instanceof Error 
+                 ? loadError.message 
+                 : "Failed to load profile")}
             </div>
           )}
 
@@ -208,6 +204,7 @@ export default function ProfilePage() {
                   firstName: value,
                 })
               }
+              disabled={updateMutation.isPending}
             />
 
             <ProfileInput
@@ -220,6 +217,7 @@ export default function ProfilePage() {
                   lastName: value,
                 })
               }
+              disabled={updateMutation.isPending}
             />
 
             <ProfileInput
@@ -232,6 +230,7 @@ export default function ProfilePage() {
                   phoneNumber: value,
                 })
               }
+              disabled={updateMutation.isPending}
             />
 
             <ProfileInput
@@ -242,14 +241,15 @@ export default function ProfilePage() {
               onChange={() => {}}
             />
 
+            {/* ✅ SUBMIT BUTTON WITH MUTATION STATE */}
             <div className="flex justify-end md:col-span-2">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={updateMutation.isPending}
                 className="flex items-center gap-2 rounded-2xl bg-primary-blue px-6 py-4 font-bold text-white transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                {saving ? "Saving..." : "Save Profile"}
+                {updateMutation.isPending ? "Saving..." : "Save Profile"}
               </button>
             </div>
           </form>
@@ -280,8 +280,8 @@ function ProfileInput({
 
       <div
         className={`flex items-center gap-3 rounded-2xl border border-border-color p-4 transition-colors ${
-          disabled 
-            ? "bg-slate-100 cursor-not-allowed" 
+          disabled
+            ? "bg-slate-100 cursor-not-allowed"
             : "bg-white hover:border-primary-blue focus-within:border-primary-blue"
         }`}
       >

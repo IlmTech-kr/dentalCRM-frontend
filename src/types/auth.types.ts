@@ -31,6 +31,7 @@ export interface ForgotPasswordDto {
 }
 
 export interface ResetPasswordDto {
+  confirmPassword: string;
   token: string;
   newPassword: string;
 }
