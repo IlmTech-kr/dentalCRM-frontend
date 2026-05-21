@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Lock, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
+import { useToast } from "@/src/lib/hooks/Usetoast";
 
 function getSubDomain() {
   if (typeof window === "undefined") return "";
@@ -34,6 +35,7 @@ export default function LoginPage() {
 
   // ✅ USE REACT QUERY HOOK
   const loginMutation = useLogin();
+  const toast = useToast();
 
   useEffect(() => {
     const saved = localStorage.getItem("savedLogin");
@@ -79,10 +81,11 @@ export default function LoginPage() {
       } else {
         localStorage.removeItem("savedLogin");
       }
-
+      toast.success("Welcome back!");
       window.location.href = `http://${subDomain}.localhost:3000/dashboard`;
     } catch (error) {
       // ✅ ERROR HANDLED BY MUTATION
+      toast.error("Invalid credentials");
       console.error("Login error:", error);
     }
   }

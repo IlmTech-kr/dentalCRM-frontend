@@ -13,6 +13,7 @@ import {
 } from "@/src/features/patients/hooks/usePatients";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
+import { useToast } from "@/src/lib/hooks/Usetoast";
 
 const emptyForm: CreatePatientDto = {
   firstName: "",
@@ -22,6 +23,9 @@ const emptyForm: CreatePatientDto = {
   gender: "MALE",
   anamnesis: "",
 };
+
+const toast = useToast();
+
 
 type ModalState = "none" | "form" | "view" | "phone-search";
 
@@ -221,9 +225,12 @@ export default function PatientsPage() {
     try {
       // ✅ USE DELETE MUTATION
       await deleteMutation.mutateAsync(id);
+    toast.success("Patient deleted successfully");
+
     } catch (error) {
       console.error("Failed to delete patient:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete patient");
+    toast.error("Cannot delete patient");
+
     }
   }
 

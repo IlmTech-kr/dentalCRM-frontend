@@ -4,13 +4,12 @@ import { Camera, Mail, Phone, Save, User } from "lucide-react";
 import { useRef, useState } from "react";
 import React from "react";
 
-// ✅ IMPORT REACT QUERY HOOKS - CORRECT PATH
-import {
-  useGetProfile,
-  useUpdateProfile,
-} from "@/src/features/users/hooks/useUser";
+
+// ✅ IMPORT TOAST HOOK
 
 import type { UserProfile } from "@/src/types/user.types";
+import { useGetProfile, useUpdateProfile } from "@/src/features/users/hooks/useUser";
+import { useToast } from "@/src/lib/hooks/Usetoast";
 
 export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -18,6 +17,18 @@ export default function ProfilePage() {
   // ✅ USE REACT QUERY HOOKS
   const { data: profileData, isLoading, error: loadError } = useGetProfile();
   const updateMutation = useUpdateProfile();
+
+  // ✅ USE TOAST HOOK
+  const toast = useToast();
+
+  // Show error when profile fails to load
+  React.useEffect(() => {
+    if (loadError) {
+      toast.error(
+        loadError instanceof Error ? loadError.message : "Failed to load profile"
+      );
+    }
+  }, [loadError, toast]);
 
   // ✅ Initialize with all UserProfile fields
   const [profile, setProfile] = useState<UserProfile>({
@@ -31,10 +42,9 @@ export default function ProfilePage() {
     roles: profileData?.roles || [],
   });
 
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // ✅ Sync profile data when loaded - includes all fields
+  // ✅ Sync profile data when loaded
   React.useEffect(() => {
     if (profileData) {
       setProfile({
@@ -54,10 +64,9 @@ export default function ProfilePage() {
     e.preventDefault();
 
     try {
-      setMessage("");
       setError("");
 
-      // ✅ USE MUTATION - only send editable fields
+      // ✅ USE MUTATION
       await updateMutation.mutateAsync({
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -65,11 +74,15 @@ export default function ProfilePage() {
         avatarUrl: profile.avatarUrl,
       });
 
-      setMessage("Profile updated successfully!");
-      setTimeout(() => setMessage(""), 4000);
+      // ✅ SHOW SUCCESS TOAST
+      toast.success("Profile updated successfully! 🎉");
     } catch (err) {
       console.error("Error updating profile:", err);
-      // ✅ ERROR HANDLED BY MUTATION
+      
+      // ✅ SHOW ERROR TOAST
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to update profile";
+      toast.error(errorMessage);
     }
   }
 
@@ -79,13 +92,17 @@ export default function ProfilePage() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
+      const msg = "Please select an image file";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5MB");
+      const msg = "Image size must be less than 5MB";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -98,6 +115,7 @@ export default function ProfilePage() {
     }));
 
     setError("");
+    toast.info("Image selected. Click Save to upload.");
   }
 
   const firstLetter =
@@ -185,25 +203,11 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Success Message */}
-          {message && (
-            <div className="mb-5 rounded-2xl bg-green-50 p-4 text-green-600 flex items-center gap-3 border border-green-200">
-              <div className="text-lg">✓</div>
-              {message}
-            </div>
-          )}
-
-          {/* ✅ ERROR MESSAGE FROM MUTATION OR QUERY */}
-          {(error || updateMutation.error || loadError) && (
+          {/* Local error message (kept for validation) */}
+          {error && (
             <div className="mb-5 rounded-2xl bg-red-50 p-4 text-red-600 flex items-center gap-3 border border-red-200">
               <div className="text-lg">✕</div>
-              {error ||
-                (updateMutation.error instanceof Error
-                  ? updateMutation.error.message
-                  : "Failed to update profile") ||
-                (loadError instanceof Error
-                  ? loadError.message
-                  : "Failed to load profile")}
+              {error}
             </div>
           )}
 

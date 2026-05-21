@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Save, CheckCircle, AlertCircle } from "lucide-react";
 import { useChangePassword } from "@/src/features/users/hooks/useUser";
+import { useToast } from "@/src/lib/hooks/Usetoast";
 
 interface PasswordForm {
   currentPassword: string;
@@ -21,6 +22,8 @@ export default function ChangePasswordPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const toast = useToast();
 
   const [form, setForm] = useState<PasswordForm>({
     currentPassword: "",
@@ -106,10 +109,9 @@ export default function ChangePasswordPage() {
         confirmPassword: "",
       });
 
-      // Clear success message after 4 seconds
-      setTimeout(() => setMessage(""), 4000);
     } catch (error) {
       // ✅ ERROR HANDLED BY MUTATION
+      toast.error("Current password is incorrect");
       console.error("Error changing password:", error);
     }
   }
