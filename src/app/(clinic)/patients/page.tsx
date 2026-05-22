@@ -24,9 +24,6 @@ const emptyForm: CreatePatientDto = {
   anamnesis: "",
 };
 
-const toast = useToast();
-
-
 type ModalState = "none" | "form" | "view" | "phone-search";
 
 /**
@@ -108,6 +105,7 @@ export default function PatientsPage() {
   } = useSearchPatientByPhone(shouldSearch ? phoneSearch : null);
 
   const phoneSearchResult = phoneSearchResults.length > 0 ? phoneSearchResults[0] : null;
+    const toast = useToast();
 
   function openCreateModal() {
     setEditingPatient(null);

@@ -1,170 +1,130 @@
 // File: src/features/auth/auth.service.ts
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import { mainHttp, tenantHttp } from "@/src/lib/api/http";
-import {
+import type {
   ForgotPasswordDto,
-  InviteUserDto,
   LoginDto,
   RegisterClinicDto,
   ResetPasswordDto,
 } from "@/src/types/auth.types";
 
+function saveAuthData(data: any, subDomain?: string) {
+  if (typeof window === "undefined") return;
+
+  const accessToken = data?.accessToken || data?.access_token;
+  const tenantId = data?.tenantId || data?.tenant_id;
+
+  if (accessToken) {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("access_token", accessToken);
+  }
+
+  if (tenantId) {
+    localStorage.setItem("tenantId", tenantId);
+    localStorage.setItem("tenant_id", tenantId);
+  }
+
+  if (subDomain) {
+    localStorage.setItem("subDomain", subDomain);
+    localStorage.setItem("subdomain", subDomain);
+  }
+}
+
+function clearAuthData() {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("tenantId");
+  localStorage.removeItem("tenant_id");
+  localStorage.removeItem("subDomain");
+  localStorage.removeItem("subdomain");
+}
+
 /**
- * Register a new clinic
+ * Register clinic
  */
 export async function registerClinic(data: RegisterClinicDto) {
-  try {
-    const res = await mainHttp.post(ENDPOINTS.auth.register, data);
-    return res.data;
-  } catch (error) {
-    console.error("Failed to register clinic:", error);
-    throw error;
-  }
+  const response = await mainHttp.post(ENDPOINTS.auth.register, data);
+  return response.data;
 }
 
 /**
- * Login user with subdomain
+ * Login clinic user
  */
 export async function login(data: LoginDto) {
-  try {
-    localStorage.clear();
+  clearAuthData();
 
-    const res = await axios.post(
-      `http://${data.subDomain}.localhost:9000${ENDPOINTS.auth.login}`,
-      {
-        email: data.email.trim(),
-        password: data.password,
+  const subDomain = data.subDomain.trim();
+
+  const response = await axios.post(
+    `http://${subDomain}.localhost:9000/api/auth/login`,
+    {
+      email: data.email.trim(),
+      password: data.password,
+    },
+    {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    // Store credentials
-    localStorage.setItem("subDomain", data.subDomain);
-
-    if (res.data?.accessToken) {
-      localStorage.setItem("accessToken", res.data.accessToken);
     }
+  );
 
-    return res.data;
-  } catch (error) {
-    console.error("Failed to login:", error);
-    throw error;
-  }
+  saveAuthData(response.data, subDomain);
+
+  return response.data;
 }
 
 /**
- * Refresh the access token
- */
-export async function refreshToken(subDomain: string) {
-  try {
-    const api = tenantHttp(subDomain);
-    const res = await api.post(ENDPOINTS.auth.refresh);
-
-    if (res.data?.accessToken) {
-      localStorage.setItem("accessToken", res.data.accessToken);
-    }
-
-    return res.data;
-  } catch (error) {
-    console.error("Failed to refresh token:", error);
-    throw error;
-  }
-}
-
-/**
- * Send invite to user
- */
-export async function sendInvite(data: InviteUserDto) {
-  try {
-    const api = tenantHttp(data.subDomain);
-
-    const res = await api.post(ENDPOINTS.auth.invites, {
-      email: data.email,
-      role: data.role,
-    });
-
-    return res.data;
-  } catch (error) {
-    console.error("Failed to send invite:", error);
-    throw error;
-  }
-}
-
-/**
- * Request password reset link
- * ✅ FIXED: Uses dynamic subdomain from ForgotPasswordDto
- * ✅ FIXED: Uses tenantHttp for proper auth headers
+ * Forgot password
  */
 export async function forgotPassword(data: ForgotPasswordDto) {
-  try {
-    if (!data.email || !data.email.trim()) {
-      throw new Error("Email is required");
-    }
+  const subDomain = data.subDomain?.trim();
 
-    if (!data.subDomain) {
-      throw new Error("Subdomain is required");
-    }
+  if (subDomain) {
+    const http = tenantHttp(subDomain);
 
-    const api = tenantHttp(data.subDomain);
-
-    const res = await api.post(ENDPOINTS.auth.forgotPassword, {
+    const response = await http.post(ENDPOINTS.auth.forgotPassword, {
       email: data.email.trim(),
     });
 
-    return res.data;
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to send reset link";
-      throw new Error(message);
-    }
-    throw error;
+    return response.data;
   }
+
+  const response = await mainHttp.post(ENDPOINTS.auth.forgotPassword, data);
+  return response.data;
 }
 
 /**
- * Reset password with token
- * ✅ FIXED: Uses mainHttp for public endpoint
+ * Reset password
  */
 export async function resetPassword(data: ResetPasswordDto) {
-  try {
-    if (!data.token || !data.token.trim()) {
-      throw new Error("Reset token is required");
-    }
+  const subDomain =
+    typeof window !== "undefined"
+      ? localStorage.getItem("subDomain") || localStorage.getItem("subdomain")
+      : "";
 
-    if (!data.newPassword || data.newPassword.length < 8) {
-      throw new Error("Password must be at least 8 characters");
-    }
+  if (subDomain) {
+    const http = tenantHttp(subDomain);
 
-    if (data.newPassword !== data.confirmPassword) {
-      throw new Error("Passwords do not match");
-    }
+    const response = await http.post(ENDPOINTS.auth.resetPassword, data);
 
-    const res = await mainHttp.post(ENDPOINTS.auth.resetPassword, {
-      token: data.token.trim(),
-      newPassword: data.newPassword,
-      confirmPassword: data.confirmPassword,
-    });
-
-    return res.data;
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to reset password";
-      throw new Error(message);
-    }
-    throw error;
+    return response.data;
   }
+
+  const response = await mainHttp.post(ENDPOINTS.auth.resetPassword, data);
+  return response.data;
 }
 
 /**
- * Logout user
+ * Logout
  */
 export function logout() {
-  localStorage.clear();
-  window.location.href = "/login";
+  clearAuthData();
+
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
 }
