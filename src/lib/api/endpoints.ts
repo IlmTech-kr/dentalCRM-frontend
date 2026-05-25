@@ -1,3 +1,5 @@
+import { Doctor } from "@/src/types/doctor.types";
+
 export const ENDPOINTS = {
   auth: {
     register: "/api/auth/register",
@@ -19,11 +21,14 @@ export const ENDPOINTS = {
     byId: (id: string) => `/api/dental/patients/${id}`,
   },
 
-  admin: {
-    users: "/api/v1/admin/users",
+  doctors: {
+    list: "/api/v1/admin/users",
+    byId: (id: string) => `/api/v1/admin/users/${id}`,
   },
 
   superAdmin: {
     clinics: "/api/v1/super-admin/clinics",
   },
+
+
 };

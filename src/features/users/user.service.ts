@@ -7,21 +7,19 @@ import type {
   ChangePasswordPayload,
 } from "@/src/types/user.types";
 import { AxiosError } from "axios";
+import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 
 /**
  * Get subdomain from localStorage
  */
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("subDomain") || "";
-}
+
 
 /**
  * Get current user profile
  */
 export async function getMe(): Promise<UserProfile> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -44,7 +42,7 @@ export async function updateMe(
   payload: UpdateProfilePayload
 ): Promise<UserProfile> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -76,7 +74,7 @@ export async function changePassword(
   payload: ChangePasswordPayload
 ): Promise<void> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");

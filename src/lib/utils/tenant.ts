@@ -33,6 +33,10 @@ export function getCurrentSubdomain() {
     return null;
   }
 
+// function getSubdomain(): string {
+//   if (typeof window === "undefined") return "";
+//   return localStorage.getItem("subDomain") || "";
+// }
   const host = window.location.hostname;
 
   if (host === "localhost") {
@@ -53,4 +57,10 @@ export function getCurrentSubdomain() {
   }
 
   return null;
+}
+
+// Get Tenant ID:
+export function getTenantId(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("tenantId") || "";
 }

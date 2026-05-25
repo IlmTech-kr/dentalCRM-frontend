@@ -1,67 +1,72 @@
 import { AxiosError } from "axios";
-import { tenantHttp } from "@/src/lib/api/http";
 import type {
   Doctor,
   InviteDoctorDto,
   UpdateDoctorDto,
 } from "@/src/types/doctor.types";
+import { getCurrentSubdomain, getTenantId } from "@/src/lib/utils/tenant";
+import { tenantHttp } from "@/src/lib/api/http";
+import { ENDPOINTS } from "@/src/lib/api/endpoints";
 
-function getTenantId(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("tenantId") || "";
-}
 
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("subDomain") || "";
-}
-
-function getHttp() {
-  const subDomain = getSubdomain();
-
-  if (!subDomain) {
-    throw new Error("No tenant subdomain found");
-  }
-
-  return tenantHttp(subDomain);
-}
 
 export async function getDoctors(): Promise<Doctor[]> {
-  const http = getHttp();
+    try {
+        const subDomain = getCurrentSubdomain();
+    
+        if (!subDomain) {
+          throw new Error("No tenant subdomain found");
+        }
+    
+        const http = tenantHttp(subDomain);
+        const response = await http.get(ENDPOINTS.doctors.list);
+    
+        const users = response.data?.data || response.data?.users || response.data || [];
 
-  const response = await http.get("/api/v1/admin/users?page=0&limit=10", {
-    headers: {
-      "X-Tenant-ID": getTenantId(),
-    },
-  });
-
-  const users = response.data?.data || response.data?.users || response.data || [];
-
-  return users
-    .filter((user: any) => user.roles?.includes("DOCTOR"))
-    .map((user: any) => ({
-      ...user,
-      id: user.id || user._id,
-    }));
+        return users
+            .filter((user: any) => user.roles?.includes("DOCTOR"))
+            .map((user: any) => ({
+            ...user,
+            id: user.id || user._id,
+            }));
+    
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        throw new Error("Failed to load users");
+      }
 }
 
 export async function getDoctorById(doctorId: string): Promise<Doctor> {
-  const http = getHttp();
 
-  const response = await http.get(`/api/v1/admin/users/${doctorId}`, {
-    headers: {
-      "X-Tenant-ID": getTenantId(),
-    },
-  });
+    try {
+        const subDomain = getCurrentSubdomain();
+    
+        if (!subDomain) {
+          throw new Error("No tenant subdomain found");
+        }
+    
+        const http = tenantHttp(subDomain);
 
-  return {
-    ...response.data,
-    id: response.data.id || response.data._id,
-  };
+        const response = await http.get(ENDPOINTS.doctors.byId(doctorId));
+    
+        const users = response.data?.data || response.data?.users || response.data || [];
+
+        return users
+            .filter((user: any) => user.roles?.includes("DOCTOR"))
+            .map((user: any) => ({
+            ...user,
+            id: user.id || user._id,
+            }));
+    
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        throw new Error("Failed to load users");
+      }
+
 }
 
 export async function inviteDoctor(payload: InviteDoctorDto): Promise<void> {
-  const http = getHttp();
+  const http = tenantHttp();
 
   try {
     await http.post("/api/auth/invites", payload, {
@@ -99,7 +104,7 @@ export async function updateDoctor(
   doctorId: string,
   payload: UpdateDoctorDto
 ): Promise<Doctor> {
-  const http = getHttp();
+  const http = tenantHttp();
 
   const response = await http.put(`/api/v1/admin/users/${doctorId}`, payload, {
     headers: {
@@ -114,7 +119,7 @@ export async function updateDoctor(
 }
 
 export async function deleteDoctor(doctorId: string): Promise<void> {
-  const http = getHttp();
+  const http = tenantHttp();
 
   await http.delete(`/api/v1/admin/users/${doctorId}`, {
     headers: {

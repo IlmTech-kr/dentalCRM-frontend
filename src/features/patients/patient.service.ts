@@ -7,14 +7,8 @@ import type {
   UpdatePatientDto,
 } from "@/src/types/patient.types";
 import { AxiosError } from "axios";
+import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 
-/**
- * Get subdomain from localStorage
- */
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("subDomain") || "";
-}
 
 /**
  * Extract only digits from phone number
@@ -53,7 +47,7 @@ function normalizePatientsResponse(responseData: any): Patient[] {
  */
 export async function getPatients(): Promise<Patient[]> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -76,7 +70,7 @@ export async function getPatients(): Promise<Patient[]> {
  */
 export async function getPatientById(id: string): Promise<Patient> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -104,7 +98,7 @@ export async function getPatientById(id: string): Promise<Patient> {
  */
 export async function searchPatientByPhone(phone: string): Promise<Patient[]> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       console.error("[Patient Service] No subdomain found");
@@ -176,7 +170,7 @@ export async function createPatient(
   payload: CreatePatientDto
 ): Promise<Patient> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -209,7 +203,7 @@ export async function updatePatient(
   payload: UpdatePatientDto
 ): Promise<Patient> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
@@ -239,7 +233,7 @@ export async function updatePatient(
  */
 export async function deletePatient(id: string): Promise<void> {
   try {
-    const subDomain = getSubdomain();
+    const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
       throw new Error("No tenant subdomain found");
