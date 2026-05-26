@@ -8,7 +8,7 @@ import {
   inviteDoctor,
   updateDoctor,
   deleteDoctor,
-} from "../doctor.service";
+} from "../services/doctor.service";
 
 import type {
   Doctor,

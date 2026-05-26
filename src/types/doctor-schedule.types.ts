@@ -1,5 +1,3 @@
-// File: src/types/doctor-schedule.types.ts
-
 export type DayOfWeek =
   | "MONDAY"
   | "TUESDAY"
@@ -10,8 +8,9 @@ export type DayOfWeek =
   | "SUNDAY";
 
 export interface DoctorSchedule {
-  id: string;
-  doctorId?: string;
+  id?: string;
+  _id?: string;
+  doctorId: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
@@ -19,16 +18,10 @@ export interface DoctorSchedule {
   active: boolean;
   createdAt?: string;
   updatedAt?: string;
-
-  doctor?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  };
 }
 
-export interface CreateDoctorScheduleDto {
+export interface DoctorSchedulePayload {
+  doctorId: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
@@ -36,7 +29,7 @@ export interface CreateDoctorScheduleDto {
   active: boolean;
 }
 
-export interface UpdateDoctorScheduleDto {
+export interface UpdateDoctorSchedulePayload {
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
@@ -44,11 +37,25 @@ export interface UpdateDoctorScheduleDto {
   active: boolean;
 }
 
-export interface DoctorScheduleListResponse {
-  data?: DoctorSchedule[];
-  content?: DoctorSchedule[];
+export type DoctorScheduleFormValues = UpdateDoctorSchedulePayload;
+
+export interface DoctorSchedulesResponse {
   schedules?: DoctorSchedule[];
+  content?: DoctorSchedule[];
+  data?: DoctorSchedule[];
   total?: number;
+  totalElements?: number;
+  totalPages?: number;
   page?: number;
-  limit?: number;
+  size?: number;
+}
+
+export interface DoctorOption {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  name?: string;
+  specialization?: string;
 }

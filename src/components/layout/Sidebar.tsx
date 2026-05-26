@@ -14,21 +14,28 @@ import {
   Activity,
   ChevronDown,
   ChevronRight,
+  List,
+  Clock,
 } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/patients", label: "Patients", icon: Users },
-  { href: "/doctors", label: "Doctors", icon: Stethoscope },
+  { href: "/doctors", label: "Doctors", icon: Stethoscope, hasChildren: true },
   { href: "/assistants", label: "Assistants", icon: UserRound },
   { href: "/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/treatments", label: "Treatments", icon: Activity },
   { href: "/reports", label: "Reports", icon: FileBarChart },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "Settings", icon: Settings, hasChildren: true },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+
+  const [openDoctors, setOpenDoctors] = useState(
+    pathname.startsWith("/doctors")
+  );
+
   const [openSettings, setOpenSettings] = useState(
     pathname.startsWith("/settings")
   );
@@ -40,10 +47,68 @@ export default function Sidebar() {
       <nav className="space-y-2">
         {links.map((item) => {
           const Icon = item.icon;
+
           const active =
             item.href === "/settings"
               ? pathname.startsWith("/settings")
+              : item.href === "/doctors"
+              ? pathname.startsWith("/doctors")
               : pathname === item.href;
+
+          if (item.href === "/doctors") {
+            return (
+              <div key={item.href}>
+                <button
+                  type="button"
+                  onClick={() => setOpenDoctors(!openDoctors)}
+                  className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+                    active
+                      ? "bg-white text-primary-blue"
+                      : "text-white/90 hover:bg-white/15"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon size={20} />
+                    {item.label}
+                  </span>
+
+                  {openDoctors ? (
+                    <ChevronDown size={18} />
+                  ) : (
+                    <ChevronRight size={18} />
+                  )}
+                </button>
+
+                {openDoctors && (
+                  <div className="ml-8 mt-2 space-y-2">
+                    <Link
+                      href="/doctors"
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                        pathname === "/doctors"
+                          ? "bg-white text-primary-blue"
+                          : "text-white/80 hover:bg-white/15"
+                      }`}
+                    >
+                      <List size={16} />
+                      Doctors List
+                    </Link>
+
+                    <Link
+                      href="/doctors/schedule"
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                        pathname === "/doctors/schedule"
+                          ? "bg-white text-primary-blue"
+                          : "text-white/80 hover:bg-white/15"
+                      }`}
+                    >
+                      <Clock size={16} />
+                      Doctor Schedule
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           if (item.href === "/settings") {
             return (
