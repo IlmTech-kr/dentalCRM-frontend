@@ -13,6 +13,7 @@ import {
   deleteAppointment,
   getAppointmentById,
   getAppointments,
+  getAppointmentsByDate,
   updateAppointment,
 } from "../appointment.service";
 
@@ -23,6 +24,10 @@ export const appointmentKeys = {
 
   list: (page: number, limit: number) =>
     [...appointmentKeys.lists(), { page, limit }] as const,
+
+  byDates: () => [...appointmentKeys.all, "by-date"] as const,
+
+  byDate: (date: string) => [...appointmentKeys.byDates(), date] as const,
 
   details: () => [...appointmentKeys.all, "detail"] as const,
 
@@ -37,6 +42,21 @@ export function useGetAppointments(page = 0, limit = 10) {
     queryKey: appointmentKeys.list(page, limit),
     queryFn: () => getAppointments(page, limit),
     staleTime: 1000 * 60 * 3,
+    gcTime: 1000 * 60 * 10,
+  });
+}
+
+/**
+ * Hook: Get appointments by date
+ *
+ * GET /api/dental/appointments/by-date?date=2026-06-06
+ */
+export function useGetAppointmentsByDate(date: string) {
+  return useQuery<Appointment[]>({
+    queryKey: appointmentKeys.byDate(date),
+    queryFn: () => getAppointmentsByDate(date),
+    enabled: Boolean(date),
+    staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 10,
   });
 }
@@ -78,13 +98,15 @@ export function useCreateAppointment() {
 
     onSuccess: (newAppointment) => {
       queryClient.invalidateQueries({
-        queryKey: appointmentKeys.lists(),
+        queryKey: appointmentKeys.all,
       });
 
-      queryClient.setQueryData(
-        appointmentKeys.detail(newAppointment.id),
-        newAppointment
-      );
+      if (newAppointment.id) {
+        queryClient.setQueryData(
+          appointmentKeys.detail(newAppointment.id),
+          newAppointment
+        );
+      }
     },
   });
 }
@@ -105,7 +127,7 @@ export function useUpdateAppointment(appointmentId: string) {
       );
 
       queryClient.invalidateQueries({
-        queryKey: appointmentKeys.lists(),
+        queryKey: appointmentKeys.all,
       });
     },
   });
@@ -126,7 +148,7 @@ export function useDeleteAppointment() {
       });
 
       queryClient.invalidateQueries({
-        queryKey: appointmentKeys.lists(),
+        queryKey: appointmentKeys.all,
       });
     },
   });

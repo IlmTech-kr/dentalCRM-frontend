@@ -36,5 +36,11 @@ export const ENDPOINTS = {
   create: "/api/dental/doctor-schedules",
 },
 
+appointments: {
+  list: "/api/dental/appointments",
+  byId: (appointmentId: string) =>
+    `/api/dental/appointments/${appointmentId}`,
+  byDate: "/api/dental/appointments/by-date",
+},
 
 };

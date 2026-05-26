@@ -1,6 +1,5 @@
-// File: src/features/appointments/appointment.service.ts
-
 import { tenantHttp } from "@/src/lib/api/http";
+import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
   Appointment,
   AppointmentListResponse,
@@ -62,6 +61,20 @@ function normalizeAppointment(appointment: any): Appointment {
   };
 }
 
+function normalizeAppointmentsResponse(
+  result: AppointmentListResponse | Appointment[] | any
+): Appointment[] {
+  const appointments = Array.isArray(result)
+    ? result
+    : result.data ||
+      result.content ||
+      result.appointments ||
+      result.schedules ||
+      [];
+
+  return appointments.map(normalizeAppointment);
+}
+
 /**
  * GET /api/dental/appointments?page=0&limit=10
  */
@@ -72,16 +85,36 @@ export async function getAppointments(
   const http = getHttp();
 
   const response = await http.get<AppointmentListResponse | Appointment[]>(
-    `/api/dental/appointments?page=${page}&limit=${limit}`
+    ENDPOINTS.appointments.list,
+    {
+      params: {
+        page,
+        limit,
+      },
+    }
   );
 
-  const result = response.data;
+  return normalizeAppointmentsResponse(response.data);
+}
 
-  const appointments = Array.isArray(result)
-    ? result
-    : result.data || result.content || result.appointments || [];
+/**
+ * GET /api/dental/appointments/by-date?date=2026-06-06
+ */
+export async function getAppointmentsByDate(
+  date: string
+): Promise<Appointment[]> {
+  const http = getHttp();
 
-  return appointments.map(normalizeAppointment);
+  const response = await http.get<AppointmentListResponse | Appointment[]>(
+    ENDPOINTS.appointments.byDate,
+    {
+      params: {
+        date,
+      },
+    }
+  );
+
+  return normalizeAppointmentsResponse(response.data);
 }
 
 /**
@@ -92,7 +125,9 @@ export async function getAppointmentById(
 ): Promise<Appointment> {
   const http = getHttp();
 
-  const response = await http.get(`/api/dental/appointments/${appointmentId}`);
+  const response = await http.get(
+    ENDPOINTS.appointments.byId(appointmentId)
+  );
 
   return normalizeAppointment(response.data);
 }
@@ -108,7 +143,10 @@ export async function createAppointment(
 ): Promise<Appointment> {
   const http = getHttp();
 
-  const response = await http.post("/api/dental/appointments", payload);
+  const response = await http.post(
+    ENDPOINTS.appointments.list,
+    payload
+  );
 
   return normalizeAppointment(response.data);
 }
@@ -123,7 +161,7 @@ export async function updateAppointment(
   const http = getHttp();
 
   const response = await http.put(
-    `/api/dental/appointments/${appointmentId}`,
+    ENDPOINTS.appointments.byId(appointmentId),
     payload
   );
 
@@ -136,5 +174,5 @@ export async function updateAppointment(
 export async function deleteAppointment(appointmentId: string): Promise<void> {
   const http = getHttp();
 
-  await http.delete(`/api/dental/appointments/${appointmentId}`);
+  await http.delete(ENDPOINTS.appointments.byId(appointmentId));
 }
