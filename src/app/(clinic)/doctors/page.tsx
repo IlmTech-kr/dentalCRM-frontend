@@ -7,31 +7,35 @@ import {
   useInviteDoctor,
   useUpdateDoctor,
 } from "@/src/features/doctors/hooks/useDoctors";
+import { getApiErrorMessage } from "@/src/lib/api/http";
 import type { Doctor, DoctorStatus } from "@/src/types/doctor.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
+const initialEditForm = {
+  firstName: "",
+  lastName: "",
+  phoneNumber: "",
+  avatarUrl: "",
+  status: "ACTIVE" as DoctorStatus,
+};
+
 export default function DoctorsPage() {
+  const toast = useToast();
+
   const { data: doctors = [], isLoading, isError, refetch } = useGetDoctors();
 
   const inviteDoctorMutation = useInviteDoctor();
   const deleteDoctorMutation = useDeleteDoctor();
 
   const [search, setSearch] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
 
-  const [editForm, setEditForm] = useState({
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    avatarUrl: "",
-    status: "ACTIVE" as DoctorStatus,
-  });
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [editForm, setEditForm] = useState(initialEditForm);
 
   const updateDoctorMutation = useUpdateDoctor(selectedDoctor?.id || "");
-  const toast = useToast();
 
   const filteredDoctors = useMemo(() => {
     const value = search.toLowerCase().trim();
@@ -39,41 +43,22 @@ export default function DoctorsPage() {
     if (!value) return doctors;
 
     return doctors.filter((doctor) => {
-      const fullName = `${doctor.firstName} ${doctor.lastName}`.toLowerCase();
+      const fullName = `${doctor.firstName || ""} ${
+        doctor.lastName || ""
+      }`.toLowerCase();
+
       const email = doctor.email?.toLowerCase() || "";
       const phone = doctor.phoneNumber?.toLowerCase() || "";
+      const status = doctor.status?.toLowerCase() || "";
 
       return (
         fullName.includes(value) ||
         email.includes(value) ||
-        phone.includes(value)
+        phone.includes(value) ||
+        status.includes(value)
       );
     });
   }, [doctors, search]);
-
-  function handleOpenEdit(doctor: Doctor) {
-    setSelectedDoctor(doctor);
-
-    setEditForm({
-      firstName: doctor.firstName || "",
-      lastName: doctor.lastName || "",
-      phoneNumber: doctor.phoneNumber || "",
-      avatarUrl: doctor.avatarUrl || "",
-      status: doctor.status || "ACTIVE",
-    });
-  }
-
-  function handleCloseEdit() {
-    setSelectedDoctor(null);
-
-    setEditForm({
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
-      avatarUrl: "",
-      status: "ACTIVE",
-    });
-  }
 
   function handleOpenInviteModal() {
     setInviteEmail("");
@@ -85,61 +70,88 @@ export default function DoctorsPage() {
     setIsInviteModalOpen(false);
   }
 
-async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
+  function handleOpenEditModal(doctor: Doctor) {
+    setSelectedDoctor(doctor);
 
-  if (!inviteEmail.trim()) {
-    toast.warning("Doctor email kiriting");
-    return;
-  }
-
-  try {
-    await inviteDoctorMutation.mutateAsync({
-      email: inviteEmail.trim(),
-      role: "DOCTOR",
+    setEditForm({
+      firstName: doctor.firstName || "",
+      lastName: doctor.lastName || "",
+      phoneNumber: doctor.phoneNumber || "",
+      avatarUrl: doctor.avatarUrl || "",
+      status: doctor.status || "ACTIVE",
     });
-
-    handleCloseInviteModal();
-    await refetch();
-
-    toast.success("Invite yuborildi. Doctor emaildagi link orqali signup qiladi.");
-  } catch (error: any) {
-    const message =
-      error?.message || "Invite yuborishda xatolik bo‘ldi yoki bu email oldin ishlatilgan";
-
-    toast.error(message);
   }
-}
+
+  function handleCloseEditModal() {
+    setSelectedDoctor(null);
+    setEditForm(initialEditForm);
+  }
+
+  async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!inviteEmail.trim()) {
+      toast.warning("Doctor email kiriting");
+      return;
+    }
+
+    try {
+      await inviteDoctorMutation.mutateAsync({
+        email: inviteEmail.trim(),
+        role: "DOCTOR",
+      });
+
+      handleCloseInviteModal();
+      await refetch();
+
+      toast.success("Invite yuborildi. Doctor email orqali signup qiladi.");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Invite yuborishda xatolik bo‘ldi"));
+    }
+  }
 
   async function handleUpdateDoctor(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!selectedDoctor?.id) {
-      alert("Doctor ID topilmadi");
+      toast.error("Doctor ID topilmadi");
+      return;
+    }
+
+    if (!editForm.firstName.trim()) {
+      toast.warning("First name kiriting");
+      return;
+    }
+
+    if (!editForm.lastName.trim()) {
+      toast.warning("Last name kiriting");
       return;
     }
 
     try {
       await updateDoctorMutation.mutateAsync({
-        firstName: editForm.firstName,
-        lastName: editForm.lastName,
-        phoneNumber: editForm.phoneNumber,
-        avatarUrl: editForm.avatarUrl,
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        phoneNumber: editForm.phoneNumber.trim(),
+        avatarUrl: editForm.avatarUrl.trim(),
         roles: ["DOCTOR"],
         status: editForm.status,
       });
 
-      handleCloseEdit();
-      alert("Doctor updated successfully");
+      handleCloseEditModal();
+      await refetch();
+
+      toast.success("Doctor updated successfully");
     } catch (error) {
-      console.error(error);
-      alert("Doctor update qilishda xatolik bo‘ldi");
+      toast.error(
+        getApiErrorMessage(error, "Doctor update qilishda xatolik bo‘ldi")
+      );
     }
   }
 
   async function handleDeleteDoctor(doctor: Doctor) {
     if (!doctor.id) {
-      alert("Doctor ID topilmadi");
+      toast.error("Doctor ID topilmadi");
       return;
     }
 
@@ -151,15 +163,23 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
 
     try {
       await deleteDoctorMutation.mutateAsync(doctor.id);
-      alert("Doctor deleted successfully");
+      await refetch();
+
+      toast.success("Doctor deleted successfully");
     } catch (error) {
-      console.error(error);
-      alert("Doctor delete qilishda xatolik bo‘ldi");
+      toast.error(
+        getApiErrorMessage(error, "Doctor delete qilishda xatolik bo‘ldi")
+      );
     }
   }
 
+  const isSubmitting =
+    inviteDoctorMutation.isPending ||
+    updateDoctorMutation.isPending ||
+    deleteDoctorMutation.isPending;
+
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen bg-slate-50 p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Doctors</h1>
@@ -205,6 +225,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
             <p className="text-sm font-medium text-red-600">
               Doctors listni olishda xatolik bo‘ldi.
             </p>
+
             <button
               type="button"
               onClick={() => refetch()}
@@ -301,8 +322,8 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                             doctor.status === "ACTIVE"
                               ? "bg-green-100 text-green-700"
                               : doctor.status === "INACTIVE"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
                           }`}
                         >
                           {doctor.status}
@@ -313,7 +334,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => handleOpenEdit(doctor)}
+                            onClick={() => handleOpenEditModal(doctor)}
                             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                           >
                             Edit
@@ -416,7 +437,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
 
               <button
                 type="button"
-                onClick={handleCloseEdit}
+                onClick={handleCloseEditModal}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
               >
                 Close
@@ -429,6 +450,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                   <label className="mb-1 block text-sm font-medium text-slate-700">
                     First Name
                   </label>
+
                   <input
                     type="text"
                     value={editForm.firstName}
@@ -446,6 +468,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                   <label className="mb-1 block text-sm font-medium text-slate-700">
                     Last Name
                   </label>
+
                   <input
                     type="text"
                     value={editForm.lastName}
@@ -464,6 +487,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Phone Number
                 </label>
+
                 <input
                   type="text"
                   value={editForm.phoneNumber}
@@ -482,6 +506,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Avatar URL
                 </label>
+
                 <input
                   type="text"
                   value={editForm.avatarUrl}
@@ -500,6 +525,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Status
                 </label>
+
                 <select
                   value={editForm.status}
                   onChange={(e) =>
@@ -519,7 +545,7 @@ async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={handleCloseEdit}
+                  onClick={handleCloseEditModal}
                   className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Cancel

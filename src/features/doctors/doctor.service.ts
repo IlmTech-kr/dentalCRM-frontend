@@ -1,129 +1,105 @@
-import { AxiosError } from "axios";
+// File: src/features/doctors/doctor.service.ts
+
+import { tenantHttp } from "@/src/lib/api/http";
 import type {
   Doctor,
+  DoctorListResponse,
   InviteDoctorDto,
   UpdateDoctorDto,
 } from "@/src/types/doctor.types";
-import { getCurrentSubdomain, getTenantId } from "@/src/lib/utils/tenant";
-import { tenantHttp } from "@/src/lib/api/http";
-import { ENDPOINTS } from "@/src/lib/api/endpoints";
 
+function getSubdomain(): string {
+  if (typeof window === "undefined") return "";
 
-
-export async function getDoctors(): Promise<Doctor[]> {
-    try {
-        const subDomain = getCurrentSubdomain();
-    
-        if (!subDomain) {
-          throw new Error("No tenant subdomain found");
-        }
-    
-        const http = tenantHttp(subDomain);
-        const response = await http.get(ENDPOINTS.doctors.list);
-    
-        const users = response.data?.data || response.data?.users || response.data || [];
-
-        return users
-            .filter((user: any) => user.roles?.includes("DOCTOR"))
-            .map((user: any) => ({
-            ...user,
-            id: user.id || user._id,
-            }));
-    
-      } catch (error) {
-        console.error("Failed to load users:", error);
-        throw new Error("Failed to load users");
-      }
+  return (
+    localStorage.getItem("subDomain") ||
+    localStorage.getItem("subdomain") ||
+    ""
+  );
 }
 
-export async function getDoctorById(doctorId: string): Promise<Doctor> {
+function getHttp() {
+  const subDomain = getSubdomain();
 
-    try {
-        const subDomain = getCurrentSubdomain();
-    
-        if (!subDomain) {
-          throw new Error("No tenant subdomain found");
-        }
-    
-        const http = tenantHttp(subDomain);
-
-        const response = await http.get(ENDPOINTS.doctors.byId(doctorId));
-    
-        const users = response.data?.data || response.data?.users || response.data || [];
-
-        return users
-            .filter((user: any) => user.roles?.includes("DOCTOR"))
-            .map((user: any) => ({
-            ...user,
-            id: user.id || user._id,
-            }));
-    
-      } catch (error) {
-        console.error("Failed to load users:", error);
-        throw new Error("Failed to load users");
-      }
-
-}
-
-export async function inviteDoctor(payload: InviteDoctorDto): Promise<void> {
-  const http = tenantHttp();
-
-  try {
-    await http.post("/api/auth/invites", payload, {
-      headers: {
-        "X-Tenant-ID": getTenantId(),
-      },
-    });
-  } catch (error) {
-    const axiosError = error as AxiosError<any>;
-
-    const status = axiosError.response?.status;
-    const code = axiosError.response?.data?.code;
-    const message =
-      axiosError.response?.data?.message ||
-      "Doctor invite yuborishda xatolik bo‘ldi";
-
-    // Expected API error: user already exists
-    if (status === 409 || code === "AUTH_INVITE_EMAIL_EXISTS") {
-      throw {
-        status,
-        code,
-        message,
-      };
-    }
-
+  if (!subDomain) {
     throw {
-      status,
-      code,
-      message,
+      code: "NO_TENANT_SUBDOMAIN",
+      message: "No tenant subdomain found",
     };
   }
+
+  return tenantHttp(subDomain);
 }
 
+function normalizeDoctor(user: any): Doctor {
+  return {
+    ...user,
+    id: user.id || user._id,
+  };
+}
+
+/**
+ * GET /api/v1/admin/users?page=0&limit=10
+ */
+export async function getDoctors(): Promise<Doctor[]> {
+  const http = getHttp();
+
+  const response = await http.get<DoctorListResponse | Doctor[]>(
+    "/api/v1/admin/users?page=0&limit=10"
+  );
+
+  const result = response.data;
+
+  const users = Array.isArray(result)
+    ? result
+    : result.data || result.users || result.content || [];
+
+  return users
+    .filter((user: any) => user.roles?.includes("DOCTOR"))
+    .map(normalizeDoctor);
+}
+
+/**
+ * GET /api/v1/admin/users/:id
+ */
+export async function getDoctorById(doctorId: string): Promise<Doctor> {
+  const http = getHttp();
+
+  const response = await http.get(`/api/v1/admin/users/${doctorId}`);
+
+  return normalizeDoctor(response.data);
+}
+
+/**
+ * POST /api/auth/invites
+ *
+ * Sends invite email.
+ */
+export async function inviteDoctor(payload: InviteDoctorDto): Promise<void> {
+  const http = getHttp();
+
+  await http.post("/api/auth/invites", payload);
+}
+
+/**
+ * PUT /api/v1/admin/users/:id
+ */
 export async function updateDoctor(
   doctorId: string,
   payload: UpdateDoctorDto
 ): Promise<Doctor> {
-  const http = tenantHttp();
+  const http = getHttp();
 
-  const response = await http.put(`/api/v1/admin/users/${doctorId}`, payload, {
-    headers: {
-      "X-Tenant-ID": getTenantId(),
-    },
-  });
+  const response = await http.put(`/api/v1/admin/users/${doctorId}`, payload);
 
-  return {
-    ...response.data,
-    id: response.data.id || response.data._id,
-  };
+  return normalizeDoctor(response.data);
 }
 
+/**
+ * DELETE /api/v1/admin/users/:id
+ */
 export async function deleteDoctor(doctorId: string): Promise<void> {
-  const http = tenantHttp();
+  const http = getHttp();
 
-  await http.delete(`/api/v1/admin/users/${doctorId}`, {
-    headers: {
-      "X-Tenant-ID": getTenantId(),
-    },
-  });
+  await http.delete(`/api/v1/admin/users/${doctorId}`);
 }

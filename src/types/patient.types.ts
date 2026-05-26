@@ -1,6 +1,7 @@
 export type Gender = "MALE" | "FEMALE";
 
 export interface Patient {
+  phoneNumber: any;
   id: string;
   firstName: string;
   lastName: string;

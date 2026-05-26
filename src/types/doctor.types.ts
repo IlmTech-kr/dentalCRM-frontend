@@ -1,3 +1,5 @@
+// File: src/types/doctor.types.ts
+
 export type DoctorStatus = "ACTIVE" | "INACTIVE" | "BLOCKED";
 
 export type DoctorRole = "DOCTOR";
@@ -11,6 +13,8 @@ export interface Doctor {
   avatarUrl?: string;
   roles: DoctorRole[];
   status: DoctorStatus;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface InviteDoctorDto {
@@ -25,4 +29,13 @@ export interface UpdateDoctorDto {
   avatarUrl?: string;
   roles: ["DOCTOR"];
   status: DoctorStatus;
+}
+
+export interface DoctorListResponse {
+  data?: Doctor[];
+  users?: Doctor[];
+  content?: Doctor[];
+  total?: number;
+  page?: number;
+  limit?: number;
 }

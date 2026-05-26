@@ -1,5 +1,6 @@
+// File: src/features/doctors/hooks/useDoctors.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 
 import {
   getDoctors,
@@ -15,12 +16,15 @@ import type {
   UpdateDoctorDto,
 } from "@/src/types/doctor.types";
 
-// Query keys
 export const doctorKeys = {
   all: ["doctors"] as const,
+
   lists: () => [...doctorKeys.all, "list"] as const,
+
   list: (filters: string) => [...doctorKeys.lists(), { filters }] as const,
+
   details: () => [...doctorKeys.all, "detail"] as const,
+
   detail: (id: string) => [...doctorKeys.details(), id] as const,
 };
 
@@ -28,7 +32,7 @@ export const doctorKeys = {
  * Hook: Get all doctors
  */
 export function useGetDoctors() {
-  return useQuery<Doctor[], AxiosError>({
+  return useQuery<Doctor[]>({
     queryKey: doctorKeys.lists(),
     queryFn: () => getDoctors(),
     staleTime: 1000 * 60 * 5,
@@ -37,18 +41,23 @@ export function useGetDoctors() {
 }
 
 /**
- * Hook: Get single doctor by ID
+ * Hook: Get doctor by ID
  */
 export function useGetDoctor(doctorId: string | null) {
-  return useQuery<Doctor, AxiosError>({
+  return useQuery<Doctor>({
     queryKey: doctorId ? doctorKeys.detail(doctorId) : ["doctor-disabled"],
+
     queryFn: () => {
       if (!doctorId) {
-        throw new Error("Doctor ID is required");
+        throw {
+          code: "DOCTOR_ID_REQUIRED",
+          message: "Doctor ID is required",
+        };
       }
 
       return getDoctorById(doctorId);
     },
+
     enabled: !!doctorId,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
@@ -57,15 +66,13 @@ export function useGetDoctor(doctorId: string | null) {
 
 /**
  * Hook: Invite doctor
- *
- * This does not directly create a completed doctor account.
- * It sends an invite email. Doctor finishes signup from email link.
  */
 export function useInviteDoctor() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, AxiosError, InviteDoctorDto>({
+  return useMutation<void, unknown, InviteDoctorDto>({
     mutationFn: (payload) => inviteDoctor(payload),
+
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: doctorKeys.lists(),
@@ -80,17 +87,15 @@ export function useInviteDoctor() {
 export function useUpdateDoctor(doctorId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Doctor, AxiosError, UpdateDoctorDto>({
+  return useMutation<Doctor, unknown, UpdateDoctorDto>({
     mutationFn: (payload) => updateDoctor(doctorId, payload),
+
     onSuccess: (updatedDoctor) => {
       queryClient.setQueryData(doctorKeys.detail(doctorId), updatedDoctor);
 
       queryClient.invalidateQueries({
         queryKey: doctorKeys.lists(),
       });
-    },
-    onError: (error) => {
-      console.error("Failed to update doctor:", error);
     },
   });
 }
@@ -101,8 +106,9 @@ export function useUpdateDoctor(doctorId: string) {
 export function useDeleteDoctor() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, AxiosError, string>({
+  return useMutation<void, unknown, string>({
     mutationFn: (doctorId) => deleteDoctor(doctorId),
+
     onSuccess: (_, deletedDoctorId) => {
       queryClient.removeQueries({
         queryKey: doctorKeys.detail(deletedDoctorId),
@@ -111,9 +117,6 @@ export function useDeleteDoctor() {
       queryClient.invalidateQueries({
         queryKey: doctorKeys.lists(),
       });
-    },
-    onError: (error) => {
-      console.error("Failed to delete doctor:", error);
     },
   });
 }
