@@ -1,12 +1,9 @@
-import { Doctor } from "@/src/types/doctor.types";
-
 export const ENDPOINTS = {
   auth: {
     register: "/api/auth/register",
     login: "/api/auth/login",
     refresh: "/api/auth/refresh",
     invites: "/api/auth/invites",
-    // ✅ FIXED: Consistent endpoint paths
     forgotPassword: "/api/v1/auth/forgot-password",
     resetPassword: "/api/v1/auth/reset-password",
   },
@@ -30,24 +27,25 @@ export const ENDPOINTS = {
     clinics: "/api/v1/super-admin/clinics",
   },
 
+  doctorSchedules: {
+    list: "/api/dental/doctor-schedules",
+    detail: (id: string) => `/api/dental/doctor-schedules/${id}`,
+    create: "/api/dental/doctor-schedules",
+    createWeekly: "/api/dental/doctor-schedules/weekly",
+    update: (id: string) => `/api/dental/doctor-schedules/${id}`,
+    delete: (id: string) => `/api/dental/doctor-schedules/${id}`,
+  },
 
-doctorSchedules: {
-  list: "/api/dental/doctor-schedules",
-  detail: (id: string) => `/api/dental/doctor-schedules/${id}`,
-  create: "/api/dental/doctor-schedules",
-  createWeekly: "/api/dental/doctor-schedules/weekly",
-  update: (id: string) => `/api/dental/doctor-schedules/${id}`,
-  delete: (id: string) => `/api/dental/doctor-schedules/${id}`,
-},
+  appointments: {
+    list: "/api/dental/appointments",
+    create: "/api/dental/appointments",
+    detail: (id: string) => `/api/dental/appointments/${id}`,
+    update: (id: string) => `/api/dental/appointments/${id}`,
+    delete: (id: string) => `/api/dental/appointments/${id}`,
+    byDate: "/api/dental/appointments/by-date",
+  },
 
-appointments: {
-  list: "/api/dental/appointments",
-  byId: (appointmentId: string) =>
-    `/api/dental/appointments/${appointmentId}`,
-  byDate: "/api/dental/appointments/by-date",
-},
-
-dental: {
+  dental: {
     charts: {
       create: "/api/dental/charts",
       getById: (chartId: string) => `/api/dental/charts/${chartId}`,
@@ -70,8 +68,25 @@ dental: {
       delete: (procedureId: string) =>
         `/api/dental/procedures/${procedureId}`,
     },
+
+    treatmentCourses: {
+      create: "/api/dental/treatment-courses",
+
+      addVisit: (courseId: string) =>
+        `/api/dental/treatment-courses/${courseId}/visits`,
+
+      complete: (courseId: string) =>
+        `/api/dental/treatment-courses/${courseId}/complete`,
+
+      getById: (courseId: string) =>
+        `/api/dental/treatment-courses/${courseId}`,
+
+      listByPatient: (patientId: string) =>
+        `/api/dental/treatment-courses/patient/${patientId}`,
+    },
   },
 
+  // Optional: old shortcut. Agar eski codeda ishlatilgan bo‘lsa qoldiring.
   dentalCharts: {
     create: "/api/dental/charts",
     getById: (chartId: string) => `/api/dental/charts/${chartId}`,
@@ -80,5 +95,4 @@ dental: {
     update: (chartId: string) => `/api/dental/charts/${chartId}`,
     delete: (chartId: string) => `/api/dental/charts/${chartId}`,
   },
-
 };

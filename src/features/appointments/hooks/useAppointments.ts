@@ -1,12 +1,4 @@
-// File: src/features/appointments/hooks/useAppointments.ts
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import type {
-  Appointment,
-  CreateAppointmentDto,
-  UpdateAppointmentDto,
-} from "@/src/types/appointment.types";
 
 import {
   createAppointment,
@@ -17,6 +9,12 @@ import {
   updateAppointment,
 } from "../appointment.service";
 
+import type {
+  Appointment,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+} from "@/src/types/appointment.types";
+
 export const appointmentKeys = {
   all: ["appointments"] as const,
 
@@ -25,9 +23,8 @@ export const appointmentKeys = {
   list: (page: number, limit: number) =>
     [...appointmentKeys.lists(), { page, limit }] as const,
 
-  byDates: () => [...appointmentKeys.all, "by-date"] as const,
-
-  byDate: (date: string) => [...appointmentKeys.byDates(), date] as const,
+  byDate: (date: string) =>
+    [...appointmentKeys.all, "by-date", date] as const,
 
   details: () => [...appointmentKeys.all, "detail"] as const,
 
@@ -36,33 +33,22 @@ export const appointmentKeys = {
 
 /**
  * Hook: Get appointments
+ *
+ * GET /api/dental/appointments?page=0&limit=10
  */
 export function useGetAppointments(page = 0, limit = 10) {
   return useQuery<Appointment[]>({
     queryKey: appointmentKeys.list(page, limit),
     queryFn: () => getAppointments(page, limit),
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 10,
   });
 }
 
 /**
- * Hook: Get appointments by date
+ * Hook: Get appointment by ID
  *
- * GET /api/dental/appointments/by-date?date=2026-06-06
- */
-export function useGetAppointmentsByDate(date: string) {
-  return useQuery<Appointment[]>({
-    queryKey: appointmentKeys.byDate(date),
-    queryFn: () => getAppointmentsByDate(date),
-    enabled: Boolean(date),
-    staleTime: 1000 * 60,
-    gcTime: 1000 * 60 * 10,
-  });
-}
-
-/**
- * Hook: Get single appointment by ID
+ * GET /api/dental/appointments/:id
  */
 export function useGetAppointment(appointmentId: string | null) {
   return useQuery<Appointment>({
@@ -82,13 +68,41 @@ export function useGetAppointment(appointmentId: string | null) {
     },
 
     enabled: !!appointmentId,
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+  });
+}
+
+/**
+ * Hook: Get appointments by date
+ *
+ * GET /api/dental/appointments/by-date?date=2026-06-06
+ */
+export function useGetAppointmentsByDate(date: string | null) {
+  return useQuery<Appointment[]>({
+    queryKey: date ? appointmentKeys.byDate(date) : ["appointments-by-date-disabled"],
+
+    queryFn: () => {
+      if (!date) {
+        throw {
+          code: "APPOINTMENT_DATE_REQUIRED",
+          message: "Appointment date is required",
+        };
+      }
+
+      return getAppointmentsByDate(date);
+    },
+
+    enabled: !!date,
+    staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 10,
   });
 }
 
 /**
  * Hook: Create appointment
+ *
+ * POST /api/dental/appointments
  */
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
@@ -96,16 +110,15 @@ export function useCreateAppointment() {
   return useMutation<Appointment, unknown, CreateAppointmentDto>({
     mutationFn: (payload) => createAppointment(payload),
 
-    onSuccess: (newAppointment) => {
+    onSuccess: (createdAppointment) => {
       queryClient.invalidateQueries({
-        queryKey: appointmentKeys.all,
+        queryKey: appointmentKeys.lists(),
       });
 
-      if (newAppointment.id) {
-        queryClient.setQueryData(
-          appointmentKeys.detail(newAppointment.id),
-          newAppointment
-        );
+      if (createdAppointment.appointmentDate) {
+        queryClient.invalidateQueries({
+          queryKey: appointmentKeys.byDate(createdAppointment.appointmentDate),
+        });
       }
     },
   });
@@ -113,28 +126,46 @@ export function useCreateAppointment() {
 
 /**
  * Hook: Update appointment
+ *
+ * PUT /api/dental/appointments/:id
  */
-export function useUpdateAppointment(appointmentId: string) {
+export function useUpdateAppointment() {
   const queryClient = useQueryClient();
 
-  return useMutation<Appointment, unknown, UpdateAppointmentDto>({
-    mutationFn: (payload) => updateAppointment(appointmentId, payload),
+  return useMutation<
+    Appointment,
+    unknown,
+    {
+      appointmentId: string;
+      payload: UpdateAppointmentDto;
+    }
+  >({
+    mutationFn: ({ appointmentId, payload }) =>
+      updateAppointment(appointmentId, payload),
 
-    onSuccess: (updatedAppointment) => {
+    onSuccess: (updatedAppointment, variables) => {
       queryClient.setQueryData(
-        appointmentKeys.detail(appointmentId),
+        appointmentKeys.detail(variables.appointmentId),
         updatedAppointment
       );
 
       queryClient.invalidateQueries({
-        queryKey: appointmentKeys.all,
+        queryKey: appointmentKeys.lists(),
       });
+
+      if (updatedAppointment.appointmentDate) {
+        queryClient.invalidateQueries({
+          queryKey: appointmentKeys.byDate(updatedAppointment.appointmentDate),
+        });
+      }
     },
   });
 }
 
 /**
  * Hook: Delete appointment
+ *
+ * DELETE /api/dental/appointments/:id
  */
 export function useDeleteAppointment() {
   const queryClient = useQueryClient();
@@ -148,8 +179,20 @@ export function useDeleteAppointment() {
       });
 
       queryClient.invalidateQueries({
+        queryKey: appointmentKeys.lists(),
+      });
+
+      queryClient.invalidateQueries({
         queryKey: appointmentKeys.all,
       });
     },
   });
 }
+
+/**
+ * Optional aliases
+ * Agar eski page'da shu nomlar ishlatilgan bo'lsa.
+ */
+export const useAppointments = useGetAppointments;
+export const useAppointment = useGetAppointment;
+export const useAppointmentsByDate = useGetAppointmentsByDate;

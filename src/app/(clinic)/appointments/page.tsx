@@ -1,21 +1,18 @@
-// File: src/app/(clinic)/appointments/page.tsx
-
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Calendar,
-  Plus,
-  Trash2,
+  Clock,
   Edit2,
-  X,
-  Phone,
   Loader2,
+  Plus,
+  RefreshCcw,
+  Search,
+  Trash2,
+  UserRound,
+  X,
 } from "lucide-react";
 
 import {
@@ -30,12 +27,26 @@ import { useGetPatients } from "@/src/features/patients/hooks/usePatients";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 
 import { getApiErrorMessage } from "@/src/lib/api/http";
+import { useToast } from "@/src/lib/hooks/Usetoast";
 
 import type {
   Appointment,
   CreateAppointmentDto,
+  UpdateAppointmentDto,
 } from "@/src/types/appointment.types";
-import { useToast } from "@/src/lib/hooks/Usetoast";
+
+type ViewMode = "BY_DATE" | "ALL";
+
+const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
+
+const initialForm: CreateAppointmentDto = {
+  patientId: "",
+  doctorId: "",
+  appointmentDate: "",
+  startTime: "09:00",
+  slotDurationMinutes: 30,
+  notes: "",
+};
 
 function getTodayDate() {
   const today = new Date();
@@ -47,782 +58,181 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-function formatDateLocal(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+function getItemId(item: any): string {
+  return item?.id || item?._id || "";
 }
 
-function normalizeAppointmentTime(time?: string) {
-  if (!time) return "-";
-  return time.slice(0, 5);
+function getAppointmentId(appointment: Appointment | null): string {
+  if (!appointment) return "";
+
+  return appointment.id || appointment._id || "";
 }
 
-const initialForm: CreateAppointmentDto = {
-  patientId: "",
-  doctorId: "",
-  appointmentDate: "",
-  startTime: "",
-  slotDurationMinutes: 30,
-  notes: "",
-};
+function normalizeDateForInput(date?: string | Date | null): string {
+  if (!date) return "";
 
-const durationOptions = [
-  { value: 10, label: "10 min" },
-  { value: 15, label: "15 min" },
-  { value: 30, label: "30 min" },
-  { value: 45, label: "45 min" },
-  { value: 60, label: "1 hour" },
-  { value: 90, label: "1.5 hrs" },
-];
+  if (date instanceof Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
-function AvatarWithInitials({
-  name,
-  size = "md",
-}: {
-  name: string;
-  size?: "sm" | "md" | "lg";
-}) {
-  const initials = name
+    return `${year}-${month}-${day}`;
+  }
+
+  const value = String(date).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const parsedDate = new Date(value);
+
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const year = parsedDate.getFullYear();
+    const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(parsedDate.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  return value;
+}
+
+function normalizeTimeForInput(time?: string | null): string {
+  if (!time) return "";
+
+  const value = String(time).trim();
+
+  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
+    return value.slice(0, 5);
+  }
+
+  return value;
+}
+
+function formatTime(time?: string | null): string {
+  return normalizeTimeForInput(time) || "-";
+}
+
+function getPersonName(person: any): string {
+  if (!person) return "";
+
+  if (person.fullName) return person.fullName;
+  if (person.name) return person.name;
+
+  const firstName = person.firstName || person.first_name || "";
+  const lastName = person.lastName || person.last_name || "";
+
+  return `${firstName} ${lastName}`.trim();
+}
+
+function getInitials(name: string) {
+  if (!name) return "?";
+
+  return name
     .split(" ")
-    .map((n) => n[0])
+    .filter(Boolean)
+    .map((item) => item[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
-  const sizeClasses = {
-    sm: "w-6 h-6 text-xs",
-    md: "w-10 h-10 text-sm",
-    lg: "w-12 h-12 text-base",
-  };
-
-  const gradients = [
-    "from-blue-400 to-blue-600",
-    "from-purple-400 to-purple-600",
-    "from-pink-400 to-pink-600",
-    "from-amber-400 to-amber-600",
-    "from-green-400 to-green-600",
-  ];
-
-  const gradient = gradients[name.charCodeAt(0) % gradients.length];
-
-  return (
-    <div
-      className={`${sizeClasses[size]} flex items-center justify-center rounded-full bg-gradient-to-br ${gradient} font-semibold text-white shadow-md`}
-    >
-      {initials || "?"}
-    </div>
-  );
 }
 
-function CalendarPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(value || new Date())
-  );
-
-  const daysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const firstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const getDayArray = () => {
-    const days = [];
-    const totalDays = daysInMonth(currentMonth);
-    const firstDay = (firstDayOfMonth(currentMonth) + 6) % 7;
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-
-    for (let i = 1; i <= totalDays; i++) {
-      days.push(i);
-    }
-
-    return days;
-  };
-
-  const handleDateClick = (day: number | null) => {
-    if (!day) return;
-
-    const selectedDate = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day
-    );
-
-    onChange(formatDateLocal(selectedDate));
-    setIsOpen(false);
-  };
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const dayNames = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-  const days = getDayArray();
-
-  const selectedDate = value ? new Date(value) : null;
-  const selectedDay = selectedDate ? selectedDate.getDate() : null;
-
-  const isCurrentMonth =
-    selectedDate &&
-    selectedDate.getMonth() === currentMonth.getMonth() &&
-    selectedDate.getFullYear() === currentMonth.getFullYear();
-
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-
-    return `${day} / ${month} / ${year}`;
-  };
-
+function Avatar({ name }: { name: string }) {
   return (
-    <div className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 text-left font-medium text-slate-900 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-blue-100 p-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-600">Date</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {value ? formatDate(value) : "Select date"}
-              </p>
-            </div>
-          </div>
-
-          <ChevronDown
-            className={`h-5 w-5 text-slate-400 transition ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/40"
-            onClick={() => setIsOpen(false)}
-          />
-
-          <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl">
-            <div className="mb-8 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      currentMonth.getFullYear(),
-                      currentMonth.getMonth() - 1
-                    )
-                  )
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-
-              <div className="text-center">
-                <p className="text-2xl font-bold text-slate-900">
-                  {monthNames[currentMonth.getMonth()]}
-                </p>
-                <p className="text-sm font-semibold text-slate-500">
-                  {currentMonth.getFullYear()}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      currentMonth.getFullYear(),
-                      currentMonth.getMonth() + 1
-                    )
-                  )
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mb-6 grid grid-cols-7 gap-3">
-              {dayNames.map((day) => (
-                <p
-                  key={day}
-                  className="text-center text-xs font-bold uppercase tracking-wider text-slate-500"
-                >
-                  {day}
-                </p>
-              ))}
-            </div>
-
-            <div className="mb-8 grid grid-cols-7 gap-3">
-              {days.map((day, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleDateClick(day)}
-                  disabled={!day}
-                  className={`h-10 w-10 rounded-lg text-sm font-semibold transition ${
-                    !day
-                      ? "text-slate-200"
-                      : isCurrentMonth && day === selectedDay
-                      ? "bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg hover:from-purple-600 hover:to-indigo-700"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-
-            <div className="mb-6 text-center">
-              <p className="text-sm text-slate-600">
-                {value ? formatDate(value) : "No date selected"}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 py-3 text-sm font-bold text-white shadow-lg transition hover:from-purple-600 hover:to-indigo-700"
-            >
-              Set Date
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TimePicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [hour, setHour] = useState(value ? parseInt(value.split(":")[0]) : 9);
-  const [minute, setMinute] = useState(
-    value ? parseInt(value.split(":")[1]) : 0
-  );
-
-  const handleConfirm = () => {
-    const timeString = `${String(hour).padStart(2, "0")}:${String(
-      minute
-    ).padStart(2, "0")}`;
-
-    onChange(timeString);
-    setIsOpen(false);
-  };
-
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
-
-  const timeDisplay = value
-    ? value.slice(0, 5)
-    : `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-
-  return (
-    <div className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 text-left font-medium text-slate-900 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-amber-100 p-2">
-              <Clock className="h-5 w-5 text-amber-600" />
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-600">Start Time</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {timeDisplay}
-              </p>
-            </div>
-          </div>
-
-          <ChevronDown
-            className={`h-5 w-5 text-slate-400 transition ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/40"
-            onClick={() => setIsOpen(false)}
-          />
-
-          <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
-            <p className="mb-6 text-center text-lg font-bold text-slate-900">
-              Select Time
-            </p>
-
-            <div className="mb-6 flex gap-4">
-              <div className="flex-1">
-                <p className="mb-3 text-center text-xs font-bold uppercase text-slate-600">
-                  Hour
-                </p>
-
-                <div className="flex h-48 flex-col overflow-y-auto rounded-xl border-2 border-slate-200 bg-slate-50">
-                  {hours.map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      onClick={() => setHour(h)}
-                      className={`flex-1 border-b border-slate-100 px-2 py-2 text-base font-bold transition ${
-                        hour === h
-                          ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-                          : "text-slate-700 hover:bg-blue-50"
-                      }`}
-                    >
-                      {String(h).padStart(2, "0")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center">
-                <p className="text-3xl font-bold text-slate-400">:</p>
-              </div>
-
-              <div className="flex-1">
-                <p className="mb-3 text-center text-xs font-bold uppercase text-slate-600">
-                  Minute
-                </p>
-
-                <div className="flex h-48 flex-col overflow-y-auto rounded-xl border-2 border-slate-200 bg-slate-50">
-                  {minutes.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMinute(m)}
-                      className={`flex-1 border-b border-slate-100 px-2 py-2 text-base font-bold transition ${
-                        minute === m
-                          ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-                          : "text-slate-700 hover:bg-blue-50"
-                      }`}
-                    >
-                      {String(m).padStart(2, "0")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-6 rounded-lg bg-slate-50 p-4 text-center">
-              <p className="text-xs text-slate-600">Selected Time</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {timeDisplay}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex-1 rounded-lg border-2 border-slate-200 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirm}
-                className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-600 hover:to-indigo-700"
-              >
-                Set Time
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DurationSelector({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="w-full">
-      <p className="mb-4 text-sm font-bold text-slate-900">Duration</p>
-
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {durationOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            className={`group relative rounded-xl px-3 py-3 text-center transition ${
-              value === option.value
-                ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg"
-                : "border-2 border-slate-200 bg-white hover:border-blue-300"
-            }`}
-          >
-            <p
-              className={`text-xs font-bold transition ${
-                value === option.value ? "text-white" : "text-slate-700"
-              }`}
-            >
-              {option.label}
-            </p>
-
-            {value === option.value && (
-              <div className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white">
-                <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-600">
-                  <span className="text-xs text-white">✓</span>
-                </div>
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DoctorSelector({
-  doctors,
-  value,
-  onChange,
-}: {
-  doctors: any[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectedDoctor = doctors.find((d) => d.id === value);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 text-left font-medium text-slate-900 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      >
-        <div className="flex items-center justify-between">
-          {selectedDoctor ? (
-            <div className="flex items-center gap-3">
-              <AvatarWithInitials
-                name={`${selectedDoctor.firstName} ${selectedDoctor.lastName}`}
-              />
-
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-slate-600">Doctor</p>
-                <p className="font-semibold text-slate-900">
-                  {selectedDoctor.firstName} {selectedDoctor.lastName}
-                </p>
-
-                {selectedDoctor.phoneNumber && (
-                  <p className="flex items-center gap-1 text-xs text-slate-500">
-                    <Phone className="h-3 w-3" />
-                    {selectedDoctor.phoneNumber}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div>
-              <p className="text-xs text-slate-600">Doctor</p>
-              <p className="text-sm text-slate-500">Select a doctor</p>
-            </div>
-          )}
-
-          <ChevronDown
-            className={`h-5 w-5 text-slate-400 transition ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-40 mt-3 max-h-64 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-2xl">
-          <div className="space-y-1 p-3">
-            {doctors.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-slate-500">
-                No doctors available
-              </div>
-            ) : (
-              doctors.map((doctor) => (
-                <button
-                  key={doctor.id}
-                  type="button"
-                  onClick={() => {
-                    onChange(doctor.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full rounded-xl px-3 py-3 text-left transition ${
-                    value === doctor.id ? "bg-blue-50" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <AvatarWithInitials
-                      name={`${doctor.firstName} ${doctor.lastName}`}
-                      size="sm"
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">
-                        {doctor.firstName} {doctor.lastName}
-                      </p>
-
-                      <div className="space-y-0.5">
-                        {doctor.email && (
-                          <p className="text-xs text-slate-500">
-                            {doctor.email}
-                          </p>
-                        )}
-
-                        {doctor.phoneNumber && (
-                          <p className="flex items-center gap-1 text-xs text-slate-500">
-                            <Phone className="h-3 w-3" />
-                            {doctor.phoneNumber}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {value === doctor.id && (
-                      <div className="h-2 w-2 rounded-full bg-blue-600" />
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PatientSelector({
-  patients,
-  value,
-  onChange,
-}: {
-  patients: any[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectedPatient = patients.find((p) => p.id === value);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 text-left font-medium text-slate-900 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      >
-        <div className="flex items-center justify-between">
-          {selectedPatient ? (
-            <div className="flex items-center gap-3">
-              <AvatarWithInitials
-                name={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
-              />
-
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-slate-600">Patient</p>
-                <p className="font-semibold text-slate-900">
-                  {selectedPatient.firstName} {selectedPatient.lastName}
-                </p>
-
-                {selectedPatient.phoneNumber && (
-                  <p className="flex items-center gap-1 text-xs text-slate-500">
-                    <Phone className="h-3 w-3" />
-                    {selectedPatient.phoneNumber}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div>
-              <p className="text-xs text-slate-600">Patient</p>
-              <p className="text-sm text-slate-500">Select a patient</p>
-            </div>
-          )}
-
-          <ChevronDown
-            className={`h-5 w-5 text-slate-400 transition ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-40 mt-3 max-h-64 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-2xl">
-          <div className="space-y-1 p-3">
-            {patients.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-slate-500">
-                No patients available
-              </div>
-            ) : (
-              patients.map((patient) => (
-                <button
-                  key={patient.id}
-                  type="button"
-                  onClick={() => {
-                    onChange(patient.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full rounded-xl px-3 py-3 text-left transition ${
-                    value === patient.id ? "bg-blue-50" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <AvatarWithInitials
-                      name={`${patient.firstName} ${patient.lastName}`}
-                      size="sm"
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">
-                        {patient.firstName} {patient.lastName}
-                      </p>
-
-                      {patient.phoneNumber && (
-                        <p className="flex items-center gap-1 text-xs text-slate-500">
-                          <Phone className="h-3 w-3" />
-                          {patient.phoneNumber}
-                        </p>
-                      )}
-                    </div>
-
-                    {value === patient.id && (
-                      <div className="h-2 w-2 rounded-full bg-blue-600" />
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-extrabold text-white shadow-md">
+      {getInitials(name)}
     </div>
   );
 }
 
 interface AppointmentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedAppointment: Appointment | null;
+  open: boolean;
   form: CreateAppointmentDto;
-  onFormChange: (form: CreateAppointmentDto) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  isSubmitting: boolean;
+  selectedAppointment: Appointment | null;
   patients: any[];
   doctors: any[];
+  isSubmitting: boolean;
+  onClose: () => void;
+  onChange: (form: CreateAppointmentDto) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
 function AppointmentModal({
-  isOpen,
-  onClose,
-  selectedAppointment,
+  open,
   form,
-  onFormChange,
-  onSubmit,
-  isSubmitting,
+  selectedAppointment,
   patients,
   doctors,
+  isSubmitting,
+  onClose,
+  onChange,
+  onSubmit,
 }: AppointmentModalProps) {
-  if (!isOpen) return null;
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition"
         onClick={onClose}
+        className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
       />
 
-      <div className="relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-3xl bg-white shadow-2xl sm:max-w-2xl">
-        <div className="sticky top-0 border-b-2 border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-8 sm:px-8">
+      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
+        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-extrabold text-slate-900">
                 {selectedAppointment
                   ? "Edit Appointment"
-                  : "Schedule New Appointment"}
+                  : "Create Appointment"}
               </h2>
 
-              <p className="mt-3 text-sm text-slate-600">
-                {selectedAppointment
-                  ? "Update appointment details"
-                  : "Create a new appointment with patient and doctor"}
+              <p className="mt-2 text-sm font-medium text-slate-600">
+                Select patient, doctor, date and appointment time.
               </p>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center rounded-xl p-2 text-slate-500 transition hover:bg-white/50"
+              className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-8 px-6 py-8 sm:px-8">
-          <div className="grid gap-6 sm:grid-cols-2">
+        <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">
                 Patient <span className="text-red-500">*</span>
               </label>
 
-              <PatientSelector
-                patients={patients}
+              <select
                 value={form.patientId}
-                onChange={(patientId) => onFormChange({ ...form, patientId })}
-              />
+                onChange={(e) =>
+                  onChange({
+                    ...form,
+                    patientId: e.target.value,
+                  })
+                }
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              >
+                <option value="">Select patient</option>
+
+                {patients.map((patient) => {
+                  const id = getItemId(patient);
+                  const name = getPersonName(patient) || id;
+
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
 
             <div>
@@ -830,25 +240,48 @@ function AppointmentModal({
                 Doctor <span className="text-red-500">*</span>
               </label>
 
-              <DoctorSelector
-                doctors={doctors}
+              <select
                 value={form.doctorId}
-                onChange={(doctorId) => onFormChange({ ...form, doctorId })}
-              />
+                onChange={(e) =>
+                  onChange({
+                    ...form,
+                    doctorId: e.target.value,
+                  })
+                }
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              >
+                <option value="">Select doctor</option>
+
+                {doctors.map((doctor) => {
+                  const id = getItemId(doctor);
+                  const name = getPersonName(doctor) || id;
+
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">
                 Date <span className="text-red-500">*</span>
               </label>
 
-              <CalendarPicker
-                value={form.appointmentDate}
-                onChange={(appointmentDate) =>
-                  onFormChange({ ...form, appointmentDate })
+              <input
+                type="date"
+                value={normalizeDateForInput(form.appointmentDate)}
+                onChange={(e) =>
+                  onChange({
+                    ...form,
+                    appointmentDate: e.target.value,
+                  })
                 }
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
@@ -857,32 +290,46 @@ function AppointmentModal({
                 Start Time <span className="text-red-500">*</span>
               </label>
 
-              <TimePicker
-                value={form.startTime}
-                onChange={(startTime) =>
-                  onFormChange({
+              <input
+                type="time"
+                value={normalizeTimeForInput(form.startTime)}
+                onChange={(e) =>
+                  onChange({
                     ...form,
-                    startTime,
+                    startTime: e.target.value,
                   })
                 }
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
           </div>
 
           <div>
             <label className="mb-3 block text-sm font-bold text-slate-900">
-              Duration <span className="text-red-500">*</span>
+              Slot Duration <span className="text-red-500">*</span>
             </label>
 
-            <DurationSelector
-              value={form.slotDurationMinutes}
-              onChange={(slotDurationMinutes) =>
-                onFormChange({
-                  ...form,
-                  slotDurationMinutes,
-                })
-              }
-            />
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
+              {DURATION_OPTIONS.map((duration) => (
+                <button
+                  key={duration}
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      ...form,
+                      slotDurationMinutes: duration,
+                    })
+                  }
+                  className={`rounded-2xl border-2 px-3 py-3 text-sm font-extrabold transition ${
+                    form.slotDurationMinutes === duration
+                      ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  {duration}m
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -891,24 +338,24 @@ function AppointmentModal({
             </label>
 
             <textarea
-              value={form.notes}
+              value={form.notes || ""}
               onChange={(e) =>
-                onFormChange({
+                onChange({
                   ...form,
                   notes: e.target.value,
                 })
               }
-              placeholder="e.g., First checkup, Follow-up visit, Treatment notes..."
               rows={4}
-              className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              placeholder="Birinchi ko'rik..."
+              className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             />
           </div>
 
-          <div className="flex justify-end gap-3 border-t-2 border-slate-100 pt-8">
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border-2 border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -916,15 +363,10 @@ function AppointmentModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting
-                ? selectedAppointment
-                  ? "Updating..."
-                  : "Creating..."
-                : selectedAppointment
-                ? "Save Changes"
-                : "Schedule Appointment"}
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {selectedAppointment ? "Save Changes" : "Create Appointment"}
             </button>
           </div>
         </form>
@@ -943,6 +385,7 @@ export default function AppointmentsPage() {
   const [page] = useState(0);
   const [limit] = useState(10);
 
+  const [viewMode, setViewMode] = useState<ViewMode>("BY_DATE");
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
@@ -950,38 +393,74 @@ export default function AppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
-  const [form, setForm] = useState<CreateAppointmentDto>(initialForm);
+  const [form, setForm] = useState<CreateAppointmentDto>({
+    ...initialForm,
+    appointmentDate: getTodayDate(),
+  });
 
   const {
     data: appointments = [],
-    isLoading,
-    isError,
-    refetch,
+    isLoading: isAllLoading,
+    isError: isAllError,
+    error: allError,
+    refetch: refetchAllAppointments,
   } = useGetAppointments(page, limit);
 
   const {
     data: appointmentsByDate = [],
-    isLoading: isAppointmentsByDateLoading,
-    isError: isAppointmentsByDateError,
+    isLoading: isByDateLoading,
+    isError: isByDateError,
+    error: byDateError,
     refetch: refetchAppointmentsByDate,
   } = useGetAppointmentsByDate(selectedDate);
 
-  const { data: patients = [] } = useGetPatients();
-  const { data: doctors = [] } = useGetDoctors();
+  const { data: patients = [], isLoading: isPatientsLoading } =
+    useGetPatients();
+
+  const { data: doctors = [], isLoading: isDoctorsLoading } = useGetDoctors();
 
   const createAppointmentMutation = useCreateAppointment();
-
-  const updateAppointmentMutation = useUpdateAppointment(
-    selectedAppointment?.id || ""
-  );
-
+  const updateAppointmentMutation = useUpdateAppointment();
   const deleteAppointmentMutation = useDeleteAppointment();
+
+  const isSubmitting =
+    createAppointmentMutation.isPending ||
+    updateAppointmentMutation.isPending;
+
+  const patientsMap = useMemo(() => {
+    const map = new Map<string, any>();
+
+    patients.forEach((patient: any) => {
+      const id = getItemId(patient);
+
+      if (id) {
+        map.set(id, patient);
+      }
+    });
+
+    return map;
+  }, [patients]);
+
+  const doctorsMap = useMemo(() => {
+    const map = new Map<string, any>();
+
+    doctors.forEach((doctor: any) => {
+      const id = getItemId(doctor);
+
+      if (id) {
+        map.set(id, doctor);
+      }
+    });
+
+    return map;
+  }, [doctors]);
 
   useEffect(() => {
     if (!patientIdFromUrl) return;
     if (hasOpenedFromPatientRef.current) return;
 
     setSelectedAppointment(null);
+
     setForm({
       ...initialForm,
       patientId: patientIdFromUrl,
@@ -992,85 +471,145 @@ export default function AppointmentsPage() {
     hasOpenedFromPatientRef.current = true;
   }, [patientIdFromUrl, selectedDate]);
 
-  const filteredAppointments = useMemo(() => {
-    const value = search.toLowerCase().trim();
+  const enrichedAppointments = useMemo(() => {
+    return appointments.map((appointment) => {
+      const patientFromAppointment = (appointment as any).patient;
+      const doctorFromAppointment = (appointment as any).doctor;
 
-    if (!value) return appointments;
+      const patient =
+        patientFromAppointment || patientsMap.get(appointment.patientId);
 
-    return appointments.filter((appointment) => {
-      const patientName = getPatientName(appointment.patientId).toLowerCase();
-      const doctorName = getDoctorName(appointment.doctorId).toLowerCase();
+      const doctor =
+        doctorFromAppointment || doctorsMap.get(appointment.doctorId);
 
-      const date = appointment.appointmentDate?.toLowerCase() || "";
-      const time = appointment.startTime?.toLowerCase() || "";
-      const notes = appointment.notes?.toLowerCase() || "";
-
-      return (
-        patientName.includes(value) ||
-        doctorName.includes(value) ||
-        date.includes(value) ||
-        time.includes(value) ||
-        notes.includes(value)
-      );
+      return {
+        ...appointment,
+        id: getAppointmentId(appointment),
+        appointmentDate: normalizeDateForInput(appointment.appointmentDate),
+        patientName: getPersonName(patient) || appointment.patientId || "-",
+        doctorName: getPersonName(doctor) || appointment.doctorId || "-",
+        startTime: normalizeTimeForInput(appointment.startTime),
+        endTime: normalizeTimeForInput((appointment as any).endTime),
+      };
     });
-  }, [appointments, search, patients, doctors]);
+  }, [appointments, patientsMap, doctorsMap]);
 
-  const sortedAppointmentsByDate = useMemo(() => {
+  const enrichedAppointmentsByDate = useMemo(() => {
     return appointmentsByDate
-      .slice()
+      .map((appointment) => {
+        const patientFromAppointment = (appointment as any).patient;
+        const doctorFromAppointment = (appointment as any).doctor;
+
+        const patient =
+          patientFromAppointment || patientsMap.get(appointment.patientId);
+
+        const doctor =
+          doctorFromAppointment || doctorsMap.get(appointment.doctorId);
+
+        return {
+          ...appointment,
+          id: getAppointmentId(appointment),
+          appointmentDate: normalizeDateForInput(appointment.appointmentDate),
+          patientName: getPersonName(patient) || appointment.patientId || "-",
+          doctorName: getPersonName(doctor) || appointment.doctorId || "-",
+          startTime: normalizeTimeForInput(appointment.startTime),
+          endTime: normalizeTimeForInput((appointment as any).endTime),
+        };
+      })
       .sort((a, b) =>
         String(a.startTime || "").localeCompare(String(b.startTime || ""))
       );
-  }, [appointmentsByDate]);
+  }, [appointmentsByDate, patientsMap, doctorsMap]);
 
-  function getPatientName(patientId: string) {
-    const patient = patients.find((item) => item.id === patientId);
+  const currentAppointments =
+    viewMode === "BY_DATE" ? enrichedAppointmentsByDate : enrichedAppointments;
 
-    if (!patient) return patientId || "-";
+  const currentLoading = viewMode === "BY_DATE" ? isByDateLoading : isAllLoading;
+  const currentError = viewMode === "BY_DATE" ? isByDateError : isAllError;
+  const currentErrorObject = viewMode === "BY_DATE" ? byDateError : allError;
 
-    return `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
-  }
+  const filteredAppointments = useMemo(() => {
+    const value = search.trim().toLowerCase();
 
-  function getDoctorName(doctorId: string) {
-    const doctor = doctors.find((item) => item.id === doctorId);
+    if (!value) return currentAppointments;
 
-    if (!doctor) return doctorId || "-";
+    return currentAppointments.filter((appointment) => {
+      return (
+        String((appointment as any).patientName || "")
+          .toLowerCase()
+          .includes(value) ||
+        String((appointment as any).doctorName || "")
+          .toLowerCase()
+          .includes(value) ||
+        String(appointment.appointmentDate || "")
+          .toLowerCase()
+          .includes(value) ||
+        String(appointment.startTime || "").toLowerCase().includes(value) ||
+        String((appointment as any).endTime || "")
+          .toLowerCase()
+          .includes(value) ||
+        String(appointment.notes || "").toLowerCase().includes(value) ||
+        String(appointment.status || "").toLowerCase().includes(value)
+      );
+    });
+  }, [currentAppointments, search]);
 
-    return `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim();
-  }
-
-  function handleOpenCreateModal() {
+  function openCreateModal() {
     setSelectedAppointment(null);
+
     setForm({
       ...initialForm,
       appointmentDate: selectedDate,
     });
+
     setIsModalOpen(true);
   }
 
-  function handleOpenEditModal(appointment: Appointment) {
+  function openEditModal(appointment: Appointment) {
     setSelectedAppointment(appointment);
 
     setForm({
       patientId: appointment.patientId || "",
       doctorId: appointment.doctorId || "",
-      appointmentDate: appointment.appointmentDate || selectedDate,
-      startTime: normalizeAppointmentTime(appointment.startTime),
-      slotDurationMinutes: appointment.slotDurationMinutes || 30,
+      appointmentDate:
+        normalizeDateForInput(appointment.appointmentDate) || selectedDate,
+      startTime: normalizeTimeForInput(appointment.startTime),
+      slotDurationMinutes: Number(appointment.slotDurationMinutes || 30),
       notes: appointment.notes || "",
     });
 
     setIsModalOpen(true);
   }
 
-  function handleCloseModal() {
+  function closeModal() {
     setSelectedAppointment(null);
-    setForm(initialForm);
+
+    setForm({
+      ...initialForm,
+      appointmentDate: selectedDate,
+    });
+
     setIsModalOpen(false);
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function refreshCurrent() {
+    if (viewMode === "BY_DATE") {
+      await refetchAppointmentsByDate();
+      return;
+    }
+
+    await refetchAllAppointments();
+  }
+
+  async function refreshAll() {
+    await Promise.all([refetchAllAppointments(), refetchAppointmentsByDate()]);
+  }
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const startTime = normalizeTimeForInput(form.startTime);
+    const appointmentDate = normalizeDateForInput(form.appointmentDate);
 
     if (!form.patientId) {
       toast.warning("Patient tanlang");
@@ -1082,12 +621,12 @@ export default function AppointmentsPage() {
       return;
     }
 
-    if (!form.appointmentDate) {
+    if (!appointmentDate) {
       toast.warning("Appointment date kiriting");
       return;
     }
 
-    if (!form.startTime) {
+    if (!startTime) {
       toast.warning("Start time kiriting");
       return;
     }
@@ -1098,361 +637,425 @@ export default function AppointmentsPage() {
     }
 
     try {
-      const payload: CreateAppointmentDto = {
-        patientId: form.patientId,
-        doctorId: form.doctorId,
-        appointmentDate: form.appointmentDate,
-        startTime: normalizeAppointmentTime(form.startTime),
-        slotDurationMinutes: Number(form.slotDurationMinutes),
-        notes: form.notes || "",
-      };
-
       if (selectedAppointment) {
-        await updateAppointmentMutation.mutateAsync(payload);
+        const appointmentId = getAppointmentId(selectedAppointment);
+
+        if (!appointmentId) {
+          toast.error("Appointment ID topilmadi");
+          return;
+        }
+
+        const payload: UpdateAppointmentDto = {
+          patientId: form.patientId,
+          doctorId: form.doctorId,
+          appointmentDate,
+          startTime,
+          slotDurationMinutes: Number(form.slotDurationMinutes),
+          notes: form.notes || "",
+        };
+
+        await updateAppointmentMutation.mutateAsync({
+          appointmentId,
+          payload,
+        });
+
         toast.success("Appointment updated successfully");
       } else {
+        const payload: CreateAppointmentDto = {
+          patientId: form.patientId,
+          doctorId: form.doctorId,
+          appointmentDate,
+          startTime,
+          slotDurationMinutes: Number(form.slotDurationMinutes),
+          notes: form.notes || "",
+        };
+
         await createAppointmentMutation.mutateAsync(payload);
+
         toast.success("Appointment created successfully");
       }
 
-      handleCloseModal();
-      await refetch();
-      await refetchAppointmentsByDate();
-    } catch (error) {
+      closeModal();
+      await refreshAll();
+    } catch (err) {
       toast.error(
-        getApiErrorMessage(error, "Appointment saqlashda xatolik bo'ldi")
+        getApiErrorMessage(err, "Appointment saqlashda xatolik bo'ldi")
       );
     }
   }
 
-  async function handleDeleteAppointment(appointment: Appointment) {
-    if (!appointment.id) {
+  async function handleDelete(appointment: Appointment) {
+    const appointmentId = getAppointmentId(appointment);
+
+    if (!appointmentId) {
       toast.error("Appointment ID topilmadi");
       return;
     }
 
-    const confirmed = confirm("Appointmentni o'chirmoqchimisiz?");
+    const confirmed = confirm("Appointment o'chirilsinmi?");
 
     if (!confirmed) return;
 
     try {
-      await deleteAppointmentMutation.mutateAsync(appointment.id);
+      await deleteAppointmentMutation.mutateAsync(appointmentId);
 
       toast.success("Appointment deleted successfully");
-      await refetch();
-      await refetchAppointmentsByDate();
-    } catch (error) {
+      await refreshAll();
+    } catch (err) {
       toast.error(
-        getApiErrorMessage(error, "Appointment delete qilishda xatolik bo'ldi")
+        getApiErrorMessage(err, "Appointment delete qilishda xatolik bo'ldi")
       );
     }
   }
 
-  const isSubmitting =
-    createAppointmentMutation.isPending || updateAppointmentMutation.isPending;
+  const pageLoading =
+    currentLoading || isPatientsLoading || isDoctorsLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/70 backdrop-blur-sm">
+      <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">
-                Appointments
-              </h1>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
+                <Calendar className="h-6 w-6" />
+              </div>
 
-              <p className="mt-2 text-sm text-slate-600">
-                Manage patient appointments, doctors, dates, and visit times.
-              </p>
+              <div>
+                <h1 className="text-3xl font-extrabold text-slate-900">
+                  Appointments
+                </h1>
+
+                <p className="mt-1 text-sm font-medium text-slate-600">
+                  Manage patient appointments, doctors, dates and visit times.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleOpenCreateModal}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
-            >
-              <Plus className="h-5 w-5" />
-              Add Appointment
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={refreshCurrent}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Refresh
+              </button>
+
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
+              >
+                <Plus className="h-5 w-5" />
+                Add Appointment
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm">
-          <div className="border-b border-slate-100 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="flex items-center gap-3 text-2xl font-bold text-white">
-                  <Calendar className="h-6 w-6" />
-                  Daily Appointments
-                </h2>
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              Current View
+            </p>
 
-                <p className="mt-2 text-sm font-medium text-blue-100">
-                  Today is selected by default. Choose another date to view
-                  appointments.
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-white/15 p-1 backdrop-blur-sm">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none"
-                />
-              </div>
-            </div>
+            <p className="mt-3 text-2xl font-extrabold text-slate-900">
+              {viewMode === "BY_DATE" ? "By Date" : "All"}
+            </p>
           </div>
 
-          <div className="p-6">
-            {isAppointmentsByDateLoading ? (
-              <div className="flex items-center justify-center py-12 text-sm font-semibold text-slate-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin text-blue-600" />
-                Loading appointments...
-              </div>
-            ) : isAppointmentsByDateError ? (
-              <div className="rounded-2xl bg-red-50 p-5 text-sm font-bold text-red-600">
-                Failed to load appointments for selected date.
-              </div>
-            ) : sortedAppointmentsByDate.length === 0 ? (
-              <div className="rounded-3xl bg-slate-50 px-6 py-12 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
-                  <Calendar className="h-8 w-8 text-blue-600" />
-                </div>
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              Showing Appointments
+            </p>
 
-                <p className="text-lg font-extrabold text-slate-800">
-                  No appointments for this date
-                </p>
+            <p className="mt-3 text-3xl font-extrabold text-blue-600">
+              {currentAppointments.length}
+            </p>
+          </div>
 
-                <p className="mt-2 text-sm font-medium text-slate-500">
-                  Choose another date or create a new appointment.
-                </p>
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              Selected Date
+            </p>
+
+            <p className="mt-3 text-2xl font-extrabold text-indigo-600">
+              {viewMode === "BY_DATE" ? selectedDate : "All dates"}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">Doctors</p>
+
+            <p className="mt-3 text-3xl font-extrabold text-emerald-600">
+              {doctors.length}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <div className="flex w-fit rounded-2xl bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("BY_DATE")}
+                  className={`rounded-xl px-5 py-3 text-sm font-extrabold transition ${
+                    viewMode === "BY_DATE"
+                      ? "bg-white text-blue-700 shadow-sm"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  By Date
+                </button>
 
                 <button
                   type="button"
-                  onClick={handleOpenCreateModal}
-                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+                  onClick={() => setViewMode("ALL")}
+                  className={`rounded-xl px-5 py-3 text-sm font-extrabold transition ${
+                    viewMode === "ALL"
+                      ? "bg-white text-blue-700 shadow-sm"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
                 >
-                  <Plus className="h-4 w-4" />
-                  Add Appointment
+                  All Appointments
                 </button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {sortedAppointmentsByDate.map((appointment, index) => (
-                  <div
-                    key={appointment.id || `${appointment.patientId}-${index}`}
-                    className="group flex flex-col gap-4 rounded-3xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+
+              {viewMode === "BY_DATE" && (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+
+                      setForm((prev) => ({
+                        ...prev,
+                        appointmentDate: e.target.value,
+                      }));
+                    }}
+                    className="rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const today = getTodayDate();
+
+                      setSelectedDate(today);
+
+                      setForm((prev) => ({
+                        ...prev,
+                        appointmentDate: today,
+                      }));
+                    }}
+                    className="rounded-2xl bg-blue-50 px-5 py-4 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-lg font-extrabold text-white shadow-lg">
-                        {index + 1}
-                      </div>
+                    Today
+                  </button>
+                </div>
+              )}
+            </div>
 
-                      <AvatarWithInitials
-                        name={getPatientName(appointment.patientId)}
-                        size="lg"
-                      />
+            <div className="relative w-full xl:max-w-md">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
-                      <div>
-                        <p className="text-lg font-extrabold text-slate-900">
-                          {getPatientName(appointment.patientId)}
-                        </p>
-
-                        <p className="mt-1 text-sm font-semibold text-slate-500">
-                          Doctor: {getDoctorName(appointment.doctorId)}
-                        </p>
-
-                        {appointment.notes && (
-                          <p className="mt-1 line-clamp-1 text-xs font-medium text-slate-400">
-                            {appointment.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4 sm:justify-end">
-                      <div className="rounded-2xl bg-blue-50 px-5 py-3 text-right">
-                        <p className="text-xs font-bold uppercase tracking-wide text-blue-500">
-                          Time
-                        </p>
-
-                        <p className="flex items-center gap-2 text-xl font-extrabold text-blue-700">
-                          <Clock className="h-5 w-5" />
-                          {normalizeAppointmentTime(appointment.startTime)}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl bg-indigo-50 px-4 py-3 text-center">
-                        <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
-                          Slot
-                        </p>
-
-                        <p className="text-sm font-extrabold text-indigo-700">
-                          {appointment.slotDurationMinutes} min
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search patient, doctor, date, time..."
+                className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by patient, doctor, date, or notes..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-          />
-        </div>
+        <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+          <div className="border-b border-slate-100 bg-white px-6 py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900">
+                  {viewMode === "BY_DATE"
+                    ? `Appointments on ${selectedDate}`
+                    : "All Appointments"}
+                </h2>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {isError ? (
-            <div className="p-12 text-center">
-              <div className="mb-4 text-5xl">⚠️</div>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  {viewMode === "BY_DATE"
+                    ? "Showing appointments from by-date API."
+                    : "Showing paginated appointments from all appointments API."}
+                </p>
+              </div>
 
-              <p className="mb-4 text-sm font-medium text-red-600">
-                Failed to load appointments. Please try again.
+              <span className="w-fit rounded-full bg-blue-50 px-4 py-2 text-xs font-extrabold text-blue-700">
+                {filteredAppointments.length} result
+                {filteredAppointments.length === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+
+          {pageLoading ? (
+            <div className="flex items-center justify-center gap-3 px-6 py-20 text-sm font-bold text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              Loading appointments...
+            </div>
+          ) : currentError ? (
+            <div className="px-6 py-16 text-center">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">
+                !
+              </div>
+
+              <p className="text-lg font-extrabold text-slate-900">
+                Failed to load appointments
+              </p>
+
+              <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">
+                {getApiErrorMessage(
+                  currentErrorObject,
+                  "Server error. Appointments API ichida xato bor."
+                )}
               </p>
 
               <button
                 type="button"
-                onClick={() => refetch()}
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:from-blue-700 hover:to-indigo-700"
+                onClick={refreshCurrent}
+                className="mt-6 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
               >
                 Try Again
+              </button>
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="px-6 py-20 text-center">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+                <Calendar className="h-8 w-8" />
+              </div>
+
+              <p className="text-lg font-extrabold text-slate-900">
+                No appointments found
+              </p>
+
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                {viewMode === "BY_DATE"
+                  ? "No appointments for selected date."
+                  : "Create appointment for patient visit."}
+              </p>
+
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add Appointment
               </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
-                <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+                <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Patient
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Doctor
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Date
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Time
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Duration
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                      Notes
+
+                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                      Status
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+
+                    <th className="px-6 py-4 text-right text-xs font-extrabold uppercase tracking-wider text-slate-500">
                       Actions
                     </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="px-6 py-10 text-center text-sm text-slate-500"
-                      >
-                        <div className="inline-flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                          Loading appointments...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredAppointments.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="px-6 py-10 text-center text-sm text-slate-500"
-                      >
-                        No appointments found
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredAppointments.map((appointment) => (
+                  {filteredAppointments.map((appointment) => {
+                    const appointmentId = getAppointmentId(appointment);
+
+                    return (
                       <tr
-                        key={appointment.id}
-                        className="border-t border-slate-100 transition hover:bg-blue-50/50"
+                        key={appointmentId}
+                        className="border-t border-slate-100 transition hover:bg-blue-50/40"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <AvatarWithInitials
-                              name={getPatientName(appointment.patientId)}
-                            />
+                            <Avatar name={(appointment as any).patientName} />
 
                             <div>
-                              <p className="font-semibold text-slate-900">
-                                {getPatientName(appointment.patientId)}
+                              <p className="font-extrabold text-slate-900">
+                                {(appointment as any).patientName}
                               </p>
 
-                              <p className="text-xs text-slate-500">
+                              <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
+                                <UserRound className="h-3.5 w-3.5" />
                                 {appointment.patientId}
                               </p>
                             </div>
                           </div>
                         </td>
 
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <AvatarWithInitials
-                              name={getDoctorName(appointment.doctorId)}
-                            />
+                        <td className="px-6 py-5">
+                          <p className="font-extrabold text-slate-900">
+                            {(appointment as any).doctorName}
+                          </p>
 
-                            <div>
-                              <p className="font-semibold text-slate-900">
-                                {getDoctorName(appointment.doctorId)}
-                              </p>
-
-                              <p className="text-xs text-slate-500">
-                                {appointment.doctorId}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                            <Calendar className="h-4 w-4 text-slate-400" />
-                            {appointment.appointmentDate || "-"}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                            <Clock className="h-4 w-4 text-slate-400" />
-                            {normalizeAppointmentTime(appointment.startTime)}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <span className="rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                            {appointment.slotDurationMinutes} min
-                          </span>
-                        </td>
-
-                        <td className="max-w-xs px-6 py-4">
-                          <p className="line-clamp-2 text-sm text-slate-600">
-                            {appointment.notes || "-"}
+                          <p className="mt-1 text-xs font-semibold text-slate-500">
+                            {appointment.doctorId}
                           </p>
                         </td>
 
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-indigo-50 px-4 py-2 text-xs font-extrabold text-indigo-700">
+                            {normalizeDateForInput(appointment.appointmentDate)}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 text-sm font-extrabold text-slate-800">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            {formatTime(appointment.startTime)} -{" "}
+                            {formatTime((appointment as any).endTime)}
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-blue-50 px-4 py-2 text-xs font-extrabold text-blue-700">
+                            {appointment.slotDurationMinutes || "-"} min
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-extrabold text-emerald-700">
+                            {appointment.status || "SCHEDULED"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => handleOpenEditModal(appointment)}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
+                              onClick={() => openEditModal(appointment)}
+                              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
                             >
                               <Edit2 className="h-4 w-4" />
                               Edit
@@ -1460,11 +1063,9 @@ export default function AppointmentsPage() {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                handleDeleteAppointment(appointment)
-                              }
+                              onClick={() => handleDelete(appointment)}
                               disabled={deleteAppointmentMutation.isPending}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               <Trash2 className="h-4 w-4" />
                               Delete
@@ -1472,25 +1073,25 @@ export default function AppointmentsPage() {
                           </div>
                         </td>
                       </tr>
-                    ))
-                  )}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      </main>
 
       <AppointmentModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        selectedAppointment={selectedAppointment}
+        open={isModalOpen}
         form={form}
-        onFormChange={setForm}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+        selectedAppointment={selectedAppointment}
         patients={patients}
         doctors={doctors}
+        isSubmitting={isSubmitting}
+        onClose={closeModal}
+        onChange={setForm}
+        onSubmit={handleSubmit}
       />
     </div>
   );

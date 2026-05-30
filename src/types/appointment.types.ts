@@ -1,41 +1,34 @@
-// File: src/types/appointment.types.ts
+export type AppointmentStatus =
+  | "SCHEDULED"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW"
+  | string;
 
 export interface Appointment {
-  id: string;
+  id?: string;
+  _id?: string;
+
+  tenantId?: string;
 
   patientId: string;
   doctorId: string;
 
   appointmentDate: string;
   startTime: string;
-  slotDurationMinutes: number;
+  endTime?: string;
+
+  slotDurationMinutes?: number;
 
   notes?: string;
   status?: AppointmentStatus;
 
+  patient?: any;
+  doctor?: any;
+
   createdAt?: string;
   updatedAt?: string;
-
-  patient?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-  };
-
-  doctor?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  };
 }
-
-export type AppointmentStatus =
-  | "SCHEDULED"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW";
 
 export interface CreateAppointmentDto {
   patientId: string;
@@ -57,9 +50,10 @@ export interface UpdateAppointmentDto {
 
 export interface AppointmentListResponse {
   data?: Appointment[];
-  content?: Appointment[];
   appointments?: Appointment[];
+  content?: Appointment[];
+  items?: Appointment[];
+  results?: Appointment[];
   total?: number;
-  page?: number;
-  limit?: number;
+  totalElements?: number;
 }
