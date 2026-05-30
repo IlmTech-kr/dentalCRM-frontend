@@ -30,10 +30,14 @@ export const ENDPOINTS = {
     clinics: "/api/v1/super-admin/clinics",
   },
 
-  doctorSchedules: {
+
+doctorSchedules: {
   list: "/api/dental/doctor-schedules",
-  byId: (id: string) => `/api/dental/doctor-schedules/${id}`,
+  detail: (id: string) => `/api/dental/doctor-schedules/${id}`,
   create: "/api/dental/doctor-schedules",
+  createWeekly: "/api/dental/doctor-schedules/weekly",
+  update: (id: string) => `/api/dental/doctor-schedules/${id}`,
+  delete: (id: string) => `/api/dental/doctor-schedules/${id}`,
 },
 
 appointments: {
