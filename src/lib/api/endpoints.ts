@@ -43,4 +43,38 @@ appointments: {
   byDate: "/api/dental/appointments/by-date",
 },
 
+dental: {
+    charts: {
+      create: "/api/dental/charts",
+      getById: (chartId: string) => `/api/dental/charts/${chartId}`,
+      getByPatient: (patientId: string) =>
+        `/api/dental/charts/patient/${patientId}`,
+      update: (chartId: string) => `/api/dental/charts/${chartId}`,
+      delete: (chartId: string) => `/api/dental/charts/${chartId}`,
+    },
+
+    procedures: {
+      create: "/api/dental/procedures",
+      getById: (procedureId: string) =>
+        `/api/dental/procedures/${procedureId}`,
+      getAll: (search?: string) =>
+        search
+          ? `/api/dental/procedures?search=${encodeURIComponent(search)}`
+          : "/api/dental/procedures",
+      update: (procedureId: string) =>
+        `/api/dental/procedures/${procedureId}`,
+      delete: (procedureId: string) =>
+        `/api/dental/procedures/${procedureId}`,
+    },
+  },
+
+  dentalCharts: {
+    create: "/api/dental/charts",
+    getById: (chartId: string) => `/api/dental/charts/${chartId}`,
+    getByPatientId: (patientId: string) =>
+      `/api/dental/charts/patient/${patientId}`,
+    update: (chartId: string) => `/api/dental/charts/${chartId}`,
+    delete: (chartId: string) => `/api/dental/charts/${chartId}`,
+  },
+
 };
