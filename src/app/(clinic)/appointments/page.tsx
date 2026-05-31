@@ -326,7 +326,7 @@ function AppointmentModal({
                       : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
                   }`}
                 >
-                  {duration}m
+                  {duration}
                 </button>
               ))}
             </div>
@@ -346,16 +346,16 @@ function AppointmentModal({
                 })
               }
               rows={4}
-              placeholder="Birinchi ko'rik..."
-              className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              placeholder="Appointment notes..."
+              className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             />
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -708,8 +708,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  const pageLoading =
-    currentLoading || isPatientsLoading || isDoctorsLoading;
+  const pageLoading = currentLoading || isPatientsLoading || isDoctorsLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -745,9 +744,9 @@ export default function AppointmentsPage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" />
                 Add Appointment
               </button>
             </div>
@@ -755,113 +754,45 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              Current View
-            </p>
+      <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+        <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setViewMode("BY_DATE")}
+                className={`rounded-2xl px-5 py-3 text-sm font-extrabold transition ${
+                  viewMode === "BY_DATE"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                By Date
+              </button>
 
-            <p className="mt-3 text-2xl font-extrabold text-slate-900">
-              {viewMode === "BY_DATE" ? "By Date" : "All"}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              Showing Appointments
-            </p>
-
-            <p className="mt-3 text-3xl font-extrabold text-blue-600">
-              {currentAppointments.length}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              Selected Date
-            </p>
-
-            <p className="mt-3 text-2xl font-extrabold text-indigo-600">
-              {viewMode === "BY_DATE" ? selectedDate : "All dates"}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">Doctors</p>
-
-            <p className="mt-3 text-3xl font-extrabold text-emerald-600">
-              {doctors.length}
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <div className="flex w-fit rounded-2xl bg-slate-100 p-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("BY_DATE")}
-                  className={`rounded-xl px-5 py-3 text-sm font-extrabold transition ${
-                    viewMode === "BY_DATE"
-                      ? "bg-white text-blue-700 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  By Date
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode("ALL")}
-                  className={`rounded-xl px-5 py-3 text-sm font-extrabold transition ${
-                    viewMode === "ALL"
-                      ? "bg-white text-blue-700 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  All Appointments
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setViewMode("ALL")}
+                className={`rounded-2xl px-5 py-3 text-sm font-extrabold transition ${
+                  viewMode === "ALL"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                All Appointments
+              </button>
 
               {viewMode === "BY_DATE" && (
-                <div className="flex items-center gap-3">
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value);
-
-                      setForm((prev) => ({
-                        ...prev,
-                        appointmentDate: e.target.value,
-                      }));
-                    }}
-                    className="rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const today = getTodayDate();
-
-                      setSelectedDate(today);
-
-                      setForm((prev) => ({
-                        ...prev,
-                        appointmentDate: today,
-                      }));
-                    }}
-                    className="rounded-2xl bg-blue-50 px-5 py-4 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100"
-                  >
-                    Today
-                  </button>
-                </div>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
               )}
             </div>
 
-            <div className="relative w-full xl:max-w-md">
+            <div className="relative w-full lg:max-w-md">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
               <input
@@ -872,7 +803,7 @@ export default function AppointmentsPage() {
               />
             </div>
           </div>
-        </div>
+        </section>
 
         <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
           <div className="border-b border-slate-100 bg-white px-6 py-5">

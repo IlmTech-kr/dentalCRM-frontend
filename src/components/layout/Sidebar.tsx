@@ -16,6 +16,7 @@ import {
   ChevronRight,
   List,
   Clock,
+  BadgeDollarSign,
 } from "lucide-react";
 
 const links = [
@@ -25,6 +26,10 @@ const links = [
   { href: "/assistants", label: "Assistants", icon: UserRound },
   { href: "/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/treatments", label: "Treatments", icon: Activity },
+
+  // ✅ Procedure alohida chiqdi
+  { href: "/procedures", label: "Procedures", icon: BadgeDollarSign },
+
   { href: "/reports", label: "Reports", icon: FileBarChart },
   { href: "/settings", label: "Settings", icon: Settings, hasChildren: true },
 ];
