@@ -32,8 +32,6 @@ export const appointmentKeys = {
 };
 
 /**
- * Hook: Get appointments
- *
  * GET /api/dental/appointments?page=0&limit=10
  */
 export function useGetAppointments(page = 0, limit = 10) {
@@ -46,8 +44,6 @@ export function useGetAppointments(page = 0, limit = 10) {
 }
 
 /**
- * Hook: Get appointment by ID
- *
  * GET /api/dental/appointments/:id
  */
 export function useGetAppointment(appointmentId: string | null) {
@@ -74,13 +70,13 @@ export function useGetAppointment(appointmentId: string | null) {
 }
 
 /**
- * Hook: Get appointments by date
- *
  * GET /api/dental/appointments/by-date?date=2026-06-06
  */
 export function useGetAppointmentsByDate(date: string | null) {
   return useQuery<Appointment[]>({
-    queryKey: date ? appointmentKeys.byDate(date) : ["appointments-by-date-disabled"],
+    queryKey: date
+      ? appointmentKeys.byDate(date)
+      : ["appointments-by-date-disabled"],
 
     queryFn: () => {
       if (!date) {
@@ -100,8 +96,6 @@ export function useGetAppointmentsByDate(date: string | null) {
 }
 
 /**
- * Hook: Create appointment
- *
  * POST /api/dental/appointments
  */
 export function useCreateAppointment() {
@@ -115,6 +109,10 @@ export function useCreateAppointment() {
         queryKey: appointmentKeys.lists(),
       });
 
+      queryClient.invalidateQueries({
+        queryKey: appointmentKeys.all,
+      });
+
       if (createdAppointment.appointmentDate) {
         queryClient.invalidateQueries({
           queryKey: appointmentKeys.byDate(createdAppointment.appointmentDate),
@@ -125,9 +123,10 @@ export function useCreateAppointment() {
 }
 
 /**
- * Hook: Update appointment
- *
  * PUT /api/dental/appointments/:id
+ *
+ * This hook is also used for status update:
+ * status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED"
  */
 export function useUpdateAppointment() {
   const queryClient = useQueryClient();
@@ -153,6 +152,10 @@ export function useUpdateAppointment() {
         queryKey: appointmentKeys.lists(),
       });
 
+      queryClient.invalidateQueries({
+        queryKey: appointmentKeys.all,
+      });
+
       if (updatedAppointment.appointmentDate) {
         queryClient.invalidateQueries({
           queryKey: appointmentKeys.byDate(updatedAppointment.appointmentDate),
@@ -163,8 +166,6 @@ export function useUpdateAppointment() {
 }
 
 /**
- * Hook: Delete appointment
- *
  * DELETE /api/dental/appointments/:id
  */
 export function useDeleteAppointment() {
@@ -191,7 +192,6 @@ export function useDeleteAppointment() {
 
 /**
  * Optional aliases
- * Agar eski page'da shu nomlar ishlatilgan bo'lsa.
  */
 export const useAppointments = useGetAppointments;
 export const useAppointment = useGetAppointment;

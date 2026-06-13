@@ -1,9 +1,4 @@
-export type AppointmentStatus =
-  | "SCHEDULED"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW"
-  | string;
+export type AppointmentStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
 
 export interface Appointment {
   id?: string;
@@ -40,12 +35,13 @@ export interface CreateAppointmentDto {
 }
 
 export interface UpdateAppointmentDto {
-  patientId: string;
-  doctorId: string;
-  appointmentDate: string;
-  startTime: string;
-  slotDurationMinutes: number;
+  patientId?: string;
+  doctorId?: string;
+  appointmentDate?: string;
+  startTime?: string;
+  slotDurationMinutes?: number;
   notes?: string;
+  status?: AppointmentStatus;
 }
 
 export interface AppointmentListResponse {

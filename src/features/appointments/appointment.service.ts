@@ -262,6 +262,7 @@ export async function updateAppointment(
       startTime: normalizeTimeForApi(payload.startTime),
       slotDurationMinutes: Number(payload.slotDurationMinutes),
       notes: payload.notes || "",
+      status: payload.status || "SCHEDULED",
     }
   );
 

@@ -33,11 +33,18 @@ import type {
   Appointment,
   CreateAppointmentDto,
   UpdateAppointmentDto,
+  AppointmentStatus,
 } from "@/src/types/appointment.types";
 
 type ViewMode = "BY_DATE" | "ALL";
 
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
+
+const STATUS_OPTIONS: AppointmentStatus[] = [
+  "SCHEDULED",
+  "IN_PROGRESS",
+  "COMPLETED",
+];
 
 const initialForm: CreateAppointmentDto = {
   patientId: "",
@@ -64,8 +71,25 @@ function getItemId(item: any): string {
 
 function getAppointmentId(appointment: Appointment | null): string {
   if (!appointment) return "";
-
   return appointment.id || appointment._id || "";
+}
+
+function getPatientId(appointment: Appointment): string {
+  return (
+    appointment.patientId ||
+    (appointment as any).patient?.id ||
+    (appointment as any).patient?._id ||
+    ""
+  );
+}
+
+function getDoctorId(appointment: Appointment): string {
+  return (
+    appointment.doctorId ||
+    (appointment as any).doctor?.id ||
+    (appointment as any).doctor?._id ||
+    ""
+  );
 }
 
 function normalizeDateForInput(date?: string | Date | null): string {
@@ -114,6 +138,16 @@ function formatTime(time?: string | null): string {
   return normalizeTimeForInput(time) || "-";
 }
 
+function timeToMinutes(time?: string | null): number {
+  const normalized = normalizeTimeForInput(time);
+
+  if (!normalized) return 99999;
+
+  const [hours, minutes] = normalized.split(":").map(Number);
+
+  return hours * 60 + minutes;
+}
+
 function getPersonName(person: any): string {
   if (!person) return "";
 
@@ -138,9 +172,42 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
+function getStatusClass(status?: string) {
+  switch (status) {
+    case "COMPLETED":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 focus:border-emerald-400 focus:ring-emerald-100";
+    case "IN_PROGRESS":
+      return "border-amber-200 bg-amber-50 text-amber-700 focus:border-amber-400 focus:ring-amber-100";
+    default:
+      return "border-sky-200 bg-sky-50 text-sky-700 focus:border-sky-400 focus:ring-sky-100";
+  }
+}
+
+function getStatusDotClass(status?: string) {
+  switch (status) {
+    case "COMPLETED":
+      return "bg-emerald-500";
+    case "IN_PROGRESS":
+      return "bg-amber-500";
+    default:
+      return "bg-sky-500";
+  }
+}
+
+function getStatusLabel(status?: string) {
+  switch (status) {
+    case "COMPLETED":
+      return "Completed";
+    case "IN_PROGRESS":
+      return "In progress";
+    default:
+      return "Scheduled";
+  }
+}
+
 function Avatar({ name }: { name: string }) {
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-extrabold text-white shadow-md">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-sm font-extrabold text-white shadow-lg shadow-blue-200">
       {getInitials(name)}
     </div>
   );
@@ -175,38 +242,48 @@ function AppointmentModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-md"
       />
 
-      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
-          <div className="flex items-start justify-between gap-4">
+      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
+        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-7 text-white">
+          <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/10" />
+          <div className="absolute -bottom-20 left-12 h-44 w-44 rounded-full bg-white/10" />
+
+          <div className="relative flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                <Calendar className="h-6 w-6" />
+              </div>
+
+              <h2 className="text-2xl font-black">
                 {selectedAppointment
                   ? "Edit Appointment"
                   : "Create Appointment"}
               </h2>
 
-              <p className="mt-2 text-sm font-medium text-slate-600">
-                Select patient, doctor, date and appointment time.
+              <p className="mt-2 text-sm font-medium text-blue-50">
+                Patient, doctor, date and time information.
               </p>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+              className="rounded-2xl bg-white/10 p-2 text-white transition hover:bg-white/20"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
+        <form
+          onSubmit={onSubmit}
+          className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-6 py-7"
+        >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-3 block text-sm font-bold text-slate-900">
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Patient <span className="text-red-500">*</span>
               </label>
 
@@ -218,7 +295,7 @@ function AppointmentModal({
                     patientId: e.target.value,
                   })
                 }
-                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               >
                 <option value="">Select patient</option>
 
@@ -236,7 +313,7 @@ function AppointmentModal({
             </div>
 
             <div>
-              <label className="mb-3 block text-sm font-bold text-slate-900">
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Doctor <span className="text-red-500">*</span>
               </label>
 
@@ -248,13 +325,13 @@ function AppointmentModal({
                     doctorId: e.target.value,
                   })
                 }
-                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               >
                 <option value="">Select doctor</option>
 
                 {doctors.map((doctor) => {
                   const id = getItemId(doctor);
-                  const name = getPersonName(doctor) || id;
+                  const name = getPersonName(doctor) || "Unnamed doctor";
 
                   return (
                     <option key={id} value={id}>
@@ -268,7 +345,7 @@ function AppointmentModal({
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-3 block text-sm font-bold text-slate-900">
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Date <span className="text-red-500">*</span>
               </label>
 
@@ -281,12 +358,12 @@ function AppointmentModal({
                     appointmentDate: e.target.value,
                   })
                 }
-                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-3 block text-sm font-bold text-slate-900">
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Start Time <span className="text-red-500">*</span>
               </label>
 
@@ -299,13 +376,13 @@ function AppointmentModal({
                     startTime: e.target.value,
                   })
                 }
-                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-bold text-slate-900">
+            <label className="mb-3 block text-sm font-extrabold text-slate-900">
               Slot Duration <span className="text-red-500">*</span>
             </label>
 
@@ -320,10 +397,10 @@ function AppointmentModal({
                       slotDurationMinutes: duration,
                     })
                   }
-                  className={`rounded-2xl border-2 px-3 py-3 text-sm font-extrabold transition ${
+                  className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${
                     form.slotDurationMinutes === duration
                       ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                      : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50"
                   }`}
                 >
                   {duration}
@@ -333,7 +410,7 @@ function AppointmentModal({
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-bold text-slate-900">
+            <label className="mb-2 block text-sm font-extrabold text-slate-900">
               Notes
             </label>
 
@@ -347,7 +424,7 @@ function AppointmentModal({
               }
               rows={4}
               placeholder="Appointment notes..."
-              className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
             />
           </div>
 
@@ -355,7 +432,7 @@ function AppointmentModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -363,7 +440,7 @@ function AppointmentModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {selectedAppointment ? "Save Changes" : "Create Appointment"}
@@ -392,6 +469,8 @@ export default function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+
+  const [changingStatusId, setChangingStatusId] = useState<string | null>(null);
 
   const [form, setForm] = useState<CreateAppointmentDto>({
     ...initialForm,
@@ -472,26 +551,40 @@ export default function AppointmentsPage() {
   }, [patientIdFromUrl, selectedDate]);
 
   const enrichedAppointments = useMemo(() => {
-    return appointments.map((appointment) => {
-      const patientFromAppointment = (appointment as any).patient;
-      const doctorFromAppointment = (appointment as any).doctor;
+    return appointments
+      .map((appointment) => {
+        const patientFromAppointment = (appointment as any).patient;
+        const doctorFromAppointment = (appointment as any).doctor;
 
-      const patient =
-        patientFromAppointment || patientsMap.get(appointment.patientId);
+        const patientId =
+          appointment.patientId ||
+          patientFromAppointment?.id ||
+          patientFromAppointment?._id ||
+          "";
 
-      const doctor =
-        doctorFromAppointment || doctorsMap.get(appointment.doctorId);
+        const doctorId =
+          appointment.doctorId ||
+          doctorFromAppointment?.id ||
+          doctorFromAppointment?._id ||
+          "";
 
-      return {
-        ...appointment,
-        id: getAppointmentId(appointment),
-        appointmentDate: normalizeDateForInput(appointment.appointmentDate),
-        patientName: getPersonName(patient) || appointment.patientId || "-",
-        doctorName: getPersonName(doctor) || appointment.doctorId || "-",
-        startTime: normalizeTimeForInput(appointment.startTime),
-        endTime: normalizeTimeForInput((appointment as any).endTime),
-      };
-    });
+        const patient = patientFromAppointment || patientsMap.get(patientId);
+        const doctor = doctorFromAppointment || doctorsMap.get(doctorId);
+
+        return {
+          ...appointment,
+          id: getAppointmentId(appointment),
+          patientId,
+          doctorId,
+          appointmentDate: normalizeDateForInput(appointment.appointmentDate),
+          patientName: getPersonName(patient) || "-",
+          doctorName: getPersonName(doctor) || "Doctor not assigned",
+          startTime: normalizeTimeForInput(appointment.startTime),
+          endTime: normalizeTimeForInput((appointment as any).endTime),
+          status: (appointment as any).status || "SCHEDULED",
+        };
+      })
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }, [appointments, patientsMap, doctorsMap]);
 
   const enrichedAppointmentsByDate = useMemo(() => {
@@ -500,25 +593,35 @@ export default function AppointmentsPage() {
         const patientFromAppointment = (appointment as any).patient;
         const doctorFromAppointment = (appointment as any).doctor;
 
-        const patient =
-          patientFromAppointment || patientsMap.get(appointment.patientId);
+        const patientId =
+          appointment.patientId ||
+          patientFromAppointment?.id ||
+          patientFromAppointment?._id ||
+          "";
 
-        const doctor =
-          doctorFromAppointment || doctorsMap.get(appointment.doctorId);
+        const doctorId =
+          appointment.doctorId ||
+          doctorFromAppointment?.id ||
+          doctorFromAppointment?._id ||
+          "";
+
+        const patient = patientFromAppointment || patientsMap.get(patientId);
+        const doctor = doctorFromAppointment || doctorsMap.get(doctorId);
 
         return {
           ...appointment,
           id: getAppointmentId(appointment),
+          patientId,
+          doctorId,
           appointmentDate: normalizeDateForInput(appointment.appointmentDate),
-          patientName: getPersonName(patient) || appointment.patientId || "-",
-          doctorName: getPersonName(doctor) || appointment.doctorId || "-",
+          patientName: getPersonName(patient) || "-",
+          doctorName: getPersonName(doctor) || "Doctor not assigned",
           startTime: normalizeTimeForInput(appointment.startTime),
           endTime: normalizeTimeForInput((appointment as any).endTime),
+          status: (appointment as any).status || "SCHEDULED",
         };
       })
-      .sort((a, b) =>
-        String(a.startTime || "").localeCompare(String(b.startTime || ""))
-      );
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }, [appointmentsByDate, patientsMap, doctorsMap]);
 
   const currentAppointments =
@@ -531,28 +634,57 @@ export default function AppointmentsPage() {
   const filteredAppointments = useMemo(() => {
     const value = search.trim().toLowerCase();
 
-    if (!value) return currentAppointments;
+    const filtered = !value
+      ? currentAppointments
+      : currentAppointments.filter((appointment) => {
+          return (
+            String((appointment as any).patientName || "")
+              .toLowerCase()
+              .includes(value) ||
+            String((appointment as any).doctorName || "")
+              .toLowerCase()
+              .includes(value) ||
+            String(appointment.appointmentDate || "")
+              .toLowerCase()
+              .includes(value) ||
+            String(appointment.startTime || "").toLowerCase().includes(value) ||
+            String((appointment as any).endTime || "")
+              .toLowerCase()
+              .includes(value) ||
+            String(appointment.notes || "").toLowerCase().includes(value) ||
+            String((appointment as any).status || "")
+              .toLowerCase()
+              .includes(value)
+          );
+        });
 
-    return currentAppointments.filter((appointment) => {
-      return (
-        String((appointment as any).patientName || "")
-          .toLowerCase()
-          .includes(value) ||
-        String((appointment as any).doctorName || "")
-          .toLowerCase()
-          .includes(value) ||
-        String(appointment.appointmentDate || "")
-          .toLowerCase()
-          .includes(value) ||
-        String(appointment.startTime || "").toLowerCase().includes(value) ||
-        String((appointment as any).endTime || "")
-          .toLowerCase()
-          .includes(value) ||
-        String(appointment.notes || "").toLowerCase().includes(value) ||
-        String(appointment.status || "").toLowerCase().includes(value)
-      );
+    return [...filtered].sort((a, b) => {
+      return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
     });
   }, [currentAppointments, search]);
+
+  const stats = useMemo(() => {
+    const total = currentAppointments.length;
+
+    const scheduled = currentAppointments.filter(
+      (item) => ((item as any).status || "SCHEDULED") === "SCHEDULED"
+    ).length;
+
+    const inProgress = currentAppointments.filter(
+      (item) => (item as any).status === "IN_PROGRESS"
+    ).length;
+
+    const completed = currentAppointments.filter(
+      (item) => (item as any).status === "COMPLETED"
+    ).length;
+
+    return {
+      total,
+      scheduled,
+      inProgress,
+      completed,
+    };
+  }, [currentAppointments]);
 
   function openCreateModal() {
     setSelectedAppointment(null);
@@ -566,11 +698,14 @@ export default function AppointmentsPage() {
   }
 
   function openEditModal(appointment: Appointment) {
+    const patientId = getPatientId(appointment);
+    const doctorId = getDoctorId(appointment);
+
     setSelectedAppointment(appointment);
 
     setForm({
-      patientId: appointment.patientId || "",
-      doctorId: appointment.doctorId || "",
+      patientId,
+      doctorId,
       appointmentDate:
         normalizeDateForInput(appointment.appointmentDate) || selectedDate,
       startTime: normalizeTimeForInput(appointment.startTime),
@@ -652,6 +787,7 @@ export default function AppointmentsPage() {
           startTime,
           slotDurationMinutes: Number(form.slotDurationMinutes),
           notes: form.notes || "",
+          status: selectedAppointment.status || "SCHEDULED",
         };
 
         await updateAppointmentMutation.mutateAsync({
@@ -684,6 +820,65 @@ export default function AppointmentsPage() {
     }
   }
 
+  async function handleStatusChange(
+    appointment: Appointment,
+    status: AppointmentStatus
+  ) {
+    const appointmentId = getAppointmentId(appointment);
+
+    if (!appointmentId) {
+      toast.error("Appointment ID topilmadi");
+      return;
+    }
+
+    const patientId = getPatientId(appointment);
+    const doctorId = getDoctorId(appointment);
+
+    const appointmentDate = normalizeDateForInput(appointment.appointmentDate);
+    const startTime = normalizeTimeForInput(appointment.startTime);
+
+    if (!patientId) {
+      toast.error("Patient topilmadi");
+      return;
+    }
+
+    if (!doctorId) {
+      toast.error("Doctor topilmadi");
+      return;
+    }
+
+    if (!appointmentDate || !startTime) {
+      toast.error("Appointment date yoki start time topilmadi");
+      return;
+    }
+
+    try {
+      setChangingStatusId(appointmentId);
+
+      const payload: UpdateAppointmentDto = {
+        patientId,
+        doctorId,
+        appointmentDate,
+        startTime,
+        slotDurationMinutes: Number(appointment.slotDurationMinutes || 30),
+        notes: appointment.notes || "",
+        status,
+      };
+
+      await updateAppointmentMutation.mutateAsync({
+        appointmentId,
+        payload,
+      });
+
+      toast.success(`Status changed to ${status}`);
+      await refreshAll();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Status update qilishda xatolik"));
+    } finally {
+      setChangingStatusId(null);
+    }
+  }
+
   async function handleDelete(appointment: Appointment) {
     const appointmentId = getAppointmentId(appointment);
 
@@ -711,31 +906,34 @@ export default function AppointmentsPage() {
   const pageLoading = currentLoading || isPatientsLoading || isDoctorsLoading;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
-                <Calendar className="h-6 w-6" />
+    <div className="min-h-screen bg-[#F6F8FC]">
+      <div className="relative overflow-hidden border-b border-white/40 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950">
+        <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-6 py-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-extrabold text-blue-50 backdrop-blur">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                Dental CRM Appointments
               </div>
 
-              <div>
-                <h1 className="text-3xl font-extrabold text-slate-900">
-                  Appointments
-                </h1>
+              <h1 className="text-4xl font-black tracking-tight text-white">
+                Appointments
+              </h1>
 
-                <p className="mt-1 text-sm font-medium text-slate-600">
-                  Manage patient appointments, doctors, dates and visit times.
-                </p>
-              </div>
+              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-blue-100">
+                Manage patient appointments, visit time, doctor assignment and
+                appointment status in one clean workspace.
+              </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={refreshCurrent}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20"
               >
                 <RefreshCcw className="h-4 w-4" />
                 Refresh
@@ -744,26 +942,56 @@ export default function AppointmentsPage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-blue-950 shadow-xl shadow-blue-950/20 transition hover:bg-blue-50"
               >
                 <Plus className="h-4 w-4" />
                 Add Appointment
               </button>
             </div>
           </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
+                Total
+              </p>
+              <p className="mt-2 text-3xl font-black">{stats.total}</p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
+                Scheduled
+              </p>
+              <p className="mt-2 text-3xl font-black">{stats.scheduled}</p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
+                In Progress
+              </p>
+              <p className="mt-2 text-3xl font-black">{stats.inProgress}</p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
+                Completed
+              </p>
+              <p className="mt-2 text-3xl font-black">{stats.completed}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+        <section className="-mt-14 rounded-[2rem] border border-white bg-white/95 p-5 shadow-xl shadow-slate-200/70 backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => setViewMode("BY_DATE")}
-                className={`rounded-2xl px-5 py-3 text-sm font-extrabold transition ${
+                className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
                   viewMode === "BY_DATE"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                    ? "bg-slate-950 text-white shadow-lg shadow-slate-300"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
@@ -773,9 +1001,9 @@ export default function AppointmentsPage() {
               <button
                 type="button"
                 onClick={() => setViewMode("ALL")}
-                className={`rounded-2xl px-5 py-3 text-sm font-extrabold transition ${
+                className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
                   viewMode === "ALL"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                    ? "bg-slate-950 text-white shadow-lg shadow-slate-300"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
@@ -787,7 +1015,7 @@ export default function AppointmentsPage() {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               )}
             </div>
@@ -799,48 +1027,44 @@ export default function AppointmentsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search patient, doctor, date, time..."
-                className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
             </div>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-slate-100 bg-white px-6 py-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900">
-                  {viewMode === "BY_DATE"
-                    ? `Appointments on ${selectedDate}`
-                    : "All Appointments"}
-                </h2>
+        <section>
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-slate-950">
+                {viewMode === "BY_DATE"
+                  ? `Appointments on ${selectedDate}`
+                  : "All Appointments"}
+              </h2>
 
-                <p className="mt-1 text-sm font-medium text-slate-500">
-                  {viewMode === "BY_DATE"
-                    ? "Showing appointments from by-date API."
-                    : "Showing paginated appointments from all appointments API."}
-                </p>
-              </div>
-
-              <span className="w-fit rounded-full bg-blue-50 px-4 py-2 text-xs font-extrabold text-blue-700">
-                {filteredAppointments.length} result
-                {filteredAppointments.length === 1 ? "" : "s"}
-              </span>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                Sorted by time: 09:00, 09:30, 10:00...
+              </p>
             </div>
+
+            <span className="w-fit rounded-full bg-white px-4 py-2 text-xs font-black text-slate-600 shadow-sm">
+              {filteredAppointments.length} result
+              {filteredAppointments.length === 1 ? "" : "s"}
+            </span>
           </div>
 
           {pageLoading ? (
-            <div className="flex items-center justify-center gap-3 px-6 py-20 text-sm font-bold text-slate-500">
+            <div className="flex items-center justify-center gap-3 rounded-[2rem] border border-white bg-white px-6 py-24 text-sm font-bold text-slate-500 shadow-sm">
               <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
               Loading appointments...
             </div>
           ) : currentError ? (
-            <div className="px-6 py-16 text-center">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">
+            <div className="rounded-[2rem] border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-black text-red-600">
                 !
               </div>
 
-              <p className="text-lg font-extrabold text-slate-900">
+              <p className="text-lg font-black text-slate-900">
                 Failed to load appointments
               </p>
 
@@ -854,18 +1078,18 @@ export default function AppointmentsPage() {
               <button
                 type="button"
                 onClick={refreshCurrent}
-                className="mt-6 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+                className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700"
               >
                 Try Again
               </button>
             </div>
           ) : filteredAppointments.length === 0 ? (
-            <div className="px-6 py-20 text-center">
+            <div className="rounded-[2rem] border border-white bg-white px-6 py-20 text-center shadow-sm">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                 <Calendar className="h-8 w-8" />
               </div>
 
-              <p className="text-lg font-extrabold text-slate-900">
+              <p className="text-lg font-black text-slate-900">
                 No appointments found
               </p>
 
@@ -878,136 +1102,160 @@ export default function AppointmentsPage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+                className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700"
               >
                 <Plus className="h-4 w-4" />
                 Add Appointment
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Patient
-                    </th>
+            <div className="grid gap-5">
+              {filteredAppointments.map((appointment, index) => {
+                const appointmentId = getAppointmentId(appointment);
 
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Doctor
-                    </th>
+                const currentStatus =
+                  ((appointment as any).status as AppointmentStatus) ||
+                  "SCHEDULED";
 
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Date
-                    </th>
+                return (
+                  <article
+                    key={appointmentId || index}
+                    className="group overflow-hidden rounded-[2rem] border border-white bg-white shadow-sm shadow-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/80"
+                  >
+                    <div className="grid gap-0 lg:grid-cols-[1.4fr_1fr_auto]">
+                      <div className="flex gap-4 p-5 sm:p-6">
+                        <div className="flex flex-col items-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-base font-black text-white shadow-lg shadow-slate-300">
+                            {index + 1}
+                          </div>
 
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Time
-                    </th>
+                          <div className="mt-3 h-full w-px bg-slate-100" />
+                        </div>
 
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Duration
-                    </th>
-
-                    <th className="px-6 py-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Status
-                    </th>
-
-                    <th className="px-6 py-4 text-right text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredAppointments.map((appointment) => {
-                    const appointmentId = getAppointmentId(appointment);
-
-                    return (
-                      <tr
-                        key={appointmentId}
-                        className="border-t border-slate-100 transition hover:bg-blue-50/40"
-                      >
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Avatar name={(appointment as any).patientName} />
 
-                            <div>
-                              <p className="font-extrabold text-slate-900">
-                                {(appointment as any).patientName}
-                              </p>
-
-                              <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
-                                <UserRound className="h-3.5 w-3.5" />
-                                {appointment.patientId}
-                              </p>
-                            </div>
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${getStatusClass(
+                                currentStatus
+                              )}`}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${getStatusDotClass(
+                                  currentStatus
+                                )}`}
+                              />
+                              {getStatusLabel(currentStatus)}
+                            </span>
                           </div>
-                        </td>
 
-                        <td className="px-6 py-5">
-                          <p className="font-extrabold text-slate-900">
+                          <h3 className="mt-3 truncate text-xl font-black text-slate-950">
+                            {(appointment as any).patientName}
+                          </h3>
+
+                          <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-500">
+                            <UserRound className="h-4 w-4 text-slate-400" />
+                            Patient appointment
+                          </p>
+
+                          {appointment.notes && (
+                            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium leading-6 text-slate-600">
+                              {appointment.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 border-y border-slate-100 bg-slate-50/60 p-5 sm:grid-cols-3 lg:grid-cols-1 lg:border-x lg:border-y-0 lg:p-6">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                            Doctor
+                          </p>
+                          <p className="mt-1 truncate text-sm font-black text-slate-900">
                             {(appointment as any).doctorName}
                           </p>
+                        </div>
 
-                          <p className="mt-1 text-xs font-semibold text-slate-500">
-                            {appointment.doctorId}
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                            Date
                           </p>
-                        </td>
-
-                        <td className="px-6 py-5">
-                          <span className="rounded-full bg-indigo-50 px-4 py-2 text-xs font-extrabold text-indigo-700">
+                          <p className="mt-1 text-sm font-black text-slate-900">
                             {normalizeDateForInput(appointment.appointmentDate)}
-                          </span>
-                        </td>
+                          </p>
+                        </div>
 
-                        <td className="px-6 py-5">
-                          <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 text-sm font-extrabold text-slate-800">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                            Time
+                          </p>
+                          <p className="mt-1 inline-flex items-center gap-2 text-sm font-black text-slate-900">
                             <Clock className="h-4 w-4 text-blue-600" />
                             {formatTime(appointment.startTime)} -{" "}
                             {formatTime((appointment as any).endTime)}
-                          </div>
-                        </td>
+                          </p>
+                        </div>
+                      </div>
 
-                        <td className="px-6 py-5">
-                          <span className="rounded-full bg-blue-50 px-4 py-2 text-xs font-extrabold text-blue-700">
+                      <div className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center lg:w-72 lg:flex-col lg:items-stretch lg:p-6">
+                        <div>
+                          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">
+                            Change Status
+                          </p>
+
+                          <select
+                            value={currentStatus}
+                            disabled={changingStatusId === appointmentId}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                appointment,
+                                e.target.value as AppointmentStatus
+                              )
+                            }
+                            className={`w-full rounded-2xl border px-4 py-3 text-xs font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(
+                              currentStatus
+                            )}`}
+                          >
+                            {STATUS_OPTIONS.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="mr-auto rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 lg:mr-0">
                             {appointment.slotDurationMinutes || "-"} min
                           </span>
-                        </td>
 
-                        <td className="px-6 py-5">
-                          <span className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-extrabold text-emerald-700">
-                            {appointment.status || "SCHEDULED"}
-                          </span>
-                        </td>
+                          <button
+                            type="button"
+                            aria-label="Edit appointment"
+                            title="Edit"
+                            onClick={() => openEditModal(appointment)}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
 
-                        <td className="px-6 py-5">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(appointment)}
-                              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(appointment)}
-                              disabled={deleteAppointmentMutation.isPending}
-                              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          <button
+                            type="button"
+                            aria-label="Delete appointment"
+                            title="Delete"
+                            onClick={() => handleDelete(appointment)}
+                            disabled={deleteAppointmentMutation.isPending}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
