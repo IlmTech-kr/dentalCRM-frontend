@@ -20,31 +20,25 @@ import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalPr
 import type {
   CreateDentalProcedureDto,
   DentalProcedure,
+  ResultingCondition,
   UpdateDentalProcedureDto,
 } from "@/src/types/dental-procedure.types";
-
-type ResultingCondition =
-  | "FILLING"
-  | "CROWN"
-  | "IMPLANT"
-  | "ROOT_CANAL"
-  | "EXTRACTION"
-  | "EXAMINATION";
+import { ToothCondition } from "@/src/lib/enums/enums.types";
 
 const RESULTING_CONDITIONS: ResultingCondition[] = [
-  "FILLING",
-  "CROWN",
-  "IMPLANT",
-  "ROOT_CANAL",
-  "EXTRACTION",
-  "EXAMINATION",
+  ToothCondition.FILLING,
+  ToothCondition.CROWN,
+  ToothCondition.IMPLANT,
+  ToothCondition.ROOT_CANAL,
+  ToothCondition.EXTRACTED,
+  ToothCondition.MISSING,
 ];
 
 const emptyForm: CreateDentalProcedureDto = {
   code: "",
   name: "",
   defaultPrice: 0,
-  resultingCondition: "FILLING",
+  resultingCondition: ToothCondition.FILLING,
 };
 
 function getId(item?: { id?: string; _id?: string } | null) {
@@ -55,22 +49,41 @@ function formatMoney(value?: number) {
   return new Intl.NumberFormat("uz-UZ").format(Number(value || 0)) + " so'm";
 }
 
-function getConditionStyle(condition?: string) {
+function getConditionStyle(condition?: ResultingCondition | string) {
   switch (condition) {
-    case "FILLING":
+    case ToothCondition.FILLING:
       return "bg-blue-50 text-blue-700 ring-blue-100";
-    case "CROWN":
+    case ToothCondition.CROWN:
       return "bg-purple-50 text-purple-700 ring-purple-100";
-    case "IMPLANT":
+    case ToothCondition.IMPLANT:
       return "bg-emerald-50 text-emerald-700 ring-emerald-100";
-    case "ROOT_CANAL":
+    case ToothCondition.ROOT_CANAL:
       return "bg-orange-50 text-orange-700 ring-orange-100";
-    case "EXTRACTION":
+    case ToothCondition.EXTRACTED:
       return "bg-red-50 text-red-700 ring-red-100";
-    case "EXAMINATION":
+    case ToothCondition.MISSING:
       return "bg-slate-100 text-slate-700 ring-slate-200";
     default:
       return "bg-slate-100 text-slate-700 ring-slate-200";
+  }
+}
+
+function getConditionLabel(condition?: ResultingCondition | string) {
+  switch (condition) {
+    case ToothCondition.FILLING:
+      return "Plomba";
+    case ToothCondition.CROWN:
+      return "Koronka";
+    case ToothCondition.IMPLANT:
+      return "Implant";
+    case ToothCondition.ROOT_CANAL:
+      return "Kanal davolash";
+    case ToothCondition.EXTRACTED:
+      return "Sug‘urilgan";
+    case ToothCondition.MISSING:
+      return "Yo‘q";
+    default:
+      return condition || "-";
   }
 }
 
@@ -117,7 +130,8 @@ export default function ProceduresPage() {
       code: procedure.code || "",
       name: procedure.name || "",
       defaultPrice: Number(procedure.defaultPrice || 0),
-      resultingCondition: procedure.resultingCondition || "FILLING",
+      resultingCondition:
+        procedure.resultingCondition || ToothCondition.FILLING,
     });
 
     setIsModalOpen(true);
@@ -377,7 +391,7 @@ export default function ProceduresPage() {
                             procedure.resultingCondition
                           )}`}
                         >
-                          {procedure.resultingCondition}
+                          {getConditionLabel(procedure.resultingCondition)}
                         </span>
                       </td>
 
@@ -536,7 +550,7 @@ export default function ProceduresPage() {
                             : "border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                         }`}
                       >
-                        {condition}
+                        {getConditionLabel(condition)}
                       </button>
                     );
                   })}
@@ -564,7 +578,7 @@ export default function ProceduresPage() {
                         form.resultingCondition
                       )}`}
                     >
-                      {form.resultingCondition}
+                      {getConditionLabel(form.resultingCondition)}
                     </span>
 
                     <span className="text-sm font-black text-blue-700">

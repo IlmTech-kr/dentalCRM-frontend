@@ -33,17 +33,19 @@ import type {
   Appointment,
   CreateAppointmentDto,
   UpdateAppointmentDto,
-  AppointmentStatus,
 } from "@/src/types/appointment.types";
+
+import { AppointmentStatus } from "@/src/lib/enums/enums.types";
 
 type ViewMode = "BY_DATE" | "ALL";
 
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
 
 const STATUS_OPTIONS: AppointmentStatus[] = [
-  "SCHEDULED",
-  "IN_PROGRESS",
-  "COMPLETED",
+  AppointmentStatus.SCHEDULED,
+  AppointmentStatus.IN_PROGRESS,
+  AppointmentStatus.COMPLETED,
+  AppointmentStatus.CANCELLED,
 ];
 
 const initialForm: CreateAppointmentDto = {
@@ -172,34 +174,43 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-function getStatusClass(status?: string) {
+function getStatusClass(status?: AppointmentStatus | string) {
   switch (status) {
-    case "COMPLETED":
+    case AppointmentStatus.COMPLETED:
       return "border-emerald-200 bg-emerald-50 text-emerald-700 focus:border-emerald-400 focus:ring-emerald-100";
-    case "IN_PROGRESS":
+    case AppointmentStatus.IN_PROGRESS:
       return "border-amber-200 bg-amber-50 text-amber-700 focus:border-amber-400 focus:ring-amber-100";
+    case AppointmentStatus.CANCELLED:
+      return "border-red-200 bg-red-50 text-red-700 focus:border-red-400 focus:ring-red-100";
+    case AppointmentStatus.SCHEDULED:
     default:
       return "border-sky-200 bg-sky-50 text-sky-700 focus:border-sky-400 focus:ring-sky-100";
   }
 }
 
-function getStatusDotClass(status?: string) {
+function getStatusDotClass(status?: AppointmentStatus | string) {
   switch (status) {
-    case "COMPLETED":
+    case AppointmentStatus.COMPLETED:
       return "bg-emerald-500";
-    case "IN_PROGRESS":
+    case AppointmentStatus.IN_PROGRESS:
       return "bg-amber-500";
+    case AppointmentStatus.CANCELLED:
+      return "bg-red-500";
+    case AppointmentStatus.SCHEDULED:
     default:
       return "bg-sky-500";
   }
 }
 
-function getStatusLabel(status?: string) {
+function getStatusLabel(status?: AppointmentStatus | string) {
   switch (status) {
-    case "COMPLETED":
+    case AppointmentStatus.COMPLETED:
       return "Completed";
-    case "IN_PROGRESS":
+    case AppointmentStatus.IN_PROGRESS:
       return "In progress";
+    case AppointmentStatus.CANCELLED:
+      return "Cancelled";
+    case AppointmentStatus.SCHEDULED:
     default:
       return "Scheduled";
   }
@@ -240,10 +251,7 @@ function AppointmentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div
-        onClick={onClose}
-        className="absolute inset-0 backdrop-blur-md"
-      />
+      <div onClick={onClose} className="absolute inset-0 backdrop-blur-md" />
 
       <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
         <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-7 text-white">
@@ -581,7 +589,9 @@ export default function AppointmentsPage() {
           doctorName: getPersonName(doctor) || "Doctor not assigned",
           startTime: normalizeTimeForInput(appointment.startTime),
           endTime: normalizeTimeForInput((appointment as any).endTime),
-          status: (appointment as any).status || "SCHEDULED",
+          status:
+            ((appointment as any).status as AppointmentStatus) ||
+            AppointmentStatus.SCHEDULED,
         };
       })
       .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
@@ -618,7 +628,9 @@ export default function AppointmentsPage() {
           doctorName: getPersonName(doctor) || "Doctor not assigned",
           startTime: normalizeTimeForInput(appointment.startTime),
           endTime: normalizeTimeForInput((appointment as any).endTime),
-          status: (appointment as any).status || "SCHEDULED",
+          status:
+            ((appointment as any).status as AppointmentStatus) ||
+            AppointmentStatus.SCHEDULED,
         };
       })
       .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
@@ -667,15 +679,27 @@ export default function AppointmentsPage() {
     const total = currentAppointments.length;
 
     const scheduled = currentAppointments.filter(
-      (item) => ((item as any).status || "SCHEDULED") === "SCHEDULED"
+      (item) =>
+        (((item as any).status as AppointmentStatus) ||
+          AppointmentStatus.SCHEDULED) === AppointmentStatus.SCHEDULED
     ).length;
 
     const inProgress = currentAppointments.filter(
-      (item) => (item as any).status === "IN_PROGRESS"
+      (item) =>
+        ((item as any).status as AppointmentStatus) ===
+        AppointmentStatus.IN_PROGRESS
     ).length;
 
     const completed = currentAppointments.filter(
-      (item) => (item as any).status === "COMPLETED"
+      (item) =>
+        ((item as any).status as AppointmentStatus) ===
+        AppointmentStatus.COMPLETED
+    ).length;
+
+    const cancelled = currentAppointments.filter(
+      (item) =>
+        ((item as any).status as AppointmentStatus) ===
+        AppointmentStatus.CANCELLED
     ).length;
 
     return {
@@ -683,6 +707,7 @@ export default function AppointmentsPage() {
       scheduled,
       inProgress,
       completed,
+      cancelled,
     };
   }, [currentAppointments]);
 
@@ -711,6 +736,8 @@ export default function AppointmentsPage() {
       startTime: normalizeTimeForInput(appointment.startTime),
       slotDurationMinutes: Number(appointment.slotDurationMinutes || 30),
       notes: appointment.notes || "",
+      status:
+        (appointment.status as AppointmentStatus) || AppointmentStatus.SCHEDULED,
     });
 
     setIsModalOpen(true);
@@ -787,7 +814,8 @@ export default function AppointmentsPage() {
           startTime,
           slotDurationMinutes: Number(form.slotDurationMinutes),
           notes: form.notes || "",
-          status: selectedAppointment.status || "SCHEDULED",
+          status:
+            selectedAppointment.status || AppointmentStatus.SCHEDULED,
         };
 
         await updateAppointmentMutation.mutateAsync({
@@ -804,6 +832,7 @@ export default function AppointmentsPage() {
           startTime,
           slotDurationMinutes: Number(form.slotDurationMinutes),
           notes: form.notes || "",
+          status: AppointmentStatus.SCHEDULED,
         };
 
         await createAppointmentMutation.mutateAsync(payload);
@@ -870,7 +899,7 @@ export default function AppointmentsPage() {
         payload,
       });
 
-      toast.success(`Status changed to ${status}`);
+      toast.success(`Status changed to ${getStatusLabel(status)}`);
       await refreshAll();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Status update qilishda xatolik"));
@@ -950,7 +979,7 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
               <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
                 Total
@@ -977,6 +1006,13 @@ export default function AppointmentsPage() {
                 Completed
               </p>
               <p className="mt-2 text-3xl font-black">{stats.completed}</p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-100">
+                Cancelled
+              </p>
+              <p className="mt-2 text-3xl font-black">{stats.cancelled}</p>
             </div>
           </div>
         </div>
@@ -1115,7 +1151,7 @@ export default function AppointmentsPage() {
 
                 const currentStatus =
                   ((appointment as any).status as AppointmentStatus) ||
-                  "SCHEDULED";
+                  AppointmentStatus.SCHEDULED;
 
                 return (
                   <article
@@ -1219,7 +1255,7 @@ export default function AppointmentsPage() {
                           >
                             {STATUS_OPTIONS.map((status) => (
                               <option key={status} value={status}>
-                                {status}
+                                {getStatusLabel(status)}
                               </option>
                             ))}
                           </select>

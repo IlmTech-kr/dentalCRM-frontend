@@ -9,7 +9,6 @@ import {
   Plus,
   RefreshCcw,
   Search,
-  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -24,23 +23,24 @@ import {
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 
 import type {
-  DayOfWeek,
   DoctorSchedule,
   DoctorSchedulePayload,
   WeeklyDoctorSchedulePayload,
 } from "@/src/types/doctor-schedule.types";
 
+import { DayOfWeek } from "@/src/lib/enums/enums.types";
+
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
 const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
-  { value: "MONDAY", label: "Monday", short: "Mon" },
-  { value: "TUESDAY", label: "Tuesday", short: "Tue" },
-  { value: "WEDNESDAY", label: "Wednesday", short: "Wed" },
-  { value: "THURSDAY", label: "Thursday", short: "Thu" },
-  { value: "FRIDAY", label: "Friday", short: "Fri" },
-  { value: "SATURDAY", label: "Saturday", short: "Sat" },
-  { value: "SUNDAY", label: "Sunday", short: "Sun" },
+  { value: DayOfWeek.MONDAY, label: "Monday", short: "Mon" },
+  { value: DayOfWeek.TUESDAY, label: "Tuesday", short: "Tue" },
+  { value: DayOfWeek.WEDNESDAY, label: "Wednesday", short: "Wed" },
+  { value: DayOfWeek.THURSDAY, label: "Thursday", short: "Thu" },
+  { value: DayOfWeek.FRIDAY, label: "Friday", short: "Fri" },
+  { value: DayOfWeek.SATURDAY, label: "Saturday", short: "Sat" },
+  { value: DayOfWeek.SUNDAY, label: "Sunday", short: "Sun" },
 ];
 
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
@@ -49,9 +49,14 @@ type ScheduleForm = DoctorSchedulePayload & {
   slotDurationMinutes?: number;
 };
 
+type FlatDoctorSchedule = DoctorSchedule & {
+  doctorName?: string;
+  scheduleParentId?: string;
+};
+
 const initialForm: ScheduleForm = {
   doctorId: "",
-  dayOfWeek: "MONDAY",
+  dayOfWeek: DayOfWeek.MONDAY,
   startTime: "09:00",
   endTime: "18:00",
   slotDurationMinutes: 30,
@@ -101,11 +106,11 @@ function getDoctorInitials(name: string) {
     .slice(0, 2);
 }
 
-function getDayLabel(day?: string) {
+function getDayLabel(day?: DayOfWeek | string) {
   return DAYS.find((item) => item.value === day)?.label || day || "-";
 }
 
-function getDayShort(day?: string) {
+function getDayShort(day?: DayOfWeek | string) {
   return DAYS.find((item) => item.value === day)?.short || day || "-";
 }
 
@@ -386,8 +391,8 @@ function ScheduleModal({
               {selectedSchedule
                 ? "Save Changes"
                 : createForWholeWeek
-                ? "Create Weekly Schedule"
-                : "Create Schedule"}
+                  ? "Create Weekly Schedule"
+                  : "Create Schedule"}
             </button>
           </div>
         </form>
@@ -447,8 +452,26 @@ export default function DoctorSchedulePage() {
     return map;
   }, [doctors]);
 
+  const flatSchedules = useMemo<FlatDoctorSchedule[]>(() => {
+    return schedules.flatMap((schedule) => {
+      if (Array.isArray(schedule.days) && schedule.days.length > 0) {
+        return schedule.days.map((day) => ({
+          ...schedule,
+          id: `${getScheduleId(schedule)}-${day.dayOfWeek}`,
+          scheduleParentId: getScheduleId(schedule),
+          dayOfWeek: day.dayOfWeek,
+          startTime: day.startTime,
+          endTime: day.endTime,
+          active: day.active,
+        }));
+      }
+
+      return [schedule];
+    });
+  }, [schedules]);
+
   const enrichedSchedules = useMemo(() => {
-    return schedules.map((schedule) => {
+    return flatSchedules.map((schedule) => {
       const doctorFromSchedule = (schedule as any).doctor;
       const doctorFromList = doctorsMap.get(schedule.doctorId);
       const doctor = doctorFromSchedule || doctorFromList;
@@ -460,7 +483,7 @@ export default function DoctorSchedulePage() {
         endTime: normalizeScheduleTime(schedule.endTime),
       };
     });
-  }, [schedules, doctorsMap]);
+  }, [flatSchedules, doctorsMap]);
 
   const filteredSchedules = useMemo(() => {
     const value = search.trim().toLowerCase();
@@ -489,7 +512,7 @@ export default function DoctorSchedulePage() {
         if (dayA !== dayB) return dayA - dayB;
 
         return normalizeScheduleTime(a.startTime).localeCompare(
-          normalizeScheduleTime(b.startTime)
+          normalizeScheduleTime(b.startTime),
         );
       });
   }, [enrichedSchedules, selectedDay, search]);
@@ -507,11 +530,11 @@ export default function DoctorSchedulePage() {
 
     setForm({
       doctorId: schedule.doctorId || "",
-      dayOfWeek: schedule.dayOfWeek || "MONDAY",
+      dayOfWeek: schedule.dayOfWeek || DayOfWeek.MONDAY,
       startTime: normalizeScheduleTime(schedule.startTime),
       endTime: normalizeScheduleTime(schedule.endTime),
       slotDurationMinutes: Number((schedule as any).slotDurationMinutes || 30),
-      active: Boolean(schedule.active),
+      active: schedule.active !== false,
     });
 
     setIsModalOpen(true);
@@ -569,6 +592,7 @@ export default function DoctorSchedulePage() {
           startTime,
           endTime,
           active: Boolean(form.active),
+          slotDurationMinutes: Number(form.slotDurationMinutes || 30),
         });
 
         toast.success("Doctor schedule updated successfully");
@@ -590,6 +614,7 @@ export default function DoctorSchedulePage() {
           startTime,
           endTime,
           active: Boolean(form.active),
+          slotDurationMinutes: Number(form.slotDurationMinutes || 30),
         };
 
         await createScheduleMutation.mutateAsync(payload);
@@ -601,23 +626,9 @@ export default function DoctorSchedulePage() {
       await refetch();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, "Doctor schedule saqlashda xatolik bo'ldi")
+        getApiErrorMessage(err, "Doctor schedule saqlashda xatolik bo'ldi"),
       );
     }
-  }
-
-  async function handleDelete(schedule: DoctorSchedule) {
-    const id = getScheduleId(schedule);
-
-    if (!id) {
-      toast.error("Schedule ID topilmadi");
-      return;
-    }
-
-    const confirmed = confirm("Doctor schedule o'chirilsinmi?");
-
-    if (!confirmed) return;
-
   }
 
   return (
@@ -672,7 +683,7 @@ export default function DoctorSchedulePage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-slate-900">
-              {schedules.length}
+              {flatSchedules.length}
             </p>
           </div>
 
@@ -682,7 +693,7 @@ export default function DoctorSchedulePage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-emerald-600">
-              {schedules.filter((item) => item.active).length}
+              {flatSchedules.filter((item) => item.active).length}
             </p>
           </div>
 
@@ -766,7 +777,7 @@ export default function DoctorSchedulePage() {
               <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">
                 {getApiErrorMessage(
                   error,
-                  "Server error. Backend doctor-schedules API ichida xato bor."
+                  "Server error. Backend doctor-schedules API ichida xato bor.",
                 )}
               </p>
 
@@ -901,16 +912,6 @@ export default function DoctorSchedulePage() {
                               <Edit2 className="h-4 w-4" />
                               Edit
                             </button>
-
-                            {/* <button
-                              type="button"
-                              onClick={() => handleDelete(schedule)}
-                              disabled={deleteScheduleMutation.isPending}
-                              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </button> */}
                           </div>
                         </td>
                       </tr>

@@ -1,11 +1,14 @@
+// File: src/types/dental-procedure.types.ts
+
+import { ToothCondition } from "../lib/enums/enums.types";
+
 export type ResultingCondition =
-  | "FILLING"
-  | "CROWN"
-  | "IMPLANT"
-  | "ROOT_CANAL"
-  | "EXTRACTION"
-  | "MISSING"
-  | string;
+  | ToothCondition.FILLING
+  | ToothCondition.CROWN
+  | ToothCondition.IMPLANT
+  | ToothCondition.ROOT_CANAL
+  | ToothCondition.EXTRACTED
+  | ToothCondition.MISSING;
 
 export interface DentalProcedure {
   _id: string;

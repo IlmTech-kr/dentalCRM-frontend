@@ -1,8 +1,6 @@
-export type UserRole =
-  | "SUPER_ADMIN"
-  | "CLINIC_ADMIN"
-  | "DOCTOR"
-  | "ASSISTANT";
+// File: src/types/auth.types.ts
+
+import { Role, UserStatus } from "../lib/enums/enums.types";
 
 export interface RegisterClinicDto {
   firstName: string;
@@ -21,7 +19,7 @@ export interface LoginDto {
 
 export interface InviteUserDto {
   email: string;
-  role: "DOCTOR" | "ASSISTANT" | "CLINIC_ADMIN";
+  role: Role.DOCTOR | Role.ASSISTANT | Role.CLINIC_ADMIN | Role.RECEPTIONIST;
   subDomain: string;
 }
 
@@ -38,10 +36,20 @@ export interface ResetPasswordDto {
 
 export interface AuthUser {
   id: string;
+  _id?: string;
+
   firstName: string;
   lastName: string;
   email: string;
-  roles: UserRole[];
+
+  roles: Role[];
+
   avatarUrl?: string;
-  status?: "ACTIVE" | "INACTIVE" | "BLOCKED";
+  status?: UserStatus;
+
+  clinicId?: string;
+  tenantId?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }

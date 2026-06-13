@@ -1,22 +1,10 @@
-export type ToothDiagnosis =
-  | "CARIES"
-  | "PULPITIS"
-  | "PERIODONTITIS"
-  | "GINGIVITIS"
-  | "ABSCESS"
-  | string;
+// File: src/types/dental-chart.types.ts
 
-export type ToothState =
-  | "MISSING"
-  | "FILLING"
-  | "CROWN"
-  | "IMPLANT"
-  | "ROOT_CANAL"
-  | string;
+import { ToothCondition } from "../lib/enums/enums.types";
 
 export interface ToothItem {
-  diagnoses: ToothDiagnosis[];
-  states: ToothState[];
+  diagnoses: ToothCondition[];
+  states: ToothCondition[];
   note: string;
 }
 
@@ -43,3 +31,4 @@ export interface UpdateDentalChartDto {
   patientId: string;
   toothMap: ToothMap;
 }
+

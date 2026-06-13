@@ -1,4 +1,27 @@
-export type AppointmentStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+// File: src/types/appointment.types.ts
+
+import { AppointmentStatus } from "../lib/enums/enums.types";
+
+export interface AppointmentPatient {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  gender?: string;
+  anamnesis?: string;
+}
+
+export interface AppointmentDoctor {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+}
 
 export interface Appointment {
   id?: string;
@@ -18,8 +41,8 @@ export interface Appointment {
   notes?: string;
   status?: AppointmentStatus;
 
-  patient?: any;
-  doctor?: any;
+  patient?: AppointmentPatient;
+  doctor?: AppointmentDoctor;
 
   createdAt?: string;
   updatedAt?: string;
@@ -32,6 +55,9 @@ export interface CreateAppointmentDto {
   startTime: string;
   slotDurationMinutes: number;
   notes?: string;
+
+  // Optional because backend can set default SCHEDULED
+  status?: AppointmentStatus;
 }
 
 export interface UpdateAppointmentDto {
@@ -50,6 +76,10 @@ export interface AppointmentListResponse {
   content?: Appointment[];
   items?: Appointment[];
   results?: Appointment[];
+
   total?: number;
   totalElements?: number;
+  totalPages?: number;
+  page?: number;
+  size?: number;
 }

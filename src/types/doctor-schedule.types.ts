@@ -1,11 +1,6 @@
-export type DayOfWeek =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
+// File: src/types/doctor-schedule.types.ts
+
+import { DayOfWeek } from "../lib/enums/enums.types";
 
 export interface DoctorScheduleDay {
   dayOfWeek: DayOfWeek;
@@ -20,14 +15,14 @@ export interface DoctorSchedule {
   tenantId?: string;
   doctorId: string;
 
-  // Ba'zi backendlarda schedule bitta day sifatida kelishi mumkin
+  // Some backend responses may return schedule as single day
   dayOfWeek?: DayOfWeek;
   startTime?: string;
   endTime?: string;
   active?: boolean;
   slotDurationMinutes?: number;
 
-  // Siz ko'rsatgan MongoDB response'da days array bor
+  // MongoDB response can return days array
   days?: DoctorScheduleDay[];
 
   doctor?: any;

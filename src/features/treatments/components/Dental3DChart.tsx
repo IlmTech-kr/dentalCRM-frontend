@@ -1,6 +1,9 @@
 "use client";
 
-import type { ToothItem, ToothMap } from "@/src/types/treatment.types";
+import type { ReactNode } from "react";
+
+import { ToothCondition } from "@/src/lib/enums/enums.types";
+import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
 
 interface Dental3DChartProps {
   selectedTooth: string;
@@ -9,19 +12,51 @@ interface Dental3DChartProps {
 }
 
 const UPPER_TEETH = [
-  "18", "17", "16", "15", "14", "13", "12", "11",
-  "21", "22", "23", "24", "25", "26", "27", "28",
+  "18",
+  "17",
+  "16",
+  "15",
+  "14",
+  "13",
+  "12",
+  "11",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+  "28",
 ];
 
 const LOWER_TEETH = [
-  "48", "47", "46", "45", "44", "43", "42", "41",
-  "31", "32", "33", "34", "35", "36", "37", "38",
+  "48",
+  "47",
+  "46",
+  "45",
+  "44",
+  "43",
+  "42",
+  "41",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "36",
+  "37",
+  "38",
 ];
 
-function getToothStatus(item?: ToothItem) {
+type ToothStatus = "clean" | "missing" | "diagnosis" | "treated";
+
+function getToothStatus(item?: ToothItem): ToothStatus {
   if (!item) return "clean";
 
-  if (item.states?.includes("MISSING")) return "missing";
+  if (item.states?.includes(ToothCondition.MISSING)) return "missing";
+  if (item.states?.includes(ToothCondition.EXTRACTED)) return "missing";
+
   if (item.diagnoses?.length) return "diagnosis";
   if (item.states?.length) return "treated";
 
@@ -104,7 +139,7 @@ function ToothButton({
         hover:-translate-y-0.5 hover:scale-105
         ${
           selected
-            ? "z-20 scale-110 ring-2 ring-blue-200 border-blue-500"
+            ? "z-20 scale-110 border-blue-500 ring-2 ring-blue-200"
             : "z-10"
         }
       `}
@@ -121,8 +156,8 @@ function ToothButton({
               status === "missing"
                 ? "bg-red-500"
                 : status === "diagnosis"
-                ? "bg-orange-500"
-                : "bg-emerald-500"
+                  ? "bg-orange-500"
+                  : "bg-emerald-500"
             }
           `}
         />
@@ -136,7 +171,7 @@ function Gum({
   children,
 }: {
   type: "upper" | "lower";
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div
@@ -183,6 +218,7 @@ export function Dental3DChart({
           <h2 className="text-base font-bold text-slate-900">
             3D tish xaritasi
           </h2>
+
           <p className="text-xs text-slate-500">
             Tishni bosib tanlang, o‘ng paneldan diagnoz va holatni belgilang.
           </p>

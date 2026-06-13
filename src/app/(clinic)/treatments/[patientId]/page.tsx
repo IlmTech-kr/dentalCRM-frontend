@@ -30,12 +30,9 @@ import { useDentalChart } from "@/src/features/treatments/hooks/useDentalChart";
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useTreatmentCourses } from "@/src/features/treatments/hooks/useTreatmentCourses";
 
-import type {
-  ToothDiagnosis,
-  ToothItem,
-  ToothMap,
-  ToothState,
-} from "@/src/types/dental-chart.types";
+import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
+
+import { ToothCondition } from "@/src/lib/enums/enums.types";
 
 import type { DentalProcedure } from "@/src/types/dental-procedure.types";
 import type {
@@ -46,36 +43,52 @@ import type {
 type TreatmentTab = "CHART" | "COURSE" | "VISIT";
 type CourseStatusFilter = "ACTIVE" | "COMPLETED";
 
-const DIAGNOSIS_OPTIONS: ToothDiagnosis[] = [
-  "CARIES",
-  "PULPITIS",
-  "PERIODONTITIS",
-  "GINGIVITIS",
-  "ABSCESS",
+const DIAGNOSIS_OPTIONS: ToothCondition[] = [
+  ToothCondition.CARIES,
+  ToothCondition.PULPITIS,
+  ToothCondition.GINGIVITIS,
+  ToothCondition.CRACK,
 ];
 
-const STATE_OPTIONS: ToothState[] = [
-  "MISSING",
-  "FILLING",
-  "CROWN",
-  "IMPLANT",
-  "ROOT_CANAL",
+const STATE_OPTIONS: ToothCondition[] = [
+  ToothCondition.HEALTHY,
+  ToothCondition.MISSING,
+  ToothCondition.EXTRACTED,
+  ToothCondition.FILLING,
+  ToothCondition.CROWN,
+  ToothCondition.IMPLANT,
+  ToothCondition.BRIDGE,
+  ToothCondition.ROOT_CANAL,
 ];
 
-const diagnosisLabels: Record<string, string> = {
-  CARIES: "Karies",
-  PULPITIS: "Pulpit",
-  PERIODONTITIS: "Periodontit",
-  GINGIVITIS: "Gingivit",
-  ABSCESS: "Abssess",
+const diagnosisLabels: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "Sog‘lom",
+  [ToothCondition.CARIES]: "Karies",
+  [ToothCondition.EXTRACTED]: "Sug‘urilgan",
+  [ToothCondition.PULPITIS]: "Pulpit",
+  [ToothCondition.FILLING]: "Plomba",
+  [ToothCondition.CROWN]: "Koronka",
+  [ToothCondition.IMPLANT]: "Implant",
+  [ToothCondition.MISSING]: "Yo‘q",
+  [ToothCondition.CRACK]: "Yoriq",
+  [ToothCondition.BRIDGE]: "Ko‘prik",
+  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
+  [ToothCondition.GINGIVITIS]: "Gingivit",
 };
 
-const stateLabels: Record<string, string> = {
-  MISSING: "Yo‘q",
-  FILLING: "Plomba",
-  CROWN: "Koronka",
-  IMPLANT: "Implant",
-  ROOT_CANAL: "Kanal davolangan",
+const stateLabels: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "Sog‘lom",
+  [ToothCondition.CARIES]: "Karies",
+  [ToothCondition.EXTRACTED]: "Sug‘urilgan",
+  [ToothCondition.PULPITIS]: "Pulpit",
+  [ToothCondition.FILLING]: "Plomba",
+  [ToothCondition.CROWN]: "Koronka",
+  [ToothCondition.IMPLANT]: "Implant",
+  [ToothCondition.MISSING]: "Yo‘q",
+  [ToothCondition.CRACK]: "Yoriq",
+  [ToothCondition.BRIDGE]: "Ko‘prik",
+  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
+  [ToothCondition.GINGIVITIS]: "Gingivit",
 };
 
 function emptyToothItem(): ToothItem {
@@ -498,11 +511,12 @@ export default function TreatmentPatientPage() {
     if (!item) return `${toothNumber}-tish`;
 
     const diagnosis = item.diagnoses?.[0]
-      ? diagnosisLabels[item.diagnoses[0]] || item.diagnoses[0]
+      ? diagnosisLabels[item.diagnoses[0] as ToothCondition] ||
+        item.diagnoses[0]
       : "";
 
     const state = item.states?.[0]
-      ? stateLabels[item.states[0]] || item.states[0]
+      ? stateLabels[item.states[0] as ToothCondition] || item.states[0]
       : "";
 
     const details = [diagnosis, state].filter(Boolean).join(" • ");
@@ -521,7 +535,10 @@ export default function TreatmentPatientPage() {
     const uniqueDiagnoses = Array.from(new Set(diagnoses));
     const diagnosisText = uniqueDiagnoses.length
       ? uniqueDiagnoses
-          .map((diagnosis) => diagnosisLabels[diagnosis] || diagnosis)
+          .map(
+            (diagnosis) =>
+              diagnosisLabels[diagnosis as ToothCondition] || diagnosis,
+          )
           .join(", ")
       : "davolanishi";
 
@@ -725,7 +742,7 @@ export default function TreatmentPatientPage() {
           ...base,
           [selectedTooth]: {
             ...current,
-            states: [procedure.resultingCondition as ToothState],
+            states: [procedure.resultingCondition as ToothCondition],
             note: current.note || procedure.name,
           },
         };
@@ -1515,7 +1532,7 @@ export default function TreatmentPatientPage() {
                     onChange={(event) =>
                       updateSelectedTooth({
                         diagnoses: event.target.value
-                          ? [event.target.value as ToothDiagnosis]
+                          ? [event.target.value as ToothCondition]
                           : [],
                       })
                     }
@@ -1525,7 +1542,7 @@ export default function TreatmentPatientPage() {
 
                     {DIAGNOSIS_OPTIONS.map((diagnosis) => (
                       <option key={diagnosis} value={diagnosis}>
-                        {diagnosisLabels[diagnosis] || diagnosis}
+                        {diagnosisLabels[diagnosis]}
                       </option>
                     ))}
                   </select>
@@ -1545,7 +1562,7 @@ export default function TreatmentPatientPage() {
                     onChange={(event) =>
                       updateSelectedTooth({
                         states: event.target.value
-                          ? [event.target.value as ToothState]
+                          ? [event.target.value as ToothCondition]
                           : [],
                       })
                     }
@@ -1555,7 +1572,7 @@ export default function TreatmentPatientPage() {
 
                     {STATE_OPTIONS.map((state) => (
                       <option key={state} value={state}>
-                        {stateLabels[state] || state}
+                        {stateLabels[state]}
                       </option>
                     ))}
                   </select>
@@ -1593,8 +1610,9 @@ export default function TreatmentPatientPage() {
                       <span>Diagnoz:</span>
                       <span className="font-semibold text-slate-900">
                         {selectedToothData.diagnoses[0]
-                          ? diagnosisLabels[selectedToothData.diagnoses[0]] ||
-                            selectedToothData.diagnoses[0]
+                          ? diagnosisLabels[
+                              selectedToothData.diagnoses[0] as ToothCondition
+                            ] || selectedToothData.diagnoses[0]
                           : "Tanlanmagan"}
                       </span>
                     </div>
@@ -1603,8 +1621,9 @@ export default function TreatmentPatientPage() {
                       <span>Holat:</span>
                       <span className="font-semibold text-slate-900">
                         {selectedToothData.states[0]
-                          ? stateLabels[selectedToothData.states[0]] ||
-                            selectedToothData.states[0]
+                          ? stateLabels[
+                              selectedToothData.states[0] as ToothCondition
+                            ] || selectedToothData.states[0]
                           : "Tanlanmagan"}
                       </span>
                     </div>

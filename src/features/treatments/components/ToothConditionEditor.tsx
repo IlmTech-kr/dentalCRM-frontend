@@ -1,53 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Plus } from "lucide-react";
-import type { ToothMap } from "@/src/types/treatment.types";
 
-const diagnosisOptions = [
-  "CARIES",
-  "PULPITIS",
-  "PERIODONTITIS",
-  "GINGIVITIS",
-  "ABSCESS",
+import { ToothCondition } from "@/src/lib/enums/enums.types";
+import type { ToothMap } from "@/src/types/dental-chart.types";
+
+const diagnosisOptions: ToothCondition[] = [
+  ToothCondition.CARIES,
+  ToothCondition.PULPITIS,
+  ToothCondition.GINGIVITIS,
+  ToothCondition.CRACK,
 ];
 
-const stateOptions = [
-  "MISSING",
-  "FILLING",
-  "CROWN",
-  "IMPLANT",
-  "ROOT_CANAL",
+const stateOptions: ToothCondition[] = [
+  ToothCondition.HEALTHY,
+  ToothCondition.MISSING,
+  ToothCondition.EXTRACTED,
+  ToothCondition.FILLING,
+  ToothCondition.CROWN,
+  ToothCondition.IMPLANT,
+  ToothCondition.BRIDGE,
+  ToothCondition.ROOT_CANAL,
 ];
+
+const conditionLabels: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "Sog‘lom",
+  [ToothCondition.CARIES]: "Karies",
+  [ToothCondition.EXTRACTED]: "Sug‘urilgan",
+  [ToothCondition.PULPITIS]: "Pulpit",
+  [ToothCondition.FILLING]: "Plomba",
+  [ToothCondition.CROWN]: "Koronka",
+  [ToothCondition.IMPLANT]: "Implant",
+  [ToothCondition.MISSING]: "Yo‘q",
+  [ToothCondition.CRACK]: "Yoriq",
+  [ToothCondition.BRIDGE]: "Ko‘prik",
+  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
+  [ToothCondition.GINGIVITIS]: "Gingivit",
+};
 
 type Props = {
   toothMap: ToothMap;
-  setToothMap: React.Dispatch<React.SetStateAction<ToothMap>>;
+  setToothMap: Dispatch<SetStateAction<ToothMap>>;
 };
 
 export function ToothConditionEditor({ setToothMap }: Props) {
   const [toothNumber, setToothNumber] = useState("16");
-  const [diagnosis, setDiagnosis] = useState("CARIES");
-  const [state, setState] = useState("");
+  const [diagnosis, setDiagnosis] = useState<ToothCondition | "">(
+    ToothCondition.CARIES,
+  );
+  const [state, setState] = useState<ToothCondition | "">("");
   const [note, setNote] = useState("Chaynash yuzasida chuqur karies bor");
 
   function addTooth() {
-    if (!toothNumber.trim()) {
+    const normalizedToothNumber = toothNumber.trim();
+
+    if (!normalizedToothNumber) {
       alert("Tish raqamini kiriting");
       return;
     }
 
     setToothMap((prev) => ({
       ...prev,
-      [toothNumber]: {
+      [normalizedToothNumber]: {
         diagnoses: diagnosis ? [diagnosis] : [],
         states: state ? [state] : [],
-        note,
+        note: note.trim(),
       },
     }));
 
     setToothNumber("");
-    setDiagnosis("CARIES");
+    setDiagnosis(ToothCondition.CARIES);
     setState("");
     setNote("");
   }
@@ -57,6 +80,7 @@ export function ToothConditionEditor({ setToothMap }: Props) {
       <h3 className="mb-1 font-black text-slate-900">
         Tish holatini kiritish
       </h3>
+
       <p className="mb-5 text-sm text-slate-500">
         Tish raqami, tashxis, holat va doctor note kiriting.
       </p>
@@ -74,13 +98,16 @@ export function ToothConditionEditor({ setToothMap }: Props) {
         <FormField label="Diagnosis">
           <select
             value={diagnosis}
-            onChange={(e) => setDiagnosis(e.target.value)}
+            onChange={(e) =>
+              setDiagnosis(e.target.value as ToothCondition | "")
+            }
             className="input-ui"
           >
             <option value="">Yo‘q</option>
+
             {diagnosisOptions.map((item) => (
               <option key={item} value={item}>
-                {item}
+                {conditionLabels[item]}
               </option>
             ))}
           </select>
@@ -89,13 +116,14 @@ export function ToothConditionEditor({ setToothMap }: Props) {
         <FormField label="State">
           <select
             value={state}
-            onChange={(e) => setState(e.target.value)}
+            onChange={(e) => setState(e.target.value as ToothCondition | "")}
             className="input-ui"
           >
             <option value="">Yo‘q</option>
+
             {stateOptions.map((item) => (
               <option key={item} value={item}>
-                {item}
+                {conditionLabels[item]}
               </option>
             ))}
           </select>
@@ -111,6 +139,7 @@ export function ToothConditionEditor({ setToothMap }: Props) {
         </FormField>
 
         <button
+          type="button"
           onClick={addTooth}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700"
         >
@@ -127,7 +156,7 @@ function FormField({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <label className="block">

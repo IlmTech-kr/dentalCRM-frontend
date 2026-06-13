@@ -1,8 +1,6 @@
-export type TreatmentCourseStatus =
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED"
-  | string;
+// File: src/types/treatment-course.types.ts
+
+import { AppointmentStatus } from "../lib/enums/enums.types";
 
 export interface TreatmentVisitItem {
   toothNumber: string;
@@ -23,15 +21,24 @@ export interface TreatmentVisit {
 export interface TreatmentCourse {
   _id: string;
   id?: string;
+
   tenantId?: string;
   patientId: string;
+
   mainDiagnosis: string;
+
   startDate?: string;
   endDate?: string;
-  status: TreatmentCourseStatus;
+
+  status: AppointmentStatus;
+
   totalCoursePrice?: number;
   invoiceGenerated?: boolean;
+
   visits: TreatmentVisit[];
+
+  createdAt?: string;
+  updatedAt?: string;
   _class?: string;
 }
 
