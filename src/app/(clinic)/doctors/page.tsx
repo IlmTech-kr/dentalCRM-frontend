@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+
 import {
   useDeleteDoctor,
   useGetDoctors,
@@ -8,16 +9,51 @@ import {
   useUpdateDoctor,
 } from "@/src/features/doctors/hooks/useDoctors";
 import { getApiErrorMessage } from "@/src/lib/api/http";
-import type { Doctor, DoctorStatus } from "@/src/types/doctor.types";
+import { Role, UserStatus } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import type { Doctor, DoctorStatus, StaffRole } from "@/src/types/doctor.types";
+
+const staffRoleOptions: StaffRole[] = [
+  Role.DOCTOR,
+  Role.RECEPTIONIST,
+  Role.ASSISTANT,
+];
+
+const statusOptions: DoctorStatus[] = [
+  UserStatus.ACTIVE,
+  UserStatus.BLOCKED,
+  UserStatus.PENDING,
+  UserStatus.DELETED,
+];
 
 const initialEditForm = {
   firstName: "",
   lastName: "",
   phoneNumber: "",
   avatarUrl: "",
-  status: "ACTIVE" as DoctorStatus,
+  role: Role.DOCTOR as StaffRole,
+  status: UserStatus.ACTIVE as DoctorStatus,
 };
+
+function getDoctorId(doctor: Doctor) {
+  return doctor.id || doctor._id || "";
+}
+
+function getMainRole(doctor: Doctor): StaffRole {
+  const role = doctor.roles?.find((item) =>
+    staffRoleOptions.includes(item as StaffRole),
+  );
+
+  return (role as StaffRole) || Role.DOCTOR;
+}
+
+function getRoleBadgeClass(role: string) {
+  if (role === Role.DOCTOR) return "bg-blue-100 text-blue-700";
+  if (role === Role.RECEPTIONIST) return "bg-purple-100 text-purple-700";
+  if (role === Role.ASSISTANT) return "bg-emerald-100 text-emerald-700";
+
+  return "bg-slate-100 text-slate-600";
+}
 
 export default function DoctorsPage() {
   const toast = useToast();
@@ -31,42 +67,56 @@ export default function DoctorsPage() {
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<StaffRole>(Role.DOCTOR);
 
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [editForm, setEditForm] = useState(initialEditForm);
 
-  const updateDoctorMutation = useUpdateDoctor(selectedDoctor?.id || "");
+  const selectedDoctorId = selectedDoctor ? getDoctorId(selectedDoctor) : "";
+  const updateDoctorMutation = useUpdateDoctor(selectedDoctorId);
+
+  const staffUsers = useMemo(() => {
+    return doctors.filter((doctor) =>
+      doctor.roles?.some((role) =>
+        staffRoleOptions.includes(role as StaffRole),
+      ),
+    );
+  }, [doctors]);
 
   const filteredDoctors = useMemo(() => {
     const value = search.toLowerCase().trim();
 
-    if (!value) return doctors;
+    if (!value) return staffUsers;
 
-    return doctors.filter((doctor) => {
+    return staffUsers.filter((doctor) => {
       const fullName = `${doctor.firstName || ""} ${
         doctor.lastName || ""
       }`.toLowerCase();
 
       const email = doctor.email?.toLowerCase() || "";
-      const phone = doctor.phoneNumber?.toLowerCase() || "";
+      const phone = (doctor.phoneNumber || doctor.phone || "").toLowerCase();
       const status = doctor.status?.toLowerCase() || "";
+      const roles = doctor.roles?.join(" ").toLowerCase() || "";
 
       return (
         fullName.includes(value) ||
         email.includes(value) ||
         phone.includes(value) ||
-        status.includes(value)
+        status.includes(value) ||
+        roles.includes(value)
       );
     });
-  }, [doctors, search]);
+  }, [staffUsers, search]);
 
   function handleOpenInviteModal() {
     setInviteEmail("");
+    setInviteRole(Role.DOCTOR);
     setIsInviteModalOpen(true);
   }
 
   function handleCloseInviteModal() {
     setInviteEmail("");
+    setInviteRole(Role.DOCTOR);
     setIsInviteModalOpen(false);
   }
 
@@ -76,9 +126,10 @@ export default function DoctorsPage() {
     setEditForm({
       firstName: doctor.firstName || "",
       lastName: doctor.lastName || "",
-      phoneNumber: doctor.phoneNumber || "",
+      phoneNumber: doctor.phoneNumber || doctor.phone || "",
       avatarUrl: doctor.avatarUrl || "",
-      status: doctor.status || "ACTIVE",
+      role: getMainRole(doctor),
+      status: doctor.status || UserStatus.ACTIVE,
     });
   }
 
@@ -87,34 +138,34 @@ export default function DoctorsPage() {
     setEditForm(initialEditForm);
   }
 
-  async function handleInviteDoctor(e: React.FormEvent<HTMLFormElement>) {
+  async function handleInviteDoctor(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!inviteEmail.trim()) {
-      toast.warning("Doctor email kiriting");
+      toast.warning("Email kiriting");
       return;
     }
 
     try {
       await inviteDoctorMutation.mutateAsync({
         email: inviteEmail.trim(),
-        role: "DOCTOR",
+        role: inviteRole,
       });
 
       handleCloseInviteModal();
       await refetch();
 
-      toast.success("Invite yuborildi. Doctor email orqali signup qiladi.");
+      toast.success(`${inviteRole} uchun invite yuborildi`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Invite yuborishda xatolik bo‘ldi"));
     }
   }
 
-  async function handleUpdateDoctor(e: React.FormEvent<HTMLFormElement>) {
+  async function handleUpdateDoctor(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!selectedDoctor?.id) {
-      toast.error("Doctor ID topilmadi");
+    if (!selectedDoctorId) {
+      toast.error("User ID topilmadi");
       return;
     }
 
@@ -134,58 +185,54 @@ export default function DoctorsPage() {
         lastName: editForm.lastName.trim(),
         phoneNumber: editForm.phoneNumber.trim(),
         avatarUrl: editForm.avatarUrl.trim(),
-        roles: ["DOCTOR"],
+        roles: [editForm.role],
         status: editForm.status,
       });
 
       handleCloseEditModal();
       await refetch();
 
-      toast.success("Doctor updated successfully");
+      toast.success("Staff updated successfully");
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error, "Doctor update qilishda xatolik bo‘ldi")
+        getApiErrorMessage(error, "Staff update qilishda xatolik bo‘ldi"),
       );
     }
   }
 
   async function handleDeleteDoctor(doctor: Doctor) {
-    if (!doctor.id) {
-      toast.error("Doctor ID topilmadi");
+    const doctorId = getDoctorId(doctor);
+
+    if (!doctorId) {
+      toast.error("User ID topilmadi");
       return;
     }
 
     const confirmed = confirm(
-      `${doctor.firstName} ${doctor.lastName} ni o‘chirmoqchimisiz?`
+      `${doctor.firstName} ${doctor.lastName} ni o‘chirmoqchimisiz?`,
     );
 
     if (!confirmed) return;
 
     try {
-      await deleteDoctorMutation.mutateAsync(doctor.id);
+      await deleteDoctorMutation.mutateAsync(doctorId);
       await refetch();
 
-      toast.success("Doctor deleted successfully");
+      toast.success("Staff deleted successfully");
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error, "Doctor delete qilishda xatolik bo‘ldi")
+        getApiErrorMessage(error, "Staff delete qilishda xatolik bo‘ldi"),
       );
     }
   }
 
-  const isSubmitting =
-    inviteDoctorMutation.isPending ||
-    updateDoctorMutation.isPending ||
-    deleteDoctorMutation.isPending;
-
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Doctors</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Clinic Staff</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Manage clinic doctors, send invites, update profiles, and remove
-            doctors.
+            Manage doctors, receptionists, assistants and clinic team invites.
           </p>
         </div>
 
@@ -194,7 +241,7 @@ export default function DoctorsPage() {
           onClick={handleOpenInviteModal}
           className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
         >
-          + Add Doctor
+          + Add Staff
         </button>
       </div>
 
@@ -202,10 +249,10 @@ export default function DoctorsPage() {
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Doctors List
+              Staff List
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              All doctors from clinic users.
+              All clinic users with DOCTOR, RECEPTIONIST and ASSISTANT roles.
             </p>
           </div>
 
@@ -214,7 +261,7 @@ export default function DoctorsPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search doctor..."
+              placeholder="Search staff..."
               className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
             />
           </div>
@@ -223,7 +270,7 @@ export default function DoctorsPage() {
         {isError ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-red-600">
-              Doctors listni olishda xatolik bo‘ldi.
+              Staff listni olishda xatolik bo‘ldi.
             </p>
 
             <button
@@ -240,13 +287,16 @@ export default function DoctorsPage() {
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Doctor
+                    Staff
                   </th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Email
                   </th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Phone
+                  </th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Role
                   </th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Status
@@ -261,25 +311,25 @@ export default function DoctorsPage() {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      Loading doctors...
+                      Loading staff...
                     </td>
                   </tr>
                 ) : filteredDoctors.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      No doctors found
+                      No staff found
                     </td>
                   </tr>
                 ) : (
                   filteredDoctors.map((doctor) => (
                     <tr
-                      key={doctor.id}
+                      key={getDoctorId(doctor)}
                       className="border-t border-slate-100 transition hover:bg-slate-50"
                     >
                       <td className="px-5 py-4">
@@ -302,7 +352,7 @@ export default function DoctorsPage() {
                               {doctor.firstName} {doctor.lastName}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {doctor.roles?.join(", ")}
+                              ID: {getDoctorId(doctor)}
                             </p>
                           </div>
                         </div>
@@ -313,15 +363,34 @@ export default function DoctorsPage() {
                       </td>
 
                       <td className="px-5 py-4 text-sm text-slate-600">
-                        {doctor.phoneNumber || "-"}
+                        {doctor.phoneNumber || doctor.phone || "-"}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {doctor.roles?.length ? (
+                            doctor.roles.map((role) => (
+                              <span
+                                key={role}
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
+                                  role,
+                                )}`}
+                              >
+                                {role}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-slate-400">-</span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-5 py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            doctor.status === "ACTIVE"
+                            doctor.status === UserStatus.ACTIVE
                               ? "bg-green-100 text-green-700"
-                              : doctor.status === "INACTIVE"
+                              : doctor.status === UserStatus.PENDING
                                 ? "bg-yellow-100 text-yellow-700"
                                 : "bg-red-100 text-red-700"
                           }`}
@@ -365,10 +434,10 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Add Doctor
+                  Add Staff
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Doctor emailiga invite link yuboriladi.
+                  Select role and send invite link to email.
                 </p>
               </div>
 
@@ -384,19 +453,38 @@ export default function DoctorsPage() {
             <form onSubmit={handleInviteDoctor} className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Doctor Email
+                  Email
                 </label>
+
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="doctor@gmail.com"
+                  placeholder="staff@gmail.com"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Role
+                </label>
+
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as StaffRole)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                >
+                  {staffRoleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
-                Doctor emaildagi linkni bosadi, keyin name va password kiritib
+                User emaildagi linkni bosadi, keyin name va password kiritib
                 signup qiladi.
               </div>
 
@@ -428,10 +516,10 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Edit Doctor
+                  Edit Staff
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Update doctor profile information.
+                  Update staff profile and role.
                 </p>
               </div>
 
@@ -523,6 +611,29 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Role
+                </label>
+
+                <select
+                  value={editForm.role}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      role: e.target.value as StaffRole,
+                    })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                >
+                  {staffRoleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   Status
                 </label>
 
@@ -536,9 +647,11 @@ export default function DoctorsPage() {
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
-                  <option value="BLOCKED">BLOCKED</option>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -2,7 +2,9 @@
 
 import { Role, UserStatus } from "../lib/enums/enums.types";
 
-export type DoctorRole = Role.DOCTOR;
+export type StaffRole = Role.DOCTOR | Role.RECEPTIONIST | Role.ASSISTANT;
+
+export type DoctorRole = StaffRole;
 
 export type DoctorStatus =
   | UserStatus.ACTIVE
@@ -22,7 +24,7 @@ export interface Doctor {
   phone?: string;
   avatarUrl?: string;
 
-  roles: DoctorRole[];
+  roles: StaffRole[];
   status: DoctorStatus;
 
   tenantId?: string;
@@ -34,7 +36,7 @@ export interface Doctor {
 
 export interface InviteDoctorDto {
   email: string;
-  role: Role.DOCTOR;
+  role: StaffRole;
 }
 
 export interface UpdateDoctorDto {
@@ -43,7 +45,7 @@ export interface UpdateDoctorDto {
   phoneNumber?: string;
   phone?: string;
   avatarUrl?: string;
-  roles: [Role.DOCTOR];
+  roles: StaffRole[];
   status: DoctorStatus;
 }
 

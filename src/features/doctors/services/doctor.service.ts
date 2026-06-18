@@ -1,12 +1,20 @@
 // File: src/features/doctors/doctor.service.ts
 
 import { tenantHttp } from "@/src/lib/api/http";
+import { Role } from "@/src/lib/enums/enums.types";
 import type {
   Doctor,
   DoctorListResponse,
   InviteDoctorDto,
+  StaffRole,
   UpdateDoctorDto,
 } from "@/src/types/doctor.types";
+
+const STAFF_ROLES: StaffRole[] = [
+  Role.DOCTOR,
+  Role.RECEPTIONIST,
+  Role.ASSISTANT,
+];
 
 function getSubdomain(): string {
   if (typeof window === "undefined") return "";
@@ -35,28 +43,40 @@ function normalizeDoctor(user: any): Doctor {
   return {
     ...user,
     id: user.id || user._id,
+    phoneNumber: user.phoneNumber || user.phone || "",
+    roles: Array.isArray(user.roles) ? user.roles : [],
   };
 }
 
+function extractUsers(result: DoctorListResponse | Doctor[] | any): any[] {
+  if (Array.isArray(result)) return result;
+
+  if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.users)) return result.users;
+  if (Array.isArray(result?.content)) return result.content;
+  if (Array.isArray(result?.items)) return result.items;
+  if (Array.isArray(result?.results)) return result.results;
+
+  return [];
+}
+
+function isStaffUser(user: Doctor): boolean {
+  return user.roles?.some((role) => STAFF_ROLES.includes(role as StaffRole));
+}
+
 /**
- * GET /api/v1/admin/users?page=0&limit=10
+ * GET /api/v1/admin/users?page=0&limit=100
  */
 export async function getDoctors(): Promise<Doctor[]> {
   const http = getHttp();
 
   const response = await http.get<DoctorListResponse | Doctor[]>(
-    "/api/v1/admin/users?page=0&limit=10"
+    "/api/v1/admin/users?page=0&limit=100",
   );
 
-  const result = response.data;
+  const users = extractUsers(response.data);
 
-  const users = Array.isArray(result)
-    ? result
-    : result.data || result.users || result.content || [];
-
-  return users
-    .filter((user: any) => user.roles?.includes("DOCTOR"))
-    .map(normalizeDoctor);
+  return users.map(normalizeDoctor).filter(isStaffUser);
 }
 
 /**
@@ -72,8 +92,6 @@ export async function getDoctorById(doctorId: string): Promise<Doctor> {
 
 /**
  * POST /api/auth/invites
- *
- * Sends invite email.
  */
 export async function inviteDoctor(payload: InviteDoctorDto): Promise<void> {
   const http = getHttp();
@@ -86,7 +104,7 @@ export async function inviteDoctor(payload: InviteDoctorDto): Promise<void> {
  */
 export async function updateDoctor(
   doctorId: string,
-  payload: UpdateDoctorDto
+  payload: UpdateDoctorDto,
 ): Promise<Doctor> {
   const http = getHttp();
 

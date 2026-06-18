@@ -1,13 +1,13 @@
 // File: src/features/doctors/hooks/useDoctors.ts
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  getDoctors,
+  deleteDoctor,
   getDoctorById,
+  getDoctors,
   inviteDoctor,
   updateDoctor,
-  deleteDoctor,
 } from "../services/doctor.service";
 
 import type {
@@ -28,9 +28,6 @@ export const doctorKeys = {
   detail: (id: string) => [...doctorKeys.details(), id] as const,
 };
 
-/**
- * Hook: Get all doctors
- */
 export function useGetDoctors() {
   return useQuery<Doctor[]>({
     queryKey: doctorKeys.lists(),
@@ -40,9 +37,6 @@ export function useGetDoctors() {
   });
 }
 
-/**
- * Hook: Get doctor by ID
- */
 export function useGetDoctor(doctorId: string | null) {
   return useQuery<Doctor>({
     queryKey: doctorId ? doctorKeys.detail(doctorId) : ["doctor-disabled"],
@@ -58,15 +52,12 @@ export function useGetDoctor(doctorId: string | null) {
       return getDoctorById(doctorId);
     },
 
-    enabled: !!doctorId,
+    enabled: Boolean(doctorId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 }
 
-/**
- * Hook: Invite doctor
- */
 export function useInviteDoctor() {
   const queryClient = useQueryClient();
 
@@ -81,9 +72,6 @@ export function useInviteDoctor() {
   });
 }
 
-/**
- * Hook: Update doctor
- */
 export function useUpdateDoctor(doctorId: string) {
   const queryClient = useQueryClient();
 
@@ -100,9 +88,6 @@ export function useUpdateDoctor(doctorId: string) {
   });
 }
 
-/**
- * Hook: Delete doctor
- */
 export function useDeleteDoctor() {
   const queryClient = useQueryClient();
 
