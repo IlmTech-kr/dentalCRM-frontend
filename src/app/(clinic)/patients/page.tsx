@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Pencil, Plus, Trash2, X, Search, AlertCircle, CheckCircle, Loader } from "lucide-react";
-
-// ✅ IMPORT REACT QUERY HOOKS
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import {
-  useGetPatients,
+  AlertCircle,
+  CheckCircle,
+  Eye,
+  Loader,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import {
   useCreatePatient,
-  useUpdatePatient,
   useDeletePatient,
+  useGetPatients,
   useSearchPatientByPhone,
+  useUpdatePatient,
 } from "@/src/features/patients/hooks/usePatients";
+
+import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
+import { useCreateAppointment } from "@/src/features/appointments/hooks/useAppointments";
+import { Gender } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -20,97 +33,123 @@ const emptyForm: CreatePatientDto = {
   lastName: "",
   birthDate: "",
   phone: "",
-  gender: "MALE",
+  gender: Gender.MALE,
   anamnesis: "",
 };
 
-type ModalState = "none" | "form" | "view" | "phone-search";
+const emptyAppointmentForm = {
+  doctorId: "",
+  appointmentDate: "",
+  startTime: "09:00",
+  slotDurationMinutes: 30,
+  notes: "",
+};
 
-/**
- * Format phone number to +998 XX XXX XX XX format
- */
+type ModalState = "none" | "form" | "view" | "phone-search" | "appointment";
+
 function formatPhoneNumber(input: string): string {
-  if (!input) return "";
-
   const digits = input.replace(/\D/g, "");
 
-  if (!digits) return "";
+  let localNumber = digits;
 
-  let normalized = digits;
-  if (digits.startsWith("998")) {
-    normalized = digits;
-  } else if (digits.startsWith("98")) {
-    normalized = "9" + digits;
-  } else if (digits.startsWith("9")) {
-    normalized = "998" + digits.substring(1);
-  } else {
-    normalized = "998" + digits;
+  if (localNumber.startsWith("998")) {
+    localNumber = localNumber.slice(3);
   }
 
-  normalized = normalized.substring(0, 12);
-
-  if (normalized.length === 12) {
-    return `+${normalized.substring(0, 3)} ${normalized.substring(3, 5)} ${normalized.substring(5, 8)} ${normalized.substring(8, 10)} ${normalized.substring(10, 12)}`;
+  if (localNumber.startsWith("0")) {
+    localNumber = localNumber.slice(1);
   }
 
-  if (normalized.length >= 3) {
-    let formatted = `+${normalized.substring(0, 3)}`;
-    if (normalized.length > 3) {
-      formatted += ` ${normalized.substring(3, 5)}`;
-    }
-    if (normalized.length > 5) {
-      formatted += ` ${normalized.substring(5, 8)}`;
-    }
-    if (normalized.length > 8) {
-      formatted += ` ${normalized.substring(8, 10)}`;
-    }
-    if (normalized.length > 10) {
-      formatted += ` ${normalized.substring(10, 12)}`;
-    }
-    return formatted;
-  }
+  localNumber = localNumber.slice(0, 9);
 
-  return normalized.length > 0 ? `+${normalized}` : "";
+  return localNumber ? `+998${localNumber}` : "+998";
 }
 
-/**
- * Extract only digits from phone number
- */
 function extractDigits(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
+function getPatientPhone(patient?: Patient | null) {
+  return formatPhoneNumber(patient?.phone || patient?.phoneNumber || "");
+}
+
+function getDoctorId(doctor: any) {
+  return doctor?.id || doctor?._id || "";
+}
+
+function getDoctorName(doctor: any) {
+  return (
+    doctor?.fullName ||
+    doctor?.name ||
+    `${doctor?.firstName || ""} ${doctor?.lastName || ""}`.trim()
+  );
+}
+
+function getGenderLabel(gender?: string) {
+  if (gender === Gender.MALE) return "Male";
+  if (gender === Gender.FEMALE) return "Female";
+
+  return gender || "-";
+}
+
+function getGenderBadgeClass(gender?: string) {
+  if (gender === Gender.MALE) {
+    return "border-blue-200 bg-blue-50 text-blue-700";
+  }
+
+  if (gender === Gender.FEMALE) {
+    return "border-pink-200 bg-pink-50 text-pink-700";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
 export default function PatientsPage() {
-  // ✅ USE REACT QUERY HOOKS
-  const { data: patients = [], isLoading, error: patientsError } = useGetPatients();
+  const toast = useToast();
+
+  const {
+    data: patients = [],
+    isLoading,
+    error: patientsError,
+  } = useGetPatients();
+
+  const { data: doctors = [] } = useGetDoctors();
+
   const createMutation = useCreatePatient();
   const deleteMutation = useDeletePatient();
+  const createAppointmentMutation = useCreateAppointment();
 
   const [form, setForm] = useState<CreatePatientDto>(emptyForm);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [modalState, setModalState] = useState<ModalState>("none");
 
-  // Phone search state
-  const [phoneSearch, setPhoneSearch] = useState<string>("+998 ");
+  const updateMutation = useUpdatePatient(editingPatient?.id || "");
+
+  const [phoneSearch, setPhoneSearch] = useState<string>("+998");
   const [phoneSearchError, setPhoneSearchError] = useState("");
   const [phoneSearchAttempted, setPhoneSearchAttempted] = useState(false);
 
-  // ✅ USE PHONE SEARCH HOOK
+  const [appointmentForm, setAppointmentForm] = useState(emptyAppointmentForm);
+
   const phoneDigits = extractDigits(phoneSearch);
   const shouldSearch = phoneDigits.length === 12 && phoneSearchAttempted;
-  const {
-    data: phoneSearchResults = [],
-    isLoading: phoneSearchLoading,
-  } = useSearchPatientByPhone(shouldSearch ? phoneSearch : null);
 
-  const phoneSearchResult = phoneSearchResults.length > 0 ? phoneSearchResults[0] : null;
-    const toast = useToast();
+  const { data: phoneSearchResults = [], isLoading: phoneSearchLoading } =
+    useSearchPatientByPhone(shouldSearch ? phoneSearch : null);
+
+  const phoneSearchResult =
+    phoneSearchResults.length > 0 ? phoneSearchResults[0] : null;
+
+  const appointmentDoctors = doctors.filter((doctor: any) =>
+    doctor.roles?.includes("DOCTOR"),
+  );
 
   function openCreateModal() {
     setEditingPatient(null);
+    setSelectedPatient(null);
     setForm(emptyForm);
-    setPhoneSearch("+998 ");
+    setPhoneSearch("+998");
     setPhoneSearchError("");
     setPhoneSearchAttempted(false);
     setModalState("phone-search");
@@ -118,30 +157,40 @@ export default function PatientsPage() {
 
   function openEditModal(patient: Patient) {
     setEditingPatient(patient);
+    setSelectedPatient(null);
+
     setForm({
-      firstName: patient.firstName,
-      lastName: patient.lastName,
-      birthDate: patient.birthDate,
-      phone: patient.phone,
+      firstName: patient.firstName || "",
+      lastName: patient.lastName || "",
+      birthDate: patient.birthDate || "",
+      phone: getPatientPhone(patient),
       gender: patient.gender,
-      anamnesis: patient.anamnesis,
+      anamnesis: patient.anamnesis || "",
     });
+
     setModalState("form");
+  }
+
+  function openAppointmentModal(patient: Patient) {
+    setSelectedPatient(patient);
+    setEditingPatient(null);
+    setAppointmentForm(emptyAppointmentForm);
+    setModalState("appointment");
   }
 
   function closeModal() {
     setModalState("none");
     setEditingPatient(null);
+    setSelectedPatient(null);
     setForm(emptyForm);
-    setPhoneSearch("+998 ");
+    setAppointmentForm(emptyAppointmentForm);
+    setPhoneSearch("+998");
     setPhoneSearchError("");
     setPhoneSearchAttempted(false);
   }
 
   function handleChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
     const { name, value } = e.target;
 
@@ -151,68 +200,96 @@ export default function PatientsPage() {
     }));
   }
 
-  /**
-   * Handle phone search input with +998 prefix
-   */
   function handlePhoneSearchInput(value: string) {
-    if (!value.startsWith("+998")) {
-      setPhoneSearch("+998 ");
-      return;
-    }
-
-    const cleaned = value.replace(/\s+/g, " ");
-    setPhoneSearch(cleaned);
+    setPhoneSearch(formatPhoneNumber(value));
     setPhoneSearchError("");
   }
 
-  /**
-   * Handle phone search submission
-   */
-  async function handlePhoneSearch(e: React.FormEvent) {
+  async function handlePhoneSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const digits = phoneSearch.replace(/\D/g, "");
+    const digits = extractDigits(phoneSearch);
 
-    if (digits.length < 12) {
+    if (digits.length !== 12) {
       setPhoneSearchError("Please enter a complete phone number");
       return;
     }
 
     setPhoneSearchAttempted(true);
     setPhoneSearchError("");
-
-    // React Query will automatically fetch due to useSearchPatientByPhone hook
   }
 
   function proceedToCreateForm() {
-    const formattedPhone = formatPhoneNumber(phoneSearch);
     setForm((prev) => ({
       ...prev,
-      phone: formattedPhone,
+      phone: formatPhoneNumber(phoneSearch),
     }));
+
     setModalState("form");
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
+      const payload = {
+        ...form,
+        phone: formatPhoneNumber(form.phone),
+      };
+
       if (editingPatient) {
-        // ✅ PROPERLY CALL useUpdatePatient with patientId
-        const updateMutation = useUpdatePatient(editingPatient.id);
         await updateMutation.mutateAsync({
           id: editingPatient.id,
-          ...form,
+          ...payload,
         });
+
+        toast.success("Patient updated successfully");
       } else {
-        // ✅ USE CREATE MUTATION
-        await createMutation.mutateAsync(form);
+        await createMutation.mutateAsync(payload);
+        toast.success("Patient created successfully");
       }
 
       closeModal();
     } catch (error) {
-      console.error("Failed to save patient:", error);
-      alert(error instanceof Error ? error.message : "Failed to save patient");
+      toast.error("Failed to save patient");
+    }
+  }
+
+  async function handleCreateAppointment(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!selectedPatient?.id) {
+      toast.error("Patient ID topilmadi");
+      return;
+    }
+
+    if (!appointmentForm.doctorId) {
+      toast.warning("Doctor tanlang");
+      return;
+    }
+
+    if (!appointmentForm.appointmentDate) {
+      toast.warning("Appointment date tanlang");
+      return;
+    }
+
+    try {
+      await createAppointmentMutation.mutateAsync({
+        patientId: selectedPatient.id,
+        doctorId: appointmentForm.doctorId,
+        appointmentDate: appointmentForm.appointmentDate,
+        startTime:
+          appointmentForm.startTime.length === 5
+            ? `${appointmentForm.startTime}:00`
+            : appointmentForm.startTime,
+        slotDurationMinutes: Number(appointmentForm.slotDurationMinutes),
+        notes: appointmentForm.notes,
+      });
+
+      toast.success("Appointment created successfully");
+      closeModal();
+    } catch (error) {
+      toast.error("Appointment create qilishda xatolik bo‘ldi");
     }
   }
 
@@ -221,14 +298,10 @@ export default function PatientsPage() {
     if (!confirmed) return;
 
     try {
-      // ✅ USE DELETE MUTATION
       await deleteMutation.mutateAsync(id);
-    toast.success("Patient deleted successfully");
-
+      toast.success("Patient deleted successfully");
     } catch (error) {
-      console.error("Failed to delete patient:", error);
-    toast.error("Cannot delete patient");
-
+      toast.error("Cannot delete patient");
     }
   }
 
@@ -237,17 +310,16 @@ export default function PatientsPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Patients</h1>
-          <p className="mt-1 text-slate-500">
-            Manage dental clinic patients
-          </p>
+          <p className="mt-1 text-slate-500">Manage dental clinic patients</p>
         </div>
 
         <button
+          type="button"
           onClick={openCreateModal}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
         >
           <Plus size={18} />
-          Create Patient
+          Create Patient / Appointment
         </button>
       </div>
 
@@ -262,7 +334,6 @@ export default function PatientsPage() {
           </span>
         </div>
 
-        {/* ✅ USE QUERY STATE */}
         {isLoading ? (
           <p className="p-6 text-slate-500">Loading patients...</p>
         ) : patientsError ? (
@@ -308,13 +379,17 @@ export default function PatientsPage() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-slate-700">
-                        {patient.phone}
+                      <td className="px-6 py-4 font-semibold text-slate-700">
+                        {getPatientPhone(patient)}
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                          {patient.gender}
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${getGenderBadgeClass(
+                            patient.gender,
+                          )}`}
+                        >
+                          {getGenderLabel(patient.gender)}
                         </span>
                       </td>
 
@@ -329,6 +404,7 @@ export default function PatientsPage() {
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedPatient(patient);
                               setModalState("view");
@@ -340,6 +416,16 @@ export default function PatientsPage() {
                           </button>
 
                           <button
+                            type="button"
+                            onClick={() => openAppointmentModal(patient)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+                            title="Create Appointment"
+                          >
+                            <Plus size={16} />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => openEditModal(patient)}
                             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                             title="Edit"
@@ -348,6 +434,7 @@ export default function PatientsPage() {
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => handleDelete(patient.id)}
                             disabled={deleteMutation.isPending}
                             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
@@ -375,7 +462,6 @@ export default function PatientsPage() {
         )}
       </div>
 
-      {/* PHONE SEARCH MODAL */}
       {modalState === "phone-search" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
@@ -385,6 +471,7 @@ export default function PatientsPage() {
               </h2>
 
               <button
+                type="button"
                 onClick={closeModal}
                 className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
               >
@@ -393,12 +480,13 @@ export default function PatientsPage() {
             </div>
 
             <div className="space-y-4 p-6">
-              {/* If patient found */}
               {phoneSearchResult ? (
                 <div className="space-y-4">
-                  {/* Success message */}
                   <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
-                    <CheckCircle className="mt-0.5 flex-shrink-0 text-green-600" size={20} />
+                    <CheckCircle
+                      className="mt-0.5 flex-shrink-0 text-green-600"
+                      size={20}
+                    />
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-green-900">
                         Patient Found!
@@ -409,49 +497,32 @@ export default function PatientsPage() {
                     </div>
                   </div>
 
-                  {/* Patient information */}
                   <div className="space-y-3">
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <p className="text-xs font-medium uppercase text-slate-500">Name</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {phoneSearchResult.firstName} {phoneSearchResult.lastName}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <p className="text-xs font-medium uppercase text-slate-500">Phone</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {phoneSearchResult.phone}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <p className="text-xs font-medium uppercase text-slate-500">Gender</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {phoneSearchResult.gender}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <p className="text-xs font-medium uppercase text-slate-500">Birth Date</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {phoneSearchResult.birthDate}
-                      </p>
-                    </div>
-
-                    {phoneSearchResult.anamnesis && (
-                      <div className="rounded-xl bg-slate-50 p-4">
-                        <p className="text-xs font-medium uppercase text-slate-500">Anamnesis</p>
-                        <p className="mt-1 text-sm text-slate-700">
-                          {phoneSearchResult.anamnesis}
-                        </p>
-                      </div>
-                    )}
+                    <Info
+                      label="Name"
+                      value={`${phoneSearchResult.firstName} ${phoneSearchResult.lastName}`}
+                    />
+                    <Info
+                      label="Phone"
+                      value={getPatientPhone(phoneSearchResult)}
+                    />
+                    <Info
+                      label="Gender"
+                      value={getGenderLabel(phoneSearchResult.gender)}
+                    />
+                    <Info
+                      label="Birth Date"
+                      value={phoneSearchResult.birthDate}
+                    />
+                    <Info
+                      label="Anamnesis"
+                      value={phoneSearchResult.anamnesis || "-"}
+                    />
                   </div>
 
-                  {/* Action buttons */}
                   <div className="flex gap-3 border-t border-slate-200 pt-4">
                     <button
+                      type="button"
                       onClick={closeModal}
                       className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50"
                     >
@@ -459,13 +530,11 @@ export default function PatientsPage() {
                     </button>
 
                     <button
-                      onClick={() => {
-                        setSelectedPatient(phoneSearchResult);
-                        setModalState("view");
-                      }}
+                      type="button"
+                      onClick={() => openAppointmentModal(phoneSearchResult)}
                       className="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
                     >
-                      View Details
+                      Create Appointment
                     </button>
                   </div>
                 </div>
@@ -475,57 +544,67 @@ export default function PatientsPage() {
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Phone Number
                     </label>
+
                     <div className="relative">
                       <input
                         type="tel"
                         value={phoneSearch}
                         onChange={(e) => handlePhoneSearchInput(e.target.value)}
-                        onFocus={(e) => {
-                          if (!e.target.value.startsWith("+998")) {
-                            setPhoneSearch("+998 ");
-                          }
-                        }}
-                        placeholder="+998 90 123 45 67"
-                        maxLength={17}
+                        placeholder="+998934919100"
+                        maxLength={13}
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-10 text-lg font-semibold tracking-wider outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                      <Search className="absolute right-3 top-3.5 text-slate-400" size={18} />
+
+                      <Search
+                        className="absolute right-3 top-3.5 text-slate-400"
+                        size={18}
+                      />
                     </div>
 
-                    <div className="mt-2 rounded-lg bg-blue-50 p-3 border border-blue-200">
+                    <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
                       <p className="text-xs text-slate-600">
-                        Formatted:{" "}
+                        Phone:{" "}
                         <span className="font-semibold text-blue-700">
-                          {phoneSearch || "+998 "}
+                          {phoneSearch || "+998934919100"}
                         </span>
                       </p>
                     </div>
 
                     <p className="mt-2 text-xs text-slate-500">
-                      Automatically starts with +998. Just enter the remaining 9 digits.
+                      Enter number without spaces. Example: +998934919100
                     </p>
                   </div>
 
-                  {/* ✅ ERROR MESSAGE */}
                   {phoneSearchError && (
                     <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-                      <AlertCircle className="mt-0.5 flex-shrink-0 text-red-600" size={20} />
+                      <AlertCircle
+                        className="mt-0.5 flex-shrink-0 text-red-600"
+                        size={20}
+                      />
                       <p className="text-sm text-red-700">{phoneSearchError}</p>
                     </div>
                   )}
 
-                  {/* Not found message */}
-                  {phoneSearchAttempted && !phoneSearchResult && !phoneSearchLoading && !phoneSearchError && (
-                    <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                      <AlertCircle className="mt-0.5 flex-shrink-0 text-blue-600" size={20} />
-                      <div>
-                        <p className="text-sm font-semibold text-blue-900">No Patient Found</p>
-                        <p className="mt-0.5 text-xs text-blue-700">
-                          This phone number is not in the system. You can create a new patient.
-                        </p>
+                  {phoneSearchAttempted &&
+                    !phoneSearchResult &&
+                    !phoneSearchLoading &&
+                    !phoneSearchError && (
+                      <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                        <AlertCircle
+                          className="mt-0.5 flex-shrink-0 text-blue-600"
+                          size={20}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-blue-900">
+                            No Patient Found
+                          </p>
+                          <p className="mt-0.5 text-xs text-blue-700">
+                            This phone number is not in the system. You can
+                            create a new patient.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   <div className="flex gap-3 border-t border-slate-200 pt-4">
                     <button
@@ -536,11 +615,10 @@ export default function PatientsPage() {
                       Cancel
                     </button>
 
-                    {/* ✅ USE QUERY LOADING STATE */}
                     <button
                       type="submit"
-                      disabled={phoneSearchLoading || phoneDigits.length < 12}
-                      className="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      disabled={phoneSearchLoading || phoneDigits.length !== 12}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {phoneSearchLoading ? (
                         <>
@@ -556,17 +634,19 @@ export default function PatientsPage() {
                     </button>
                   </div>
 
-                  {/* Proceed to create button - shown after search attempted with no result */}
-                  {phoneSearchAttempted && !phoneSearchResult && !phoneSearchLoading && !phoneSearchError && (
-                    <button
-                      type="button"
-                      onClick={proceedToCreateForm}
-                      className="w-full rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 flex items-center justify-center gap-2"
-                    >
-                      <Plus size={16} />
-                      Create New Patient
-                    </button>
-                  )}
+                  {phoneSearchAttempted &&
+                    !phoneSearchResult &&
+                    !phoneSearchLoading &&
+                    !phoneSearchError && (
+                      <button
+                        type="button"
+                        onClick={proceedToCreateForm}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700"
+                      >
+                        <Plus size={16} />
+                        Create New Patient
+                      </button>
+                    )}
                 </form>
               )}
             </div>
@@ -574,7 +654,177 @@ export default function PatientsPage() {
         </div>
       )}
 
-      {/* CREATE/EDIT FORM MODAL */}
+      {modalState === "appointment" && selectedPatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Create Appointment
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedPatient.firstName} {selectedPatient.lastName} uchun
+                  appointment
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAppointment} className="space-y-4 p-6">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-medium uppercase text-blue-600">
+                  Patient
+                </p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {selectedPatient.firstName} {selectedPatient.lastName}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {getPatientPhone(selectedPatient)}
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  Doctor
+                </label>
+
+                <select
+                  value={appointmentForm.doctorId}
+                  onChange={(e) =>
+                    setAppointmentForm((prev) => ({
+                      ...prev,
+                      doctorId: e.target.value,
+                    }))
+                  }
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select doctor</option>
+
+                  {appointmentDoctors.map((doctor: any) => {
+                    const doctorId = getDoctorId(doctor);
+                    const doctorName = getDoctorName(doctor);
+
+                    return (
+                      <option key={doctorId} value={doctorId}>
+                        {doctorName || doctorId}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                    Date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={appointmentForm.appointmentDate}
+                    onChange={(e) =>
+                      setAppointmentForm((prev) => ({
+                        ...prev,
+                        appointmentDate: e.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                    Start Time
+                  </label>
+
+                  <input
+                    type="time"
+                    value={appointmentForm.startTime}
+                    onChange={(e) =>
+                      setAppointmentForm((prev) => ({
+                        ...prev,
+                        startTime: e.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  Slot Duration
+                </label>
+
+                <select
+                  value={appointmentForm.slotDurationMinutes}
+                  onChange={(e) =>
+                    setAppointmentForm((prev) => ({
+                      ...prev,
+                      slotDurationMinutes: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>60 min</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  Notes
+                </label>
+
+                <textarea
+                  value={appointmentForm.notes}
+                  onChange={(e) =>
+                    setAppointmentForm((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                  placeholder="Birinchi ko‘rik"
+                  className="min-h-[100px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={createAppointmentMutation.isPending}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {createAppointmentMutation.isPending
+                    ? "Creating..."
+                    : "Create Appointment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {modalState === "form" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
@@ -584,6 +834,7 @@ export default function PatientsPage() {
               </h2>
 
               <button
+                type="button"
                 onClick={closeModal}
                 className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
               >
@@ -626,13 +877,13 @@ export default function PatientsPage() {
                 name="phone"
                 value={form.phone}
                 onChange={(e) => {
-                  const formatted = formatPhoneNumber(e.target.value);
                   setForm((prev) => ({
                     ...prev,
-                    phone: formatted,
+                    phone: formatPhoneNumber(e.target.value),
                   }));
                 }}
-                placeholder="+998 90 123 45 67"
+                placeholder="+998934919100"
+                maxLength={13}
                 required
                 className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -641,10 +892,12 @@ export default function PatientsPage() {
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
-                className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className={`rounded-xl border px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-blue-500 ${getGenderBadgeClass(
+                  form.gender,
+                )}`}
               >
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
+                <option value={Gender.MALE}>Male</option>
+                <option value={Gender.FEMALE}>Female</option>
               </select>
 
               <textarea
@@ -664,10 +917,11 @@ export default function PatientsPage() {
                   Cancel
                 </button>
 
-                {/* ✅ SUBMIT BUTTON WITH MUTATION STATE */}
                 <button
                   type="submit"
-                  disabled={createMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
                   className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {editingPatient ? "Save Changes" : "Create Patient"}
@@ -678,7 +932,6 @@ export default function PatientsPage() {
         </div>
       )}
 
-      {/* VIEW PATIENT MODAL */}
       {modalState === "view" && selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
@@ -688,6 +941,7 @@ export default function PatientsPage() {
               </h2>
 
               <button
+                type="button"
                 onClick={closeModal}
                 className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
               >
@@ -696,15 +950,25 @@ export default function PatientsPage() {
             </div>
 
             <div className="space-y-4 text-sm">
-              <Info label="Name" value={`${selectedPatient.firstName} ${selectedPatient.lastName}`} />
-              <Info label="Phone" value={selectedPatient.phone} />
-              <Info label="Gender" value={selectedPatient.gender} />
+              <Info
+                label="Name"
+                value={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
+              />
+              <Info label="Phone" value={getPatientPhone(selectedPatient)} />
+              <Info
+                label="Gender"
+                value={getGenderLabel(selectedPatient.gender)}
+              />
               <Info label="Birth Date" value={selectedPatient.birthDate} />
-              <Info label="Anamnesis" value={selectedPatient.anamnesis || "-"} />
+              <Info
+                label="Anamnesis"
+                value={selectedPatient.anamnesis || "-"}
+              />
             </div>
 
             <div className="mt-6 flex gap-3 border-t border-slate-200 pt-4">
               <button
+                type="button"
                 onClick={closeModal}
                 className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50"
               >
@@ -712,6 +976,15 @@ export default function PatientsPage() {
               </button>
 
               <button
+                type="button"
+                onClick={() => openAppointmentModal(selectedPatient)}
+                className="flex-1 rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700"
+              >
+                Create Appointment
+              </button>
+
+              <button
+                type="button"
                 onClick={() => openEditModal(selectedPatient)}
                 className="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
               >
