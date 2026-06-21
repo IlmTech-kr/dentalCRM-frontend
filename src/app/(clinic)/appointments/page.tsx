@@ -23,9 +23,12 @@ import {
   useUpdateAppointment,
 } from "@/src/features/appointments/hooks/useAppointments";
 
-import { useGetPatients } from "@/src/features/patients/hooks/usePatients";
-import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
+import {
+  useGetPatients,
+  useSearchPatientByPhone,
+} from "@/src/features/patients/hooks/usePatients";
 
+import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
@@ -57,9 +60,26 @@ const initialForm: CreateAppointmentDto = {
   notes: "",
 };
 
+function formatPhoneNumber(input: string): string {
+  const digits = input.replace(/\D/g, "");
+
+  let localNumber = digits;
+
+  if (localNumber.startsWith("998")) {
+    localNumber = localNumber.slice(3);
+  }
+
+  if (localNumber.startsWith("0")) {
+    localNumber = localNumber.slice(1);
+  }
+
+  localNumber = localNumber.slice(0, 9);
+
+  return localNumber ? `+998${localNumber}` : "+998";
+}
+
 function getTodayDate() {
   const today = new Date();
-
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
@@ -73,6 +93,7 @@ function getItemId(item: any): string {
 
 function getAppointmentId(appointment: Appointment | null): string {
   if (!appointment) return "";
+
   return appointment.id || appointment._id || "";
 }
 
@@ -162,6 +183,10 @@ function getPersonName(person: any): string {
   return `${firstName} ${lastName}`.trim();
 }
 
+function getPersonPhone(person: any): string {
+  return person?.phone || person?.phoneNumber || "";
+}
+
 function getInitials(name: string) {
   if (!name) return "?";
 
@@ -228,7 +253,6 @@ interface AppointmentModalProps {
   open: boolean;
   form: CreateAppointmentDto;
   selectedAppointment: Appointment | null;
-  patients: any[];
   doctors: any[];
   isSubmitting: boolean;
   onClose: () => void;
@@ -240,20 +264,88 @@ function AppointmentModal({
   open,
   form,
   selectedAppointment,
-  patients,
   doctors,
   isSubmitting,
   onClose,
   onChange,
   onSubmit,
 }: AppointmentModalProps) {
+  const [phoneSearch, setPhoneSearch] = useState("+998");
+  const [searchStarted, setSearchStarted] = useState(false);
+  const [patientSearchError, setPatientSearchError] = useState("");
+
+  const phoneDigits = phoneSearch.replace(/\D/g, "");
+  const shouldSearch = searchStarted && phoneDigits.length === 12;
+
+  const { data: foundPatients = [], isLoading: isPatientSearching } =
+    useSearchPatientByPhone(shouldSearch ? phoneSearch : null);
+
+  const foundPatient = foundPatients[0] || null;
+
+  useEffect(() => {
+    if (!open) {
+      setPhoneSearch("+998");
+      setSearchStarted(false);
+      setPatientSearchError("");
+      return;
+    }
+
+    if (!selectedAppointment && !form.patientId) {
+      setPhoneSearch("+998");
+      setSearchStarted(false);
+      setPatientSearchError("");
+    }
+  }, [open, selectedAppointment, form.patientId]);
+
+  useEffect(() => {
+    if (!foundPatient) return;
+
+    const patientId = getItemId(foundPatient);
+
+    if (patientId && form.patientId !== patientId) {
+      onChange({
+        ...form,
+        patientId,
+      });
+    }
+  }, [foundPatient, form, onChange]);
+
+  function handleSearchPatient() {
+    const digits = phoneSearch.replace(/\D/g, "");
+
+    if (digits.length !== 12) {
+      setPatientSearchError("To‘liq raqam kiriting. Masalan: +998934919100");
+      return;
+    }
+
+    setSearchStarted(true);
+    setPatientSearchError("");
+  }
+
+  function handlePhoneChange(value: string) {
+    setPhoneSearch(formatPhoneNumber(value));
+    setSearchStarted(false);
+    setPatientSearchError("");
+
+    if (!selectedAppointment) {
+      onChange({
+        ...form,
+        patientId: "",
+      });
+    }
+  }
+
   if (!open) return null;
+
+  const selectedPatientName =
+    (selectedAppointment as any)?.patientName ||
+    getPersonName((selectedAppointment as any)?.patient);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div onClick={onClose} className="absolute inset-0 backdrop-blur-md" />
 
-      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
+      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
         <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-7 text-white">
           <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 left-12 h-44 w-44 rounded-full bg-white/10" />
@@ -271,7 +363,7 @@ function AppointmentModal({
               </h2>
 
               <p className="mt-2 text-sm font-medium text-blue-50">
-                Patient, doctor, date and time information.
+                Find patient by phone number, then choose doctor and time.
               </p>
             </div>
 
@@ -289,66 +381,118 @@ function AppointmentModal({
           onSubmit={onSubmit}
           className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-6 py-7"
         >
-          <div className="grid gap-5 sm:grid-cols-2">
+          {selectedAppointment ? (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <p className="text-xs font-black uppercase text-blue-600">
+                Patient
+              </p>
+              <p className="mt-1 text-sm font-black text-slate-900">
+                {selectedPatientName || form.patientId}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                ID: {form.patientId}
+              </p>
+            </div>
+          ) : (
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">
-                Patient <span className="text-red-500">*</span>
+                Find Patient by Phone <span className="text-red-500">*</span>
               </label>
 
-              <select
-                value={form.patientId}
-                onChange={(e) =>
-                  onChange({
-                    ...form,
-                    patientId: e.target.value,
-                  })
-                }
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">Select patient</option>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    type="tel"
+                    value={phoneSearch}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="+998934919100"
+                    maxLength={13}
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
 
-                {patients.map((patient) => {
-                  const id = getItemId(patient);
-                  const name = getPersonName(patient) || id;
+                  <button
+                    type="button"
+                    onClick={handleSearchPatient}
+                    disabled={isPatientSearching || phoneDigits.length !== 12}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isPatientSearching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Search
+                  </button>
+                </div>
 
-                  return (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  );
-                })}
-              </select>
+                {patientSearchError && (
+                  <p className="mt-3 text-sm font-bold text-red-600">
+                    {patientSearchError}
+                  </p>
+                )}
+
+                {searchStarted && !isPatientSearching && !foundPatient && (
+                  <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
+                    <p className="text-sm font-black text-red-700">
+                      Patient topilmadi
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-red-600">
+                      Avval patient create qiling, keyin appointment yarating.
+                    </p>
+                  </div>
+                )}
+
+                {foundPatient && (
+                  <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                    <p className="text-xs font-black uppercase text-emerald-600">
+                      Patient found
+                    </p>
+
+                    <p className="mt-1 text-sm font-black text-slate-900">
+                      {getPersonName(foundPatient)}
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-600">
+                      Phone: {getPersonPhone(foundPatient)}
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      ID: {getItemId(foundPatient)}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
+          )}
 
-            <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">
-                Doctor <span className="text-red-500">*</span>
-              </label>
+          <div>
+            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+              Doctor <span className="text-red-500">*</span>
+            </label>
 
-              <select
-                value={form.doctorId}
-                onChange={(e) =>
-                  onChange({
-                    ...form,
-                    doctorId: e.target.value,
-                  })
-                }
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">Select doctor</option>
+            <select
+              value={form.doctorId}
+              onChange={(e) =>
+                onChange({
+                  ...form,
+                  doctorId: e.target.value,
+                })
+              }
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+            >
+              <option value="">Select doctor</option>
 
-                {doctors.map((doctor) => {
-                  const id = getItemId(doctor);
-                  const name = getPersonName(doctor) || "Unnamed doctor";
+              {doctors.map((doctor) => {
+                const id = getItemId(doctor);
+                const name = getPersonName(doctor) || "Unnamed doctor";
 
-                  return (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+                return (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -447,7 +591,7 @@ function AppointmentModal({
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!selectedAppointment && !form.patientId)}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -681,25 +825,25 @@ export default function AppointmentsPage() {
     const scheduled = currentAppointments.filter(
       (item) =>
         (((item as any).status as AppointmentStatus) ||
-          AppointmentStatus.SCHEDULED) === AppointmentStatus.SCHEDULED
+          AppointmentStatus.SCHEDULED) === AppointmentStatus.SCHEDULED,
     ).length;
 
     const inProgress = currentAppointments.filter(
       (item) =>
         ((item as any).status as AppointmentStatus) ===
-        AppointmentStatus.IN_PROGRESS
+        AppointmentStatus.IN_PROGRESS,
     ).length;
 
     const completed = currentAppointments.filter(
       (item) =>
         ((item as any).status as AppointmentStatus) ===
-        AppointmentStatus.COMPLETED
+        AppointmentStatus.COMPLETED,
     ).length;
 
     const cancelled = currentAppointments.filter(
       (item) =>
         ((item as any).status as AppointmentStatus) ===
-        AppointmentStatus.CANCELLED
+        AppointmentStatus.CANCELLED,
     ).length;
 
     return {
@@ -774,7 +918,7 @@ export default function AppointmentsPage() {
     const appointmentDate = normalizeDateForInput(form.appointmentDate);
 
     if (!form.patientId) {
-      toast.warning("Patient tanlang");
+      toast.warning("Patientni telefon raqam orqali toping");
       return;
     }
 
@@ -814,8 +958,7 @@ export default function AppointmentsPage() {
           startTime,
           slotDurationMinutes: Number(form.slotDurationMinutes),
           notes: form.notes || "",
-          status:
-            selectedAppointment.status || AppointmentStatus.SCHEDULED,
+          status: selectedAppointment.status || AppointmentStatus.SCHEDULED,
         };
 
         await updateAppointmentMutation.mutateAsync({
@@ -844,14 +987,14 @@ export default function AppointmentsPage() {
       await refreshAll();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, "Appointment saqlashda xatolik bo'ldi")
+        getApiErrorMessage(err, "Appointment saqlashda xatolik bo'ldi"),
       );
     }
   }
 
   async function handleStatusChange(
     appointment: Appointment,
-    status: AppointmentStatus
+    status: AppointmentStatus,
   ) {
     const appointmentId = getAppointmentId(appointment);
 
@@ -927,7 +1070,7 @@ export default function AppointmentsPage() {
       await refreshAll();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, "Appointment delete qilishda xatolik bo'ldi")
+        getApiErrorMessage(err, "Appointment delete qilishda xatolik bo'ldi"),
       );
     }
   }
@@ -1107,7 +1250,7 @@ export default function AppointmentsPage() {
               <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">
                 {getApiErrorMessage(
                   currentErrorObject,
-                  "Server error. Appointments API ichida xato bor."
+                  "Server error. Appointments API ichida xato bor.",
                 )}
               </p>
 
@@ -1174,119 +1317,92 @@ export default function AppointmentsPage() {
 
                             <span
                               className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${getStatusClass(
-                                currentStatus
+                                currentStatus,
                               )}`}
                             >
                               <span
                                 className={`h-2 w-2 rounded-full ${getStatusDotClass(
-                                  currentStatus
+                                  currentStatus,
                                 )}`}
                               />
                               {getStatusLabel(currentStatus)}
                             </span>
                           </div>
 
-                          <h3 className="mt-3 truncate text-xl font-black text-slate-950">
+                          <h3 className="mt-4 truncate text-xl font-black text-slate-950">
                             {(appointment as any).patientName}
                           </h3>
 
-                          <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-500">
-                            <UserRound className="h-4 w-4 text-slate-400" />
-                            Patient appointment
-                          </p>
+                          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-500 sm:grid-cols-2">
+                            <span className="inline-flex items-center gap-2">
+                              <UserRound className="h-4 w-4 text-blue-600" />
+                              {(appointment as any).doctorName}
+                            </span>
+
+                            <span className="inline-flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                              {appointment.appointmentDate}
+                            </span>
+
+                            <span className="inline-flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-blue-600" />
+                              {formatTime(appointment.startTime)}
+                              {(appointment as any).endTime
+                                ? ` - ${formatTime((appointment as any).endTime)}`
+                                : ""}
+                            </span>
+                          </div>
 
                           {appointment.notes && (
-                            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium leading-6 text-slate-600">
+                            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
                               {appointment.notes}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="grid gap-3 border-y border-slate-100 bg-slate-50/60 p-5 sm:grid-cols-3 lg:grid-cols-1 lg:border-x lg:border-y-0 lg:p-6">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-                            Doctor
-                          </p>
-                          <p className="mt-1 truncate text-sm font-black text-slate-900">
-                            {(appointment as any).doctorName}
-                          </p>
-                        </div>
+                      <div className="border-t border-slate-100 p-5 lg:border-l lg:border-t-0 sm:p-6">
+                        <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
+                          Change Status
+                        </label>
 
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-                            Date
-                          </p>
-                          <p className="mt-1 text-sm font-black text-slate-900">
-                            {normalizeDateForInput(appointment.appointmentDate)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-                            Time
-                          </p>
-                          <p className="mt-1 inline-flex items-center gap-2 text-sm font-black text-slate-900">
-                            <Clock className="h-4 w-4 text-blue-600" />
-                            {formatTime(appointment.startTime)} -{" "}
-                            {formatTime((appointment as any).endTime)}
-                          </p>
-                        </div>
+                        <select
+                          value={currentStatus}
+                          disabled={changingStatusId === appointmentId}
+                          onChange={(e) =>
+                            handleStatusChange(
+                              appointment,
+                              e.target.value as AppointmentStatus,
+                            )
+                          }
+                          className={`w-full rounded-2xl border px-4 py-3 text-sm font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(
+                            currentStatus,
+                          )}`}
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {getStatusLabel(status)}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
-                      <div className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center lg:w-72 lg:flex-col lg:items-stretch lg:p-6">
-                        <div>
-                          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">
-                            Change Status
-                          </p>
+                      <div className="flex items-center gap-2 border-t border-slate-100 p-5 lg:border-l lg:border-t-0 sm:p-6">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(appointment)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
 
-                          <select
-                            value={currentStatus}
-                            disabled={changingStatusId === appointmentId}
-                            onChange={(e) =>
-                              handleStatusChange(
-                                appointment,
-                                e.target.value as AppointmentStatus
-                              )
-                            }
-                            className={`w-full rounded-2xl border px-4 py-3 text-xs font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(
-                              currentStatus
-                            )}`}
-                          >
-                            {STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {getStatusLabel(status)}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="mr-auto rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 lg:mr-0">
-                            {appointment.slotDurationMinutes || "-"} min
-                          </span>
-
-                          <button
-                            type="button"
-                            aria-label="Edit appointment"
-                            title="Edit"
-                            onClick={() => openEditModal(appointment)}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-
-                          <button
-                            type="button"
-                            aria-label="Delete appointment"
-                            title="Delete"
-                            onClick={() => handleDelete(appointment)}
-                            disabled={deleteAppointmentMutation.isPending}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(appointment)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-700 transition hover:bg-red-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -1301,7 +1417,6 @@ export default function AppointmentsPage() {
         open={isModalOpen}
         form={form}
         selectedAppointment={selectedAppointment}
-        patients={patients}
         doctors={doctors}
         isSubmitting={isSubmitting}
         onClose={closeModal}
