@@ -1,16 +1,37 @@
+"use client";
+
+/**
+ * File: src/store/auth.store.ts
+ */
+
 import { create } from "zustand";
-import { AuthUser } from "../types/auth.types";
-import { Role } from "../lib/enums/enums.types"; // 👈 1. Add this import (adjust path if needed)
+import type { AuthUser } from "../types/auth.types";
+import { Role } from "../lib/enums/enums.types";
+import {
+  getStoredAccessToken,
+  getStoredUser,
+  saveAccessToken,
+  saveUser,
+  clearAuthStorage,
+} from "@/src/lib/auth/storage";
+
+type AuthDataPayload = {
+  user?: AuthUser | null;
+  accessToken?: string | null;
+  isAuthenticated?: boolean;
+};
 
 interface AuthState {
   user: AuthUser | null;
-  subDomain: string | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
 
-  setUser: (user: AuthUser) => void;
-  setSubDomain: (subDomain: string) => void;
-  setAccessToken: (token: string) => void;
+  setUser: (user: AuthUser | null) => void;
+  setAccessToken: (token: string | null) => void;
+  setAuthenticated: (value: boolean) => void;
+  setAuthData: (data: AuthDataPayload) => void;
+  hydrateFromStorage: () => void;
   logout: () => void;
 
   hasRole: (role: string) => boolean;
@@ -19,61 +40,114 @@ interface AuthState {
   isClinicAdmin: () => boolean;
   isDoctor: () => boolean;
   isAssistant: () => boolean;
+  isReceptionist: () => boolean;
 }
 
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
+// Initial hydration — store yaratilganda bir marta
+const initialUser = getStoredUser<AuthUser>();
+const initialAccessToken = getStoredAccessToken();
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  subDomain: typeof window !== "undefined" ? localStorage.getItem("subDomain") : null,
-  accessToken: typeof window !== "undefined" ? localStorage.getItem("accessToken") : null,
-  isAuthenticated: typeof window !== "undefined" ? Boolean(localStorage.getItem("accessToken")) : false,
+  user: initialUser,
+  accessToken: initialAccessToken,
+  isAuthenticated: Boolean(initialAccessToken),
+  isHydrated: isBrowser(),
 
-  setUser: (user) => set({ user, isAuthenticated: true }),
-  setSubDomain: (subDomain) => {
-    localStorage.setItem("subDomain", subDomain);
-    set({ subDomain });
+  setUser: (user) => {
+    // Shared helper orqali
+    saveUser(user);
+
+    set({
+      user,
+      isAuthenticated: Boolean(get().accessToken || user),
+      isHydrated: true,
+    });
   },
+
   setAccessToken: (token) => {
-    localStorage.setItem("accessToken", token);
-    set({ accessToken: token, isAuthenticated: true });
-  },
-  logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("subDomain");
-    set({ user: null, subDomain: null, accessToken: null, isAuthenticated: false });
+    saveAccessToken(token);
+
+    set({
+      accessToken: token,
+      isAuthenticated: Boolean(token),
+      isHydrated: true,
+    });
   },
 
-  // ✅ Fixed: Safely tell TS to treat the incoming string as a Role
+  setAuthenticated: (value) => {
+    set({
+      isAuthenticated: value,
+      isHydrated: true,
+    });
+  },
+
+  setAuthData: (data) => {
+    if (data.user !== undefined) {
+      saveUser(data.user);
+    }
+
+    if (data.accessToken !== undefined) {
+      saveAccessToken(data.accessToken);
+    }
+
+    const nextUser =
+      data.user !== undefined ? data.user : get().user;
+
+    const nextAccessToken =
+      data.accessToken !== undefined ? data.accessToken : get().accessToken;
+
+    set({
+      user: nextUser,
+      accessToken: nextAccessToken,
+      isAuthenticated:
+        data.isAuthenticated !== undefined
+          ? data.isAuthenticated
+          : Boolean(nextAccessToken),
+      isHydrated: true,
+    });
+  },
+
+  hydrateFromStorage: () => {
+    const user = getStoredUser<AuthUser>();
+    const accessToken = getStoredAccessToken();
+
+    set({
+      user,
+      accessToken,
+      isAuthenticated: Boolean(accessToken),
+      isHydrated: true,
+    });
+  },
+
+  logout: () => {
+    // Bitta shared clearAuthStorage — hamma key to'g'ri o'chadi
+    clearAuthStorage();
+
+    set({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      isHydrated: true,
+    });
+  },
+
   hasRole: (role: string) => {
-    const { user } = get();
-    return user?.roles?.includes(role as Role) || false; 
+    const roles = (get().user?.roles || []) as string[];
+    return roles.includes(role);
   },
 
   getPrimaryRole: () => {
-    const { user } = get();
-    return user?.roles?.[0] || null;
+    const roles = (get().user?.roles || []) as string[];
+    return roles[0] || null;
   },
 
-  // ✅ Fixed: Use the Enum directly
-  isAdmin: () => {
-    const { user } = get();
-    return user?.roles?.includes(Role.SUPER_ADMIN) || false;
-  },
-
-  // ✅ Fixed: Use the Enum directly
-  isClinicAdmin: () => {
-    const { user } = get();
-    return user?.roles?.includes(Role.CLINIC_ADMIN) || false;
-  },
-
-  // ✅ Fixed: Use the Enum directly
-  isDoctor: () => {
-    const { user } = get();
-    return user?.roles?.includes(Role.DOCTOR) || false;
-  },
-
-  // ✅ Fixed: Use the Enum directly
-  isAssistant: () => {
-    const { user } = get();
-    return user?.roles?.includes(Role.ASSISTANT) || false;
-  },
+  isAdmin: () => get().hasRole(Role.SUPER_ADMIN),
+  isClinicAdmin: () => get().hasRole(Role.CLINIC_ADMIN),
+  isDoctor: () => get().hasRole(Role.DOCTOR),
+  isAssistant: () => get().hasRole(Role.ASSISTANT),
+  isReceptionist: () => get().hasRole(Role.RECEPTIONIST),
 }));

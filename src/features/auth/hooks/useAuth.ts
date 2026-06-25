@@ -1,109 +1,156 @@
-// File: src/features/auth/hooks/useAuth.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+"use client";
+
+/**
+ * File: src/features/auth/hooks/useAuth.ts
+ */
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+
 import {
   login,
   registerClinic,
   forgotPassword,
   resetPassword,
   logout as logoutService,
-} from '../auth.service';
+} from "../auth.service";
+
+import { getMe } from "@/src/features/users/user.service";
+import { useAuthStore } from "@/src/store/auth.store";
+import { getStoredAccessToken } from "@/src/lib/auth/storage";
+
 import type {
   LoginDto,
   RegisterClinicDto,
   ForgotPasswordDto,
   ResetPasswordDto,
-} from '@/src/types/auth.types';
+} from "@/src/types/auth.types";
 
-/**
- * Hook: Login
- */
+export const authKeys = {
+  all: ["auth"] as const,
+  me: () => [...authKeys.all, "me"] as const,
+};
+
 export function useLogin() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
-  return useMutation<any, AxiosError, LoginDto>({
-    mutationFn: (credentials) => login(credentials),
-    onSuccess: (data) => {
-      // Clear all cached data on login
+  return useMutation({
+    mutationFn: (credentials: LoginDto) => login(credentials),
+
+    onSuccess: async (data) => {
+      /**
+       * Login bo'lganda eski querylarni to'liq tozalaymiz.
+       * invalidateQueries kerak emas — clear() dan keyin
+       * querylar avto refetch bo'ladi (enabled bo'lganlari).
+       */
       queryClient.clear();
 
-      // Set auth data in cache if needed
-      console.log('Login successful');
-    },
-    onError: (error) => {
-      console.error('Login failed:', error);
+      /**
+       * accessToken storage.ts dagi saveAuthData() orqali
+       * login() ichida allaqachon saqlangan.
+       *
+       * Shuning uchun uni qayta parse qilmaymiz —
+       * storage dan o'qiymiz.
+       */
+      const accessToken = getStoredAccessToken();
+
+      const responseUser =
+        data?.user || data?.profile || data?.data?.user || null;
+
+      if (responseUser) {
+        useAuthStore.getState().setAuthData({
+          user: responseUser,
+          accessToken,
+          isAuthenticated: true,
+        });
+      } else {
+        /**
+         * Login response ichida user qaytmasa:
+         * accessToken storage da bor, getMe() Authorization bilan ishlaydi.
+         */
+        const me = await getMe();
+
+        useAuthStore.getState().setAuthData({
+          user: me as any,
+          accessToken,
+          isAuthenticated: true,
+        });
+      }
+
+      router.replace("/dashboard");
     },
   });
 }
 
-/**
- * Hook: Register Clinic
- */
+export function useGetProfile() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
+
+  return useQuery({
+    queryKey: authKeys.me(),
+    queryFn: getMe,
+    enabled: isHydrated && isAuthenticated,
+    retry: false,
+    staleTime: 1000 * 60,
+  });
+}
+
 export function useRegisterClinic() {
   const queryClient = useQueryClient();
 
-  return useMutation<any, AxiosError, RegisterClinicDto>({
-    mutationFn: (data) => registerClinic(data),
-    onSuccess: (data) => {
-      console.log('Clinic registered successfully');
-    },
-    onError: (error) => {
-      console.error('Clinic registration failed:', error);
+  return useMutation({
+    mutationFn: (data: RegisterClinicDto) => registerClinic(data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: authKeys.all,
+      });
     },
   });
 }
 
-/**
- * Hook: Forgot Password
- */
 export function useForgotPassword() {
-  return useMutation<any, AxiosError, ForgotPasswordDto>({
-    mutationFn: (data) => forgotPassword(data),
-    onSuccess: (data) => {
-      console.log('Password reset link sent');
-    },
-    onError: (error) => {
-      console.error('Forgot password failed:', error);
-    },
+  return useMutation({
+    mutationFn: (data: ForgotPasswordDto) => forgotPassword(data),
   });
 }
 
-/**
- * Hook: Reset Password
- */
 export function useResetPassword() {
   const queryClient = useQueryClient();
 
-  return useMutation<any, AxiosError, ResetPasswordDto>({
-    mutationFn: (data) => resetPassword(data),
-    onSuccess: (data) => {
-      // Clear all data on password reset
+  return useMutation({
+    mutationFn: (data: ResetPasswordDto) => resetPassword(data),
+
+    onSuccess: () => {
+      /**
+       * Reset password dan keyin eski querylarni tozalaymiz.
+       * Redirect komponent o'zi handle qiladi.
+       */
       queryClient.clear();
-      console.log('Password reset successfully');
-    },
-    onError: (error) => {
-      console.error('Password reset failed:', error);
     },
   });
 }
 
-/**
- * Hook: Logout
- */
 export function useLogout() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, void>({
-    mutationFn: async () => {
-      logoutService();
-    },
-    onSuccess: () => {
-      // Clear all cached data
-      queryClient.clear();
-      console.log('Logged out successfully');
-    },
-    onError: (error) => {
-      console.error('Logout failed:', error);
-    },
+  /**
+   * logoutService() o'zi finally blokida:
+   * 1. clearAuthStorage() chaqiradi
+   * 2. window.location.href = "/login" qiladi
+   *
+   * Shuning uchun bu yerda redirect kerak emas.
+   * store.logout() va queryClient.clear() — ikki holatda ham bir xil.
+   */
+  function handleLogout() {
+    useAuthStore.getState().logout();
+    queryClient.clear();
+  }
+
+  return useMutation({
+    mutationFn: logoutService,
+    onSuccess: handleLogout,
+    onError: handleLogout,
   });
 }

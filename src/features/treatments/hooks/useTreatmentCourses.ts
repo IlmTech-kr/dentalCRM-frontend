@@ -1,6 +1,11 @@
 "use client";
 
+/**
+ * File: src/features/treatments/hooks/useTreatmentCourses.ts
+ */
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/src/store/auth.store";
 import { treatmentCourseService } from "../services/treatment-course.service";
 import type {
   AddTreatmentVisitDto,
@@ -9,11 +14,12 @@ import type {
 
 export function useTreatmentCourses(patientId?: string) {
   const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const coursesQuery = useQuery({
     queryKey: ["treatment-courses", patientId],
     queryFn: () => treatmentCourseService.listByPatient(patientId!),
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && isAuthenticated,
   });
 
   const createCourseMutation = useMutation({
@@ -27,13 +33,8 @@ export function useTreatmentCourses(patientId?: string) {
   });
 
   const addVisitMutation = useMutation({
-    mutationFn: ({
-      courseId,
-      payload,
-    }: {
-      courseId: string;
-      payload: AddTreatmentVisitDto;
-    }) => treatmentCourseService.addVisit(courseId, payload),
+    mutationFn: ({ courseId, payload }: { courseId: string; payload: AddTreatmentVisitDto }) =>
+      treatmentCourseService.addVisit(courseId, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["treatment-courses", data.patientId],

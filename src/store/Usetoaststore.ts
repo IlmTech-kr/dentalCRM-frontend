@@ -1,12 +1,16 @@
-import { create } from 'zustand';
+/**
+ * File: src/store/Usetoaststore.ts
+ */
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
+import { create } from "zustand";
+
+export type ToastType = "success" | "error" | "info" | "warning";
 
 export interface Toast {
   id: string;
   type: ToastType;
   message: string;
-  duration?: number; // milliseconds, default 4000
+  duration?: number;
 }
 
 interface ToastStore {
@@ -20,14 +24,21 @@ export const useToastStore = create<ToastStore>((set) => ({
   toasts: [],
 
   addToast: (type, message, duration = 4000) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    /**
+     * substr deprecated — substring ishlatamiz.
+     *
+     * addToast void qaytaradi (Zustand set callback).
+     * id ni tashqariga chiqarish kerak bo'lsa,
+     * alohida generateId + addToast(id, ...) pattern kerak bo'ladi.
+     * Hozir id ishlatilmaydi — void kifoya.
+     */
+    const id = Math.random().toString(36).substring(2, 11);
     const toast: Toast = { id, type, message, duration };
 
     set((state) => ({
       toasts: [...state.toasts, toast],
     }));
 
-    // Auto remove after duration
     if (duration > 0) {
       setTimeout(() => {
         set((state) => ({
@@ -35,8 +46,6 @@ export const useToastStore = create<ToastStore>((set) => ({
         }));
       }, duration);
     }
-
-    return id;
   },
 
   removeToast: (id) => {

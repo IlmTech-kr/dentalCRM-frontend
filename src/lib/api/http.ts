@@ -1,19 +1,37 @@
-// File: src/lib/api/http.ts
+/**
+ * File: src/lib/api/http.ts
+ */
+
 import axios, {
   AxiosError,
   AxiosInstance,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { ENDPOINTS } from "@/src/lib/api/endpoints";
+
+import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import {
+  getStoredAccessToken,
+  clearAuthStorage,
+} from "@/src/lib/auth/storage";
 
 const MAIN_API_URL =
-  process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:9000";
+  process.env.NEXT_PUBLIC_MAIN_API_URL || "https://dental.api.ilmtech.uz";
 
 const TENANT_API_PROTOCOL =
-  process.env.NEXT_PUBLIC_TENANT_API_PROTOCOL || "http";
+  process.env.NEXT_PUBLIC_TENANT_API_PROTOCOL || "https";
 
-const TENANT_API_PORT = process.env.NEXT_PUBLIC_TENANT_API_PORT || "9000";
+const TENANT_API_ROOT_DOMAIN =
+  process.env.NEXT_PUBLIC_TENANT_API_ROOT_DOMAIN || "dental.api.ilmtech.uz";
+
+const ENV_TENANT_API_PORT = process.env.NEXT_PUBLIC_TENANT_API_PORT;
+
+const TENANT_API_PORT =
+  ENV_TENANT_API_PORT !== undefined
+    ? ENV_TENANT_API_PORT.trim()
+    : TENANT_API_ROOT_DOMAIN === "localhost"
+      ? "9000"
+      : "";
 
 export type ApiErrorObject = {
   status?: number;
@@ -21,98 +39,78 @@ export type ApiErrorObject = {
   message?: string;
 };
 
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
+// ---------------------------------------------------------------------------
+// URL builders
+// ---------------------------------------------------------------------------
+
 /**
- * JWT token ichidan tenantId olish
+ * clinic11 => https://clinic11.dental.api.ilmtech.uz
  */
-export function getTenantIdFromToken(token: string): string | null {
-  try {
-    const payload = token.split(".")[1];
+export function buildTenantBaseUrl(subDomain: string): string {
+  const cleanSubDomain = subDomain.trim().toLowerCase();
 
-    if (!payload) return null;
-
-    const decodedPayload = JSON.parse(atob(payload));
-
-    return (
-      decodedPayload.tenantId ||
-      decodedPayload.tenant_id ||
-      decodedPayload.clinicId ||
-      null
-    );
-  } catch {
-    return null;
+  if (!cleanSubDomain) {
+    throw {
+      code: "NO_TENANT_SUBDOMAIN",
+      message: "No tenant subdomain found",
+    };
   }
+
+  const port = TENANT_API_PORT ? `:${TENANT_API_PORT}` : "";
+
+  if (TENANT_API_ROOT_DOMAIN === "localhost") {
+    return `${TENANT_API_PROTOCOL}://${cleanSubDomain}.localhost${port}`;
+  }
+
+  return `${TENANT_API_PROTOCOL}://${cleanSubDomain}.${TENANT_API_ROOT_DOMAIN}${port}`;
 }
 
 /**
- * Access token olish
+ * URL'dan subdomain oladi.
+ * Fallback: localStorage subDomain
  */
-function getAccessToken(): string {
-  if (typeof window === "undefined") return "";
+function getTenantSubDomainForBaseUrl(): string {
+  /**
+   * Subdomain FAQAT URL dan olinadi.
+   *
+   * localStorage fallback ishlatilmaydi — chunki localStorage da
+   * boshqa tenant subDomain bo'lsa, noto'g'ri tenant ga request ketib
+   * AUTH_TENANT_MISMATCH xatosi chiqadi.
+   */
+  const urlSubdomain = getCurrentSubdomain();
 
-  return (
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("access_token") ||
-    ""
-  );
+  if (urlSubdomain) {
+    return urlSubdomain.trim().toLowerCase();
+  }
+
+  throw {
+    code: "NO_TENANT_SUBDOMAIN",
+    message: "No tenant subdomain found in URL. Open clinic11.localhost:3000",
+  };
 }
 
-/**
- * Subdomain olish
- */
-function getStoredSubDomain(): string {
-  if (typeof window === "undefined") return "";
+function getUrlSubDomain(): string {
+  const subDomain = getCurrentSubdomain();
 
-  return (
-    localStorage.getItem("subDomain") ||
-    localStorage.getItem("subdomain") ||
-    ""
-  );
+  if (!subDomain) {
+    throw {
+      code: "NO_TENANT_SUBDOMAIN",
+      message:
+        "No tenant subdomain found in URL. Open clinic11.localhost:3000",
+    };
+  }
+
+  return subDomain.trim().toLowerCase();
 }
 
-/**
- * Tenant ID olish
- */
-function getStoredTenantId(): string {
-  if (typeof window === "undefined") return "";
+// ---------------------------------------------------------------------------
+// Error helpers
+// ---------------------------------------------------------------------------
 
-  return (
-    localStorage.getItem("tenantId") ||
-    localStorage.getItem("tenant_id") ||
-    ""
-  );
-}
-
-/**
- * Auth storage tozalash
- */
-export function clearAuthStorage() {
-  if (typeof window === "undefined") return;
-
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("tenantId");
-  localStorage.removeItem("tenant_id");
-  localStorage.removeItem("subDomain");
-  localStorage.removeItem("subdomain");
-}
-
-/**
- * Tenant base url yasash
- *
- * Example:
- * clinic1 => http://clinic1.localhost:9000
- */
-function buildTenantBaseUrl(subDomain: string): string {
-  return `${TENANT_API_PROTOCOL}://${subDomain}.localhost:${TENANT_API_PORT}`;
-}
-
-/**
- * API errorni oddiy objectga aylantirish
- *
- * MUHIM:
- * Bu yerda new Error() throw qilmaymiz.
- * Chunki Next.js dev mode overlay chiqarishi mumkin.
- */
 export function normalizeApiError(error: unknown): ApiErrorObject {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as any;
@@ -128,88 +126,87 @@ export function normalizeApiError(error: unknown): ApiErrorObject {
     };
   }
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error
-  ) {
+  if (typeof error === "object" && error !== null && "message" in error) {
     return {
       message: String((error as { message?: string }).message || ""),
     };
   }
 
   if (typeof error === "string") {
-    return {
-      message: error,
-    };
+    return { message: error };
   }
 
-  return {
-    message: "Something went wrong",
-  };
+  return { message: "Something went wrong" };
 }
 
-/**
- * Toast yoki UI uchun error message olish
- */
 export function getApiErrorMessage(
   error: unknown,
   fallback = "Something went wrong"
 ): string {
-  const normalized = normalizeApiError(error);
-
-  return normalized.message || fallback;
+  return normalizeApiError(error).message || fallback;
 }
 
+function redirectToLogin(): void {
+  if (!isBrowser()) return;
+
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Interceptors
+// ---------------------------------------------------------------------------
+
 /**
- * Common interceptors
+ * Token har requestda localStorage'dan yangi o'qiladi.
+ * Shuning uchun singleton instance ham login/logout dan keyin
+ * to'g'ri token yuboradi — cache muammosi yo'q.
  */
-function attachInterceptors(instance: AxiosInstance, subDomain?: string) {
-  /**
-   * Request interceptor
-   */
+function attachTenantInterceptors(instance: AxiosInstance): void {
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      const accessToken = getAccessToken();
-
-      const storedSubDomain = subDomain || getStoredSubDomain();
-      const storedTenantId = getStoredTenantId();
-
-      const tokenTenantId = accessToken
-        ? getTenantIdFromToken(accessToken)
-        : "";
-
-      const tenantIdToSend = storedTenantId || tokenTenantId || storedSubDomain;
+      // Har safar fresh token o'qiladi
+      const accessToken = getStoredAccessToken();
 
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
+      } else {
+        delete config.headers.Authorization;
       }
 
-      if (tenantIdToSend) {
-        config.headers["X-Tenant-ID"] = tenantIdToSend;
-      }
+      // X-Tenant-ID hech qachon yuborilmaydi
+      delete config.headers["X-Tenant-ID"];
+      delete config.headers["x-tenant-id"];
+      delete config.headers["X-Tenant-Id"];
 
       if (!config.headers["Content-Type"]) {
         config.headers["Content-Type"] = "application/json";
       }
 
+      if (!config.headers["Accept-Language"]) {
+        config.headers["Accept-Language"] = "uz";
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[API DEBUG]", {
+          frontendHost: isBrowser() ? window.location.host : null,
+          apiBaseURL: config.baseURL,
+          requestURL: config.url,
+          hasAuthorization: Boolean(config.headers.Authorization),
+        });
+      }
+
       return config;
     },
-    (error: AxiosError) => {
-      return Promise.reject(error);
-    }
+    (error: AxiosError) => Promise.reject(error)
   );
 
-  /**
-   * Response interceptor
-   */
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
       if (process.env.NODE_ENV === "development") {
         console.debug(
-          `[API] ${response.status} ${response.config.method?.toUpperCase()} ${
-            response.config.url
-          }`
+          `[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`
         );
       }
 
@@ -217,17 +214,8 @@ function attachInterceptors(instance: AxiosInstance, subDomain?: string) {
     },
 
     async (error: AxiosError<any>) => {
-      const originalRequest = error.config as
-        | (InternalAxiosRequestConfig & { _retry?: boolean })
-        | undefined;
-
       const errorData = error.response?.data as any;
 
-      /**
-       * MUHIM:
-       * console.error ishlatma.
-       * Next.js dev overlay console.error sabab chiqishi mumkin.
-       */
       if (process.env.NODE_ENV === "development") {
         console.warn(
           `[API] ${error.response?.status || "NO_STATUS"} - ${
@@ -241,150 +229,127 @@ function attachInterceptors(instance: AxiosInstance, subDomain?: string) {
         );
       }
 
-      /**
-       * Tenant mismatch bo‘lsa logout
-       */
+      if (error.response?.status === 401) {
+        clearAuthStorage();
+        redirectToLogin();
+        return Promise.reject(normalizeApiError(error));
+      }
+
       if (
         error.response?.status === 403 &&
         errorData?.code === "AUTH_TENANT_MISMATCH"
       ) {
-        console.warn(
-          "Tenant mismatch detected. Token tenant ID does not match request context."
-        );
-
         clearAuthStorage();
-
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-
+        redirectToLogin();
         return Promise.reject(normalizeApiError(error));
       }
 
-      /**
-       * 401 bo‘lsa refresh token qilib ko‘ramiz
-       */
-      if (
-        error.response?.status === 401 &&
-        originalRequest &&
-        !originalRequest._retry
-      ) {
-        originalRequest._retry = true;
-
-        try {
-          const storedSubDomain = subDomain || getStoredSubDomain();
-          const storedTenantId = getStoredTenantId();
-
-          const refreshResponse = await axios.post(
-            `${MAIN_API_URL}${ENDPOINTS.auth.refresh}`,
-            {},
-            {
-              withCredentials: true,
-              headers: {
-                "Content-Type": "application/json",
-                "X-Tenant-ID": storedTenantId || storedSubDomain,
-              },
-            }
-          );
-
-          const newAccessToken =
-            refreshResponse.data?.accessToken ||
-            refreshResponse.data?.access_token;
-
-          if (!newAccessToken) {
-            return Promise.reject({
-              status: 401,
-              code: "NO_ACCESS_TOKEN",
-              message: "No access token returned from refresh endpoint",
-            });
-          }
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem("accessToken", newAccessToken);
-            localStorage.setItem("access_token", newAccessToken);
-          }
-
-          const newTokenTenantId = getTenantIdFromToken(newAccessToken);
-
-          const tenantIdToSend =
-            storedTenantId || newTokenTenantId || storedSubDomain;
-
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-          if (tenantIdToSend) {
-            originalRequest.headers["X-Tenant-ID"] = tenantIdToSend;
-          }
-
-          if (process.env.NODE_ENV === "development") {
-            console.debug("[API] Token refreshed. Retrying request...");
-          }
-
-          return instance(originalRequest);
-        } catch (refreshError) {
-          console.warn("Token refresh failed:", refreshError);
-
-          clearAuthStorage();
-
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
-
-          return Promise.reject(normalizeApiError(refreshError));
-        }
-      }
-
-      /**
-       * Expected API errors:
-       * 400, 404, 409, validation errors va boshqalar
-       * new Error emas, plain object qaytaramiz.
-       */
       return Promise.reject(normalizeApiError(error));
     }
   );
 }
 
-/**
- * Main API
- *
- * Example:
- * register clinic, super admin, main auth
- */
-export const mainHttp = axios.create({
-  baseURL: MAIN_API_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-attachInterceptors(mainHttp);
+// ---------------------------------------------------------------------------
+// Singleton cache — tenantHttp
+// ---------------------------------------------------------------------------
 
 /**
- * Tenant API
+ * Cache: subDomain → AxiosInstance
  *
- * Usage:
- * const http = tenantHttp("clinic1");
- * await http.get("/api/v1/admin/users");
+ * Har bir clinic uchun bitta instance yaratiladi va qayta ishlatiladi.
+ * Interceptor faqat 1 marta attach bo'ladi.
+ * Token har requestda localStorage'dan o'qiladi (interceptor ichida).
+ *
+ * Subdomain o'zgarsa (boshqa clinicga o'tilsa) — yangi instance yaratiladi.
  */
-export function tenantHttp(subDomain?: string): AxiosInstance {
-  const finalSubDomain = subDomain || getStoredSubDomain();
+const tenantHttpCache = new Map<string, AxiosInstance>();
 
-  if (!finalSubDomain) {
-    throw {
-      code: "NO_TENANT_SUBDOMAIN",
-      message: "No tenant subdomain found",
-    };
-  }
+export function tenantHttp(subDomainOverride?: string): AxiosInstance {
+  const subDomain = (subDomainOverride || getTenantSubDomainForBaseUrl())
+    .trim()
+    .toLowerCase();
 
+  // Cache hit
+  const cached = tenantHttpCache.get(subDomain);
+  if (cached) return cached;
+
+  // Cache miss — yangi instance
   const instance = axios.create({
-    baseURL: buildTenantBaseUrl(finalSubDomain),
-    withCredentials: true,
+    baseURL: buildTenantBaseUrl(subDomain),
+    withCredentials: false,
     headers: {
       "Content-Type": "application/json",
+      "Accept-Language": "uz",
     },
   });
 
-  attachInterceptors(instance, finalSubDomain);
+  attachTenantInterceptors(instance);
+
+  tenantHttpCache.set(subDomain, instance);
 
   return instance;
+}
+
+/**
+ * Cache ni tozalash.
+ *
+ * Logout yoki tenant o'zgarganda chaqirilsin.
+ * Normal holatda kerak emas, lekin test yoki
+ * hard-reset uchun foydali.
+ */
+export function clearTenantHttpCache(): void {
+  tenantHttpCache.clear();
+}
+
+// ---------------------------------------------------------------------------
+// Public instances
+// ---------------------------------------------------------------------------
+
+/**
+ * Main/root API — tenantga bog'liq emas.
+ * Register clinic kabi requestlar uchun.
+ *
+ * Example: https://dental.api.ilmtech.uz
+ */
+export const mainHttp = axios.create({
+  baseURL: MAIN_API_URL,
+  withCredentials: false,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept-Language": "uz",
+  },
+});
+
+export const publicMainHttp = axios.create({
+  baseURL: MAIN_API_URL,
+  withCredentials: false,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept-Language": "uz",
+  },
+});
+
+/**
+ * Public tenant API — token kerak emas.
+ *
+ * Login, forgot-password, reset-password uchun.
+ * Authorization yo'q, X-Tenant-ID yo'q.
+ *
+ * Har safar yangi instance — bu intentional,
+ * chunki public endpointlar uchun singleton shart emas
+ * va token muammosi ham yo'q.
+ */
+export function publicTenantHttp(subDomainOverride?: string): AxiosInstance {
+  const subDomain = (subDomainOverride || getUrlSubDomain())
+    .trim()
+    .toLowerCase();
+
+  return axios.create({
+    baseURL: buildTenantBaseUrl(subDomain),
+    withCredentials: false,
+    headers: {
+      "Content-Type": "application/json",
+      "Accept-Language": "uz",
+    },
+  });
 }

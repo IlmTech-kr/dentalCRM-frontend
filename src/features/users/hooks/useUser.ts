@@ -1,66 +1,61 @@
-// File: src/features/user/hooks/useUser.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-import {
-  getMe,
-  updateMe,
-  changePassword,
-} from '../user.service';
+// File: src/features/users/hooks/useUser.ts
+
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { getMe, updateMe, changePassword } from "../user.service";
+
+import { useAuthStore } from "@/src/store/auth.store";
+
 import type {
   UserProfile,
   UpdateProfilePayload,
   ChangePasswordPayload,
-} from '@/src/types/user.types';
+} from "@/src/types/user.types";
 
-// Query keys for user data
 export const userKeys = {
-  all: ['user'] as const,
-  profile: () => [...userKeys.all, 'profile'] as const,
+  all: ["user"] as const,
+  profile: () => [...userKeys.all, "profile"] as const,
 };
 
-/**
- * Hook: Get current user profile
- */
+function hasAccessToken() {
+  if (typeof window === "undefined") return false;
+
+  return Boolean(
+    localStorage.getItem("accessToken") ||
+      localStorage.getItem("access_token")
+  );
+}
+
 export function useGetProfile() {
-  return useQuery<UserProfile, AxiosError>({
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
+
+  return useQuery<UserProfile>({
     queryKey: userKeys.profile(),
-    queryFn: () => getMe(),
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 30,    // 30 minutes
-    retry: 1,
+    queryFn: getMe,
+    enabled: isHydrated && isAuthenticated && hasAccessToken(),
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    retry: false,
   });
 }
 
-/**
- * Hook: Update user profile
- */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
-  return useMutation<UserProfile, AxiosError, UpdateProfilePayload>({
+  return useMutation<UserProfile, Error, UpdateProfilePayload>({
     mutationFn: (payload) => updateMe(payload),
+
     onSuccess: (updatedProfile) => {
-      // Update cache with new profile
       queryClient.setQueryData(userKeys.profile(), updatedProfile);
-      console.log('Profile updated successfully');
-    },
-    onError: (error) => {
-      console.error('Failed to update profile:', error);
     },
   });
 }
 
-/**
- * Hook: Change password
- */
 export function useChangePassword() {
-  return useMutation<void, AxiosError, ChangePasswordPayload>({
+  return useMutation<void, Error, ChangePasswordPayload>({
     mutationFn: (payload) => changePassword(payload),
-    onSuccess: () => {
-      console.log('Password changed successfully');
-    },
-    onError: (error) => {
-      console.error('Failed to change password:', error);
-    },
   });
 }

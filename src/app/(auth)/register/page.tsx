@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * File: src/app/register/page.tsx
+ */
+
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -11,13 +15,35 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
+
 import { useRegisterClinic } from "@/src/features/auth/hooks/useAuth";
+import { useToast } from "@/src/lib/hooks/Usetoast";
+
+const FRONTEND_ROOT_DOMAIN = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
+const FRONTEND_PROTOCOL = process.env.NEXT_PUBLIC_FRONTEND_PROTOCOL || "http";
+
+/**
+ * Register bo'lgandan keyin clinic login sahifasiga redirect.
+ *
+ * Local:      http://clinic1.localhost:3000/login
+ * Production: https://clinic1.dentalcrm.uz/login
+ */
+function buildClinicLoginUrl(subDomain: string): string {
+  if (FRONTEND_ROOT_DOMAIN && FRONTEND_ROOT_DOMAIN !== "localhost") {
+    return `${FRONTEND_PROTOCOL}://${subDomain}.${FRONTEND_ROOT_DOMAIN}/login`;
+  }
+
+  // Local dev fallback
+  const port = window.location.port ? `:${window.location.port}` : "";
+  return `http://${subDomain}.localhost${port}/login`;
+}
 
 export default function RegisterPage() {
+  const toast = useToast();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ✅ USE REACT QUERY HOOK
   const registerMutation = useRegisterClinic();
 
   const [form, setForm] = useState({
@@ -30,20 +56,17 @@ export default function RegisterPage() {
     subDomain: "",
   });
 
-  const passwordsMatch =
-    form.confirmPassword.length > 0 &&
-    form.password === form.confirmPassword;
+  const passwordsMatch = form.confirmPassword.length > 0 && form.password === form.confirmPassword;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
+      toast.warning("Passwords do not match");
       return;
     }
 
     try {
-      // ✅ USE MUTATION
       await registerMutation.mutateAsync({
         firstName: form.firstName,
         lastName: form.lastName,
@@ -53,15 +76,17 @@ export default function RegisterPage() {
         subDomain: form.subDomain,
       });
 
-      window.location.href = `http://${form.subDomain}.localhost:3000/login`;
-    } catch (error) {
-      // ✅ ERROR HANDLED BY MUTATION
-      console.error("Registration error:", error);
+      /**
+       * Redirect — env dan dinamik URL
+       */
+      window.location.href = buildClinicLoginUrl(form.subDomain);
+    } catch {
+      // xato registerMutation.error da ko'rinadi
     }
   }
 
   return (
-    <main className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-[#eef7ff]">
+    <main className="grid h-screen grid-cols-1 overflow-hidden bg-[#eef7ff] lg:grid-cols-2">
       <section className="relative hidden h-screen overflow-hidden bg-[#3498db] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -left-20 top-20 h-80 w-80 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 right-10 h-96 w-96 rounded-full bg-white/10" />
@@ -70,7 +95,6 @@ export default function RegisterPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
             <ShieldCheck size={30} />
           </div>
-
           <div>
             <h1 className="text-3xl font-bold">DentalCRM</h1>
             <p className="text-white/80">Smart Clinic Management System</p>
@@ -78,19 +102,13 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10 max-w-xl">
-          <h2 className="text-5xl font-bold leading-tight">
-            Build Your Modern Dental Clinic
-          </h2>
-
+          <h2 className="text-5xl font-bold leading-tight">Build Your Modern Dental Clinic</h2>
           <p className="mt-6 text-lg leading-8 text-white/85">
-            Manage patients, appointments, doctors, reports and treatments in
-            one secure cloud platform.
+            Manage patients, appointments, doctors, reports and treatments in one secure cloud platform.
           </p>
         </div>
 
-        <p className="relative z-10 text-sm text-white/70">
-          © 2026 DentalCRM. All rights reserved.
-        </p>
+        <p className="relative z-10 text-sm text-white/70">© 2026 DentalCRM. All rights reserved.</p>
       </section>
 
       <section className="flex h-screen items-center justify-center overflow-hidden px-6 py-4">
@@ -98,18 +116,12 @@ export default function RegisterPage() {
           onSubmit={handleSubmit}
           className="w-full max-w-[470px] rounded-[26px] border border-[#d7e8f7] bg-white px-7 py-4 shadow-xl shadow-slate-300/30"
         >
-          <h2 className="text-[28px] font-bold text-[#0f2f4f]">
-            Create Clinic
-          </h2>
+          <h2 className="text-[28px] font-bold text-[#0f2f4f]">Create Clinic</h2>
+          <p className="mt-1 text-sm text-slate-500">Start managing your clinic digitally</p>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Start managing your clinic digitally
-          </p>
-
-          {/* ✅ ERROR MESSAGE FROM MUTATION */}
           {registerMutation.error && (
-            <div className="mt-3 rounded-lg bg-red-50 p-3 border border-red-200">
-              <p className="text-sm text-red-700 font-semibold">
+            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm font-semibold text-red-700">
                 {registerMutation.error instanceof Error
                   ? registerMutation.error.message
                   : "Registration failed. Please try again."}
@@ -118,103 +130,51 @@ export default function RegisterPage() {
           )}
 
           <div className="mt-4 space-y-2">
-            <Input
-              label="First Name"
-              icon={<User size={18} />}
-              value={form.firstName}
-              onChange={(v) => setForm({ ...form, firstName: v })}
-              placeholder="Ali"
-              disabled={registerMutation.isPending}
-            />
+            <Input label="First Name" icon={<User size={18} />} value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} placeholder="Ali" disabled={registerMutation.isPending} />
+            <Input label="Last Name" icon={<User size={18} />} value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} placeholder="Karimov" disabled={registerMutation.isPending} />
+            <Input label="Email Address" icon={<Mail size={18} />} value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="admin@clinic1.com" disabled={registerMutation.isPending} />
 
-            <Input
-              label="Last Name"
-              icon={<User size={18} />}
-              value={form.lastName}
-              onChange={(v) => setForm({ ...form, lastName: v })}
-              placeholder="Karimov"
-              disabled={registerMutation.isPending}
-            />
-
-            <Input
-              label="Email Address"
-              icon={<Mail size={18} />}
-              value={form.email}
-              onChange={(v) => setForm({ ...form, email: v })}
-              placeholder="admin@clinic1.com"
-              disabled={registerMutation.isPending}
-            />
-
-            <PasswordInput
-              label="Password"
-              value={form.password}
-              placeholder="Create password"
-              show={showPassword}
-              onToggle={() => setShowPassword((prev) => !prev)}
-              onChange={(v) => setForm({ ...form, password: v })}
-              disabled={registerMutation.isPending}
-            />
-
-            <PasswordInput
-              label="Confirm Password"
-              value={form.confirmPassword}
-              placeholder="Confirm password"
-              show={showConfirmPassword}
-              onToggle={() => setShowConfirmPassword((prev) => !prev)}
-              onChange={(v) => setForm({ ...form, confirmPassword: v })}
-              disabled={registerMutation.isPending}
-            />
+            <PasswordInput label="Password" value={form.password} placeholder="Create password" show={showPassword} onToggle={() => setShowPassword((p) => !p)} onChange={(v) => setForm({ ...form, password: v })} disabled={registerMutation.isPending} />
+            <PasswordInput label="Confirm Password" value={form.confirmPassword} placeholder="Confirm password" show={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} onChange={(v) => setForm({ ...form, confirmPassword: v })} disabled={registerMutation.isPending} />
 
             {form.confirmPassword && !passwordsMatch && (
-              <p className="text-xs font-semibold text-red-500">
-                Passwords do not match
-              </p>
+              <p className="text-xs font-semibold text-red-500">Passwords do not match</p>
             )}
-
             {passwordsMatch && (
-              <p className="text-xs font-semibold text-green-500">
-                Passwords match
-              </p>
+              <p className="text-xs font-semibold text-green-500">Passwords match ✓</p>
             )}
 
-            <Input
-              label="Clinic Name"
-              icon={<Building2 size={18} />}
-              value={form.clinicName}
-              onChange={(v) => setForm({ ...form, clinicName: v })}
-              placeholder="Dental Smile Clinic"
-              disabled={registerMutation.isPending}
-            />
+            <Input label="Clinic Name" icon={<Building2 size={18} />} value={form.clinicName} onChange={(v) => setForm({ ...form, clinicName: v })} placeholder="Dental Smile Clinic" disabled={registerMutation.isPending} />
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-600">
-                Clinic Subdomain
-              </label>
-
+              <label className="mb-1 block text-sm font-semibold text-slate-600">Clinic Subdomain</label>
               <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
                 <Building2 size={18} className="text-slate-400" />
-
                 <input
                   className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
                   placeholder="clinic1"
                   value={form.subDomain}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      subDomain: e.target.value.toLowerCase().trim(),
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, subDomain: e.target.value.toLowerCase().trim() })}
                   disabled={registerMutation.isPending}
                 />
-
-                <span className="text-sm text-slate-400">.localhost</span>
+                <span className="text-sm text-slate-400">
+                  .{FRONTEND_ROOT_DOMAIN || "localhost"}
+                </span>
               </div>
             </div>
 
-            {/* ✅ USE MUTATION STATE */}
             <button
-              disabled={registerMutation.isPending || !form.firstName || !form.email || !form.password || !form.clinicName || !form.subDomain}
-              className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:opacity-60 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={
+                registerMutation.isPending ||
+                !form.firstName ||
+                !form.email ||
+                !form.password ||
+                !form.clinicName ||
+                !form.subDomain ||
+                !passwordsMatch
+              }
+              className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {registerMutation.isPending ? "Creating..." : "Create Clinic"}
             </button>
@@ -222,9 +182,7 @@ export default function RegisterPage() {
 
           <p className="mt-3 text-center text-sm text-slate-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-bold text-[#35a8f5]">
-              Sign In
-            </Link>
+            <Link href="/login" className="font-bold text-[#35a8f5]">Sign In</Link>
           </p>
         </form>
       </section>
@@ -232,14 +190,7 @@ export default function RegisterPage() {
   );
 }
 
-function Input({
-  label,
-  icon,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-}: {
+function Input({ label, icon, value, onChange, placeholder, disabled }: {
   label: string;
   icon: React.ReactNode;
   value: string;
@@ -249,34 +200,16 @@ function Input({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-semibold text-slate-600">
-        {label}
-      </label>
-
-      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4 disabled:opacity-50">
+      <label className="mb-1 block text-sm font-semibold text-slate-600">{label}</label>
+      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
         <span className="text-slate-400">{icon}</span>
-
-        <input
-          className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-        />
+        <input className="w-full bg-transparent text-sm outline-none disabled:opacity-50" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
       </div>
     </div>
   );
 }
 
-function PasswordInput({
-  label,
-  value,
-  onChange,
-  placeholder,
-  show,
-  onToggle,
-  disabled,
-}: {
+function PasswordInput({ label, value, onChange, placeholder, show, onToggle, disabled }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -287,28 +220,11 @@ function PasswordInput({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-semibold text-slate-600">
-        {label}
-      </label>
-
+      <label className="mb-1 block text-sm font-semibold text-slate-600">{label}</label>
       <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
         <Lock size={18} className="text-slate-400" />
-
-        <input
-          type={show ? "text" : "password"}
-          className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-        />
-
-        <button
-          type="button"
-          onClick={onToggle}
-          className="text-slate-400 transition hover:text-[#35a8f5] disabled:opacity-50"
-          disabled={disabled}
-        >
+        <input type={show ? "text" : "password"} className="w-full bg-transparent text-sm outline-none disabled:opacity-50" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+        <button type="button" onClick={onToggle} disabled={disabled} className="text-slate-400 transition hover:text-[#35a8f5] disabled:opacity-50">
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>

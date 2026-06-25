@@ -1,4 +1,8 @@
-import { tenantHttp } from "@/src/lib/api/http";
+/**
+ * File: src/features/appointments/appointment.service.ts
+ */
+
+import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 
 import type {
   Appointment,
@@ -7,41 +11,16 @@ import type {
   UpdateAppointmentDto,
 } from "@/src/types/appointment.types";
 
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-
-  return (
-    localStorage.getItem("subDomain") ||
-    localStorage.getItem("subdomain") ||
-    ""
-  );
-}
-
-function getHttp() {
-  const subDomain = getSubdomain();
-
-  if (!subDomain) {
-    throw {
-      code: "NO_TENANT_SUBDOMAIN",
-      message: "No tenant subdomain found",
-    };
-  }
-
-  return tenantHttp(subDomain);
-}
+// ---------------------------------------------------------------------------
+// Time / Date helpers
+// ---------------------------------------------------------------------------
 
 function normalizeAppointmentTime(time?: string | null): string {
   if (!time) return "";
 
   const value = String(time).trim();
 
-  /**
-   * Backend returns:
-   * "11:00:00"
-   *
-   * Frontend input type="time" needs:
-   * "11:00"
-   */
+  // "11:00:00" → "11:00"
   if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
     return value.slice(0, 5);
   }
@@ -54,13 +33,7 @@ function normalizeTimeForApi(time?: string | null): string {
 
   const value = String(time).trim();
 
-  /**
-   * Backend expects:
-   * "11:00:00"
-   *
-   * Frontend sends:
-   * "11:00"
-   */
+  // "11:00" → "11:00:00"
   if (/^\d{2}:\d{2}$/.test(value)) {
     return `${value}:00`;
   }
@@ -75,31 +48,21 @@ function normalizeDateForApi(date?: string | Date | null): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   }
 
   const value = String(date).trim();
 
-  /**
-   * Already correct:
-   * "2026-05-27"
-   */
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
   }
 
-  /**
-   * Fixes this backend error:
-   * "Wed May 27 00:00:00 GMT+05:00 2026"
-   */
   const parsedDate = new Date(value);
 
   if (!Number.isNaN(parsedDate.getTime())) {
     const year = parsedDate.getFullYear();
     const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
     const day = String(parsedDate.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   }
 
@@ -127,20 +90,18 @@ function calculateDurationMinutes(
     return undefined;
   }
 
-  const startTotal = startHour * 60 + startMinute;
-  const endTotal = endHour * 60 + endMinute;
+  const duration = endHour * 60 + endMinute - (startHour * 60 + startMinute);
 
-  const duration = endTotal - startTotal;
-
-  if (duration <= 0) return undefined;
-
-  return duration;
+  return duration > 0 ? duration : undefined;
 }
+
+// ---------------------------------------------------------------------------
+// Response normalizer
+// ---------------------------------------------------------------------------
 
 function normalizeAppointment(appointment: any): Appointment {
   const startTime = normalizeAppointmentTime(appointment.startTime);
   const endTime = normalizeAppointmentTime(appointment.endTime);
-
   const calculatedDuration = calculateDurationMinutes(startTime, endTime);
 
   return {
@@ -170,6 +131,14 @@ function extractAppointments(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Service functions
+//
+// tenantHttp() argumentsiz chaqiriladi — subdomain URL dan olinadi.
+// getHttp() / getSubdomain() olib tashlandi:
+// localStorage fallback AUTH_TENANT_MISMATCH xatosiga olib kelardi.
+// ---------------------------------------------------------------------------
+
 /**
  * GET /api/dental/appointments?page=0&limit=10
  */
@@ -177,15 +146,19 @@ export async function getAppointments(
   page = 0,
   limit = 10
 ): Promise<Appointment[]> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().get<AppointmentListResponse | Appointment[]>(
+      `/api/dental/appointments?page=${page}&limit=${limit}`
+    );
 
-  const response = await http.get<AppointmentListResponse | Appointment[]>(
-    `/api/dental/appointments?page=${page}&limit=${limit}`
-  );
+    return extractAppointments(response.data).map(normalizeAppointment);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] getAppointments failed:", getApiErrorMessage(error));
+    }
 
-  const appointments = extractAppointments(response.data);
-
-  return appointments.map(normalizeAppointment);
+    throw new Error(getApiErrorMessage(error, "Failed to load appointments"));
+  }
 }
 
 /**
@@ -194,13 +167,19 @@ export async function getAppointments(
 export async function getAppointmentById(
   appointmentId: string
 ): Promise<Appointment> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().get<Appointment>(
+      `/api/dental/appointments/${appointmentId}`
+    );
 
-  const response = await http.get<Appointment>(
-    `/api/dental/appointments/${appointmentId}`
-  );
+    return normalizeAppointment(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] getAppointmentById failed:", getApiErrorMessage(error));
+    }
 
-  return normalizeAppointment(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to load appointment"));
+  }
 }
 
 /**
@@ -209,39 +188,50 @@ export async function getAppointmentById(
 export async function getAppointmentsByDate(
   date: string | Date
 ): Promise<Appointment[]> {
-  const http = getHttp();
+  try {
+    const normalizedDate = normalizeDateForApi(date);
 
-  const normalizedDate = normalizeDateForApi(date);
+    const response = await tenantHttp().get<AppointmentListResponse | Appointment[]>(
+      `/api/dental/appointments/by-date?date=${normalizedDate}`
+    );
 
-  const response = await http.get<AppointmentListResponse | Appointment[]>(
-    `/api/dental/appointments/by-date?date=${normalizedDate}`
-  );
+    return extractAppointments(response.data).map(normalizeAppointment);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] getAppointmentsByDate failed:", getApiErrorMessage(error));
+    }
 
-  const appointments = extractAppointments(response.data);
-
-  return appointments.map(normalizeAppointment);
+    throw new Error(getApiErrorMessage(error, "Failed to load appointments by date"));
+  }
 }
 
 /**
  * POST /api/dental/appointments
- *
- * Role: RECEPTIONIST, CLINIC_ADMIN
  */
 export async function createAppointment(
   payload: CreateAppointmentDto
 ): Promise<Appointment> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().post<Appointment>(
+      "/api/dental/appointments",
+      {
+        patientId: payload.patientId,
+        doctorId: payload.doctorId,
+        appointmentDate: normalizeDateForApi(payload.appointmentDate),
+        startTime: normalizeTimeForApi(payload.startTime),
+        slotDurationMinutes: Number(payload.slotDurationMinutes),
+        notes: payload.notes || "",
+      }
+    );
 
-  const response = await http.post<Appointment>("/api/dental/appointments", {
-    patientId: payload.patientId,
-    doctorId: payload.doctorId,
-    appointmentDate: normalizeDateForApi(payload.appointmentDate),
-    startTime: normalizeTimeForApi(payload.startTime),
-    slotDurationMinutes: Number(payload.slotDurationMinutes),
-    notes: payload.notes || "",
-  });
+    return normalizeAppointment(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] createAppointment failed:", getApiErrorMessage(error));
+    }
 
-  return normalizeAppointment(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to create appointment"));
+  }
 }
 
 /**
@@ -251,29 +241,41 @@ export async function updateAppointment(
   appointmentId: string,
   payload: UpdateAppointmentDto
 ): Promise<Appointment> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().put<Appointment>(
+      `/api/dental/appointments/${appointmentId}`,
+      {
+        patientId: payload.patientId,
+        doctorId: payload.doctorId,
+        appointmentDate: normalizeDateForApi(payload.appointmentDate),
+        startTime: normalizeTimeForApi(payload.startTime),
+        slotDurationMinutes: Number(payload.slotDurationMinutes),
+        notes: payload.notes || "",
+        status: payload.status || "SCHEDULED",
+      }
+    );
 
-  const response = await http.put<Appointment>(
-    `/api/dental/appointments/${appointmentId}`,
-    {
-      patientId: payload.patientId,
-      doctorId: payload.doctorId,
-      appointmentDate: normalizeDateForApi(payload.appointmentDate),
-      startTime: normalizeTimeForApi(payload.startTime),
-      slotDurationMinutes: Number(payload.slotDurationMinutes),
-      notes: payload.notes || "",
-      status: payload.status || "SCHEDULED",
+    return normalizeAppointment(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] updateAppointment failed:", getApiErrorMessage(error));
     }
-  );
 
-  return normalizeAppointment(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to update appointment"));
+  }
 }
 
 /**
  * DELETE /api/dental/appointments/:id
  */
 export async function deleteAppointment(appointmentId: string): Promise<void> {
-  const http = getHttp();
+  try {
+    await tenantHttp().delete(`/api/dental/appointments/${appointmentId}`);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Appointment Service] deleteAppointment failed:", getApiErrorMessage(error));
+    }
 
-  await http.delete(`/api/dental/appointments/${appointmentId}`);
+    throw new Error(getApiErrorMessage(error, "Failed to delete appointment"));
+  }
 }

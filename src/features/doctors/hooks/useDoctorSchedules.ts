@@ -1,3 +1,9 @@
+"use client";
+
+/**
+ * File: src/features/doctors/hooks/useDoctorSchedules.ts
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -6,7 +12,10 @@ import {
   createDoctorSchedule,
   createWeeklyDoctorSchedule,
   updateDoctorSchedule,
+  deleteDoctorSchedule,
 } from "../services/doctor-schedule.service";
+
+import { useAuthStore } from "@/src/store/auth.store";
 
 import type {
   DoctorSchedule,
@@ -17,96 +26,70 @@ import type {
 
 export const doctorScheduleKeys = {
   all: ["doctor-schedules"] as const,
-
   lists: () => [...doctorScheduleKeys.all, "list"] as const,
-
   list: (page: number, limit: number) =>
     [...doctorScheduleKeys.lists(), { page, limit }] as const,
-
   details: () => [...doctorScheduleKeys.all, "detail"] as const,
-
   detail: (id: string) => [...doctorScheduleKeys.details(), id] as const,
 };
 
-/**
- * Hook: Get all doctor schedules
- */
 export function useGetDoctorSchedules(page = 0, limit = 20) {
-  return useQuery<DoctorSchedule[]>({
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return useQuery<DoctorSchedule[], Error>({
     queryKey: doctorScheduleKeys.list(page, limit),
     queryFn: () => getDoctorSchedules(page, limit),
+    enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 }
 
-/**
- * Hook: Get doctor schedule by ID
- */
 export function useGetDoctorSchedule(scheduleId: string | null) {
-  return useQuery<DoctorSchedule>({
-    queryKey: scheduleId
-      ? doctorScheduleKeys.detail(scheduleId)
-      : ["doctor-schedule-disabled"],
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
+  return useQuery<DoctorSchedule, Error>({
+    queryKey: doctorScheduleKeys.detail(scheduleId ?? ""),
     queryFn: () => {
-      if (!scheduleId) {
-        throw {
-          code: "DOCTOR_SCHEDULE_ID_REQUIRED",
-          message: "Doctor schedule ID is required",
-        };
-      }
-
+      if (!scheduleId) throw new Error("Doctor schedule ID is required");
       return getDoctorScheduleById(scheduleId);
     },
-
-    enabled: !!scheduleId,
+    enabled: Boolean(scheduleId) && isAuthenticated,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 }
 
-/**
- * Hook: Create daily doctor schedule
- */
 export function useCreateDoctorSchedule() {
   const queryClient = useQueryClient();
 
-  return useMutation<DoctorSchedule, unknown, DoctorSchedulePayload>({
-    mutationFn: (payload) => createDoctorSchedule(payload),
+  return useMutation<DoctorSchedule, Error, DoctorSchedulePayload>({
+    mutationFn: createDoctorSchedule,
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: doctorScheduleKeys.lists(),
-      });
+      queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
     },
   });
 }
 
-/**
- * Hook: Create weekly doctor schedule
- */
 export function useCreateWeeklyDoctorSchedule() {
   const queryClient = useQueryClient();
 
-  return useMutation<DoctorSchedule, unknown, WeeklyDoctorSchedulePayload>({
-    mutationFn: (payload) => createWeeklyDoctorSchedule(payload),
+  return useMutation<DoctorSchedule, Error, WeeklyDoctorSchedulePayload>({
+    mutationFn: createWeeklyDoctorSchedule,
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: doctorScheduleKeys.lists(),
-      });
+      queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
     },
   });
 }
 
-/**
- * Hook: Update doctor schedule
- */
 export function useUpdateDoctorSchedule(scheduleId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<DoctorSchedule, unknown, UpdateDoctorSchedulePayload>({
+  return useMutation<DoctorSchedule, Error, UpdateDoctorSchedulePayload>({
     mutationFn: (payload) => updateDoctorSchedule(scheduleId, payload),
 
     onSuccess: (updatedSchedule) => {
@@ -115,9 +98,23 @@ export function useUpdateDoctorSchedule(scheduleId: string) {
         updatedSchedule
       );
 
-      queryClient.invalidateQueries({
-        queryKey: doctorScheduleKeys.lists(),
+      queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
+    },
+  });
+}
+
+export function useDeleteDoctorSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: deleteDoctorSchedule,
+
+    onSuccess: (_, deletedScheduleId) => {
+      queryClient.removeQueries({
+        queryKey: doctorScheduleKeys.detail(deletedScheduleId),
       });
+
+      queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
     },
   });
 }

@@ -14,7 +14,6 @@ export interface RegisterClinicDto {
 export interface LoginDto {
   email: string;
   password: string;
-  subDomain: string;
 }
 
 export interface InviteUserDto {
@@ -23,9 +22,15 @@ export interface InviteUserDto {
   subDomain: string;
 }
 
+/**
+ * Hozir tenant URL'dan olinayotgan bo‘lsa,
+ * forgot password body ichida subDomain shart emas.
+ *
+ * Agar backend hali subDomain talab qilsa, optional qoldiramiz.
+ */
 export interface ForgotPasswordDto {
   email: string;
-  subDomain: string;
+  subDomain?: string;
 }
 
 export interface ResetPasswordDto {
@@ -45,6 +50,7 @@ export interface AuthUser {
   roles: Role[];
 
   avatarUrl?: string;
+  phoneNumber?: string;
   status?: UserStatus;
 
   clinicId?: string;
@@ -52,4 +58,40 @@ export interface AuthUser {
 
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AuthClinic {
+  id: string;
+  _id?: string;
+
+  name: string;
+  subDomain: string;
+  ownerId?: string;
+
+  status?: string;
+  subscriptionStatus?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Login response backenddan shunday kelyapti:
+ *
+ * {
+ *   accessToken: "...",
+ *   refreshToken: null,
+ *   tenantId: "...",
+ *   clinic: {...},
+ *   user: {...}
+ * }
+ */
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken?: string | null;
+
+  tenantId: string;
+
+  clinic: AuthClinic;
+  user: AuthUser;
 }

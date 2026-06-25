@@ -1,4 +1,8 @@
-import { tenantHttp } from "@/src/lib/api/http";
+/**
+ * File: src/features/doctors/services/doctor-schedule.service.ts
+ */
+
+import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 
 import type {
   DoctorSchedule,
@@ -7,41 +11,16 @@ import type {
   WeeklyDoctorSchedulePayload,
 } from "@/src/types/doctor-schedule.types";
 
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-
-  return (
-    localStorage.getItem("subDomain") ||
-    localStorage.getItem("subdomain") ||
-    ""
-  );
-}
-
-function getHttp() {
-  const subDomain = getSubdomain();
-
-  if (!subDomain) {
-    throw {
-      code: "NO_TENANT_SUBDOMAIN",
-      message: "No tenant subdomain found",
-    };
-  }
-
-  return tenantHttp(subDomain);
-}
+// ---------------------------------------------------------------------------
+// Time helpers
+// ---------------------------------------------------------------------------
 
 function normalizeTime(time?: string | null): string {
   if (!time) return "";
 
   const value = String(time).trim();
 
-  /**
-   * Backend sometimes returns:
-   * "09:00:00"
-   *
-   * HTML time input needs:
-   * "09:00"
-   */
+  // "HH:MM:SS" → "HH:MM"
   if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
     return value.slice(0, 5);
   }
@@ -49,15 +28,9 @@ function normalizeTime(time?: string | null): string {
   return value;
 }
 
-function normalizeTimeForApi(time: string): string {
-  /**
-   * Your API examples use:
-   * "09:00"
-   *
-   * So we send "09:00", not "09:00:00".
-   */
-  return normalizeTime(time);
-}
+// ---------------------------------------------------------------------------
+// Response normalizers
+// ---------------------------------------------------------------------------
 
 export function normalizeDoctorSchedule(schedule: any): DoctorSchedule {
   return {
@@ -69,34 +42,6 @@ export function normalizeDoctorSchedule(schedule: any): DoctorSchedule {
   };
 }
 
-/**
- * Backend can return schedule like this:
- *
- * {
- *   _id: "...",
- *   tenantId: "...",
- *   doctorId: "...",
- *   days: [
- *     {
- *       dayOfWeek: "MONDAY",
- *       startTime: "09:00:00",
- *       endTime: "18:00:00",
- *       active: true
- *     }
- *   ]
- * }
- *
- * UI needs row-like data:
- *
- * {
- *   _id: "...",
- *   doctorId: "...",
- *   dayOfWeek: "MONDAY",
- *   startTime: "09:00",
- *   endTime: "18:00",
- *   active: true
- * }
- */
 export function normalizeDoctorScheduleRows(schedule: any): DoctorSchedule[] {
   if (Array.isArray(schedule.days) && schedule.days.length > 0) {
     return schedule.days.map((day: any) => ({
@@ -115,17 +60,19 @@ export function normalizeDoctorScheduleRows(schedule: any): DoctorSchedule[] {
 
 function extractSchedules(result: any): any[] {
   if (Array.isArray(result)) return result;
-
-  return (
-    result.data ||
-    result.schedules ||
-    result.users ||
-    result.content ||
-    result.items ||
-    result.results ||
-    []
-  );
+  if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.schedules)) return result.schedules;
+  if (Array.isArray(result?.users)) return result.users;
+  if (Array.isArray(result?.content)) return result.content;
+  if (Array.isArray(result?.items)) return result.items;
+  if (Array.isArray(result?.results)) return result.results;
+  if (Array.isArray(result?.data?.content)) return result.data.content;
+  return [];
 }
+
+// ---------------------------------------------------------------------------
+// Service functions
+// ---------------------------------------------------------------------------
 
 /**
  * GET /api/dental/doctor-schedules?page=0&limit=20
@@ -134,15 +81,21 @@ export async function getDoctorSchedules(
   page = 0,
   limit = 20
 ): Promise<DoctorSchedule[]> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().get(
+      `/api/dental/doctor-schedules?page=${page}&limit=${limit}`
+    );
 
-  const response = await http.get(
-    `/api/dental/doctor-schedules?page=${page}&limit=${limit}`
-  );
+    const schedules = extractSchedules(response.data);
 
-  const schedules = extractSchedules(response.data);
+    return schedules.flatMap(normalizeDoctorScheduleRows);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] getDoctorSchedules failed:", getApiErrorMessage(error));
+    }
 
-  return schedules.flatMap(normalizeDoctorScheduleRows);
+    throw new Error(getApiErrorMessage(error, "Failed to load schedules"));
+  }
 }
 
 /**
@@ -151,107 +104,112 @@ export async function getDoctorSchedules(
 export async function getDoctorScheduleById(
   scheduleId: string
 ): Promise<DoctorSchedule> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().get(
+      `/api/dental/doctor-schedules/${scheduleId}`
+    );
 
-  const response = await http.get(
-    `/api/dental/doctor-schedules/${scheduleId}`
-  );
+    return normalizeDoctorSchedule(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] getDoctorScheduleById failed:", getApiErrorMessage(error));
+    }
 
-  return normalizeDoctorSchedule(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to load schedule"));
+  }
 }
 
 /**
  * POST /api/dental/doctor-schedules
- *
- * Daily schedule create qiladi.
- * Masalan faqat MONDAY uchun.
  */
 export async function createDoctorSchedule(
   payload: DoctorSchedulePayload
 ): Promise<DoctorSchedule> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().post("/api/dental/doctor-schedules", {
+      doctorId: payload.doctorId,
+      dayOfWeek: payload.dayOfWeek,
+      startTime: normalizeTime(payload.startTime),
+      endTime: normalizeTime(payload.endTime),
+      active: payload.active,
+    });
 
-  const response = await http.post("/api/dental/doctor-schedules", {
-    doctorId: payload.doctorId,
-    dayOfWeek: payload.dayOfWeek,
-    startTime: normalizeTimeForApi(payload.startTime),
-    endTime: normalizeTimeForApi(payload.endTime),
-    active: payload.active,
-  });
+    return normalizeDoctorSchedule(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] createDoctorSchedule failed:", getApiErrorMessage(error));
+    }
 
-  return normalizeDoctorSchedule(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to create schedule"));
+  }
 }
 
 /**
  * POST /api/dental/doctor-schedules/weekly
- *
- * Hamma kunlar uchun bir xil schedule create qiladi.
- *
- * Payload:
- * {
- *   doctorId: "...",
- *   startTime: "09:00",
- *   endTime: "13:00",
- *   active: true
- * }
  */
 export async function createWeeklyDoctorSchedule(
   payload: WeeklyDoctorSchedulePayload
 ): Promise<DoctorSchedule> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().post(
+      "/api/dental/doctor-schedules/weekly",
+      {
+        doctorId: payload.doctorId,
+        startTime: normalizeTime(payload.startTime),
+        endTime: normalizeTime(payload.endTime),
+        active: payload.active,
+      }
+    );
 
-  const response = await http.post("/api/dental/doctor-schedules/weekly", {
-    doctorId: payload.doctorId,
-    startTime: normalizeTimeForApi(payload.startTime),
-    endTime: normalizeTimeForApi(payload.endTime),
-    active: payload.active,
-  });
+    return normalizeDoctorSchedule(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] createWeeklyDoctorSchedule failed:", getApiErrorMessage(error));
+    }
 
-  return normalizeDoctorSchedule(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to create weekly schedule"));
+  }
 }
 
 /**
  * PUT /api/dental/doctor-schedules/:id
- *
- * Bitta schedule kunini update qiladi.
- *
- * Payload:
- * {
- *   dayOfWeek: "FRIDAY",
- *   startTime: "09:00",
- *   endTime: "18:00",
- *   active: false
- * }
  */
 export async function updateDoctorSchedule(
   scheduleId: string,
   payload: UpdateDoctorSchedulePayload
 ): Promise<DoctorSchedule> {
-  const http = getHttp();
+  try {
+    const response = await tenantHttp().put(
+      `/api/dental/doctor-schedules/${scheduleId}`,
+      {
+        dayOfWeek: payload.dayOfWeek,
+        startTime: normalizeTime(payload.startTime),
+        endTime: normalizeTime(payload.endTime),
+        active: payload.active,
+      }
+    );
 
-  const response = await http.put(
-    `/api/dental/doctor-schedules/${scheduleId}`,
-    {
-      dayOfWeek: payload.dayOfWeek,
-      startTime: normalizeTimeForApi(payload.startTime),
-      endTime: normalizeTimeForApi(payload.endTime),
-      active: payload.active,
+    return normalizeDoctorSchedule(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] updateDoctorSchedule failed:", getApiErrorMessage(error));
     }
-  );
 
-  return normalizeDoctorSchedule(response.data);
+    throw new Error(getApiErrorMessage(error, "Failed to update schedule"));
+  }
 }
 
 /**
  * DELETE /api/dental/doctor-schedules/:id
- *
- * Agar backendda DELETE API bo'lmasa,
- * hook va page'da delete ishlatmang.
  */
-export async function deleteDoctorSchedule(
-  scheduleId: string
-): Promise<void> {
-  const http = getHttp();
+export async function deleteDoctorSchedule(scheduleId: string): Promise<void> {
+  try {
+    await tenantHttp().delete(`/api/dental/doctor-schedules/${scheduleId}`);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] deleteDoctorSchedule failed:", getApiErrorMessage(error));
+    }
 
-  await http.delete(`/api/dental/doctor-schedules/${scheduleId}`);
+    throw new Error(getApiErrorMessage(error, "Failed to delete schedule"));
+  }
 }

@@ -1,28 +1,12 @@
+/**
+ * File: src/features/treatments/services/treatment-appointment.service.ts
+ *
+ * tenantHttp() argumentsiz chaqiriladi — subdomain URL dan olinadi.
+ * getHttp() / getSubdomain() olib tashlandi.
+ */
+
 import { tenantHttp } from "@/src/lib/api/http";
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
-
-function getSubdomain(): string {
-  if (typeof window === "undefined") return "";
-
-  return (
-    localStorage.getItem("subDomain") ||
-    localStorage.getItem("subdomain") ||
-    ""
-  );
-}
-
-function getHttp() {
-  const subDomain = getSubdomain();
-
-  if (!subDomain) {
-    throw {
-      code: "NO_TENANT_SUBDOMAIN",
-      message: "No tenant subdomain found",
-    };
-  }
-
-  return tenantHttp(subDomain);
-}
 
 function normalizeAppointment(item: any): TreatmentAppointment {
   return {
@@ -59,7 +43,6 @@ function getAppointmentDateValue(item: TreatmentAppointment): string {
 function isSameDate(item: TreatmentAppointment, yyyyMmDd: string) {
   const value = getAppointmentDateValue(item);
   if (!value) return false;
-
   return String(value).slice(0, 10) === yyyyMmDd;
 }
 
@@ -70,25 +53,19 @@ function isInProgress(item: TreatmentAppointment) {
 function sortByTime(a: TreatmentAppointment, b: TreatmentAppointment) {
   const aValue = getAppointmentDateValue(a) || a.startTime || "";
   const bValue = getAppointmentDateValue(b) || b.startTime || "";
-
   return String(aValue).localeCompare(String(bValue));
 }
 
 export const treatmentAppointmentService = {
+  /**
+   * Backend endpoint noaniq bo'lgani uchun bir nechta URL sinab ko'riladi.
+   * Bu intentional — aniq endpoint ma'lum bo'lsa, bitta URL qoldirish mumkin.
+   */
   async getTodayInProgress(date: string): Promise<TreatmentAppointment[]> {
-    const http = getHttp();
-
     const requests = [
-      `/api/dental/appointments?date=${encodeURIComponent(
-        date
-      )}&status=IN_PROGRESS`,
-
-      `/api/dental/appointments?appointmentDate=${encodeURIComponent(
-        date
-      )}&status=IN_PROGRESS`,
-
+      `/api/dental/appointments?date=${encodeURIComponent(date)}&status=IN_PROGRESS`,
+      `/api/dental/appointments?appointmentDate=${encodeURIComponent(date)}&status=IN_PROGRESS`,
       `/api/dental/appointments?date=${encodeURIComponent(date)}`,
-
       `/api/dental/appointments`,
     ];
 
@@ -96,7 +73,7 @@ export const treatmentAppointmentService = {
 
     for (const url of requests) {
       try {
-        const res = await http.get(url);
+        const res = await tenantHttp().get(url);
 
         const list = extractArray(res.data).map(normalizeAppointment);
 

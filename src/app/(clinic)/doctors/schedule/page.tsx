@@ -14,8 +14,6 @@ import {
   X,
 } from "lucide-react";
 
-
-
 import {
   useCreateDoctorSchedule,
   useCreateWeeklyDoctorSchedule,
@@ -50,7 +48,6 @@ const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
 
 const CALENDAR_HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00–18:00
 
-/** Avatar palette — cycles by doctor index */
 const AVATAR_PALETTE = [
   { bg: "bg-blue-100",   text: "text-blue-800"   },
   { bg: "bg-teal-100",   text: "text-teal-800"   },
@@ -73,7 +70,6 @@ type FlatDoctorSchedule = DoctorSchedule & {
   scheduleRowKey?: string;
 };
 
-/** One doctor with all their schedule rows grouped */
 interface DoctorScheduleGroup {
   doctorId: string;
   doctorName: string;
@@ -128,10 +124,6 @@ function getDoctorInitials(name: string): string {
     .slice(0, 2);
 }
 
-function getDayLabel(day?: DayOfWeek | string): string {
-  return DAYS.find((d) => d.value === day)?.label ?? String(day ?? "-");
-}
-
 function getDayShort(day?: DayOfWeek | string): string {
   return DAYS.find((d) => d.value === day)?.short ?? String(day ?? "-");
 }
@@ -162,7 +154,7 @@ function Avatar({
   );
 }
 
-// ─── Doctor card (cards view) ─────────────────────────────────────────────────
+// ─── Doctor card ──────────────────────────────────────────────────────────────
 
 function DoctorCard({
   group,
@@ -179,7 +171,6 @@ function DoctorCard({
 
   return (
     <div className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
-      {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${bg} ${text}`}
@@ -195,7 +186,6 @@ function DoctorCard({
         </div>
       </div>
 
-      {/* Day pips */}
       <div className="mb-4 flex gap-1.5">
         {DAYS.map((d) => {
           const active = uniqueDays.includes(d.value);
@@ -204,9 +194,7 @@ function DoctorCard({
               key={d.value}
               title={d.label}
               className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-extrabold transition ${
-                active
-                  ? `${bg} ${text}`
-                  : "bg-slate-100 text-slate-400"
+                active ? `${bg} ${text}` : "bg-slate-100 text-slate-400"
               }`}
             >
               {d.short[0]}
@@ -215,7 +203,6 @@ function DoctorCard({
         })}
       </div>
 
-      {/* Stats row */}
       <div className="mb-4 flex gap-3 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <CalendarDays className="h-3.5 w-3.5" />
@@ -227,7 +214,6 @@ function DoctorCard({
         </span>
       </div>
 
-      {/* Actions */}
       <div className="mt-auto flex gap-2">
         <button
           type="button"
@@ -265,7 +251,6 @@ function WeeklyCalendar({
 }) {
   const { bg, text } = AVATAR_PALETTE[group.paletteIdx % AVATAR_PALETTE.length];
 
-  // Build a map: dayOfWeek → schedules for that day
   const byDay = useMemo(() => {
     const map = new Map<DayOfWeek, FlatDoctorSchedule[]>();
     group.schedules.forEach((s) => {
@@ -277,17 +262,10 @@ function WeeklyCalendar({
     return map;
   }, [group.schedules]);
 
-  const ROW_H = 52; // px per hour row
-
-  /** Convert "HH:MM" to fractional hours from start of CALENDAR_HOURS */
-  function toOffset(time: string): number {
-    const [h, m] = time.split(":").map(Number);
-    return h + (m ?? 0) / 60 - CALENDAR_HOURS[0];
-  }
+  const ROW_H = 52;
 
   return (
     <div>
-      {/* Back bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
@@ -322,16 +300,23 @@ function WeeklyCalendar({
         </button>
       </div>
 
-      {/* Mini stats */}
       <div className="mb-6 grid grid-cols-3 gap-3">
         {[
           { label: "Work days", value: byDay.size, color: "text-slate-900" },
-          { label: "Active slots", value: group.schedules.filter((s) => s.active).length, color: "text-emerald-600" },
-          { label: "Hours / week", value: `${group.schedules.reduce((acc, s) => {
+          {
+            label: "Active slots",
+            value: group.schedules.filter((s) => s.active).length,
+            color: "text-emerald-600",
+          },
+          {
+            label: "Hours / week",
+            value: `${group.schedules.reduce((acc, s) => {
               const sh = parseInt(normalizeScheduleTime(s.startTime));
               const eh = parseInt(normalizeScheduleTime(s.endTime));
               return acc + (isNaN(sh) || isNaN(eh) ? 0 : eh - sh);
-            }, 0)}h`, color: "text-blue-600" },
+            }, 0)}h`,
+            color: "text-blue-600",
+          },
         ].map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold text-slate-500">{stat.label}</p>
@@ -340,10 +325,8 @@ function WeeklyCalendar({
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="overflow-x-auto rounded-3xl border border-slate-100 bg-white shadow-sm">
         <div style={{ minWidth: 560 }}>
-          {/* Column headers */}
           <div className="grid border-b border-slate-100" style={{ gridTemplateColumns: `52px repeat(7, 1fr)` }}>
             <div />
             {DAYS.map((d) => {
@@ -361,7 +344,6 @@ function WeeklyCalendar({
             })}
           </div>
 
-          {/* Hour rows */}
           <div className="relative">
             {CALENDAR_HOURS.map((hour) => (
               <div
@@ -369,24 +351,19 @@ function WeeklyCalendar({
                 className="grid border-b border-slate-50 last:border-0"
                 style={{ gridTemplateColumns: `52px repeat(7, 1fr)`, height: ROW_H }}
               >
-                {/* Time label */}
                 <div className="flex items-start justify-end pr-3 pt-1.5">
                   <span className="text-[10px] font-semibold text-slate-400">
                     {pad2(hour)}:00
                   </span>
                 </div>
 
-                {/* Day columns */}
                 {DAYS.map((d) => {
                   const isWorkDay = byDay.has(d.value);
                   return (
                     <div
                       key={d.value}
-                      className={`relative border-l border-slate-50 ${
-                        !isWorkDay ? "bg-slate-50/60" : ""
-                      }`}
+                      className={`relative border-l border-slate-50 ${!isWorkDay ? "bg-slate-50/60" : ""}`}
                     >
-                      {/* Work band — rendered only on the first matching hour */}
                       {isWorkDay &&
                         byDay.get(d.value)!.map((slot) => {
                           const start = normalizeScheduleTime(slot.startTime);
@@ -441,7 +418,6 @@ function WeeklyCalendar({
         </div>
       </div>
 
-      {/* Legend */}
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-blue-400 bg-blue-50" />
@@ -498,7 +474,6 @@ function ScheduleModal({
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
       <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        {/* Modal header */}
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -522,7 +497,6 @@ function ScheduleModal({
         </div>
 
         <form onSubmit={onSubmit} className="space-y-7 px-6 py-7">
-          {/* Doctor selector */}
           <div>
             <label className="mb-3 block text-sm font-bold text-slate-900">
               Doctor <span className="text-red-500">*</span>
@@ -546,7 +520,6 @@ function ScheduleModal({
             </select>
           </div>
 
-          {/* Whole week toggle */}
           {!selectedSchedule && (
             <div className="flex items-center justify-between rounded-2xl border-2 border-blue-100 bg-blue-50 px-4 py-4">
               <div>
@@ -567,7 +540,6 @@ function ScheduleModal({
             </div>
           )}
 
-          {/* Day picker */}
           {!createForWholeWeek && (
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">
@@ -592,7 +564,6 @@ function ScheduleModal({
             </div>
           )}
 
-          {/* Start / End time */}
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">
@@ -622,7 +593,6 @@ function ScheduleModal({
             </div>
           </div>
 
-          {/* Slot duration */}
           {!createForWholeWeek && (
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">Slot Duration</label>
@@ -645,7 +615,6 @@ function ScheduleModal({
             </div>
           )}
 
-          {/* Active toggle */}
           <div className="flex items-center justify-between rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-4">
             <div>
               <p className="text-sm font-extrabold text-slate-900">Schedule Active</p>
@@ -664,7 +633,6 @@ function ScheduleModal({
             </button>
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
             <button
               type="button"
@@ -697,18 +665,19 @@ function ScheduleModal({
 export default function DoctorSchedulePage() {
   const toast = useToast();
 
-  const [page] = useState(0);
-  const [limit] = useState(20);
+  /**
+   * PATCH 1: useState(0) / useState(20) → oddiy const.
+   * Setter ishlatilmaydi, useState keraksiz edi.
+   */
+  const page = 0;
+  const limit = 20;
 
-  // ── View state ──
   const [pageView, setPageView] = useState<PageView>("cards");
   const [calendarDoctorId, setCalendarDoctorId] = useState<string | null>(null);
 
-  // ── List state ──
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | "ALL">("ALL");
 
-  // ── Modal state ──
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<FlatDoctorSchedule | null>(null);
   const [form, setForm] = useState<ScheduleForm>(initialForm);
@@ -717,7 +686,6 @@ export default function DoctorSchedulePage() {
   const selectedScheduleId =
     selectedSchedule?.scheduleParentId ?? getScheduleId(selectedSchedule);
 
-  // ── Data ──
   const {
     data: schedules = [],
     isLoading,
@@ -736,8 +704,6 @@ export default function DoctorSchedulePage() {
     createScheduleMutation.isPending ||
     createWeeklyScheduleMutation.isPending ||
     updateScheduleMutation.isPending;
-
-  // ── Derived data ──
 
   const doctorsMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -809,7 +775,6 @@ export default function DoctorSchedulePage() {
     });
   }, [flatSchedules, doctorsMap]);
 
-  /** Group schedules by doctor for the cards view */
   const doctorGroups = useMemo<DoctorScheduleGroup[]>(() => {
     const map = new Map<string, DoctorScheduleGroup>();
     let palIdx = 0;
@@ -846,13 +811,15 @@ export default function DoctorSchedulePage() {
         const dayA = DAYS.findIndex((d) => d.value === a.dayOfWeek);
         const dayB = DAYS.findIndex((d) => d.value === b.dayOfWeek);
         if (dayA !== dayB) return dayA - dayB;
-        return normalizeScheduleTime(a.startTime).localeCompare(normalizeScheduleTime(b.startTime));
+        return normalizeScheduleTime(a.startTime).localeCompare(
+          normalizeScheduleTime(b.startTime)
+        );
       });
   }, [enrichedSchedules, selectedDay, search]);
 
   const activeCalendarGroup = useMemo(
     () => doctorGroups.find((g) => g.doctorId === calendarDoctorId) ?? null,
-    [doctorGroups, calendarDoctorId],
+    [doctorGroups, calendarDoctorId]
   );
 
   // ── Actions ──
@@ -938,20 +905,21 @@ export default function DoctorSchedulePage() {
         toast.success("Doctor schedule created successfully.");
       }
 
+      /**
+       * PATCH 2: await refetch() olib tashlandi.
+       * Har uchala mutation onSuccess da invalidateQueries chaqiradi —
+       * query avtomatik yangilanadi.
+       */
       closeModal();
-      await refetch();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "An error occurred while saving the schedule."));
     }
   }
 
-  // ── Render ──
-
   const isDataLoading = isLoading || isDoctorsLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* ── Sticky header ── */}
       <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6 py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -968,6 +936,10 @@ export default function DoctorSchedulePage() {
             </div>
 
             <div className="flex gap-2">
+              {/**
+               * PATCH 3: refetch() "Refresh" button va "Try Again" uchun saqlanib qoldi.
+               * handleSubmit dan olib tashlandi, lekin UI da kerak.
+               */}
               <button
                 type="button"
                 onClick={() => refetch()}
@@ -987,8 +959,7 @@ export default function DoctorSchedulePage() {
             </div>
           </div>
 
-          {/* View toggle */}
-          <div className="mt-4 flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+          <div className="mt-4 flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
             {(["cards", "calendar"] as PageView[]).map((v) => (
               <button
                 key={v}
@@ -1029,7 +1000,6 @@ export default function DoctorSchedulePage() {
             </button>
           </div>
         ) : pageView === "calendar" && activeCalendarGroup ? (
-          /* ── Calendar view ── */
           <WeeklyCalendar
             group={activeCalendarGroup}
             onBack={backToCards}
@@ -1037,15 +1007,13 @@ export default function DoctorSchedulePage() {
             onAddSchedule={() => openCreateModal(activeCalendarGroup.doctorId)}
           />
         ) : (
-          /* ── Cards view ── */
           <>
-            {/* Stats strip */}
             <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { label: "Total schedules", value: flatSchedules.length,                          color: "text-slate-900"  },
+                { label: "Total schedules", value: flatSchedules.length, color: "text-slate-900" },
                 { label: "Active schedules", value: flatSchedules.filter((s) => s.active).length, color: "text-emerald-600" },
-                { label: "Doctors",          value: doctors.length,                               color: "text-blue-600"   },
-                { label: "Selected day",     value: selectedDay === "ALL" ? "All" : getDayShort(selectedDay), color: "text-indigo-600" },
+                { label: "Doctors", value: doctors.length, color: "text-blue-600" },
+                { label: "Selected day", value: selectedDay === "ALL" ? "All" : getDayShort(selectedDay), color: "text-indigo-600" },
               ].map((stat) => (
                 <div key={stat.label} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
                   <p className="text-sm font-bold text-slate-500">{stat.label}</p>
@@ -1054,7 +1022,6 @@ export default function DoctorSchedulePage() {
               ))}
             </div>
 
-            {/* Search & filter */}
             <div className="mb-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative w-full lg:max-w-md">
@@ -1096,14 +1063,15 @@ export default function DoctorSchedulePage() {
               </div>
             </div>
 
-            {/* Doctor cards grid */}
             {doctorGroups.length === 0 ? (
               <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center shadow-sm">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                   <CalendarDays className="h-7 w-7" />
                 </div>
                 <p className="text-lg font-extrabold text-slate-900">No schedules found</p>
-                <p className="mt-2 text-sm text-slate-500">Create a doctor schedule to start accepting appointments.</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Create a doctor schedule to start accepting appointments.
+                </p>
                 <button
                   type="button"
                   onClick={() => openCreateModal()}
@@ -1125,8 +1093,6 @@ export default function DoctorSchedulePage() {
                 ))}
               </div>
             )}
-
-
           </>
         )}
       </main>

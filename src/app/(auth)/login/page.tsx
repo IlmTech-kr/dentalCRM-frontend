@@ -1,92 +1,195 @@
 "use client";
 
+/**
+ * File: src/app/login/page.tsx
+ *
+ * Session check logikasi:
+ *
+ * accessToken bor, authUser bor  → /dashboard (getMe() chaqirilmaydi)
+ * accessToken bor, authUser yo'q → getMe() orqali userni tiklash → /dashboard
+ * accessToken yo'q, authUser bor → authUser stale, o'chirish → /login da qolish
+ * accessToken yo'q, authUser yo'q → /login da qolish
+ *
+ * Asosiy source: accessToken (authUser emas)
+ */
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Lock, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Lock,
+  Mail,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
+
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import { getMe } from "@/src/features/users/user.service";
+import { useAuthStore } from "@/src/store/auth.store";
+import {
+  getStoredAccessToken,
+  getStoredUser,
+  saveUser,
+  clearAuthStorage,
+} from "@/src/lib/auth/storage";
 
-function getSubDomain() {
-  if (typeof window === "undefined") return "";
-
-  const host = window.location.hostname;
-
-  if (host.includes(".localhost")) {
-    return host.split(".")[0];
+function getErrorMessage(error: unknown): string {
+  if (!error) return "Login failed";
+  if (error instanceof Error) return error.message || "Login failed";
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message?: string }).message || "Login failed");
   }
-
-  const parts = host.split(".");
-
-  if (parts.length >= 3) {
-    return parts[0];
-  }
-
-  return "";
+  return "Login failed";
 }
 
 export default function LoginPage() {
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const router = useRouter();
+  const toast = useToast();
+  const loginMutation = useLogin();
+  const setAuthData = useAuthStore((state) => state.setAuthData);
 
+  const [mounted, setMounted] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [tenantSubdomain, setTenantSubdomain] = useState<string | null>(null);
+
+  const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ USE REACT QUERY HOOK
-  const loginMutation = useLogin();
-  const toast = useToast();
+  const tenantMissing = mounted && !tenantSubdomain;
 
   useEffect(() => {
-    const saved = localStorage.getItem("savedLogin");
+    let active = true;
 
-    if (saved) {
-      const parsed = JSON.parse(saved);
+    async function initLoginPage() {
+      const currentSubdomain = getCurrentSubdomain();
 
-      setForm({
-        email: parsed.email || "",
-        password: parsed.password || "",
-      });
+      if (!active) return;
 
-      setRememberMe(true);
+      setTenantSubdomain(currentSubdomain);
+      setMounted(true);
+
+      if (!currentSubdomain) {
+        setCheckingSession(false);
+        return;
+      }
+
+      // Remember Me — emailni tiklash
+      const savedLogin = localStorage.getItem("savedLogin");
+      if (savedLogin) {
+        try {
+          const parsed = JSON.parse(savedLogin);
+          setForm((prev) => ({ ...prev, email: parsed.email || "" }));
+          setRememberMe(true);
+        } catch {
+          localStorage.removeItem("savedLogin");
+        }
+      }
+
+      const accessToken = getStoredAccessToken();
+      const storedUser = getStoredUser();
+
+      /**
+       * Case 1 & 2: accessToken yo'q
+       *
+       * authUser bor bo'lsa — stale data, tozalaymiz.
+       * authUser yo'q bo'lsa — /login da qolish.
+       * Ikki holatda ham /login da qolamiz.
+       */
+      if (!accessToken) {
+        if (storedUser) {
+          clearAuthStorage();
+        }
+        setCheckingSession(false);
+        return;
+      }
+
+      /**
+       * Case 3: accessToken bor, authUser bor → /dashboard
+       *
+       * Serverga request ketmaydi — localStorage dan tiklash.
+       */
+      if (storedUser) {
+        if (!active) return;
+
+        setAuthData({
+          user: storedUser as any,
+          accessToken,
+          isAuthenticated: true,
+        });
+
+        router.replace("/dashboard");
+        return;
+      }
+
+      /**
+       * Case 4: accessToken bor, authUser yo'q → getMe() orqali tiklash
+       *
+       * Token bor lekin user yo'q (localStorage tozalangan yoki
+       * boshqa qurilmadan kelgan holatlar).
+       */
+      try {
+        const me = await getMe();
+
+        if (!active) return;
+
+        saveUser(me);
+
+        setAuthData({
+          user: me as any,
+          accessToken,
+          isAuthenticated: true,
+        });
+
+        router.replace("/dashboard");
+      } catch {
+        if (!active) return;
+
+        // Token invalid yoki expired — hammasini tozalaymiz
+        clearAuthStorage();
+        setCheckingSession(false);
+      }
     }
-  }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+    initLoginPage();
+
+    return () => {
+      active = false;
+    };
+  }, [router, setAuthData]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const subDomain = getSubDomain();
+    const email = form.email.trim();
+    const password = form.password;
 
-    if (!subDomain) {
-      alert("Clinic subdomain not found. Open clinic1.localhost:3000/login");
+    if (!tenantSubdomain) {
+      toast.error("Clinic subdomain not found");
+      return;
+    }
+
+    if (!email || !password) {
+      toast.error("Email and password are required");
       return;
     }
 
     try {
-      // ✅ USE MUTATION
-      await loginMutation.mutateAsync({
-        email: form.email,
-        password: form.password,
-        subDomain,
-      });
+      await loginMutation.mutateAsync({ email, password });
 
       if (rememberMe) {
-        localStorage.setItem(
-          "savedLogin",
-          JSON.stringify({
-            email: form.email,
-            password: form.password,
-          })
-        );
+        localStorage.setItem("savedLogin", JSON.stringify({ email }));
       } else {
         localStorage.removeItem("savedLogin");
       }
+
       toast.success("Welcome back!");
-      window.location.href = `http://${subDomain}.localhost:3000/dashboard`;
     } catch (error) {
-      // ✅ ERROR HANDLED BY MUTATION
-      toast.error("Invalid credentials");
-      console.error("Login error:", error);
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -115,7 +218,6 @@ export default function LoginPage() {
           <h2 className="text-[54px] font-extrabold leading-[1.15] tracking-tight">
             Manage Your Clinic Efficiently
           </h2>
-
           <p className="mt-8 text-xl leading-9 text-white/90">
             Patients, doctors, appointments, treatments and reports — everything
             in one modern platform.
@@ -140,13 +242,37 @@ export default function LoginPage() {
             Login to your clinic dashboard
           </p>
 
-          {/* ✅ ERROR MESSAGE FROM MUTATION */}
+          {checkingSession && mounted && !tenantMissing && (
+            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <p className="text-sm font-semibold text-blue-700">
+                Checking session...
+              </p>
+            </div>
+          )}
+
+          {tenantMissing && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle size={20} className="mt-0.5 text-red-500" />
+                <div>
+                  <p className="text-sm font-bold text-red-700">
+                    Clinic subdomain not found
+                  </p>
+                  <p className="mt-1 text-sm text-red-600">
+                    Please open your clinic URL:
+                  </p>
+                  <p className="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-red-700">
+                    http://clinic1.localhost:3000/login
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {loginMutation.error && (
-            <div className="mt-4 rounded-lg bg-red-50 p-3 border border-red-200">
-              <p className="text-sm text-red-700 font-semibold">
-                {loginMutation.error instanceof Error
-                  ? loginMutation.error.message
-                  : "Login failed. Please try again."}
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm font-semibold text-red-700">
+                {getErrorMessage(loginMutation.error)}
               </p>
             </div>
           )}
@@ -156,22 +282,17 @@ export default function LoginPage() {
               <label className="mb-2 block text-sm font-bold text-slate-600">
                 Email Address
               </label>
-
               <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
                 <Mail size={21} className="text-slate-400" />
-
                 <input
                   type="email"
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
                   placeholder="admin@clinic1.com"
                   value={form.email}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      email: e.target.value,
-                    })
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  disabled={
+                    loginMutation.isPending || checkingSession || tenantMissing
                   }
-                  disabled={loginMutation.isPending}
                 />
               </div>
             </div>
@@ -180,29 +301,28 @@ export default function LoginPage() {
               <label className="mb-2 block text-sm font-bold text-slate-600">
                 Password
               </label>
-
               <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
                 <Lock size={21} className="text-slate-400" />
-
                 <input
                   type={showPassword ? "text" : "password"}
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
                   placeholder="Enter your password"
                   value={form.password}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      password: e.target.value,
-                    })
+                    setForm({ ...form, password: e.target.value })
                   }
-                  disabled={loginMutation.isPending}
+                  disabled={
+                    loginMutation.isPending || checkingSession || tenantMissing
+                  }
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
-                  disabled={loginMutation.isPending}
+                  disabled={
+                    loginMutation.isPending || checkingSession || tenantMissing
+                  }
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
                 </button>
@@ -216,9 +336,10 @@ export default function LoginPage() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 accent-[#35a8f5]"
-                  disabled={loginMutation.isPending}
+                  disabled={
+                    loginMutation.isPending || checkingSession || tenantMissing
+                  }
                 />
-
                 Remember me
               </label>
 
@@ -230,10 +351,17 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* ✅ USE MUTATION STATE */}
             <button
-              disabled={loginMutation.isPending || !form.email || !form.password}
-              className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:opacity-60 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={
+                !mounted ||
+                checkingSession ||
+                tenantMissing ||
+                loginMutation.isPending ||
+                !form.email.trim() ||
+                !form.password
+              }
+              className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
             </button>

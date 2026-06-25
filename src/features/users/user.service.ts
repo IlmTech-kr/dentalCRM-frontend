@@ -1,54 +1,50 @@
-// File: src/features/user/user.service.ts
-import { tenantHttp } from "@/src/lib/api/http";
+// File: src/features/users/user.service.ts
+
+import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
   UserProfile,
   UpdateProfilePayload,
   ChangePasswordPayload,
 } from "@/src/types/user.types";
-import { AxiosError } from "axios";
-import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 
-/**
- * Get subdomain from localStorage
- */
+function getTenantClient() {
+  /**
+   * MUHIM:
+   * tenantHttp() tenantni URL'dan oladi.
+   *
+   * Example:
+   * frontend: http://clinic1.localhost:3000/dashboard
+   * backend:  https://clinic1.dental.api.ilmtech.uz
+   */
+  return tenantHttp();
+}
 
-
-/**
- * Get current user profile
- */
 export async function getMe(): Promise<UserProfile> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = getTenantClient();
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
     const response = await http.get<UserProfile>(ENDPOINTS.users.me);
 
     return response.data;
   } catch (error) {
-    console.error("Failed to get user profile:", error);
-    throw new Error("Failed to load profile");
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[User Service] Failed to get user profile:",
+        getApiErrorMessage(error)
+      );
+    }
+
+    throw new Error(getApiErrorMessage(error, "Failed to load profile"));
   }
 }
 
-/**
- * Update current user profile
- */
 export async function updateMe(
   payload: UpdateProfilePayload
 ): Promise<UserProfile> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = getTenantClient();
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
     const response = await http.put<UserProfile>(
       ENDPOINTS.users.me,
       payload
@@ -56,40 +52,32 @@ export async function updateMe(
 
     return response.data;
   } catch (error) {
-    console.error("Failed to update profile:", error);
-    
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to update profile";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[User Service] Failed to update profile:",
+        getApiErrorMessage(error)
+      );
     }
-    
-    throw error;
+
+    throw new Error(getApiErrorMessage(error, "Failed to update profile"));
   }
 }
 
-/**
- * Change password for current user
- */
 export async function changePassword(
   payload: ChangePasswordPayload
 ): Promise<void> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = getTenantClient();
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
     await http.put(ENDPOINTS.users.changePassword, payload);
   } catch (error) {
-    console.error("Failed to change password:", error);
-    
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to change password";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[User Service] Failed to change password:",
+        getApiErrorMessage(error)
+      );
     }
-    
-    throw error;
+
+    throw new Error(getApiErrorMessage(error, "Failed to change password"));
   }
 }

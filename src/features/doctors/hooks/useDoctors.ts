@@ -1,4 +1,8 @@
-// File: src/features/doctors/hooks/useDoctors.ts
+"use client";
+
+/**
+ * File: src/features/doctors/hooks/useDoctors.ts
+ */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +14,8 @@ import {
   updateDoctor,
 } from "../services/doctor.service";
 
+import { useAuthStore } from "@/src/store/auth.store";
+
 import type {
   Doctor,
   InviteDoctorDto,
@@ -18,56 +24,53 @@ import type {
 
 export const doctorKeys = {
   all: ["doctors"] as const,
-
   lists: () => [...doctorKeys.all, "list"] as const,
-
   list: (filters: string) => [...doctorKeys.lists(), { filters }] as const,
-
   details: () => [...doctorKeys.all, "detail"] as const,
-
   detail: (id: string) => [...doctorKeys.details(), id] as const,
 };
 
 export function useGetDoctors() {
-  return useQuery<Doctor[]>({
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return useQuery<Doctor[], Error>({
     queryKey: doctorKeys.lists(),
-    queryFn: () => getDoctors(),
+    queryFn: getDoctors,
+    enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 }
 
 export function useGetDoctor(doctorId: string | null) {
-  return useQuery<Doctor>({
-    queryKey: doctorId ? doctorKeys.detail(doctorId) : ["doctor-disabled"],
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
+  return useQuery<Doctor, Error>({
+    queryKey: doctorKeys.detail(doctorId ?? ""),
     queryFn: () => {
-      if (!doctorId) {
-        throw {
-          code: "DOCTOR_ID_REQUIRED",
-          message: "Doctor ID is required",
-        };
-      }
-
+      if (!doctorId) throw new Error("Doctor ID is required");
       return getDoctorById(doctorId);
     },
-
-    enabled: Boolean(doctorId),
+    enabled: Boolean(doctorId) && isAuthenticated,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 }
 
 export function useInviteDoctor() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, unknown, InviteDoctorDto>({
-    mutationFn: (payload) => inviteDoctor(payload),
+  return useMutation<void, Error, InviteDoctorDto>({
+    mutationFn: inviteDoctor,
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: doctorKeys.lists(),
-      });
+      /**
+       * invalidateQueries avtomatik refetch qiladi.
+       * DoctorsPage da alohida refetch() chaqirish shart emas.
+       */
+      queryClient.invalidateQueries({ queryKey: doctorKeys.lists() });
     },
   });
 }
@@ -75,15 +78,12 @@ export function useInviteDoctor() {
 export function useUpdateDoctor(doctorId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Doctor, unknown, UpdateDoctorDto>({
+  return useMutation<Doctor, Error, UpdateDoctorDto>({
     mutationFn: (payload) => updateDoctor(doctorId, payload),
 
     onSuccess: (updatedDoctor) => {
       queryClient.setQueryData(doctorKeys.detail(doctorId), updatedDoctor);
-
-      queryClient.invalidateQueries({
-        queryKey: doctorKeys.lists(),
-      });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.lists() });
     },
   });
 }
@@ -91,17 +91,12 @@ export function useUpdateDoctor(doctorId: string) {
 export function useDeleteDoctor() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, unknown, string>({
-    mutationFn: (doctorId) => deleteDoctor(doctorId),
+  return useMutation<void, Error, string>({
+    mutationFn: deleteDoctor,
 
     onSuccess: (_, deletedDoctorId) => {
-      queryClient.removeQueries({
-        queryKey: doctorKeys.detail(deletedDoctorId),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: doctorKeys.lists(),
-      });
+      queryClient.removeQueries({ queryKey: doctorKeys.detail(deletedDoctorId) });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.lists() });
     },
   });
 }

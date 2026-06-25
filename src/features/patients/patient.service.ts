@@ -1,254 +1,245 @@
-// File: src/features/patients/patient.service.ts
-import { tenantHttp } from "@/src/lib/api/http";
+/**
+ * File: src/features/patients/patient.service.ts
+ */
+
+import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
   Patient,
   CreatePatientDto,
   UpdatePatientDto,
 } from "@/src/types/patient.types";
-import { AxiosError } from "axios";
-import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 
+// ---------------------------------------------------------------------------
+// Phone helpers
+// ---------------------------------------------------------------------------
 
 /**
- * Extract only digits from phone number
- * Input: "+998 90 123 45 67"
- * Output: "998901234567"
+ * Faqat raqamlarni qoldiradi.
+ *
+ * "+998 93 491 91 00" → "998934919100"
  */
 function extractPhoneDigits(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
 /**
- * Normalize API response to Patient array
+ * Backendga bir xil formatda yuboriladi: +998XXXXXXXXX (12 raqam + "+")
+ *
+ * Hook da enabled: length === 12 kafolatlaydi,
+ * shuning uchun bu yerda ham 12 raqam tekshiramiz — izchillik uchun.
  */
-function normalizePatientsResponse(responseData: any): Patient[] {
-  if (Array.isArray(responseData)) {
-    return responseData;
-  }
+function normalizePhone(phone?: string): string | undefined {
+  if (!phone) return undefined;
 
-  if (responseData?.data && Array.isArray(responseData.data)) {
-    return responseData.data;
-  }
+  const digits = extractPhoneDigits(phone);
 
-  if (responseData?.content && Array.isArray(responseData.content)) {
-    return responseData.content;
-  }
+  if (digits.length !== 12) return undefined;
 
-  if (responseData?.patients && Array.isArray(responseData.patients)) {
-    return responseData.patients;
-  }
+  return `+${digits}`;
+}
 
-  return [];
+// ---------------------------------------------------------------------------
+// Response normalizers
+// ---------------------------------------------------------------------------
+
+/**
+ * Backenddan _id kelsa id ga normalize qilamiz.
+ * phone / phoneNumber ham bir xil bo'lib ishlaydi.
+ */
+function normalizePatient(patient: any): Patient {
+  return {
+    ...patient,
+    id: patient.id || patient._id,
+    phone: patient.phone || patient.phoneNumber || "",
+    phoneNumber: patient.phoneNumber || patient.phone || "",
+  } as Patient;
 }
 
 /**
- * Get all patients
+ * API response har xil formatda kelsa ham array qilib olamiz.
+ */
+function normalizePatientsResponse(responseData: any): Patient[] {
+  let patients: any[] = [];
+
+  if (Array.isArray(responseData)) {
+    patients = responseData;
+  } else if (Array.isArray(responseData?.data)) {
+    patients = responseData.data;
+  } else if (Array.isArray(responseData?.content)) {
+    patients = responseData.content;
+  } else if (Array.isArray(responseData?.patients)) {
+    patients = responseData.patients;
+  } else if (Array.isArray(responseData?.data?.content)) {
+    patients = responseData.data.content;
+  } else {
+    patients = [];
+  }
+
+  return patients.map(normalizePatient);
+}
+
+// ---------------------------------------------------------------------------
+// Payload normalizer
+// ---------------------------------------------------------------------------
+
+function normalizePatientPayload<T extends CreatePatientDto | UpdatePatientDto>(
+  payload: T
+): T {
+  const rawPhone = (payload as any).phone || (payload as any).phoneNumber;
+  const normalizedPhone = normalizePhone(rawPhone);
+
+  if (!normalizedPhone) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    phone: normalizedPhone,
+    phoneNumber: normalizedPhone,
+  } as T;
+}
+
+// ---------------------------------------------------------------------------
+// Service functions
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /patients
  */
 export async function getPatients(): Promise<Patient[]> {
   try {
-    const subDomain = getCurrentSubdomain();
-
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
+    const http = tenantHttp();
     const response = await http.get(ENDPOINTS.patients.list);
 
-    console.log("[Patient Service] getPatients response:", response.data);
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[Patient Service] getPatients response:", response.data);
+    }
 
     return normalizePatientsResponse(response.data);
   } catch (error) {
-    console.error("Failed to load patients:", error);
-    throw new Error("Failed to load patients");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] getPatients failed:", getApiErrorMessage(error));
+    }
+
+    throw new Error(getApiErrorMessage(error, "Failed to load patients"));
   }
 }
 
 /**
- * Get patient by ID
+ * GET /patients/:id
  */
 export async function getPatientById(id: string): Promise<Patient> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = tenantHttp();
+    const response = await http.get(ENDPOINTS.patients.byId(id));
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
-    const response = await http.get<Patient>(ENDPOINTS.patients.byId(id));
-
-    return response.data;
+    return normalizePatient(response.data);
   } catch (error) {
-    console.error("Failed to load patient:", error);
-
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to load patient";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] getPatientById failed:", getApiErrorMessage(error));
     }
 
-    throw error;
+    throw new Error(getApiErrorMessage(error, "Failed to load patient"));
   }
 }
 
 /**
- * Search patients by phone number
- * ✅ FIXED: Sends only digits to API (no +998 or spaces)
+ * GET /patients?search=998XXXXXXXXX
+ *
+ * Hook da enabled: cleanPhone.length === 12 kafolatlaydi.
+ * Service da ham izchillik uchun 12 raqam tekshiramiz.
+ *
+ * Input:  "+998934919100" yoki "998934919100"
+ * Search: "998934919100"
  */
 export async function searchPatientByPhone(phone: string): Promise<Patient[]> {
   try {
-    const subDomain = getCurrentSubdomain();
+    if (!phone?.trim()) return [];
 
-    if (!subDomain) {
-      console.error("[Patient Service] No subdomain found");
-      throw new Error("No tenant subdomain found");
-    }
-
-    if (!phone || !phone.trim()) {
-      console.warn("[Patient Service] Empty phone number");
-      return [];
-    }
-
-    // ✅ FIXED: Extract only digits before sending to API
     const phoneDigits = extractPhoneDigits(phone);
 
-    if (phoneDigits.length < 12) {
-      console.warn("[Patient Service] Phone number incomplete");
-      return [];
-    }
+    if (phoneDigits.length !== 12) return [];
 
-    const http = tenantHttp(subDomain);
+    const http = tenantHttp();
+    const endpoint = `${ENDPOINTS.patients.list}?search=${encodeURIComponent(phoneDigits)}`;
 
-    // ✅ Send only digits to API (no +998, no spaces)
-    const searchParam = encodeURIComponent(phoneDigits);
-    const endpoint = `${ENDPOINTS.patients.list}?search=${searchParam}`;
-
-    console.log("[Patient Service] Phone search:", {
-      original: phone,
-      digits: phoneDigits,
-      endpoint: endpoint,
-      subdomain: subDomain,
-    });
-
-    const response = await http.get(endpoint);
-
-    console.log("[Patient Service] Search response:", response.data);
-
-    const results = normalizePatientsResponse(response.data);
-
-    console.log("[Patient Service] Search results:", {
-      count: results.length,
-      results: results.map((p) => ({
-        id: p.id,
-        name: `${p.firstName} ${p.lastName}`,
-        phone: p.phone,
-      })),
-    });
-
-    return results;
-  } catch (error) {
-    console.error("[Patient Service] Search error:", error);
-
-    if (error instanceof AxiosError) {
-      console.error("[Patient Service] API Error:", {
-        status: error.response?.status,
-        message: error.response?.data?.message,
-        data: error.response?.data,
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[Patient Service] searchPatientByPhone:", {
+        original: phone,
+        digits: phoneDigits,
+        endpoint,
       });
     }
 
-    // Return empty array on error instead of throwing
+    const response = await http.get(endpoint);
+
+    return normalizePatientsResponse(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] searchPatientByPhone failed:", getApiErrorMessage(error));
+    }
+
     return [];
   }
 }
 
 /**
- * Create new patient
+ * POST /patients
  */
-export async function createPatient(
-  payload: CreatePatientDto
-): Promise<Patient> {
+export async function createPatient(payload: CreatePatientDto): Promise<Patient> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = tenantHttp();
+    const normalizedPayload = normalizePatientPayload(payload);
+    const response = await http.post(ENDPOINTS.patients.list, normalizedPayload);
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
-    const response = await http.post<Patient>(
-      ENDPOINTS.patients.list,
-      payload
-    );
-
-    return response.data;
+    return normalizePatient(response.data);
   } catch (error) {
-    console.error("Failed to create patient:", error);
-
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to create patient";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] createPatient failed:", getApiErrorMessage(error));
     }
 
-    throw error;
+    throw new Error(getApiErrorMessage(error, "Failed to create patient"));
   }
 }
 
 /**
- * Update patient
+ * PATCH /patients/:id
+ *
+ * UpdatePatientDto partial bo'lgani uchun PATCH ishlatiladi.
+ * Agar backend PUT kutsa — shu yerda o'zgartirish kifoya.
  */
 export async function updatePatient(
   id: string,
   payload: UpdatePatientDto
 ): Promise<Patient> {
   try {
-    const subDomain = getCurrentSubdomain();
+    const http = tenantHttp();
+    const normalizedPayload = normalizePatientPayload(payload);
+    const response = await http.patch(ENDPOINTS.patients.byId(id), normalizedPayload);
 
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
-    const response = await http.put<Patient>(
-      ENDPOINTS.patients.byId(id),
-      payload
-    );
-
-    return response.data;
+    return normalizePatient(response.data);
   } catch (error) {
-    console.error("Failed to update patient:", error);
-
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to update patient";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] updatePatient failed:", getApiErrorMessage(error));
     }
 
-    throw error;
+    throw new Error(getApiErrorMessage(error, "Failed to update patient"));
   }
 }
 
 /**
- * Delete patient
+ * DELETE /patients/:id
  */
 export async function deletePatient(id: string): Promise<void> {
   try {
-    const subDomain = getCurrentSubdomain();
-
-    if (!subDomain) {
-      throw new Error("No tenant subdomain found");
-    }
-
-    const http = tenantHttp(subDomain);
+    const http = tenantHttp();
     await http.delete(ENDPOINTS.patients.byId(id));
   } catch (error) {
-    console.error("Failed to delete patient:", error);
-
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || "Failed to delete patient";
-      throw new Error(message);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Patient Service] deletePatient failed:", getApiErrorMessage(error));
     }
 
-    throw error;
+    throw new Error(getApiErrorMessage(error, "Failed to delete patient"));
   }
 }

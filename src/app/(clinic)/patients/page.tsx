@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * File: src/app/(dashboard)/patients/page.tsx
+ */
+
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import {
   AlertCircle,
@@ -23,7 +27,7 @@ import {
 
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { useCreateAppointment } from "@/src/features/appointments/hooks/useAppointments";
-import { Gender } from "@/src/lib/enums/enums.types";
+import { Gender, Role } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -88,19 +92,12 @@ function getDoctorName(doctor: any) {
 function getGenderLabel(gender?: string) {
   if (gender === Gender.MALE) return "Male";
   if (gender === Gender.FEMALE) return "Female";
-
   return gender || "-";
 }
 
 function getGenderBadgeClass(gender?: string) {
-  if (gender === Gender.MALE) {
-    return "border-blue-200 bg-blue-50 text-blue-700";
-  }
-
-  if (gender === Gender.FEMALE) {
-    return "border-pink-200 bg-pink-50 text-pink-700";
-  }
-
+  if (gender === Gender.MALE) return "border-blue-200 bg-blue-50 text-blue-700";
+  if (gender === Gender.FEMALE) return "border-pink-200 bg-pink-50 text-pink-700";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
@@ -132,6 +129,10 @@ export default function PatientsPage() {
 
   const [appointmentForm, setAppointmentForm] = useState(emptyAppointmentForm);
 
+  /**
+   * Search faqat 12 raqamli bo'lganda va user search bosganida ishlaydi.
+   * useSearchPatientByPhone ichida ham enabled: length === 12 tekshiriladi.
+   */
   const phoneDigits = extractDigits(phoneSearch);
   const shouldSearch = phoneDigits.length === 12 && phoneSearchAttempted;
 
@@ -141,9 +142,16 @@ export default function PatientsPage() {
   const phoneSearchResult =
     phoneSearchResults.length > 0 ? phoneSearchResults[0] : null;
 
+  /**
+   * Role.DOCTOR enum ishlatiladi — string "DOCTOR" emas.
+   */
   const appointmentDoctors = doctors.filter((doctor: any) =>
-    doctor.roles?.includes("DOCTOR"),
+    doctor.roles?.includes(Role.DOCTOR)
   );
+
+  // ---------------------------------------------------------------------------
+  // Modal handlers
+  // ---------------------------------------------------------------------------
 
   function openCreateModal() {
     setEditingPatient(null);
@@ -189,15 +197,15 @@ export default function PatientsPage() {
     setPhoneSearchAttempted(false);
   }
 
+  // ---------------------------------------------------------------------------
+  // Form handlers
+  // ---------------------------------------------------------------------------
+
   function handleChange(
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   function handlePhoneSearchInput(value: string) {
@@ -242,7 +250,6 @@ export default function PatientsPage() {
           id: editingPatient.id,
           ...payload,
         });
-
         toast.success("Patient updated successfully");
       } else {
         await createMutation.mutateAsync(payload);
@@ -250,7 +257,7 @@ export default function PatientsPage() {
       }
 
       closeModal();
-    } catch (error) {
+    } catch {
       toast.error("Failed to save patient");
     }
   }
@@ -288,22 +295,31 @@ export default function PatientsPage() {
 
       toast.success("Appointment created successfully");
       closeModal();
-    } catch (error) {
-      toast.error("Appointment create qilishda xatolik bo‘ldi");
+    } catch {
+      toast.error("Appointment create qilishda xatolik bo'ldi");
     }
   }
 
   async function handleDelete(id: string) {
+    /**
+     * window.confirm o'rniga toast.confirm yaxshiroq bo'lardi,
+     * lekin hozir toast.confirm yo'q — shu saqlanadi.
+     * Keyinchalik ConfirmModal componentga o'tkazish mumkin.
+     */
     const confirmed = window.confirm("Delete this patient?");
     if (!confirmed) return;
 
     try {
       await deleteMutation.mutateAsync(id);
       toast.success("Patient deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error("Cannot delete patient");
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <div className="space-y-6">
@@ -325,9 +341,7 @@ export default function PatientsPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Patient List
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900">Patient List</h2>
 
           <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
             {patients.length} patients
@@ -385,9 +399,7 @@ export default function PatientsPage() {
 
                       <td className="px-6 py-4">
                         <span
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${getGenderBadgeClass(
-                            patient.gender,
-                          )}`}
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${getGenderBadgeClass(patient.gender)}`}
                         >
                           {getGenderLabel(patient.gender)}
                         </span>
@@ -462,6 +474,7 @@ export default function PatientsPage() {
         )}
       </div>
 
+      {/* Phone Search Modal */}
       {modalState === "phone-search" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
@@ -502,22 +515,10 @@ export default function PatientsPage() {
                       label="Name"
                       value={`${phoneSearchResult.firstName} ${phoneSearchResult.lastName}`}
                     />
-                    <Info
-                      label="Phone"
-                      value={getPatientPhone(phoneSearchResult)}
-                    />
-                    <Info
-                      label="Gender"
-                      value={getGenderLabel(phoneSearchResult.gender)}
-                    />
-                    <Info
-                      label="Birth Date"
-                      value={phoneSearchResult.birthDate}
-                    />
-                    <Info
-                      label="Anamnesis"
-                      value={phoneSearchResult.anamnesis || "-"}
-                    />
+                    <Info label="Phone" value={getPatientPhone(phoneSearchResult)} />
+                    <Info label="Gender" value={getGenderLabel(phoneSearchResult.gender)} />
+                    <Info label="Birth Date" value={phoneSearchResult.birthDate} />
+                    <Info label="Anamnesis" value={phoneSearchResult.anamnesis || "-"} />
                   </div>
 
                   <div className="flex gap-3 border-t border-slate-200 pt-4">
@@ -654,6 +655,7 @@ export default function PatientsPage() {
         </div>
       )}
 
+      {/* Appointment Modal */}
       {modalState === "appointment" && selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
@@ -796,7 +798,7 @@ export default function PatientsPage() {
                       notes: e.target.value,
                     }))
                   }
-                  placeholder="Birinchi ko‘rik"
+                  placeholder="Birinchi ko'rik"
                   className="min-h-[100px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -825,6 +827,7 @@ export default function PatientsPage() {
         </div>
       )}
 
+      {/* Create / Edit Patient Modal */}
       {modalState === "form" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
@@ -876,12 +879,12 @@ export default function PatientsPage() {
               <input
                 name="phone"
                 value={form.phone}
-                onChange={(e) => {
+                onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
                     phone: formatPhoneNumber(e.target.value),
-                  }));
-                }}
+                  }))
+                }
                 placeholder="+998934919100"
                 maxLength={13}
                 required
@@ -892,9 +895,7 @@ export default function PatientsPage() {
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
-                className={`rounded-xl border px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-blue-500 ${getGenderBadgeClass(
-                  form.gender,
-                )}`}
+                className={`rounded-xl border px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-blue-500 ${getGenderBadgeClass(form.gender)}`}
               >
                 <option value={Gender.MALE}>Male</option>
                 <option value={Gender.FEMALE}>Female</option>
@@ -919,9 +920,7 @@ export default function PatientsPage() {
 
                 <button
                   type="submit"
-                  disabled={
-                    createMutation.isPending || updateMutation.isPending
-                  }
+                  disabled={createMutation.isPending || updateMutation.isPending}
                   className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {editingPatient ? "Save Changes" : "Create Patient"}
@@ -932,6 +931,7 @@ export default function PatientsPage() {
         </div>
       )}
 
+      {/* View Patient Modal */}
       {modalState === "view" && selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
@@ -955,15 +955,9 @@ export default function PatientsPage() {
                 value={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
               />
               <Info label="Phone" value={getPatientPhone(selectedPatient)} />
-              <Info
-                label="Gender"
-                value={getGenderLabel(selectedPatient.gender)}
-              />
+              <Info label="Gender" value={getGenderLabel(selectedPatient.gender)} />
               <Info label="Birth Date" value={selectedPatient.birthDate} />
-              <Info
-                label="Anamnesis"
-                value={selectedPatient.anamnesis || "-"}
-              />
+              <Info label="Anamnesis" value={selectedPatient.anamnesis || "-"} />
             </div>
 
             <div className="mt-6 flex gap-3 border-t border-slate-200 pt-4">

@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * File: src/app/(dashboard)/doctors/page.tsx
+ */
+
 import { useMemo, useState, type FormEvent } from "react";
 
 import {
@@ -41,7 +45,7 @@ function getDoctorId(doctor: Doctor) {
 
 function getMainRole(doctor: Doctor): StaffRole {
   const role = doctor.roles?.find((item) =>
-    staffRoleOptions.includes(item as StaffRole),
+    staffRoleOptions.includes(item as StaffRole)
   );
 
   return (role as StaffRole) || Role.DOCTOR;
@@ -58,6 +62,10 @@ function getRoleBadgeClass(role: string) {
 export default function DoctorsPage() {
   const toast = useToast();
 
+  /**
+   * getDoctors() service da allaqachon isStaffUser filter qilingan.
+   * Bu yerda qayta filter qilish shart emas — doctors to'g'ridan ishlatiladi.
+   */
   const { data: doctors = [], isLoading, isError, refetch } = useGetDoctors();
 
   const inviteDoctorMutation = useInviteDoctor();
@@ -75,24 +83,18 @@ export default function DoctorsPage() {
   const selectedDoctorId = selectedDoctor ? getDoctorId(selectedDoctor) : "";
   const updateDoctorMutation = useUpdateDoctor(selectedDoctorId);
 
-  const staffUsers = useMemo(() => {
-    return doctors.filter((doctor) =>
-      doctor.roles?.some((role) =>
-        staffRoleOptions.includes(role as StaffRole),
-      ),
-    );
-  }, [doctors]);
-
+  /**
+   * Client-side search — service da allaqachon staff filter bo'lgani uchun
+   * faqat search filter qilamiz.
+   */
   const filteredDoctors = useMemo(() => {
     const value = search.toLowerCase().trim();
 
-    if (!value) return staffUsers;
+    if (!value) return doctors;
 
-    return staffUsers.filter((doctor) => {
-      const fullName = `${doctor.firstName || ""} ${
-        doctor.lastName || ""
-      }`.toLowerCase();
-
+    return doctors.filter((doctor) => {
+      const fullName =
+        `${doctor.firstName || ""} ${doctor.lastName || ""}`.toLowerCase();
       const email = doctor.email?.toLowerCase() || "";
       const phone = (doctor.phoneNumber || doctor.phone || "").toLowerCase();
       const status = doctor.status?.toLowerCase() || "";
@@ -106,7 +108,11 @@ export default function DoctorsPage() {
         roles.includes(value)
       );
     });
-  }, [staffUsers, search]);
+  }, [doctors, search]);
+
+  // ---------------------------------------------------------------------------
+  // Modal handlers
+  // ---------------------------------------------------------------------------
 
   function handleOpenInviteModal() {
     setInviteEmail("");
@@ -138,6 +144,10 @@ export default function DoctorsPage() {
     setEditForm(initialEditForm);
   }
 
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
+
   async function handleInviteDoctor(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -153,11 +163,14 @@ export default function DoctorsPage() {
       });
 
       handleCloseInviteModal();
-      await refetch();
 
+      /**
+       * refetch() kerak emas — useInviteDoctor onSuccess da
+       * invalidateQueries chaqiradi, query avtomatik yangilanadi.
+       */
       toast.success(`${inviteRole} uchun invite yuborildi`);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Invite yuborishda xatolik bo‘ldi"));
+      toast.error(getApiErrorMessage(error, "Invite yuborishda xatolik bo'ldi"));
     }
   }
 
@@ -190,13 +203,11 @@ export default function DoctorsPage() {
       });
 
       handleCloseEditModal();
-      await refetch();
 
+      // refetch() kerak emas — useUpdateDoctor onSuccess da invalidateQueries bor
       toast.success("Staff updated successfully");
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error, "Staff update qilishda xatolik bo‘ldi"),
-      );
+      toast.error(getApiErrorMessage(error, "Staff update qilishda xatolik bo'ldi"));
     }
   }
 
@@ -209,22 +220,24 @@ export default function DoctorsPage() {
     }
 
     const confirmed = confirm(
-      `${doctor.firstName} ${doctor.lastName} ni o‘chirmoqchimisiz?`,
+      `${doctor.firstName} ${doctor.lastName} ni o'chirmoqchimisiz?`
     );
 
     if (!confirmed) return;
 
     try {
       await deleteDoctorMutation.mutateAsync(doctorId);
-      await refetch();
 
+      // refetch() kerak emas — useDeleteDoctor onSuccess da invalidateQueries bor
       toast.success("Staff deleted successfully");
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error, "Staff delete qilishda xatolik bo‘ldi"),
-      );
+      toast.error(getApiErrorMessage(error, "Staff delete qilishda xatolik bo'ldi"));
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <div className="min-h-screen p-6">
@@ -248,9 +261,7 @@ export default function DoctorsPage() {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Staff List
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900">Staff List</h2>
             <p className="mt-1 text-sm text-slate-500">
               All clinic users with DOCTOR, RECEPTIONIST and ASSISTANT roles.
             </p>
@@ -270,7 +281,7 @@ export default function DoctorsPage() {
         {isError ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-red-600">
-              Staff listni olishda xatolik bo‘ldi.
+              Staff listni olishda xatolik bo'ldi.
             </p>
 
             <button
@@ -372,9 +383,7 @@ export default function DoctorsPage() {
                             doctor.roles.map((role) => (
                               <span
                                 key={role}
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
-                                  role,
-                                )}`}
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(role)}`}
                               >
                                 {role}
                               </span>
@@ -428,14 +437,13 @@ export default function DoctorsPage() {
         )}
       </div>
 
+      {/* Invite Modal */}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Add Staff
-                </h2>
+                <h2 className="text-xl font-bold text-slate-900">Add Staff</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Select role and send invite link to email.
                 </p>
@@ -510,14 +518,13 @@ export default function DoctorsPage() {
         </div>
       )}
 
+      {/* Edit Modal */}
       {selectedDoctor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Edit Staff
-                </h2>
+                <h2 className="text-xl font-bold text-slate-900">Edit Staff</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Update staff profile and role.
                 </p>
@@ -543,10 +550,7 @@ export default function DoctorsPage() {
                     type="text"
                     value={editForm.firstName}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        firstName: e.target.value,
-                      })
+                      setEditForm({ ...editForm, firstName: e.target.value })
                     }
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
@@ -561,10 +565,7 @@ export default function DoctorsPage() {
                     type="text"
                     value={editForm.lastName}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        lastName: e.target.value,
-                      })
+                      setEditForm({ ...editForm, lastName: e.target.value })
                     }
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
@@ -580,10 +581,7 @@ export default function DoctorsPage() {
                   type="text"
                   value={editForm.phoneNumber}
                   onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      phoneNumber: e.target.value,
-                    })
+                    setEditForm({ ...editForm, phoneNumber: e.target.value })
                   }
                   placeholder="+998901112233"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -599,10 +597,7 @@ export default function DoctorsPage() {
                   type="text"
                   value={editForm.avatarUrl}
                   onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      avatarUrl: e.target.value,
-                    })
+                    setEditForm({ ...editForm, avatarUrl: e.target.value })
                   }
                   placeholder="https://cdn.example.com/avatar.png"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -617,10 +612,7 @@ export default function DoctorsPage() {
                 <select
                   value={editForm.role}
                   onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      role: e.target.value as StaffRole,
-                    })
+                    setEditForm({ ...editForm, role: e.target.value as StaffRole })
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 >
@@ -669,9 +661,7 @@ export default function DoctorsPage() {
                   disabled={updateDoctorMutation.isPending}
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {updateDoctorMutation.isPending
-                    ? "Saving..."
-                    : "Save Changes"}
+                  {updateDoctorMutation.isPending ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>

@@ -1,7 +1,19 @@
-// File: src/features/auth/auth.service.ts
-import axios from "axios";
+/**
+ * File: src/features/auth/auth.service.ts
+ */
+
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
-import { mainHttp, tenantHttp } from "@/src/lib/api/http";
+import {
+  mainHttp,
+  publicTenantHttp,
+  tenantHttp,
+  getApiErrorMessage,
+} from "@/src/lib/api/http";
+import {
+  saveAuthData,
+  clearAuthStorage,
+} from "@/src/lib/auth/storage";
+
 import type {
   ForgotPasswordDto,
   LoginDto,
@@ -9,122 +21,124 @@ import type {
   ResetPasswordDto,
 } from "@/src/types/auth.types";
 
-function saveAuthData(data: any, subDomain?: string) {
-  if (typeof window === "undefined") return;
-
-  const accessToken = data?.accessToken || data?.access_token;
-  const tenantId = data?.tenantId || data?.tenant_id;
-
-  if (accessToken) {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("access_token", accessToken);
-  }
-
-  if (tenantId) {
-    localStorage.setItem("tenantId", tenantId);
-    localStorage.setItem("tenant_id", tenantId);
-  }
-
-  if (subDomain) {
-    localStorage.setItem("subDomain", subDomain);
-    localStorage.setItem("subdomain", subDomain);
-  }
-}
-
-function clearAuthData() {
-  if (typeof window === "undefined") return;
-
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("tenantId");
-  localStorage.removeItem("tenant_id");
-  localStorage.removeItem("subDomain");
-  localStorage.removeItem("subdomain");
-}
-
 /**
  * Register clinic
+ *
+ * Root API orqali: https://dental.api.ilmtech.uz/api/auth/register
  */
 export async function registerClinic(data: RegisterClinicDto) {
-  const response = await mainHttp.post(ENDPOINTS.auth.register, data);
-  return response.data;
+  try {
+    const response = await mainHttp.post(ENDPOINTS.auth.register, data);
+
+    return response.data;
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] registerClinic failed:", getApiErrorMessage(error));
+    }
+
+    throw new Error(getApiErrorMessage(error, "Clinic registration failed"));
+  }
 }
 
 /**
- * Login clinic user
+ * Login
+ *
+ * POST https://clinic11.dental.api.ilmtech.uz/api/auth/login
+ *
+ * Authorization yo'q, X-Tenant-ID yo'q.
+ * Subdomain URL'dan olinadi.
  */
 export async function login(data: LoginDto) {
-  clearAuthData();
+  try {
+    // Eski auth datani tozalaymiz (savedLogin saqlanib qoladi)
+    clearAuthStorage();
 
-  const subDomain = data.subDomain.trim();
+    const http = publicTenantHttp();
 
-  const response = await axios.post(
-    `http://${subDomain}.localhost:9000/api/auth/login`,
-    {
+    const response = await http.post(ENDPOINTS.auth.login, {
       email: data.email.trim(),
       password: data.password,
-    },
-    {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-      },
+    });
+
+    // Shared helper orqali bir chaqiruvda hammasini saqlaymiz
+    saveAuthData(response.data);
+
+    return response.data;
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] login failed:", getApiErrorMessage(error));
     }
-  );
 
-  saveAuthData(response.data, subDomain);
-
-  return response.data;
+    throw new Error(getApiErrorMessage(error, "Login failed"));
+  }
 }
 
 /**
  * Forgot password
+ *
+ * POST https://clinic11.dental.api.ilmtech.uz/api/auth/forgot-password
  */
 export async function forgotPassword(data: ForgotPasswordDto) {
-  const subDomain = data.subDomain?.trim();
-
-  if (subDomain) {
-    const http = tenantHttp(subDomain);
+  try {
+    const http = publicTenantHttp();
 
     const response = await http.post(ENDPOINTS.auth.forgotPassword, {
       email: data.email.trim(),
     });
 
     return response.data;
-  }
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] forgotPassword failed:", getApiErrorMessage(error));
+    }
 
-  const response = await mainHttp.post(ENDPOINTS.auth.forgotPassword, data);
-  return response.data;
+    throw new Error(getApiErrorMessage(error, "Failed to send reset link"));
+  }
 }
 
 /**
  * Reset password
  */
 export async function resetPassword(data: ResetPasswordDto) {
-  const subDomain =
-    typeof window !== "undefined"
-      ? localStorage.getItem("subDomain") || localStorage.getItem("subdomain")
-      : "";
-
-  if (subDomain) {
-    const http = tenantHttp(subDomain);
+  try {
+    const http = publicTenantHttp();
 
     const response = await http.post(ENDPOINTS.auth.resetPassword, data);
 
     return response.data;
-  }
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] resetPassword failed:", getApiErrorMessage(error));
+    }
 
-  const response = await mainHttp.post(ENDPOINTS.auth.resetPassword, data);
-  return response.data;
+    throw new Error(getApiErrorMessage(error, "Failed to reset password"));
+  }
 }
 
 /**
  * Logout
+ *
+ * Backend logout endpoint bo'lsa, avval backendga request yuboradi.
+ * Keyin localStorage tozalanadi va /login ga redirect.
  */
-export function logout() {
-  clearAuthData();
+export async function logout() {
+  try {
+    const logoutEndpoint = (ENDPOINTS.auth as any).logout;
 
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
+    if (logoutEndpoint) {
+      const http = tenantHttp();
+
+      await http.post(logoutEndpoint);
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] logout request failed:", getApiErrorMessage(error));
+    }
+  } finally {
+    clearAuthStorage();
+
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   }
 }
