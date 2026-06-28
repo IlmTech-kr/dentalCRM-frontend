@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+dental_frontend_deploy_key
+dental_frontend_deploy_key.pub
