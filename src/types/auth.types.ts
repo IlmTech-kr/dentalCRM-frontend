@@ -9,6 +9,7 @@ export interface RegisterClinicDto {
   password: string;
   clinicName: string;
   subDomain: string;
+  contactNumber?: string;
 }
 
 export interface LoginDto {
