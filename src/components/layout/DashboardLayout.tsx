@@ -2,17 +2,9 @@
 
 /**
  * File: src/app/(dashboard)/layout.tsx
- *
- * Cookie-based auth:
- *
- * storedUser bor  → store ni tiklaymiz → dashboard
- * storedUser yo'q → /login ga redirect
- *
- * Cookie mavjudligini JS orqali tekshirib bo'lmaydi (HttpOnly).
- * User localStorage'da yo'q bo'lsa — sessiya yo'q deb hisoblaymiz.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import Sidebar from "./Sidebar";
@@ -28,49 +20,38 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const checked = useRef(false);
   const setAuthData = useAuthStore((state) => state.setAuthData);
 
   useEffect(() => {
+    // StrictMode double-invoke va re-render dan himoya
+    if (checked.current) return;
+    checked.current = true;
+
     const subDomain = getCurrentSubdomain();
     const storedUser = getStoredUser();
 
-    /**
-     * Case 1: URL da subdomain yo'q
-     */
     if (!subDomain) {
       clearAuthStorage();
       router.replace("/login");
       return;
     }
 
-    /**
-     * Case 2: storedUser yo'q → sessiya yo'q → /login ga
-     *
-     * Cookie HttpOnly bo'lgani uchun JS orqali tekshirib bo'lmaydi.
-     * User localStorage'da bo'lmasa — login sahifasi getMe() orqali
-     * cookie ni tekshiradi va agar cookie ham yo'q bo'lsa login ko'rsatadi.
-     */
     if (!storedUser) {
       router.replace("/login");
       return;
     }
 
-    /**
-     * Case 3: storedUser bor → store ni tiklaymiz → dashboard
-     *
-     * /me chaqirmaymiz — har page o'zgarganda performance muammo.
-     * useGetProfile() query user ni kerak bo'lsa tiklaydi.
-     */
     setAuthData({
       user: storedUser as any,
       isAuthenticated: true,
     });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    setCheckingAuth(false);
-  }, [setAuthData, router]);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  if (checkingAuth) {
+  // Auth check tugaguncha yoki redirect bo'lguncha spinner
+  if (!isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-light-background">
         <div className="text-center">

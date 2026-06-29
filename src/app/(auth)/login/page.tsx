@@ -2,18 +2,10 @@
 
 /**
  * File: src/app/login/page.tsx
- *
- * Session check logikasi (cookie-based auth):
- *
- * authUser bor  → getMe() orqali cookie tekshiriladi → /dashboard
- * authUser yo'q → /login da qolish
- *
- * accessToken localStorage'da saqlanmaydi.
- * Cookie mavjudligini faqat getMe() chaqirib bilish mumkin.
  */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react";
 
@@ -42,20 +34,21 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [tenantSubdomain, setTenantSubdomain] = useState<string | null>(null);
-
   const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const initDone = useRef(false);
+
   const tenantMissing = mounted && !tenantSubdomain;
 
   useEffect(() => {
-    let active = true;
+    // StrictMode double-invoke himoyasi
+    if (initDone.current) return;
+    initDone.current = true;
 
     async function initLoginPage() {
       const currentSubdomain = getCurrentSubdomain();
-
-      if (!active) return;
 
       setTenantSubdomain(currentSubdomain);
       setMounted(true);
@@ -65,56 +58,44 @@ export default function LoginPage() {
         return;
       }
 
-      // Remember Me — emailni tiklash
-      const savedLogin = localStorage.getItem("savedLogin");
-      if (savedLogin) {
-        try {
+      // Remember Me
+      try {
+        const savedLogin = localStorage.getItem("savedLogin");
+        if (savedLogin) {
           const parsed = JSON.parse(savedLogin);
           setForm((prev) => ({ ...prev, email: parsed.email || "" }));
           setRememberMe(true);
-        } catch {
-          localStorage.removeItem("savedLogin");
         }
+      } catch {
+        localStorage.removeItem("savedLogin");
       }
 
       const storedUser = getStoredUser();
 
-      /**
-       * authUser yo'q → cookie ham yo'q deb hisoblaymiz → /login da qolish.
-       * Cookie HttpOnly bo'lgani uchun JS orqali tekshirib bo'lmaydi.
-       */
+      // storedUser yo'q → cookie ham yo'q → login ko'rsatamiz
       if (!storedUser) {
         setCheckingSession(false);
         return;
       }
 
-      /**
-       * authUser bor → getMe() orqali cookie haqiqiyligini tekshiramiz.
-       * Cookie valid → /dashboard
-       * Cookie expired/yo'q → clearAuthStorage() → /login da qolish
-       */
+      // storedUser bor → getMe() orqali cookie tekshiramiz
       try {
         const me = await getMe();
 
-        if (!active) return;
-
         saveUser(me);
-
         setAuthData({ user: me as any, isAuthenticated: true });
 
+        // redirect — setCheckingSession kerak emas
         router.replace("/dashboard");
       } catch {
-        if (!active) return;
-
+        // cookie yo'q yoki expired
         clearAuthStorage();
         setCheckingSession(false);
       }
     }
 
     initLoginPage();
-
-    return () => { active = false; };
-  }, [router, setAuthData]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -152,7 +133,6 @@ export default function LoginPage() {
       <section className="relative hidden min-h-screen overflow-hidden bg-[#3498db] px-14 py-12 text-white lg:flex lg:flex-col">
         <div className="absolute -left-28 top-20 h-96 w-96 rounded-full bg-white/10" />
         <div className="absolute -bottom-36 right-10 h-[430px] w-[430px] rounded-full bg-white/10" />
-
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/20 shadow-lg">
             <ShieldCheck size={34} />
@@ -162,7 +142,6 @@ export default function LoginPage() {
             <p className="text-base text-white/85">Smart Clinic Management System</p>
           </div>
         </div>
-
         <div className="relative z-10 mt-[150px] max-w-[620px]">
           <h2 className="text-[54px] font-extrabold leading-[1.15] tracking-tight">
             Manage Your Clinic Efficiently
@@ -171,7 +150,6 @@ export default function LoginPage() {
             Patients, doctors, appointments, treatments and reports — everything in one modern platform.
           </p>
         </div>
-
         <p className="relative z-10 mt-auto text-sm text-white/75">© 2026 DentalCRM. All rights reserved.</p>
       </section>
 
@@ -263,10 +241,7 @@ export default function LoginPage() {
                 />
                 Remember me
               </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark"
-              >
+              <Link href="/forgot-password" className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark">
                 Forgot Password?
               </Link>
             </div>
