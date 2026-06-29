@@ -21,10 +21,9 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const checked = useRef(false);
-  const setAuthData = useAuthStore((state) => state.setAuthData);
 
+  // Store ni mount da bir marta sync qilamiz
   useEffect(() => {
-    // StrictMode double-invoke va re-render dan himoya
     if (checked.current) return;
     checked.current = true;
 
@@ -42,16 +41,17 @@ export default function DashboardLayout({
       return;
     }
 
-    setAuthData({
+    useAuthStore.getState().setAuthData({
       user: storedUser as any,
       isAuthenticated: true,
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router]);
 
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Auth check tugaguncha yoki redirect bo'lguncha spinner
-  if (!isAuthenticated) {
+  // Hydration tugamaguncha yoki redirect bo'lguncha spinner
+  if (!isHydrated || !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-light-background">
         <div className="text-center">
