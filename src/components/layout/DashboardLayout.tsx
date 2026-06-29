@@ -2,6 +2,14 @@
 
 /**
  * File: src/app/(dashboard)/layout.tsx
+ *
+ * Cookie-based auth:
+ *
+ * storedUser bor  → store ni tiklaymiz → dashboard
+ * storedUser yo'q → /login ga redirect
+ *
+ * Cookie mavjudligini JS orqali tekshirib bo'lmaydi (HttpOnly).
+ * User localStorage'da yo'q bo'lsa — sessiya yo'q deb hisoblaymiz.
  */
 
 import { useEffect, useState } from "react";
@@ -12,11 +20,7 @@ import Header from "./Header";
 
 import { useAuthStore } from "@/src/store/auth.store";
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
-import {
-  getStoredAccessToken,
-  getStoredUser,
-  clearAuthStorage,
-} from "@/src/lib/auth/storage";
+import { getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
 
 export default function DashboardLayout({
   children,
@@ -24,19 +28,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-
   const [checkingAuth, setCheckingAuth] = useState(true);
-
   const setAuthData = useAuthStore((state) => state.setAuthData);
 
   useEffect(() => {
     const subDomain = getCurrentSubdomain();
-    const accessToken = getStoredAccessToken();
     const storedUser = getStoredUser();
 
     /**
      * Case 1: URL da subdomain yo'q
-     * clinic11.localhost:3000 formatida ochilishi kerak.
      */
     if (!subDomain) {
       clearAuthStorage();
@@ -45,29 +45,25 @@ export default function DashboardLayout({
     }
 
     /**
-     * Case 2: accessToken yo'q → login ga
-     * authUser bo'lsa ham saqlamang — token asosiy source.
+     * Case 2: storedUser yo'q → sessiya yo'q → /login ga
+     *
+     * Cookie HttpOnly bo'lgani uchun JS orqali tekshirib bo'lmaydi.
+     * User localStorage'da bo'lmasa — login sahifasi getMe() orqali
+     * cookie ni tekshiradi va agar cookie ham yo'q bo'lsa login ko'rsatadi.
      */
-    if (!accessToken) {
-      clearAuthStorage();
+    if (!storedUser) {
       router.replace("/login");
       return;
     }
 
     /**
-     * Case 3: Token bor → store ni tiklaymiz.
+     * Case 3: storedUser bor → store ni tiklaymiz → dashboard
      *
-     * /me chaqirmaymiz — bu layoutda har page o'zgarganda
-     * chaqirilishi performance muammo yaratadi.
-     * /me ni faqat login paytida (useLogin onSuccess) chaqiramiz.
-     *
-     * storedUser null bo'lishi mumkin — bu holatda store dagi
-     * user null bo'ladi, lekin isAuthenticated: true bo'ladi.
-     * Keyingi useGetProfile() query user ni tiklaydi.
+     * /me chaqirmaymiz — har page o'zgarganda performance muammo.
+     * useGetProfile() query user ni kerak bo'lsa tiklaydi.
      */
     setAuthData({
       user: storedUser as any,
-      accessToken,
       isAuthenticated: true,
     });
 

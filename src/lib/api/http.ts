@@ -1,5 +1,8 @@
 /**
  * File: src/lib/api/http.ts
+ *
+ * Token cookie orqali ketadi — Authorization header qo'shilmaydi.
+ * withCredentials: true — cookie cross-origin requestlarda avtomatik yuboriladi.
  */
 
 import axios, {
@@ -10,10 +13,7 @@ import axios, {
 } from "axios";
 
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
-import {
-  getStoredAccessToken,
-  clearAuthStorage,
-} from "@/src/lib/auth/storage";
+import { clearAuthStorage } from "@/src/lib/auth/storage";
 
 const MAIN_API_URL =
   process.env.NEXT_PUBLIC_MAIN_API_URL || "https://dental.api.ilmtech.uz";
@@ -47,9 +47,6 @@ function isBrowser(): boolean {
 // URL builders
 // ---------------------------------------------------------------------------
 
-/**
- * clinic11 => https://clinic11.dental.api.ilmtech.uz
- */
 export function buildTenantBaseUrl(subDomain: string): string {
   const cleanSubDomain = subDomain.trim().toLowerCase();
 
@@ -69,18 +66,7 @@ export function buildTenantBaseUrl(subDomain: string): string {
   return `${TENANT_API_PROTOCOL}://${cleanSubDomain}.${TENANT_API_ROOT_DOMAIN}${port}`;
 }
 
-/**
- * URL'dan subdomain oladi.
- * Fallback: localStorage subDomain
- */
 function getTenantSubDomainForBaseUrl(): string {
-  /**
-   * Subdomain FAQAT URL dan olinadi.
-   *
-   * localStorage fallback ishlatilmaydi — chunki localStorage da
-   * boshqa tenant subDomain bo'lsa, noto'g'ri tenant ga request ketib
-   * AUTH_TENANT_MISMATCH xatosi chiqadi.
-   */
   const urlSubdomain = getCurrentSubdomain();
 
   if (urlSubdomain) {
@@ -99,8 +85,7 @@ function getUrlSubDomain(): string {
   if (!subDomain) {
     throw {
       code: "NO_TENANT_SUBDOMAIN",
-      message:
-        "No tenant subdomain found in URL. Open clinic11.localhost:3000",
+      message: "No tenant subdomain found in URL. Open clinic11.localhost:3000",
     };
   }
 
@@ -158,22 +143,11 @@ function redirectToLogin(): void {
 // Interceptors
 // ---------------------------------------------------------------------------
 
-/**
- * Token har requestda localStorage'dan yangi o'qiladi.
- * Shuning uchun singleton instance ham login/logout dan keyin
- * to'g'ri token yuboradi — cache muammosi yo'q.
- */
 function attachTenantInterceptors(instance: AxiosInstance): void {
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      // Har safar fresh token o'qiladi
-      const accessToken = getStoredAccessToken();
-
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      } else {
-        delete config.headers.Authorization;
-      }
+      // Token cookie orqali ketadi — Authorization header kerak emas
+      delete config.headers.Authorization;
 
       // X-Tenant-ID hech qachon yuborilmaydi
       delete config.headers["X-Tenant-ID"];
@@ -193,7 +167,6 @@ function attachTenantInterceptors(instance: AxiosInstance): void {
           frontendHost: isBrowser() ? window.location.host : null,
           apiBaseURL: config.baseURL,
           requestURL: config.url,
-          hasAuthorization: Boolean(config.headers.Authorization),
         });
       }
 
@@ -253,15 +226,6 @@ function attachTenantInterceptors(instance: AxiosInstance): void {
 // Singleton cache — tenantHttp
 // ---------------------------------------------------------------------------
 
-/**
- * Cache: subDomain → AxiosInstance
- *
- * Har bir clinic uchun bitta instance yaratiladi va qayta ishlatiladi.
- * Interceptor faqat 1 marta attach bo'ladi.
- * Token har requestda localStorage'dan o'qiladi (interceptor ichida).
- *
- * Subdomain o'zgarsa (boshqa clinicga o'tilsa) — yangi instance yaratiladi.
- */
 const tenantHttpCache = new Map<string, AxiosInstance>();
 
 export function tenantHttp(subDomainOverride?: string): AxiosInstance {
@@ -269,14 +233,12 @@ export function tenantHttp(subDomainOverride?: string): AxiosInstance {
     .trim()
     .toLowerCase();
 
-  // Cache hit
   const cached = tenantHttpCache.get(subDomain);
   if (cached) return cached;
 
-  // Cache miss — yangi instance
   const instance = axios.create({
     baseURL: buildTenantBaseUrl(subDomain),
-    withCredentials: false,
+    withCredentials: true,
     headers: {
       "Content-Type": "application/json",
       "Accept-Language": "uz",
@@ -290,13 +252,6 @@ export function tenantHttp(subDomainOverride?: string): AxiosInstance {
   return instance;
 }
 
-/**
- * Cache ni tozalash.
- *
- * Logout yoki tenant o'zgarganda chaqirilsin.
- * Normal holatda kerak emas, lekin test yoki
- * hard-reset uchun foydali.
- */
 export function clearTenantHttpCache(): void {
   tenantHttpCache.clear();
 }
@@ -305,15 +260,9 @@ export function clearTenantHttpCache(): void {
 // Public instances
 // ---------------------------------------------------------------------------
 
-/**
- * Main/root API — tenantga bog'liq emas.
- * Register clinic kabi requestlar uchun.
- *
- * Example: https://dental.api.ilmtech.uz
- */
 export const mainHttp = axios.create({
   baseURL: MAIN_API_URL,
-  withCredentials: false,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     "Accept-Language": "uz",
@@ -322,23 +271,13 @@ export const mainHttp = axios.create({
 
 export const publicMainHttp = axios.create({
   baseURL: MAIN_API_URL,
-  withCredentials: false,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     "Accept-Language": "uz",
   },
 });
 
-/**
- * Public tenant API — token kerak emas.
- *
- * Login, forgot-password, reset-password uchun.
- * Authorization yo'q, X-Tenant-ID yo'q.
- *
- * Har safar yangi instance — bu intentional,
- * chunki public endpointlar uchun singleton shart emas
- * va token muammosi ham yo'q.
- */
 export function publicTenantHttp(subDomainOverride?: string): AxiosInstance {
   const subDomain = (subDomainOverride || getUrlSubDomain())
     .trim()
@@ -346,7 +285,7 @@ export function publicTenantHttp(subDomainOverride?: string): AxiosInstance {
 
   return axios.create({
     baseURL: buildTenantBaseUrl(subDomain),
-    withCredentials: false,
+    withCredentials: true,
     headers: {
       "Content-Type": "application/json",
       "Accept-Language": "uz",

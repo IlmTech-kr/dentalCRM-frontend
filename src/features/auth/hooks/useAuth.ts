@@ -17,7 +17,6 @@ import {
 
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
-import { getStoredAccessToken } from "@/src/lib/auth/storage";
 
 import type {
   LoginDto,
@@ -39,21 +38,7 @@ export function useLogin() {
     mutationFn: (credentials: LoginDto) => login(credentials),
 
     onSuccess: async (data) => {
-      /**
-       * Login bo'lganda eski querylarni to'liq tozalaymiz.
-       * invalidateQueries kerak emas — clear() dan keyin
-       * querylar avto refetch bo'ladi (enabled bo'lganlari).
-       */
       queryClient.clear();
-
-      /**
-       * accessToken storage.ts dagi saveAuthData() orqali
-       * login() ichida allaqachon saqlangan.
-       *
-       * Shuning uchun uni qayta parse qilmaymiz —
-       * storage dan o'qiymiz.
-       */
-      const accessToken = getStoredAccessToken();
 
       const responseUser =
         data?.user || data?.profile || data?.data?.user || null;
@@ -61,19 +46,13 @@ export function useLogin() {
       if (responseUser) {
         useAuthStore.getState().setAuthData({
           user: responseUser,
-          accessToken,
           isAuthenticated: true,
         });
       } else {
-        /**
-         * Login response ichida user qaytmasa:
-         * accessToken storage da bor, getMe() Authorization bilan ishlaydi.
-         */
+        // cookie allaqachon set bo'lgan — getMe() cookie bilan ishlaydi
         const me = await getMe();
-
         useAuthStore.getState().setAuthData({
           user: me as any,
-          accessToken,
           isAuthenticated: true,
         });
       }
@@ -101,11 +80,8 @@ export function useRegisterClinic() {
 
   return useMutation({
     mutationFn: (data: RegisterClinicDto) => registerClinic(data),
-
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: authKeys.all,
-      });
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
     },
   });
 }
@@ -121,12 +97,7 @@ export function useResetPassword() {
 
   return useMutation({
     mutationFn: (data: ResetPasswordDto) => resetPassword(data),
-
     onSuccess: () => {
-      /**
-       * Reset password dan keyin eski querylarni tozalaymiz.
-       * Redirect komponent o'zi handle qiladi.
-       */
       queryClient.clear();
     },
   });
@@ -135,14 +106,6 @@ export function useResetPassword() {
 export function useLogout() {
   const queryClient = useQueryClient();
 
-  /**
-   * logoutService() o'zi finally blokida:
-   * 1. clearAuthStorage() chaqiradi
-   * 2. window.location.href = "/login" qiladi
-   *
-   * Shuning uchun bu yerda redirect kerak emas.
-   * store.logout() va queryClient.clear() — ikki holatda ham bir xil.
-   */
   function handleLogout() {
     useAuthStore.getState().logout();
     queryClient.clear();
