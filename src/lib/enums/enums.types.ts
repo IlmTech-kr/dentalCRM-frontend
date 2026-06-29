@@ -1,4 +1,4 @@
-// File: src/types/enums.types.ts
+// File: src/lib/enums/enums.types.ts
 
 // =========================
 // Subscription Enums

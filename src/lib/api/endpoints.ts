@@ -95,4 +95,22 @@ export const ENDPOINTS = {
     update: (chartId: string) => `/api/dental/charts/${chartId}`,
     delete: (chartId: string) => `/api/dental/charts/${chartId}`,
   },
+
+   /**
+   * Payme payment
+   */
+  payment: {
+    orders: "/api/payment/orders",
+    checkout: "/api/payment/checkout",
+  },
+
+
+  /**
+   * Subscriptions / Plans
+   */
+  subscriptions: {
+    current: "/api/dental/subscriptions/current",
+    plans: "/api/dental/subscriptions/plans",
+    cancel: "/api/dental/subscriptions/cancel",
+  },
 };
