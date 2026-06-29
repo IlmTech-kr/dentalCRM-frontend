@@ -23,17 +23,10 @@ export async function registerClinic(data: RegisterClinicDto) {
     const response = await mainHttp.post(ENDPOINTS.auth.register, data);
     return response.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] registerClinic failed:", getApiErrorMessage(error));
-    }
     throw new Error(getApiErrorMessage(error, "Clinic registration failed"));
   }
 }
 
-/**
- * Backend Set-Cookie orqali access_token va refresh_token yuboradi.
- * accessToken localStorage'da saqlanmaydi.
- */
 export async function login(data: LoginDto) {
   try {
     clearAuthStorage();
@@ -45,13 +38,28 @@ export async function login(data: LoginDto) {
       password: data.password,
     });
 
+    // ===== DEBUG START =====
+    console.group("[AUTH DEBUG] Login response");
+    console.log("Status:", response.status);
+    console.log("Response data keys:", Object.keys(response.data || {}));
+    console.log("Has user:", Boolean(response.data?.user));
+    console.log("Has accessToken in body:", Boolean(response.data?.accessToken));
+    console.log("Response headers:", response.headers);
+
+    // Set-Cookie header ni tekshirish
+    const setCookie = response.headers["set-cookie"];
+    console.log("Set-Cookie header:", setCookie);
+
+    // document.cookie — HttpOnly bo'lmagan cookie lar ko'rinadi
+    console.log("document.cookie after login:", document.cookie);
+    console.groupEnd();
+    // ===== DEBUG END =====
+
     saveAuthData(response.data);
 
     return response.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] login failed:", getApiErrorMessage(error));
-    }
+    console.error("[AUTH DEBUG] Login failed:", error);
     throw new Error(getApiErrorMessage(error, "Login failed"));
   }
 }
@@ -64,9 +72,6 @@ export async function forgotPassword(data: ForgotPasswordDto) {
     });
     return response.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] forgotPassword failed:", getApiErrorMessage(error));
-    }
     throw new Error(getApiErrorMessage(error, "Failed to send reset link"));
   }
 }
@@ -77,17 +82,10 @@ export async function resetPassword(data: ResetPasswordDto) {
     const response = await http.post(ENDPOINTS.auth.resetPassword, data);
     return response.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] resetPassword failed:", getApiErrorMessage(error));
-    }
     throw new Error(getApiErrorMessage(error, "Failed to reset password"));
   }
 }
 
-/**
- * Backend logout endpointi cookie'ni o'chiradi.
- * Keyin localStorage tozalanadi va /login ga redirect.
- */
 export async function logout() {
   try {
     const logoutEndpoint = (ENDPOINTS.auth as any).logout;
@@ -95,9 +93,7 @@ export async function logout() {
       await tenantHttp().post(logoutEndpoint);
     }
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] logout request failed:", getApiErrorMessage(error));
-    }
+    console.warn("[Auth] logout request failed:", getApiErrorMessage(error));
   } finally {
     clearAuthStorage();
     if (typeof window !== "undefined") {

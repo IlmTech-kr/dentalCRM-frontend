@@ -8,76 +8,56 @@ import type {
   ChangePasswordPayload,
 } from "@/src/types/user.types";
 
-function getTenantClient() {
-  /**
-   * MUHIM:
-   * tenantHttp() tenantni URL'dan oladi.
-   *
-   * Example:
-   * frontend: http://clinic1.localhost:3000/dashboard
-   * backend:  https://clinic1.dental.api.ilmtech.uz
-   */
-  return tenantHttp();
-}
-
 export async function getMe(): Promise<UserProfile> {
   try {
-    const http = getTenantClient();
+    const http = tenantHttp();
+
+    // ===== DEBUG START =====
+    console.group("[AUTH DEBUG] getMe() called");
+    console.log("document.cookie:", document.cookie);
+    console.log("Request baseURL:", (http.defaults as any).baseURL);
+    console.log("withCredentials:", (http.defaults as any).withCredentials);
+    console.groupEnd();
+    // ===== DEBUG END =====
 
     const response = await http.get<UserProfile>(ENDPOINTS.users.me);
 
+    // ===== DEBUG START =====
+    console.group("[AUTH DEBUG] getMe() success");
+    console.log("Status:", response.status);
+    console.log("User id:", (response.data as any)?.id);
+    console.groupEnd();
+    // ===== DEBUG END =====
+
     return response.data;
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[User Service] Failed to get user profile:",
-        getApiErrorMessage(error)
-      );
-    }
+  } catch (error: any) {
+    // ===== DEBUG START =====
+    console.group("[AUTH DEBUG] getMe() FAILED");
+    console.log("Status:", error?.response?.status);
+    console.log("Error code:", error?.response?.data?.code);
+    console.log("document.cookie at fail:", document.cookie);
+    console.groupEnd();
+    // ===== DEBUG END =====
 
     throw new Error(getApiErrorMessage(error, "Failed to load profile"));
   }
 }
 
-export async function updateMe(
-  payload: UpdateProfilePayload
-): Promise<UserProfile> {
+export async function updateMe(payload: UpdateProfilePayload): Promise<UserProfile> {
   try {
-    const http = getTenantClient();
-
-    const response = await http.put<UserProfile>(
-      ENDPOINTS.users.me,
-      payload
-    );
-
+    const http = tenantHttp();
+    const response = await http.put<UserProfile>(ENDPOINTS.users.me, payload);
     return response.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[User Service] Failed to update profile:",
-        getApiErrorMessage(error)
-      );
-    }
-
     throw new Error(getApiErrorMessage(error, "Failed to update profile"));
   }
 }
 
-export async function changePassword(
-  payload: ChangePasswordPayload
-): Promise<void> {
+export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
   try {
-    const http = getTenantClient();
-
+    const http = tenantHttp();
     await http.put(ENDPOINTS.users.changePassword, payload);
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[User Service] Failed to change password:",
-        getApiErrorMessage(error)
-      );
-    }
-
     throw new Error(getApiErrorMessage(error, "Failed to change password"));
   }
 }
