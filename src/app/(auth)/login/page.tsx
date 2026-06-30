@@ -237,10 +237,6 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={
-                !mounted || checkingSession || tenantMissing ||
-                loginMutation.isPending || !form.email.trim() || !form.password
-              }
               className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
