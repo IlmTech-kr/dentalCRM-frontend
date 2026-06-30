@@ -42,20 +42,35 @@ export default function LoginPage() {
 
   const tenantMissing = mounted && !tenantSubdomain;
 
+  console.log("[LOGIN PAGE RENDER]", {
+    mounted,
+    checkingSession,
+    tenantSubdomain,
+    tenantMissing,
+  });
+
   useEffect(() => {
-    // StrictMode double-invoke himoyasi
-    if (initDone.current) return;
+    console.log("[LOGIN PAGE] useEffect chaqirildi. initDone:", initDone.current);
+
+    if (initDone.current) {
+      console.log("[LOGIN PAGE] initDone true -- qaytib chiqdi (StrictMode 2-chaqiruv)");
+      return;
+    }
     initDone.current = true;
 
     async function initLoginPage() {
       const currentSubdomain = getCurrentSubdomain();
+      console.log("[LOGIN PAGE] currentSubdomain:", currentSubdomain);
 
       setTenantSubdomain(currentSubdomain);
       setMounted(true);
 
-      
+      if (!currentSubdomain) {
+        console.log("[LOGIN PAGE] subdomain yo'q -> checkingSession=false");
+        setCheckingSession(false);
+        return;
+      }
 
-      // Remember Me
       try {
         const savedLogin = localStorage.getItem("savedLogin");
         if (savedLogin) {
@@ -68,24 +83,29 @@ export default function LoginPage() {
       }
 
       const storedUser = getStoredUser();
+      console.log("[LOGIN PAGE] storedUser:", storedUser);
 
-      // storedUser yo'q → cookie ham yo'q → login ko'rsatamiz
       if (!storedUser) {
-        setCheckingSession(true);
+        console.log("[LOGIN PAGE] storedUser yo'q -> checkingSession=false, login forma ko'rsatiladi");
+        setCheckingSession(false);
         return;
       }
 
-      // storedUser bor → getMe() orqali cookie tekshiramiz
+      console.log("[LOGIN PAGE] storedUser bor -> getMe() chaqirilyapti...");
       try {
         const me = await getMe();
+        console.log("[LOGIN PAGE] getMe() MUVAFFAQIYATLI:", me);
 
         saveUser(me);
         setAuthData({ user: me as any, isAuthenticated: true });
 
-        // redirect — setCheckingSession kerak emas
+        console.log("[LOGIN PAGE] router.replace('/dashboard') chaqirilyapti");
         router.replace("/dashboard");
-      } catch {
-       
+      } catch (err) {
+        console.log("[LOGIN PAGE] getMe() XATOLIK BERDI:", err);
+        console.log("[LOGIN PAGE] clearAuthStorage() chaqirilyapti, checkingSession=false");
+        clearAuthStorage();
+        setCheckingSession(false);
       }
     }
 
@@ -108,8 +128,11 @@ export default function LoginPage() {
       return;
     }
 
+    console.log("[LOGIN PAGE] handleSubmit -> loginMutation.mutateAsync chaqirilyapti");
+
     try {
       await loginMutation.mutateAsync({ email, password });
+      console.log("[LOGIN PAGE] loginMutation MUVAFFAQIYATLI tugadi");
 
       if (rememberMe) {
         localStorage.setItem("savedLogin", JSON.stringify({ email }));
@@ -119,6 +142,7 @@ export default function LoginPage() {
 
       toast.success("Welcome back!");
     } catch (error) {
+      console.log("[LOGIN PAGE] loginMutation XATOLIK:", error);
       toast.error(getErrorMessage(error));
     }
   }
