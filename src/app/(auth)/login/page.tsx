@@ -88,9 +88,7 @@ export default function LoginPage() {
         // redirect — setCheckingSession kerak emas
         router.replace("/dashboard");
       } catch {
-        // cookie yo'q yoki expired
-        clearAuthStorage();
-        setCheckingSession(false);
+       
       }
     }
 
