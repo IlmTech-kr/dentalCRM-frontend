@@ -29,7 +29,6 @@ export async function registerClinic(data: RegisterClinicDto) {
 
 export async function login(data: LoginDto) {
   try {
-    clearAuthStorage();
 
     const http = publicTenantHttp();
 
