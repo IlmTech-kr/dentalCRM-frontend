@@ -71,7 +71,7 @@ export default function LoginPage() {
 
       // storedUser yo'q → cookie ham yo'q → login ko'rsatamiz
       if (!storedUser) {
-        setCheckingSession(false);
+        setCheckingSession(true);
         return;
       }
 
