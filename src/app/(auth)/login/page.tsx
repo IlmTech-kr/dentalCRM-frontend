@@ -212,7 +212,6 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
-                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
