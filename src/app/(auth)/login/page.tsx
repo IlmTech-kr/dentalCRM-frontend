@@ -48,7 +48,12 @@ export default function LoginPage() {
     initDone.current = true;
 
     async function initLoginPage() {
+      const currentSubdomain = getCurrentSubdomain();
+
+      setTenantSubdomain(currentSubdomain);
       setMounted(true);
+
+      
 
       // Remember Me
       try {
@@ -212,6 +217,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
+                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
@@ -237,6 +243,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              disabled={
+                !mounted || checkingSession || tenantMissing ||
+                loginMutation.isPending || !form.email.trim() || !form.password
+              }
               className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
