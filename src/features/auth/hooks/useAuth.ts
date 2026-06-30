@@ -5,7 +5,6 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 
 import {
   login,
@@ -31,7 +30,6 @@ export const authKeys = {
 };
 
 export function useLogin() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -49,7 +47,6 @@ export function useLogin() {
           isAuthenticated: true,
         });
       } else {
-        // cookie allaqachon set bo'lgan — getMe() cookie bilan ishlaydi
         const me = await getMe();
         useAuthStore.getState().setAuthData({
           user: me as any,
@@ -57,7 +54,8 @@ export function useLogin() {
         });
       }
 
-      router.replace("/dashboard");
+      // ❌ router.replace("/dashboard") OLIB TASHLANDI
+      // Navigatsiya endi faqat login/page.tsx dagi handleSubmit ichida bo'ladi
     },
   });
 }

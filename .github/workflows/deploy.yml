@@ -2,8 +2,7 @@ name: Deploy Dental Frontend
 
 on:
   push:
-    branches:
-      - master
+        branches: [main, develop, master]
 
 jobs:
   deploy:

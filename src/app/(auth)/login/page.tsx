@@ -2,19 +2,27 @@
 
 /**
  * File: src/app/login/page.tsx
+
  */
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  Mail,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
 
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
-import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
+import { saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
 
 function getErrorMessage(error: unknown): string {
   if (!error) return "Login failed";
@@ -34,118 +42,101 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [tenantSubdomain, setTenantSubdomain] = useState<string | null>(null);
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const initDone = useRef(false);
-
   const tenantMissing = mounted && !tenantSubdomain;
 
-  console.log("[LOGIN PAGE RENDER]", {
-    mounted,
-    checkingSession,
-    tenantSubdomain,
-    tenantMissing,
-  });
-
   useEffect(() => {
-    console.log("[LOGIN PAGE] useEffect chaqirildi. initDone:", initDone.current);
-
-    if (initDone.current) {
-      console.log("[LOGIN PAGE] initDone true -- qaytib chiqdi (StrictMode 2-chaqiruv)");
-      return;
-    }
-    initDone.current = true;
+    let active = true;
 
     async function initLoginPage() {
       const currentSubdomain = getCurrentSubdomain();
-      console.log("[LOGIN PAGE] currentSubdomain:", currentSubdomain);
+
+      if (!active) return;
 
       setTenantSubdomain(currentSubdomain);
       setMounted(true);
 
       if (!currentSubdomain) {
-        console.log("[LOGIN PAGE] subdomain yo'q -> checkingSession=false");
         setCheckingSession(false);
         return;
       }
 
-      try {
-        const savedLogin = localStorage.getItem("savedLogin");
-        if (savedLogin) {
+      // Remember Me — emailni tiklash
+      const savedLogin = localStorage.getItem("savedLogin");
+      if (savedLogin) {
+        try {
           const parsed = JSON.parse(savedLogin);
           setForm((prev) => ({ ...prev, email: parsed.email || "" }));
           setRememberMe(true);
+        } catch {
+          localStorage.removeItem("savedLogin");
         }
-      } catch {
-        localStorage.removeItem("savedLogin");
       }
-
-      const storedUser = getStoredUser();
-      console.log("[LOGIN PAGE] storedUser:", storedUser);
-
-      if (!storedUser) {
-        console.log("[LOGIN PAGE] storedUser yo'q -> checkingSession=false, login forma ko'rsatiladi");
-        setCheckingSession(false);
-        return;
-      }
-
-      console.log("[LOGIN PAGE] storedUser bor -> getMe() chaqirilyapti...");
       try {
         const me = await getMe();
-        console.log("[LOGIN PAGE] getMe() MUVAFFAQIYATLI:", me);
+
+        if (!active) return;
 
         saveUser(me);
-        setAuthData({ user: me as any, isAuthenticated: true });
 
-        console.log("[LOGIN PAGE] router.replace('/dashboard') chaqirilyapti");
+        setAuthData({
+          user: me as any,
+          isAuthenticated: true,
+        });
+
         router.replace("/dashboard");
-      } catch (err) {
-        console.log("[LOGIN PAGE] getMe() XATOLIK BERDI:", err);
-        console.log("[LOGIN PAGE] clearAuthStorage() chaqirilyapti, checkingSession=false");
+      } catch {
+        if (!active) return;
+
+        // Cookie yo'q yoki eskirgan — login formani ko'rsatamiz
         clearAuthStorage();
         setCheckingSession(false);
       }
     }
 
     initLoginPage();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    return () => {
+      active = false;
+    };
+  }, [router, setAuthData]);
 
-    const email = form.email.trim();
-    const password = form.password;
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    if (!tenantSubdomain) {
-      toast.error("Clinic subdomain not found");
-      return;
-    }
+  const email = form.email.trim();
+  const password = form.password;
 
-    if (!email || !password) {
-      toast.error("Email and password are required");
-      return;
-    }
-
-    console.log("[LOGIN PAGE] handleSubmit -> loginMutation.mutateAsync chaqirilyapti");
-
-    try {
-      await loginMutation.mutateAsync({ email, password });
-      console.log("[LOGIN PAGE] loginMutation MUVAFFAQIYATLI tugadi");
-
-      if (rememberMe) {
-        localStorage.setItem("savedLogin", JSON.stringify({ email }));
-      } else {
-        localStorage.removeItem("savedLogin");
-      }
-
-      toast.success("Welcome back!");
-    } catch (error) {
-      console.log("[LOGIN PAGE] loginMutation XATOLIK:", error);
-      toast.error(getErrorMessage(error));
-    }
+  if (!tenantSubdomain) {
+    toast.error("Clinic subdomain not found");
+    return;
   }
+
+  if (!email || !password) {
+    toast.error("Email and password are required");
+    return;
+  }
+
+  try {
+    await loginMutation.mutateAsync({ email, password });
+
+    if (rememberMe) {
+      localStorage.setItem("savedLogin", JSON.stringify({ email }));
+    } else {
+      localStorage.removeItem("savedLogin");
+    }
+
+    toast.success("Welcome back!");
+
+    router.replace("/dashboard");
+  } catch (error) {
+    toast.error(getErrorMessage(error));
+  }
+}
 
   return (
     <main className="min-h-screen bg-light-background lg:grid lg:grid-cols-[48%_52%]">
