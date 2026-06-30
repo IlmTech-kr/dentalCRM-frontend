@@ -22,25 +22,38 @@ export default function DashboardLayout({
   const router = useRouter();
   const checked = useRef(false);
 
-  // Store ni mount da bir marta sync qilamiz
+  console.log("[DASHBOARD LAYOUT RENDER]", { checkedRef: checked.current });
+
   useEffect(() => {
-    if (checked.current) return;
+    console.log("[DASHBOARD] useEffect chaqirildi. checked:", checked.current);
+
+    if (checked.current) {
+      console.log("[DASHBOARD] checked true -- qaytib chiqdi");
+      return;
+    }
     checked.current = true;
 
     const subDomain = getCurrentSubdomain();
     const storedUser = getStoredUser();
 
+    console.log("[DASHBOARD] subDomain:", subDomain);
+    console.log("[DASHBOARD] storedUser:", storedUser);
+    console.log("[DASHBOARD] window.location.host:", typeof window !== "undefined" ? window.location.host : "SSR");
+
     if (!subDomain) {
+      console.log("[DASHBOARD] subDomain YO'Q -- clearAuthStorage + redirect /login");
       clearAuthStorage();
       router.replace("/login");
       return;
     }
 
     if (!storedUser) {
+      console.log("[DASHBOARD] storedUser YO'Q -- redirect /login");
       router.replace("/login");
       return;
     }
 
+    console.log("[DASHBOARD] hammasi OK -- setAuthData chaqirilyapti");
     useAuthStore.getState().setAuthData({
       user: storedUser as any,
       isAuthenticated: true,
@@ -50,7 +63,8 @@ export default function DashboardLayout({
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Hydration tugamaguncha yoki redirect bo'lguncha spinner
+  console.log("[DASHBOARD] isHydrated:", isHydrated, "isAuthenticated:", isAuthenticated);
+
   if (!isHydrated || !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-light-background">
