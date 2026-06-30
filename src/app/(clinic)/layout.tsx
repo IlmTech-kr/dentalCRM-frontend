@@ -3,33 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/src/components/layout/DashboardLayout";
-
-function getSubDomain() {
-  if (typeof window === "undefined") return "";
-
-  const host = window.location.hostname;
-
-  if (host.includes(".localhost")) {
-    return host.split(".")[0];
-  }
-
-  return "";
-}
+import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import { getStoredSubDomain, getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
 
 export default function ClinicLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const currentSubDomain = getSubDomain();
-    const savedSubDomain = localStorage.getItem("subDomain");
-    const accessToken = localStorage.getItem("accessToken");
+    const currentSubDomain = getCurrentSubdomain();
+    const savedSubDomain = getStoredSubDomain();
+    const savedUser = getStoredUser();
 
-    if (!accessToken || savedSubDomain !== currentSubDomain) {
+    if (!currentSubDomain || !savedUser) {
+      clearAuthStorage();
+      router.replace("/login");
+      return;
+    }
+
+    if (savedSubDomain && savedSubDomain !== currentSubDomain) {
+      clearAuthStorage();
       router.replace("/login");
       return;
     }

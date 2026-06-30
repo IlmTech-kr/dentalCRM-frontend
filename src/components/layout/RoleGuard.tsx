@@ -9,7 +9,7 @@ type RoleGuardProps = {
   allowedRoles?: string[];
 };
 
-export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
+export default function RoleGuard({ children, allowedRoles }: Readonly<RoleGuardProps>) {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
@@ -26,11 +26,7 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    const accessToken =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("access_token");
-
-    if (!accessToken && !isAuthenticated) {
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }

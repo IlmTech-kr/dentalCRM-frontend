@@ -2,7 +2,7 @@ name: Deploy Dental Frontend
 
 on:
   push:
-        branches: [main, develop, master]
+    branches: [main, develop, master]
 
 jobs:
   deploy:
@@ -17,8 +17,11 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
+          envs: GITHUB_BRANCH
           script: |
             set -e
+
+            echo "Deploying branch: $GITHUB_BRANCH"
 
             echo "Go to project folder"
             cd /var/www/dental/frontend
@@ -30,13 +33,13 @@ jobs:
             fi
 
             echo "Fetch latest code"
-            git fetch origin master
+            git fetch origin "$GITHUB_BRANCH"
 
             echo "Clean untracked files but keep .env.production"
             git clean -fd -e .env.production
 
-            echo "Reset to latest master"
-            git reset --hard origin/master
+            echo "Reset to latest $GITHUB_BRANCH"
+            git reset --hard "origin/$GITHUB_BRANCH"
 
             echo "Install dependencies"
             npm ci
@@ -51,3 +54,5 @@ jobs:
             pm2 save
 
             echo "Deploy completed successfully"
+        env:
+          GITHUB_BRANCH: ${{ github.ref_name }}
