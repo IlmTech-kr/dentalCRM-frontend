@@ -48,16 +48,6 @@ export default function LoginPage() {
     initDone.current = true;
 
     async function initLoginPage() {
-      const currentSubdomain = getCurrentSubdomain();
-
-      setTenantSubdomain(currentSubdomain);
-      setMounted(true);
-
-      if (!currentSubdomain) {
-        setCheckingSession(false);
-        return;
-      }
-
       // Remember Me
       try {
         const savedLogin = localStorage.getItem("savedLogin");
