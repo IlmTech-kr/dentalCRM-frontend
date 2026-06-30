@@ -48,6 +48,8 @@ export default function LoginPage() {
     initDone.current = true;
 
     async function initLoginPage() {
+      setMounted(true);
+
       // Remember Me
       try {
         const savedLogin = localStorage.getItem("savedLogin");
