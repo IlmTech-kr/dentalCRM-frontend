@@ -49,68 +49,92 @@ export const ENDPOINTS = {
     charts: {
       create: "/api/dental/charts",
       getById: (chartId: string) => `/api/dental/charts/${chartId}`,
-      getByPatient: (patientId: string) =>
-        `/api/dental/charts/patient/${patientId}`,
+      getByPatient: (patientId: string) => `/api/dental/charts/patient/${patientId}`,
       update: (chartId: string) => `/api/dental/charts/${chartId}`,
       delete: (chartId: string) => `/api/dental/charts/${chartId}`,
     },
 
     procedures: {
       create: "/api/dental/procedures",
-      getById: (procedureId: string) =>
-        `/api/dental/procedures/${procedureId}`,
+      getById: (procedureId: string) => `/api/dental/procedures/${procedureId}`,
       getAll: (search?: string) =>
         search
           ? `/api/dental/procedures?search=${encodeURIComponent(search)}`
           : "/api/dental/procedures",
-      update: (procedureId: string) =>
-        `/api/dental/procedures/${procedureId}`,
-      delete: (procedureId: string) =>
-        `/api/dental/procedures/${procedureId}`,
+      update: (procedureId: string) => `/api/dental/procedures/${procedureId}`,
+      delete: (procedureId: string) => `/api/dental/procedures/${procedureId}`,
     },
 
     treatmentCourses: {
       create: "/api/dental/treatment-courses",
-
-      addVisit: (courseId: string) =>
-        `/api/dental/treatment-courses/${courseId}/visits`,
-
-      complete: (courseId: string) =>
-        `/api/dental/treatment-courses/${courseId}/complete`,
-
-      getById: (courseId: string) =>
-        `/api/dental/treatment-courses/${courseId}`,
-
-      listByPatient: (patientId: string) =>
-        `/api/dental/treatment-courses/patient/${patientId}`,
+      addVisit: (courseId: string) => `/api/dental/treatment-courses/${courseId}/visits`,
+      complete: (courseId: string) => `/api/dental/treatment-courses/${courseId}/complete`,
+      getById: (courseId: string) => `/api/dental/treatment-courses/${courseId}`,
+      listByPatient: (patientId: string) => `/api/dental/treatment-courses/patient/${patientId}`,
     },
   },
 
-  // Optional: old shortcut. Agar eski codeda ishlatilgan bo‘lsa qoldiring.
   dentalCharts: {
     create: "/api/dental/charts",
     getById: (chartId: string) => `/api/dental/charts/${chartId}`,
-    getByPatientId: (patientId: string) =>
-      `/api/dental/charts/patient/${patientId}`,
+    getByPatientId: (patientId: string) => `/api/dental/charts/patient/${patientId}`,
     update: (chartId: string) => `/api/dental/charts/${chartId}`,
     delete: (chartId: string) => `/api/dental/charts/${chartId}`,
   },
 
-   /**
-   * Payme payment
-   */
   payment: {
     orders: "/api/payment/orders",
     checkout: "/api/payment/checkout",
   },
 
-
-  /**
-   * Subscriptions / Plans
-   */
   subscriptions: {
     current: "/api/dental/subscriptions/current",
     plans: "/api/dental/subscriptions/plans",
     cancel: "/api/dental/subscriptions/cancel",
+  },
+
+  statistics: {
+    /**
+     * CLINIC_ADMIN & SUPER_ADMIN
+     * GET /api/dental/statistics/revenue?fromDate=&toDate=&filter=DAY&sort=REVENUE&direction=DESC
+     * filter: DAY | MONTH | YEAR
+     * sort: PERIOD | REVENUE | CLINIC
+     * direction: ASC | DESC
+     */
+    revenue: (params: {
+      fromDate: string;
+      toDate: string;
+      filter?: "DAY" | "MONTH" | "YEAR";
+      sort?: "PERIOD" | "REVENUE" | "CLINIC";
+      direction?: "ASC" | "DESC";
+    }) => {
+      const q = new URLSearchParams({
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+        filter: params.filter ?? "DAY",
+        sort: params.sort ?? "REVENUE",
+        direction: params.direction ?? "DESC",
+      });
+      return `/api/dental/statistics/revenue?${q.toString()}`;
+    },
+
+    /**
+     * SUPER_ADMIN only — mainHttp (root domain)
+     * GET /api/dental/statistics/revenue/clinics?fromDate=&toDate=&sort=REVENUE&direction=DESC
+     */
+    revenueByClinic: (params: {
+      fromDate: string;
+      toDate: string;
+      sort?: "PERIOD" | "REVENUE" | "CLINIC";
+      direction?: "ASC" | "DESC";
+    }) => {
+      const q = new URLSearchParams({
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+        sort: params.sort ?? "REVENUE",
+        direction: params.direction ?? "DESC",
+      });
+      return `/api/dental/statistics/revenue/clinics?${q.toString()}`;
+    },
   },
 };

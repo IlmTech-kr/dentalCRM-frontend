@@ -1,60 +1,38 @@
-// "use client";
+// File: src/features/statistics/hooks/useStatistics.ts
 
-// /**
-//  * File: src/features/statistics/hooks/useStatistics.ts
-//  */
+"use client";
 
-// import { useQuery } from "@tanstack/react-query";
-// import { useAuthStore } from "@/src/store/auth.store";
-// import {
-//   getRevenueStats,
-//   getClinicRevenueStats,
-//   getDashboardSummary,
-// } from "../services/statistics.service";
-// import type {
-//   RevenueStatParams,
-//   ClinicRevenueParams,
-// } from "@/src/types/statistics.types";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getRevenue,
+  getRevenueByClinic,
+  RevenueParams,
+  RevenueResponse,
+} from "../services/statistics.service";
 
-// export const statisticsKeys = {
-//   all: ["statistics"] as const,
-//   revenue: (params: RevenueStatParams) => ["statistics", "revenue", params] as const,
-//   clinics: (params: ClinicRevenueParams) => ["statistics", "clinics", params] as const,
-//   summary: () => ["statistics", "summary"] as const,
-// };
+export const statisticsKeys = {
+  all: ["statistics"] as const,
+  revenue: (params: RevenueParams) => [...statisticsKeys.all, "revenue", params] as const,
+  revenueByClinic: (params: Omit<RevenueParams, "filter">) =>
+    [...statisticsKeys.all, "revenueByClinic", params] as const,
+};
 
-// export function useRevenueStats(params: RevenueStatParams) {
-//   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+export function useRevenue(params: RevenueParams & { enabled?: boolean }) {
+  const { enabled = true, ...queryParams } = params;
+  return useQuery<RevenueResponse>({
+    queryKey: statisticsKeys.revenue(queryParams),
+    queryFn: () => getRevenue(queryParams),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+    enabled,
+  });
+}
 
-//   return useQuery({
-//     queryKey: statisticsKeys.revenue(params),
-//     queryFn: () => getRevenueStats(params),
-//     enabled: isAuthenticated,
-//     staleTime: 1000 * 60 * 5,
-//     retry: 1,
-//   });
-// }
-
-// export function useClinicRevenueStats(params: ClinicRevenueParams) {
-//   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
-//   return useQuery({
-//     queryKey: statisticsKeys.clinics(params),
-//     queryFn: () => getClinicRevenueStats(params),
-//     enabled: isAuthenticated,
-//     staleTime: 1000 * 60 * 5,
-//     retry: 1,
-//   });
-// }
-
-// export function useDashboardSummary() {
-//   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
-//   return useQuery({
-//     queryKey: statisticsKeys.summary(),
-//     queryFn: getDashboardSummary,
-//     enabled: isAuthenticated,
-//     staleTime: 1000 * 60 * 2,
-//     retry: 1,
-//   });
-// }
+export function useRevenueByClinic(params: Omit<RevenueParams, "filter">) {
+  return useQuery({
+    queryKey: statisticsKeys.revenueByClinic(params),
+    queryFn: () => getRevenueByClinic(params),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+}
