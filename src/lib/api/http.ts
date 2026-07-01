@@ -1,8 +1,10 @@
 /**
  * File: src/lib/api/http.ts
  *
- * Token cookie orqali ketadi — Authorization header qo'shilmaydi.
- * withCredentials: true — cookie cross-origin requestlarda avtomatik yuboriladi.
+ * Cookie-based auth.
+ * 401 bo'lganda avval /api/auth/refresh ga uriniladi,
+ * muvaffaqiyatli bo'lsa asl request qayta yuboriladi.
+ * Refresh ham 401 bersa — /login ga redirect.
  */
 
 import axios, {
@@ -14,6 +16,7 @@ import axios, {
 
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { clearAuthStorage } from "@/src/lib/auth/storage";
+import { ENDPOINTS } from "@/src/lib/api/endpoints";
 
 const MAIN_API_URL =
   process.env.NEXT_PUBLIC_MAIN_API_URL || "https://dental.api.ilmtech.uz";
@@ -43,18 +46,11 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
-// ---------------------------------------------------------------------------
-// URL builders
-// ---------------------------------------------------------------------------
-
 export function buildTenantBaseUrl(subDomain: string): string {
   const cleanSubDomain = subDomain.trim().toLowerCase();
 
   if (!cleanSubDomain) {
-    throw {
-      code: "NO_TENANT_SUBDOMAIN",
-      message: "No tenant subdomain found",
-    };
+    throw { code: "NO_TENANT_SUBDOMAIN", message: "No tenant subdomain found" };
   }
 
   const port = TENANT_API_PORT ? `:${TENANT_API_PORT}` : "";
@@ -68,10 +64,7 @@ export function buildTenantBaseUrl(subDomain: string): string {
 
 function getTenantSubDomainForBaseUrl(): string {
   const urlSubdomain = getCurrentSubdomain();
-
-  if (urlSubdomain) {
-    return urlSubdomain.trim().toLowerCase();
-  }
+  if (urlSubdomain) return urlSubdomain.trim().toLowerCase();
 
   throw {
     code: "NO_TENANT_SUBDOMAIN",
@@ -81,45 +74,30 @@ function getTenantSubDomainForBaseUrl(): string {
 
 function getUrlSubDomain(): string {
   const subDomain = getCurrentSubdomain();
-
   if (!subDomain) {
     throw {
       code: "NO_TENANT_SUBDOMAIN",
       message: "No tenant subdomain found in URL. Open clinic11.localhost:3000",
     };
   }
-
   return subDomain.trim().toLowerCase();
 }
-
-// ---------------------------------------------------------------------------
-// Error helpers
-// ---------------------------------------------------------------------------
 
 export function normalizeApiError(error: unknown): ApiErrorObject {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as any;
-
     return {
       status: error.response?.status,
       code: data?.code || data?.errorCode || data?.error,
-      message:
-        data?.message ||
-        data?.error ||
-        error.message ||
-        "Request failed",
+      message: data?.message || data?.error || error.message || "Request failed",
     };
   }
 
   if (typeof error === "object" && error !== null && "message" in error) {
-    return {
-      message: String((error as { message?: string }).message || ""),
-    };
+    return { message: String((error as { message?: string }).message || "") };
   }
 
-  if (typeof error === "string") {
-    return { message: error };
-  }
+  if (typeof error === "string") return { message: error };
 
   return { message: "Something went wrong" };
 }
@@ -133,9 +111,38 @@ export function getApiErrorMessage(
 
 function redirectToLogin(): void {
   if (!isBrowser()) return;
-
   if (window.location.pathname !== "/login") {
+    clearAuthStorage();
     window.location.href = "/login";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Token refresh — bitta vaqtda faqat bitta refresh so'rovi ketsin
+// ---------------------------------------------------------------------------
+
+let isRefreshing = false;
+let refreshSubscribers: Array<(success: boolean) => void> = [];
+
+function subscribeToRefresh(cb: (success: boolean) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function notifyRefreshSubscribers(success: boolean) {
+  refreshSubscribers.forEach((cb) => cb(success));
+  refreshSubscribers = [];
+}
+
+async function tryRefreshToken(baseURL: string): Promise<boolean> {
+  try {
+    await axios.post(
+      `${baseURL}${ENDPOINTS.auth.refresh}`,
+      {},
+      { withCredentials: true }
+    );
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -143,13 +150,10 @@ function redirectToLogin(): void {
 // Interceptors
 // ---------------------------------------------------------------------------
 
-function attachTenantInterceptors(instance: AxiosInstance): void {
+function attachTenantInterceptors(instance: AxiosInstance, baseURL: string): void {
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      // Token cookie orqali ketadi — Authorization header kerak emas
       delete config.headers.Authorization;
-
-      // X-Tenant-ID hech qachon yuborilmaydi
       delete config.headers["X-Tenant-ID"];
       delete config.headers["x-tenant-id"];
       delete config.headers["X-Tenant-Id"];
@@ -162,57 +166,66 @@ function attachTenantInterceptors(instance: AxiosInstance): void {
         config.headers["Accept-Language"] = "uz";
       }
 
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[API DEBUG]", {
-          frontendHost: isBrowser() ? window.location.host : null,
-          apiBaseURL: config.baseURL,
-          requestURL: config.url,
-        });
-      }
-
       return config;
     },
     (error: AxiosError) => Promise.reject(error)
   );
 
   instance.interceptors.response.use(
-    (response: AxiosResponse) => {
-      if (process.env.NODE_ENV === "development") {
-        console.debug(
-          `[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`
-        );
-      }
-
-      return response;
-    },
+    (response: AxiosResponse) => response,
 
     async (error: AxiosError<any>) => {
+      const originalRequest = error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
+
       const errorData = error.response?.data as any;
 
-      if (process.env.NODE_ENV === "development") {
-        console.warn(
-          `[API] ${error.response?.status || "NO_STATUS"} - ${
-            errorData?.code || errorData?.error || "UNKNOWN_ERROR"
-          }: ${
-            errorData?.message ||
-            errorData?.error ||
-            error.message ||
-            "Request failed"
-          }`
-        );
+      // 401 — access token muddati tugagan, refresh urinish
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        // Refresh endpointining o'zi 401 bersa — cheksiz loop bo'lmasin
+        if (originalRequest.url?.includes(ENDPOINTS.auth.refresh)) {
+          redirectToLogin();
+          return Promise.reject(normalizeApiError(error));
+        }
+
+        if (isRefreshing) {
+          // Boshqa refresh ketayotgan bo'lsa — u tugaguncha kutamiz
+          return new Promise((resolve, reject) => {
+            subscribeToRefresh((success) => {
+              if (success) {
+                resolve(instance(originalRequest));
+              } else {
+                reject(normalizeApiError(error));
+              }
+            });
+          });
+        }
+
+        isRefreshing = true;
+
+        const refreshed = await tryRefreshToken(baseURL);
+
+        isRefreshing = false;
+        notifyRefreshSubscribers(refreshed);
+
+        if (refreshed) {
+          // Yangi cookie o'rnatildi — asl requestni qayta yuboramiz
+          return instance(originalRequest);
+        } else {
+          // Refresh ham muvaffaqiyatsiz — logout
+          redirectToLogin();
+          return Promise.reject(normalizeApiError(error));
+        }
       }
 
-      if (error.response?.status === 401) {
-        clearAuthStorage();
-        redirectToLogin();
-        return Promise.reject(normalizeApiError(error));
-      }
-
+      // 403 AUTH_TENANT_MISMATCH
       if (
         error.response?.status === 403 &&
         errorData?.code === "AUTH_TENANT_MISMATCH"
       ) {
-        clearAuthStorage();
         redirectToLogin();
         return Promise.reject(normalizeApiError(error));
       }
@@ -236,8 +249,10 @@ export function tenantHttp(subDomainOverride?: string): AxiosInstance {
   const cached = tenantHttpCache.get(subDomain);
   if (cached) return cached;
 
+  const baseURL = buildTenantBaseUrl(subDomain);
+
   const instance = axios.create({
-    baseURL: buildTenantBaseUrl(subDomain),
+    baseURL,
     withCredentials: true,
     headers: {
       "Content-Type": "application/json",
@@ -245,8 +260,7 @@ export function tenantHttp(subDomainOverride?: string): AxiosInstance {
     },
   });
 
-  attachTenantInterceptors(instance);
-
+  attachTenantInterceptors(instance, baseURL);
   tenantHttpCache.set(subDomain, instance);
 
   return instance;
