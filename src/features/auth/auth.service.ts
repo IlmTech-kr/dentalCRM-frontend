@@ -29,36 +29,17 @@ export async function registerClinic(data: RegisterClinicDto) {
 
 export async function login(data: LoginDto) {
   try {
+    clearAuthStorage();
 
     const http = publicTenantHttp();
-
     const response = await http.post(ENDPOINTS.auth.login, {
       email: data.email.trim(),
       password: data.password,
     });
 
-    // ===== DEBUG START =====
-    console.group("[AUTH DEBUG] Login response");
-    console.log("Status:", response.status);
-    console.log("Response data keys:", Object.keys(response.data || {}));
-    console.log("Has user:", Boolean(response.data?.user));
-    console.log("Has accessToken in body:", Boolean(response.data?.accessToken));
-    console.log("Response headers:", response.headers);
-
-    // Set-Cookie header ni tekshirish
-    const setCookie = response.headers["set-cookie"];
-    console.log("Set-Cookie header:", setCookie);
-
-    // document.cookie — HttpOnly bo'lmagan cookie lar ko'rinadi
-    console.log("document.cookie after login:", document.cookie);
-    console.groupEnd();
-    // ===== DEBUG END =====
-
     saveAuthData(response.data);
-
     return response.data;
   } catch (error) {
-    console.error("[AUTH DEBUG] Login failed:", error);
     throw new Error(getApiErrorMessage(error, "Login failed"));
   }
 }
@@ -85,6 +66,12 @@ export async function resetPassword(data: ResetPasswordDto) {
   }
 }
 
+/**
+ * Logout:
+ * 1. Backend /logout endpointiga request → server cookie ni o'chiradi
+ * 2. localStorage tozalanadi
+ * 3. /login ga redirect
+ */
 export async function logout() {
   try {
     const logoutEndpoint = (ENDPOINTS.auth as any).logout;
@@ -92,7 +79,9 @@ export async function logout() {
       await tenantHttp().post(logoutEndpoint);
     }
   } catch (error) {
-    console.warn("[Auth] logout request failed:", getApiErrorMessage(error));
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Auth] logout failed:", getApiErrorMessage(error));
+    }
   } finally {
     clearAuthStorage();
     if (typeof window !== "undefined") {

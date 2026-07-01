@@ -2,27 +2,23 @@
 
 /**
  * File: src/app/login/page.tsx
-
+ *
+ * Session check:
+ * 1. storedUser YO'Q → login forma (getMe chaqirilmaydi)
+ * 2. storedUser BOR → getMe() cookie tekshiradi → dashboard
+ * 3. getMe() xato → clearAuthStorage → login forma
  */
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Lock,
-  Mail,
-  ShieldCheck,
-  Eye,
-  EyeOff,
-  AlertCircle,
-} from "lucide-react";
+import { Lock, Mail, ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
-import { saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
+import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
 
 function getErrorMessage(error: unknown): string {
   if (!error) return "Login failed";
@@ -42,20 +38,19 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [tenantSubdomain, setTenantSubdomain] = useState<string | null>(null);
-
   const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const initDone = useRef(false);
   const tenantMissing = mounted && !tenantSubdomain;
 
   useEffect(() => {
-    let active = true;
+    if (initDone.current) return;
+    initDone.current = true;
 
     async function initLoginPage() {
       const currentSubdomain = getCurrentSubdomain();
-
-      if (!active) return;
 
       setTenantSubdomain(currentSubdomain);
       setMounted(true);
@@ -65,78 +60,67 @@ export default function LoginPage() {
         return;
       }
 
-      // Remember Me — emailni tiklash
-      const savedLogin = localStorage.getItem("savedLogin");
-      if (savedLogin) {
-        try {
+      // Remember Me
+      try {
+        const savedLogin = localStorage.getItem("savedLogin");
+        if (savedLogin) {
           const parsed = JSON.parse(savedLogin);
           setForm((prev) => ({ ...prev, email: parsed.email || "" }));
           setRememberMe(true);
-        } catch {
-          localStorage.removeItem("savedLogin");
         }
+      } catch {
+        localStorage.removeItem("savedLogin");
       }
+
+      const storedUser = getStoredUser();
+
+      // storedUser yo'q → cookie yo'q deb hisoblanadi → login forma
+      if (!storedUser) {
+        setCheckingSession(false);
+        return;
+      }
+
+      // storedUser bor → getMe() cookie ni tasdiqlaydi
       try {
         const me = await getMe();
-
-        if (!active) return;
-
         saveUser(me);
-
-        setAuthData({
-          user: me as any,
-          isAuthenticated: true,
-        });
-
+        setAuthData({ user: me as any, isAuthenticated: true });
         router.replace("/dashboard");
+        // checkingSession=true qoladi — redirect bo'lguncha forma ko'rinmasin
       } catch {
-        if (!active) return;
-
-        // Cookie yo'q yoki eskirgan — login formani ko'rsatamiz
+        // Cookie yo'q yoki eskirgan
         clearAuthStorage();
         setCheckingSession(false);
       }
     }
 
     initLoginPage();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    return () => {
-      active = false;
-    };
-  }, [router, setAuthData]);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
+    const email = form.email.trim();
+    const password = form.password;
 
-  const email = form.email.trim();
-  const password = form.password;
+    if (!tenantSubdomain) { toast.error("Clinic subdomain not found"); return; }
+    if (!email || !password) { toast.error("Email and password are required"); return; }
 
-  if (!tenantSubdomain) {
-    toast.error("Clinic subdomain not found");
-    return;
-  }
+    try {
+      await loginMutation.mutateAsync({ email, password });
 
-  if (!email || !password) {
-    toast.error("Email and password are required");
-    return;
-  }
+      if (rememberMe) {
+        localStorage.setItem("savedLogin", JSON.stringify({ email }));
+      } else {
+        localStorage.removeItem("savedLogin");
+      }
 
-  try {
-    await loginMutation.mutateAsync({ email, password });
-
-    if (rememberMe) {
-      localStorage.setItem("savedLogin", JSON.stringify({ email }));
-    } else {
-      localStorage.removeItem("savedLogin");
+      toast.success("Welcome back!");
+      router.replace("/dashboard");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
-
-    toast.success("Welcome back!");
-
-    router.replace("/dashboard");
-  } catch (error) {
-    toast.error(getErrorMessage(error));
   }
-}
 
   return (
     <main className="min-h-screen bg-light-background lg:grid lg:grid-cols-[48%_52%]">
@@ -240,7 +224,7 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
@@ -251,9 +235,6 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
                 />
                 Remember me
               </label>
-              <Link href="/forgot-password" className="text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark">
-                Forgot Password?
-              </Link>
             </div>
 
             <button
@@ -267,13 +248,6 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
             </button>
           </div>
-
-          <p className="mt-8 text-center text-sm text-text-light">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-extrabold text-primary-blue">
-              Create Clinic
-            </Link>
-          </p>
         </form>
       </section>
     </main>
