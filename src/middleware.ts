@@ -1,20 +1,57 @@
 // File: middleware.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSubdomainFromHost } from "@/src/lib/utils/tenant";
+
+const RESERVED_SUBDOMAINS = new Set([
+  "www", "app", "admin", "api", "dashboard",
+]);
+
+function getSubdomain(host: string): string | null {
+  const hostname = host.split(":")[0].trim().toLowerCase();
+
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  ) return null;
+
+  if (hostname.endsWith(".localhost")) {
+    const sub = hostname.replace(".localhost", "");
+    return isValid(sub) ? sub : null;
+  }
+
+  const rootDomain = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
+
+  if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
+    const sub = hostname.replace(`.${rootDomain}`, "");
+    if (sub.includes(".")) return null;
+    return isValid(sub) ? sub : null;
+  }
+
+  const parts = hostname.split(".");
+  if (parts.length >= 3) {
+    return isValid(parts[0]) ? parts[0] : null;
+  }
+
+  return null;
+}
+
+function isValid(sub: string): boolean {
+  if (!sub || RESERVED_SUBDOMAINS.has(sub)) return false;
+  return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(sub);
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = req.headers.get("host") || "";
-  const subDomain = getSubdomainFromHost(host);
+  const subDomain = getSubdomain(host);
 
   if (!subDomain) {
     // Subdomain yo'q → dental.ilmtech.uz → landing page
-    // /login, /register kabi sahifalar subdomain bo'lmasa ko'rinmasin
     if (pathname !== "/") {
-      const landingUrl = req.nextUrl.clone();
-      landingUrl.pathname = "/";
-      return NextResponse.redirect(landingUrl);
+      const url = req.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
     }
     return NextResponse.next();
   }
@@ -22,9 +59,9 @@ export function middleware(req: NextRequest) {
   // Subdomain bor → clinic11.dental.ilmtech.uz
   // Root ga kirsa /login ga redirect
   if (pathname === "/") {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
