@@ -2,11 +2,6 @@
 
 /**
  * File: src/app/login/page.tsx
- *
- * Session check:
- * 1. storedUser YO'Q → login forma (getMe chaqirilmaydi)
- * 2. storedUser BOR → getMe() cookie tekshiradi → dashboard
- * 3. getMe() xato → clearAuthStorage → login forma
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +14,7 @@ import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
+import DentalLoader from "@/src/components/ui/DentalLoader";
 
 function getErrorMessage(error: unknown): string {
   if (!error) return "Login failed";
@@ -60,7 +56,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Remember Me
       try {
         const savedLogin = localStorage.getItem("savedLogin");
         if (savedLogin) {
@@ -74,21 +69,17 @@ export default function LoginPage() {
 
       const storedUser = getStoredUser();
 
-      // storedUser yo'q → cookie yo'q deb hisoblanadi → login forma
       if (!storedUser) {
         setCheckingSession(false);
         return;
       }
 
-      // storedUser bor → getMe() cookie ni tasdiqlaydi
       try {
         const me = await getMe();
         saveUser(me);
         setAuthData({ user: me as any, isAuthenticated: true });
         router.replace("/dashboard");
-        // checkingSession=true qoladi — redirect bo'lguncha forma ko'rinmasin
       } catch {
-        // Cookie yo'q yoki eskirgan
         clearAuthStorage();
         setCheckingSession(false);
       }
@@ -96,6 +87,11 @@ export default function LoginPage() {
 
     initLoginPage();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Session tekshirilayotganda — DentalLoader
+  if (checkingSession) {
+    return <DentalLoader text="Checking session..." />;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -155,12 +151,6 @@ export default function LoginPage() {
           <h2 className="text-[38px] font-extrabold leading-tight text-dark-navy">Welcome Back</h2>
           <p className="mt-3 text-base text-text-light">Login to your clinic dashboard</p>
 
-          {checkingSession && mounted && !tenantMissing && (
-            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-              <p className="text-sm font-semibold text-blue-700">Checking session...</p>
-            </div>
-          )}
-
           {tenantMissing && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
               <div className="flex items-start gap-3">
@@ -195,7 +185,7 @@ export default function LoginPage() {
                   placeholder="admin@clinic1.com"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
+                  disabled={loginMutation.isPending || tenantMissing}
                 />
               </div>
             </div>
@@ -210,13 +200,13 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
+                  disabled={loginMutation.isPending || tenantMissing}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
-                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
+                  disabled={loginMutation.isPending || tenantMissing}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
@@ -231,7 +221,7 @@ export default function LoginPage() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 accent-[#35a8f5]"
-                  disabled={loginMutation.isPending || checkingSession || tenantMissing}
+                  disabled={loginMutation.isPending || tenantMissing}
                 />
                 Remember me
               </label>
@@ -239,10 +229,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={
-                !mounted || checkingSession || tenantMissing ||
-                loginMutation.isPending || !form.email.trim() || !form.password
-              }
+              disabled={tenantMissing || loginMutation.isPending || !form.email.trim() || !form.password}
               className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
