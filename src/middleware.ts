@@ -8,6 +8,7 @@ const RESERVED_SUBDOMAINS = new Set([
 
 function getSubdomain(host: string): string | null {
   const hostname = host.split(":")[0].trim().toLowerCase();
+  const rootDomain = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
 
   if (
     hostname === "localhost" ||
@@ -20,12 +21,14 @@ function getSubdomain(host: string): string | null {
     return isValid(sub) ? sub : null;
   }
 
-  const rootDomain = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
-
-  if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
-    const sub = hostname.replace(`.${rootDomain}`, "");
-    if (sub.includes(".")) return null;
-    return isValid(sub) ? sub : null;
+  if (rootDomain) {
+    if (hostname === rootDomain) return null;
+    if (hostname.endsWith(`.${rootDomain}`)) {
+      const sub = hostname.slice(0, hostname.length - rootDomain.length - 1);
+      if (!sub || sub.includes(".")) return null;
+      return isValid(sub) ? sub : null;
+    }
+    return null;
   }
 
   const parts = hostname.split(".");
@@ -47,7 +50,6 @@ export function middleware(req: NextRequest) {
   const subDomain = getSubdomain(host);
 
   if (!subDomain) {
-    // Subdomain yo'q → dental.ilmtech.uz → landing page
     if (pathname !== "/") {
       const url = req.nextUrl.clone();
       url.pathname = "/";
@@ -56,8 +58,6 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Subdomain bor → clinic11.dental.ilmtech.uz
-  // Root ga kirsa /login ga redirect
   if (pathname === "/") {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
