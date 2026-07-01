@@ -9,12 +9,18 @@ export function middleware(req: NextRequest) {
   const subDomain = getSubdomainFromHost(host);
 
   if (!subDomain) {
-    // Subdomain yo'q → landing page (hozircha yo'q bo'lsa root da qoladi)
+    // Subdomain yo'q → dental.ilmtech.uz → landing page
+    // /login, /register kabi sahifalar subdomain bo'lmasa ko'rinmasin
+    if (pathname !== "/") {
+      const landingUrl = req.nextUrl.clone();
+      landingUrl.pathname = "/";
+      return NextResponse.redirect(landingUrl);
+    }
     return NextResponse.next();
   }
 
-  // Subdomain bor → faqat /login va /dashboard ga ruxsat
-  // / ga kirsa /login ga redirect
+  // Subdomain bor → clinic11.dental.ilmtech.uz
+  // Root ga kirsa /login ga redirect
   if (pathname === "/") {
     const loginUrl = req.nextUrl.clone();
     loginUrl.pathname = "/login";
