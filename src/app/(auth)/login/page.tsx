@@ -25,6 +25,13 @@ function getErrorMessage(error: unknown): string {
   return "Login failed";
 }
 
+function getErrorStatus(error: unknown): number | null {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    return (error as any).status ?? null;
+  }
+  return null;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
@@ -69,18 +76,40 @@ export default function LoginPage() {
 
       const storedUser = getStoredUser();
 
+      // storedUser yo'q → sessiya yo'q → login forma
       if (!storedUser) {
         setCheckingSession(false);
         return;
       }
 
       try {
+        /**
+         * getMe() 401 bersa — http.ts interceptor avval refresh qiladi.
+         * Refresh muvaffaqiyatli → getMe() muvaffaqiyatli qaytadi.
+         * Refresh ham fail → interceptor clearAuthStorage + /login redirect qiladi.
+         * Shuning uchun bu yerda catch da faqat network yoki boshqa xatolarni
+         * handle qilamiz — 401 ni interceptor o'zi hal qiladi.
+         */
         const me = await getMe();
         saveUser(me);
         setAuthData({ user: me as any, isAuthenticated: true });
         router.replace("/dashboard");
-      } catch {
-        clearAuthStorage();
+      } catch (error) {
+        const status = getErrorStatus(error);
+
+        /**
+         * 401 — interceptor allaqachon refresh uringan va fail bo'lgan.
+         *        redirectToLogin() chaqirilgan — bu yerda hech narsa qilmaymiz.
+         * Boshqa xato (network, 500) — storedUser stale bo'lishi mumkin,
+         *        lekin cookie valid bo'lishi ham mumkin, shuning uchun
+         *        localStorage ni tozalamaymiz — faqat login forma ko'rsatamiz.
+         */
+        if (status === 401) {
+          // interceptor allaqachon hal qilgan — bu yerga yetib kelmasligi kerak
+          // agar yetib kelsa, storedUser ni tozalaymiz
+          clearAuthStorage();
+        }
+
         setCheckingSession(false);
       }
     }
