@@ -335,9 +335,6 @@ export default function PatientsPage() {
                               <p className="font-semibold text-dark-navy">
                                 {patient.firstName} {patient.lastName}
                               </p>
-                              <p className="text-xs text-text-light">
-                                ID: {patient.id.slice(0, 8)}...
-                              </p>
                             </div>
                           </div>
                         </td>
