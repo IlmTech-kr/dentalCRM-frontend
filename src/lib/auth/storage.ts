@@ -3,7 +3,13 @@
  *
  * accessToken localStorage'da SAQLANMAYDI.
  * Token backend tomonidan HttpOnly cookie sifatida boshqariladi.
- * clearAuthStorage() eski accessToken keylarini ham tozalaydi (migration).
+ *
+ * subDomain / tenantId localStorage'da SAQLANMAYDI —
+ * tenant har doim faqat URL (subdomain) dan olinadi.
+ * Bu AUTH_TENANT_MISMATCH xatosiga olib kelgani uchun olib tashlandi.
+ *
+ * clearAuthStorage() eski accessToken/subDomain/tenantId keylarini
+ * ham tozalaydi (migration — avvalgi versiyalardan qolgan qiymatlar).
  */
 
 function isBrowser(): boolean {
@@ -15,9 +21,11 @@ const KEYS = {
   accessToken: "accessToken",
   accessTokenAlt: "access_token",
 
+  // faqat clearAuthStorage da o'chiriladi (migration)
   subDomain: "subDomain",
   subDomainAlt: "subdomain",
 
+  // faqat clearAuthStorage da o'chiriladi (migration)
   tenantId: "tenantId",
   tenantIdAlt: "tenant_id",
 
@@ -30,16 +38,6 @@ const KEYS = {
 // ---------------------------------------------------------------------------
 // Getters
 // ---------------------------------------------------------------------------
-
-export function getStoredSubDomain(): string | null {
-  if (!isBrowser()) return null;
-  return localStorage.getItem(KEYS.subDomain) || localStorage.getItem(KEYS.subDomainAlt) || null;
-}
-
-export function getStoredTenantId(): string | null {
-  if (!isBrowser()) return null;
-  return localStorage.getItem(KEYS.tenantId) || localStorage.getItem(KEYS.tenantIdAlt) || null;
-}
 
 export function getStoredUser<T = unknown>(): T | null {
   if (!isBrowser()) return null;
@@ -69,28 +67,6 @@ export function getStoredClinic<T = unknown>(): T | null {
 // Setters
 // ---------------------------------------------------------------------------
 
-export function saveSubDomain(subDomain: string | null): void {
-  if (!isBrowser()) return;
-  if (subDomain) {
-    localStorage.setItem(KEYS.subDomain, subDomain.trim().toLowerCase());
-    localStorage.removeItem(KEYS.subDomainAlt);
-  } else {
-    localStorage.removeItem(KEYS.subDomain);
-    localStorage.removeItem(KEYS.subDomainAlt);
-  }
-}
-
-export function saveTenantId(tenantId: string | null): void {
-  if (!isBrowser()) return;
-  if (tenantId) {
-    localStorage.setItem(KEYS.tenantId, tenantId);
-    localStorage.removeItem(KEYS.tenantIdAlt);
-  } else {
-    localStorage.removeItem(KEYS.tenantId);
-    localStorage.removeItem(KEYS.tenantIdAlt);
-  }
-}
-
 export function saveUser(user: unknown): void {
   if (!isBrowser()) return;
   if (user) {
@@ -114,22 +90,16 @@ export function saveClinic(clinic: unknown): void {
 // ---------------------------------------------------------------------------
 
 /**
- * accessToken SAQLANMAYDI — backend cookie orqali boshqaradi.
+ * accessToken, subDomain, tenantId SAQLANMAYDI:
+ * - accessToken backend cookie orqali boshqaradi.
+ * - subDomain va tenantId har doim URL dan (getCurrentSubdomain) olinadi,
+ *   localStorage'dan emas — aks holda eski/boshqa tenant qiymati
+ *   qolib ketib, so'rovlar noto'g'ri tenant uchun ketishi mumkin.
  */
 export function saveAuthData(data: Record<string, any>): void {
-  const subDomain =
-    data?.clinic?.subDomain || data?.clinic?.subdomain ||
-    data?.subDomain || data?.subdomain || null;
-
-  const tenantId =
-    data?.tenantId || data?.tenant_id ||
-    data?.clinic?.id || data?.clinic?._id || null;
-
   const user = data?.user || data?.profile || data?.data?.user || null;
   const clinic = data?.clinic || data?.data?.clinic || null;
 
-  saveSubDomain(subDomain);
-  saveTenantId(tenantId);
   saveUser(user);
   saveClinic(clinic);
 }
@@ -141,7 +111,7 @@ export function saveAuthData(data: Record<string, any>): void {
 export function clearAuthStorage(): void {
   if (!isBrowser()) return;
 
-  // eski versiyadan qolgan tokenlarni ham tozalash (migration)
+  // eski versiyadan qolgan qiymatlarni ham tozalash (migration)
   localStorage.removeItem(KEYS.accessToken);
   localStorage.removeItem(KEYS.accessTokenAlt);
 
