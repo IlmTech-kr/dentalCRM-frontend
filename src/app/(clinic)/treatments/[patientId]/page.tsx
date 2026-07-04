@@ -3,14 +3,12 @@
 /**
  * File: src/app/(clinic)/treatments/[patientId]/page.tsx
  *
- * O'zgarishlar:
- * 1. getSubdomain() va getHttp() olib tashlandi
- * 2. getPatientById → treatment-patient.service.ts dan import
- * 3. PatientInfo type → treatment-patient.service.ts dan import
- * 4. import { tenantHttp } olib tashlandi
- * 5. alert() → toast.warning/error/success
- * 6. confirm() → window.confirm
- * 7. useToast qo'shildi
+ * Fixes:
+ * 1. COMPLETED course ga visit qo'sha olmaslik
+ * 2. Note textarea re-render muammosi (VisitPanel extracted)
+ * 3. "Visit qo'shish" tab olib tashlandi — faqat modal
+ * 4. Modal chiroyliroq
+ * 5. Modal z-index 9999 — error toast ustida ko'rinadi
  */
 
 import React, { useMemo, useState } from "react";
@@ -20,14 +18,9 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Activity,
-  BadgeDollarSign,
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
   ClipboardList,
   Edit3,
-  FileText,
-  Loader2,
+  Lock,
   Plus,
   Save,
   Search,
@@ -40,56 +33,43 @@ import { Dental3DChart } from "@/src/features/treatments/components/Dental3DChar
 import { useDentalChart } from "@/src/features/treatments/hooks/useDentalChart";
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useTreatmentCourses } from "@/src/features/treatments/hooks/useTreatmentCourses";
+import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { useToast } from "@/src/lib/hooks/Usetoast";
-
-
-type PatientInfo = {
-  id?: string;
-  _id?: string;
-  firstName?: string;
-  lastName?: string;
-  fullName?: string;
-  phone?: string;
-  phoneNumber?: string;
-  birthDate?: string;
-  dateOfBirth?: string;
-  lastVisit?: string;
-  lastVisitDate?: string;
-  status?: string;
-  active?: boolean;
-};
-
+import DentalLoader from "@/src/components/ui/DentalLoader";
+import { Role } from "@/src/lib/enums/enums.types";
 import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
 import { ToothCondition } from "@/src/lib/enums/enums.types";
 import type { DentalProcedure } from "@/src/types/dental-procedure.types";
-import type {
-  TreatmentCourse,
-  TreatmentVisitItem,
-} from "@/src/types/treatment-course.types";
+import type { TreatmentVisitItem } from "@/src/types/treatment-course.types";
 import { getPatientById } from "@/src/features/patients/patient.service";
 
-type TreatmentTab = "CHART" | "COURSE" | "VISIT";
+// ---------------------------------------------------------------------------
+// Types & constants
+// ---------------------------------------------------------------------------
+
+type PatientInfo = {
+  id?: string; _id?: string;
+  firstName?: string; lastName?: string; fullName?: string;
+  phone?: string; phoneNumber?: string;
+  birthDate?: string; dateOfBirth?: string;
+  status?: string; active?: boolean;
+};
+
+type TreatmentTab = "CHART" | "COURSE";
 type CourseStatusFilter = "ACTIVE" | "COMPLETED";
 
 const DIAGNOSIS_OPTIONS: ToothCondition[] = [
-  ToothCondition.CARIES,
-  ToothCondition.PULPITIS,
-  ToothCondition.GINGIVITIS,
-  ToothCondition.CRACK,
+  ToothCondition.CARIES, ToothCondition.PULPITIS,
+  ToothCondition.GINGIVITIS, ToothCondition.CRACK,
 ];
 
 const STATE_OPTIONS: ToothCondition[] = [
-  ToothCondition.HEALTHY,
-  ToothCondition.MISSING,
-  ToothCondition.EXTRACTED,
-  ToothCondition.FILLING,
-  ToothCondition.CROWN,
-  ToothCondition.IMPLANT,
-  ToothCondition.BRIDGE,
-  ToothCondition.ROOT_CANAL,
+  ToothCondition.HEALTHY, ToothCondition.MISSING, ToothCondition.EXTRACTED,
+  ToothCondition.FILLING, ToothCondition.CROWN, ToothCondition.IMPLANT,
+  ToothCondition.BRIDGE, ToothCondition.ROOT_CANAL,
 ];
 
-const diagnosisLabels: Record<ToothCondition, string> = {
+const LABELS: Record<ToothCondition, string> = {
   [ToothCondition.HEALTHY]: "Sog'lom",
   [ToothCondition.CARIES]: "Karies",
   [ToothCondition.EXTRACTED]: "Sug'urilgan",
@@ -104,71 +84,48 @@ const diagnosisLabels: Record<ToothCondition, string> = {
   [ToothCondition.GINGIVITIS]: "Gingivit",
 };
 
-const stateLabels: Record<ToothCondition, string> = { ...diagnosisLabels };
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-function emptyToothItem(): ToothItem {
-  return { diagnoses: [], states: [], note: "" };
+function emptyTooth(): ToothItem { return { diagnoses: [], states: [], note: "" }; }
+function getId(item?: { id?: string; _id?: string } | null) { return item?.id || item?._id || ""; }
+function formatMoney(v?: number) {
+  return v ? new Intl.NumberFormat("uz-UZ").format(v) + " so'm" : "0 so'm";
 }
-
-function formatMoney(value?: number) {
-  if (!value) return "0 so'm";
-  return new Intl.NumberFormat("uz-UZ").format(value) + " so'm";
-}
-
-function formatVisitDateTime(value?: string) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
-  return `${d}.${m}.${y}, ${h}:${min}`;
-}
-
-function getVisitTotal(visit: any) {
-  if (typeof visit?.totalPrice === "number") return visit.totalPrice;
-  if (typeof visit?.totalAmount === "number") return visit.totalAmount;
-  if (typeof visit?.amount === "number") return visit.amount;
-  return (visit?.items || []).reduce(
-    (sum: number, item: any) => sum + Number(item?.price || item?.amount || 0),
-    0
-  );
-}
-
-function getVisitDoctorName(visit: any) {
-  const doctor = visit?.doctor || visit?.doctorInfo || visit?.doctorData;
-  const fullName = [doctor?.firstName, doctor?.lastName].filter(Boolean).join(" ").trim();
-  return visit?.doctorName || visit?.doctorFullName || doctor?.fullName || fullName || visit?.doctorId || "-";
-}
-
-function getId(item?: { id?: string; _id?: string } | null) {
-  return item?.id || item?._id || "";
-}
-
 function calculateAge(birthDate?: string) {
   if (!birthDate) return "—";
   const birth = new Date(birthDate);
   if (Number.isNaN(birth.getTime())) return "—";
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age -= 1;
-  return age.toString();
+  if (today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  return String(age);
 }
-
-function formatLastVisit(value?: string) {
-  if (!value) return "—";
+function formatVisitDateTime(value?: string) {
+  if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  const today = new Date();
-  const isToday =
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate();
-  if (isToday) return "Bugun";
-  return new Intl.DateTimeFormat("uz-UZ", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  return `${d}.${m}.${date.getFullYear()}, ${h}:${min}`;
+}
+function getVisitTotal(visit: any) {
+  if (typeof visit?.totalPrice === "number") return visit.totalPrice;
+  if (typeof visit?.totalAmount === "number") return visit.totalAmount;
+  return (visit?.items || []).reduce((s: number, i: any) => s + Number(i?.price || 0), 0);
+}
+function getVisitDoctorName(visit: any) {
+  const doctor = visit?.doctor || visit?.doctorInfo;
+  const full = [doctor?.firstName, doctor?.lastName].filter(Boolean).join(" ").trim();
+  return visit?.doctorName || doctor?.fullName || full || visit?.doctorId || "-";
+}
+function nowLocalIso() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -176,28 +133,19 @@ function formatLastVisit(value?: string) {
 // ---------------------------------------------------------------------------
 
 function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoading: boolean }) {
-  const patientName = patient?.fullName
-    ? patient.fullName
-    : [patient?.firstName, patient?.lastName].filter(Boolean).join(" ");
-
+  const name = patient?.fullName || `${patient?.firstName || ""} ${patient?.lastName || ""}`.trim();
   const phone = patient?.phoneNumber || patient?.phone || "—";
-  const birthDate = patient?.birthDate || patient?.dateOfBirth;
-  const age = calculateAge(birthDate);
-  const lastVisit = formatLastVisit(patient?.lastVisitDate || patient?.lastVisit);
+  const age = calculateAge(patient?.birthDate || (patient as any)?.dateOfBirth);
   const isActive = patient?.active !== false && patient?.status !== "INACTIVE";
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="h-24 w-24 animate-pulse rounded-full bg-slate-100" />
-          <div className="flex-1 space-y-4">
-            <div className="h-7 w-56 animate-pulse rounded-xl bg-slate-100" />
-            <div className="grid gap-4 md:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-              ))}
-            </div>
+          <div className="h-16 w-16 animate-pulse rounded-full bg-slate-100" />
+          <div className="flex-1 space-y-2">
+            <div className="h-6 w-48 animate-pulse rounded-lg bg-slate-100" />
+            <div className="h-4 w-32 animate-pulse rounded-lg bg-slate-100" />
           </div>
         </div>
       </div>
@@ -205,81 +153,307 @@ function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoad
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-        <div className="flex items-center gap-5 lg:min-w-[260px]">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-500">
-            <UserRound className="h-14 w-14" strokeWidth={2.4} />
+    <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#35a8f5]/10 text-[#35a8f5]">
+            <UserRound size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-950">{patientName || "Bemor"}</h1>
-            <p className="mt-1 text-lg font-black text-slate-950">{phone}</p>
+            <h1 className="text-xl font-extrabold text-dark-navy">{name || "Bemor"}</h1>
+            <p className="mt-1 font-semibold text-slate-600">{phone}</p>
           </div>
         </div>
-
-        <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="flex items-center gap-4 border-slate-200 xl:border-l xl:pl-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <ClipboardList className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500">Yoshi</p>
-              <p className="mt-1 text-lg font-black text-slate-950">{age}</p>
-            </div>
+        <div className="flex flex-wrap gap-3 sm:ml-auto">
+          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center">
+            <p className="text-xs text-text-light">Yoshi</p>
+            <p className="font-extrabold text-dark-navy">{age}</p>
           </div>
-
-          <div className="flex items-center gap-4 border-slate-200 xl:border-l xl:pl-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <CalendarDays className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500">Oxirgi tashrif</p>
-              <p className="mt-1 text-lg font-black text-slate-950">{lastVisit}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 border-slate-200 xl:border-l xl:pl-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500">Holat</p>
-              <span className={["mt-1 inline-flex rounded-xl px-3 py-1 text-sm font-black", isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"].join(" ")}>
-                {isActive ? "Active" : "Inactive"}
-              </span>
-            </div>
+          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center">
+            <p className="text-xs text-text-light">Holat</p>
+            <span className={`text-xs font-bold ${isActive ? "text-emerald-600" : "text-slate-500"}`}>
+              {isActive ? "Active" : "Inactive"}
+            </span>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// TreatmentTabButton
+// TabBtn
 // ---------------------------------------------------------------------------
 
-function TreatmentTabButton({ active, icon, label, onClick }: {
-  active: boolean;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
+function TabBtn({ active, icon, label, badge, onClick }: {
+  active: boolean; icon: React.ReactNode; label: string; badge?: number; onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={[
-        "inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-extrabold shadow-sm transition",
-        active
-          ? "border-blue-200 bg-blue-600 text-white shadow-blue-100"
-          : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",
-      ].join(" ")}
+      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+        active ? "bg-[#35a8f5] text-white shadow-sm" : "border border-border-color bg-white text-slate-600 hover:bg-slate-50"
+      }`}
     >
-      {icon}
-      <span>{label}</span>
-      <ChevronDown className="h-4 w-4 opacity-70" />
+      {icon} {label}
+      {badge !== undefined && (
+        <span className={`rounded-full px-1.5 py-0.5 text-xs font-extrabold ${
+          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+        }`}>
+          {badge}
+        </span>
+      )}
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DoctorSelect
+// ---------------------------------------------------------------------------
+
+function DoctorSelect({ value, onChange, doctors }: {
+  value: string; onChange: (id: string) => void; doctors: any[];
+}) {
+  const getName = (d: any) =>
+    d?.fullName || `${d?.firstName || ""} ${d?.lastName || ""}`.trim() || "Doctor";
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+    >
+      <option value="">Doctor tanlang</option>
+      {doctors.map((d) => {
+        const id = d.id || d._id;
+        return <option key={id} value={id}>{getName(d)}</option>;
+      })}
+    </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// VisitPanel — EXTRACTED outside page component (fixes textarea re-render)
+// ---------------------------------------------------------------------------
+
+type VisitPanelProps = {
+  activeCourses: any[];
+  selectedCourseId: string;
+  onCourseChange: (id: string) => void;
+  doctors: any[];
+  doctorId: string;
+  onDoctorChange: (id: string) => void;
+  visitDate: string;
+  onVisitDateChange: (v: string) => void;
+  doctorNotes: string;
+  onDoctorNotesChange: (v: string) => void;
+  selectedTooth: string;
+  onToothChange: (t: string) => void;
+  treatmentTeeth: string[];
+  visitItems: TreatmentVisitItem[];
+  onRemoveItem: (idx: number) => void;
+  onSave: () => void;
+  isSaving: boolean;
+  isCompleted: boolean;
+  procedures: DentalProcedure[];
+  proceduresLoading: boolean;
+  procedureSearch: string;
+  onProcedureSearch: (v: string) => void;
+  onAddProcedure: (p: DentalProcedure) => void;
+  onGoToChart: () => void;
+};
+
+function VisitPanel({
+  activeCourses, selectedCourseId, onCourseChange,
+  doctors, doctorId, onDoctorChange,
+  visitDate, onVisitDateChange,
+  doctorNotes, onDoctorNotesChange,
+  selectedTooth, onToothChange, treatmentTeeth,
+  visitItems, onRemoveItem, onSave, isSaving, isCompleted,
+  procedures, proceduresLoading, procedureSearch, onProcedureSearch, onAddProcedure,
+  onGoToChart,
+}: VisitPanelProps) {
+  const totalPrice = visitItems.reduce((s, i) => s + i.price, 0);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Left: form */}
+      <div className="space-y-4">
+        {/* Course */}
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">Course tanlang</label>
+          <select
+            value={selectedCourseId}
+            onChange={(e) => onCourseChange(e.target.value)}
+            className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+          >
+            <option value="">Course tanlang</option>
+            {activeCourses.map((c) => (
+              <option key={getId(c)} value={getId(c)}>{c.mainDiagnosis}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Doctor */}
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">Shifokor</label>
+          <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
+        </div>
+
+        {/* Date */}
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">Tashrif sanasi</label>
+          <input
+            type="datetime-local"
+            value={visitDate}
+            onChange={(e) => onVisitDateChange(e.target.value)}
+            className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+          />
+        </div>
+
+        {/* Notes — key prop prevents re-mount */}
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">Shifokor izohi</label>
+          <textarea
+            value={doctorNotes}
+            onChange={(e) => onDoctorNotesChange(e.target.value)}
+            placeholder="Kanal doimiy material bilan to'ldirildi..."
+            rows={4}
+            className="w-full resize-none rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+          />
+        </div>
+
+        {/* Tooth selector */}
+        <div className="rounded-xl border border-border-color bg-slate-50 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-bold text-slate-700">Davolanadigan tish</p>
+            <span className="rounded-lg bg-[#35a8f5]/10 px-2 py-1 text-xs font-bold text-[#35a8f5]">
+              #{selectedTooth}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {treatmentTeeth.length === 0 ? (
+              <button
+                type="button"
+                onClick={onGoToChart}
+                className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-[#35a8f5] ring-1 ring-border-color hover:bg-blue-50"
+              >
+                Chartdan tish tanlash →
+              </button>
+            ) : (
+              treatmentTeeth.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onToothChange(t)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition ${
+                    selectedTooth === t
+                      ? "bg-[#35a8f5] text-white"
+                      : "bg-white text-slate-700 ring-1 ring-border-color hover:bg-blue-50"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Visit items */}
+        <div className="rounded-xl border border-border-color bg-slate-50 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-bold text-slate-700">Tanlangan muolajalar</p>
+            <p className="text-sm font-extrabold text-[#35a8f5]">{formatMoney(totalPrice)}</p>
+          </div>
+          {visitItems.length === 0 ? (
+            <p className="text-sm text-slate-400">Hali muolaja tanlanmadi</p>
+          ) : (
+            <div className="space-y-2">
+              {visitItems.map((item, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 rounded-lg bg-white p-3">
+                  <div>
+                    <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
+                    <p className="text-xs text-slate-500">{item.note}</p>
+                    <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(item.price)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveItem(i)}
+                    className="rounded-lg p-1.5 text-red-400 hover:bg-red-50"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Save button */}
+        {isCompleted ? (
+          <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <Lock size={18} className="text-amber-600" />
+            <p className="text-sm font-bold text-amber-800">Bu kurs yakunlangan — visit qo'sha olmaysiz</p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={isSaving || visitItems.length === 0}
+            className="w-full rounded-xl bg-[#35a8f5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "Saqlanmoqda..." : visitItems.length === 0 ? "Avval muolaja tanlang" : "✓ Visitni saqlash"}
+          </button>
+        )}
+      </div>
+
+      {/* Right: procedures */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold text-slate-700">
+            Muolajalar — <span className="text-[#35a8f5]">{selectedTooth}-tish</span>
+          </p>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={procedureSearch}
+              onChange={(e) => onProcedureSearch(e.target.value)}
+              placeholder="Qidirish..."
+              className="rounded-lg border border-border-color bg-slate-50 py-2 pl-8 pr-3 text-sm outline-none focus:border-[#35a8f5]"
+            />
+          </div>
+        </div>
+
+        {proceduresLoading ? (
+          <DentalLoader fullScreen={false} text="Muolajalar yuklanmoqda..." />
+        ) : procedures.length === 0 ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="font-bold text-amber-800">Muolaja topilmadi</p>
+            <p className="mt-1 text-sm text-amber-700">Avval muolaja qo'shing.</p>
+            <Link href="/procedures" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white">
+              <Plus size={14} /> Muolajalar sahifasi
+            </Link>
+          </div>
+        ) : (
+          <div className="grid max-h-[520px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            {procedures.map((procedure) => (
+              <button
+                key={getId(procedure)}
+                type="button"
+                onClick={() => onAddProcedure(procedure)}
+                className="rounded-xl border border-border-color bg-white p-4 text-left transition hover:border-[#35a8f5]/40 hover:bg-blue-50 hover:shadow-sm"
+              >
+                <p className="font-bold text-dark-navy">{procedure.name}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{procedure.code}</p>
+                <p className="mt-2 text-sm font-bold text-[#35a8f5]">{formatMoney(procedure.defaultPrice)}</p>
+                <p className="mt-1 text-xs font-semibold text-emerald-600">+ Qo'shish</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -302,128 +476,102 @@ export default function TreatmentPatientPage() {
     staleTime: 1000 * 60,
   });
 
+  const { data: allStaff = [] } = useGetDoctors();
+  const doctors = allStaff.filter((s: any) => s.roles?.includes(Role.DOCTOR));
+
   const [activeTab, setActiveTab] = useState<TreatmentTab>("CHART");
   const [courseStatusFilter, setCourseStatusFilter] = useState<CourseStatusFilter>("ACTIVE");
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
   const [isAddVisitModalOpen, setIsAddVisitModalOpen] = useState(false);
 
-  const { chart, isLoading: chartLoading, createChart, updateChart, isCreating, isUpdating } =
-    useDentalChart(patientId);
-
-  const { courses, isLoading: coursesLoading, createCourse, addVisit, completeCourse, isCreating: isCreatingCourse, isAddingVisit, isCompleting } =
-    useTreatmentCourses(patientId);
+  const { chart, isLoading: chartLoading, createChart, updateChart, isCreating, isUpdating } = useDentalChart(patientId);
+  const {
+    courses, isLoading: coursesLoading,
+    createCourse, addVisit, completeCourse,
+    isCreating: isCreatingCourse, isAddingVisit, isCompleting,
+  } = useTreatmentCourses(patientId);
 
   const [procedureSearch, setProcedureSearch] = useState("");
-  const { procedures, isLoading: proceduresLoading, isFetching: proceduresFetching } = useDentalProcedures(procedureSearch);
+  const { procedures, isLoading: proceduresLoading } = useDentalProcedures(procedureSearch);
 
+  // Chart state
   const [selectedTooth, setSelectedTooth] = useState("16");
   const [localToothMap, setLocalToothMap] = useState<ToothMap>({});
+
+  // Course state
   const [mainDiagnosis, setMainDiagnosis] = useState("");
   const [selectedCourseTeeth, setSelectedCourseTeeth] = useState<string[]>([]);
+
+  // Visit state
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [doctorNotes, setDoctorNotes] = useState("");
-  const [visitDate, setVisitDate] = useState(() => {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16);
-  });
+  const [visitDate, setVisitDate] = useState(nowLocalIso);
   const [visitItems, setVisitItems] = useState<TreatmentVisitItem[]>([]);
 
-  const toothMap: ToothMap = useMemo(() => {
-    return Object.keys(localToothMap).length > 0 ? localToothMap : chart?.toothMap || {};
-  }, [localToothMap, chart]);
+  const toothMap: ToothMap = useMemo(
+    () => Object.keys(localToothMap).length > 0 ? localToothMap : chart?.toothMap || {},
+    [localToothMap, chart]
+  );
 
-  const selectedToothData = toothMap[selectedTooth] || emptyToothItem();
-  const selectedCourse = courses.find((c) => getId(c) === selectedCourseId);
+  const selectedToothData = toothMap[selectedTooth] || emptyTooth();
   const activeCourses = courses.filter((c) => c.status !== "COMPLETED");
   const completedCourses = courses.filter((c) => c.status === "COMPLETED");
   const visibleCourses = courseStatusFilter === "ACTIVE" ? activeCourses : completedCourses;
+  const selectedCourse = courses.find((c) => getId(c) === selectedCourseId);
+  const isSelectedCourseCompleted = selectedCourse?.status === "COMPLETED";
 
   const selectedHistoryCourse =
     visibleCourses.find((c) => getId(c) === selectedCourseId) || visibleCourses[0] || null;
-  const selectedHistoryCourseId = selectedHistoryCourse ? getId(selectedHistoryCourse) : "";
   const selectedHistoryVisits = selectedHistoryCourse?.visits || [];
-  const totalVisitPrice = visitItems.reduce((sum, item) => sum + item.price, 0);
 
-  const chartProblemTeeth = useMemo(() => {
-    return Object.entries(toothMap)
-      .filter(([, item]) => item.diagnoses?.length || item.states?.length || item.note?.trim())
-      .map(([toothNumber, item]) => ({
-        toothNumber,
-        diagnosis: item.diagnoses?.[0] || "",
-        state: item.states?.[0] || "",
-        note: item.note || "",
-      }))
-      .sort((a, b) => Number(a.toothNumber) - Number(b.toothNumber));
-  }, [toothMap]);
+  const chartProblemTeeth = useMemo(
+    () =>
+      Object.entries(toothMap)
+        .filter(([, item]) => item.diagnoses?.length || item.states?.length || item.note?.trim())
+        .map(([toothNumber, item]) => ({
+          toothNumber,
+          diagnosis: item.diagnoses?.[0] || "",
+          state: item.states?.[0] || "",
+          note: item.note || "",
+        }))
+        .sort((a, b) => Number(a.toothNumber) - Number(b.toothNumber)),
+    [toothMap]
+  );
 
-  const totalSelectedTeeth = chartProblemTeeth.length;
-  const treatmentTeeth = selectedCourseTeeth.length > 0
-    ? selectedCourseTeeth
-    : chartProblemTeeth.map((item) => item.toothNumber);
+  const treatmentTeeth = useMemo(
+    () =>
+      selectedCourseTeeth.length > 0
+        ? selectedCourseTeeth
+        : chartProblemTeeth.map((i) => i.toothNumber),
+    [selectedCourseTeeth, chartProblemTeeth]
+  );
 
-  function getToothLabel(toothNumber: string) {
-    const item = toothMap[toothNumber];
-    if (!item) return `${toothNumber}-tish`;
-    const diagnosis = item.diagnoses?.[0] ? diagnosisLabels[item.diagnoses[0] as ToothCondition] || item.diagnoses[0] : "";
-    const state = item.states?.[0] ? stateLabels[item.states[0] as ToothCondition] || item.states[0] : "";
-    const details = [diagnosis, state].filter(Boolean).join(" • ");
-    return details ? `${toothNumber}-tish — ${details}` : `${toothNumber}-tish`;
-  }
-
-  function buildCourseDiagnosis(teeth: string[]) {
-    if (teeth.length === 0) return "";
+  function buildDiagnosis(teeth: string[]) {
+    if (!teeth.length) return "";
     const teethText = teeth.map((t) => `${t}-tish`).join(", ");
-    const diagnoses = teeth.map((t) => toothMap[t]?.diagnoses?.[0]).filter(Boolean);
-    const unique = Array.from(new Set(diagnoses));
-    const diagnosisText = unique.length
-      ? unique.map((d) => diagnosisLabels[d as ToothCondition] || d).join(", ")
-      : "davolanishi";
-    return `${teethText} ${diagnosisText}`;
+    const diagnoses = [
+      ...new Set(teeth.map((t) => toothMap[t]?.diagnoses?.[0]).filter(Boolean)),
+    ];
+    const diagText = diagnoses.map((d) => LABELS[d as ToothCondition] || d).join(", ");
+    return `${teethText} ${diagText || "davolanishi"}`;
   }
 
-  function handleToggleCourseTooth(toothNumber: string) {
+  function handleToggleTooth(toothNumber: string) {
     setSelectedCourseTeeth((prev) => {
-      const exists = prev.includes(toothNumber);
-      const next = exists
+      const next = prev.includes(toothNumber)
         ? prev.filter((t) => t !== toothNumber)
         : [...prev, toothNumber].sort((a, b) => Number(a) - Number(b));
-      const auto = buildCourseDiagnosis(next);
-      setMainDiagnosis((cur) => (!cur.trim() ? auto : cur));
+      setMainDiagnosis((cur) => (!cur.trim() ? buildDiagnosis(next) : cur));
       if (next.length > 0) setSelectedTooth(next[0]);
       return next;
-    });
-  }
-
-  function handleAutoFillDiagnosis() {
-    setMainDiagnosis(buildCourseDiagnosis(selectedCourseTeeth));
-  }
-
-  function handleOpenCreateCourseModal() {
-    const fromChart = chartProblemTeeth.map((item) => item.toothNumber);
-    const toUse = selectedCourseTeeth.length > 0 ? selectedCourseTeeth : fromChart;
-    if (selectedCourseTeeth.length === 0 && fromChart.length > 0) {
-      setSelectedCourseTeeth(fromChart);
-      setSelectedTooth(fromChart[0]);
-    }
-    if (!mainDiagnosis.trim() && toUse.length > 0) setMainDiagnosis(buildCourseDiagnosis(toUse));
-    setIsCreateCourseModalOpen(true);
-  }
-
-  function handleSelectTooth(toothNumber: string) {
-    setSelectedTooth(toothNumber);
-    setLocalToothMap((prev) => {
-      const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-      return { ...base, [toothNumber]: base[toothNumber] || emptyToothItem() };
     });
   }
 
   function updateSelectedTooth(next: Partial<ToothItem>) {
     setLocalToothMap((prev) => {
       const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-      const current = base[selectedTooth] || emptyToothItem();
-      return { ...base, [selectedTooth]: { ...current, ...next } };
+      return { ...base, [selectedTooth]: { ...(base[selectedTooth] || emptyTooth()), ...next } };
     });
   }
 
@@ -437,86 +585,32 @@ export default function TreatmentPatientPage() {
   }
 
   async function handleSaveChart() {
-    if (!Object.keys(toothMap).length) {
-      toast.warning("Kamida bitta tish tanlang");
-      return;
-    }
-
+    if (!Object.keys(toothMap).length) { toast.warning("Kamida bitta tish tanlang"); return; }
     const payload = { patientId, toothMap };
-
-    if (chart && getId(chart)) {
-      await updateChart({ chartId: getId(chart), payload });
-    } else {
-      await createChart(payload);
-    }
-
+    if (chart && getId(chart)) await updateChart({ chartId: getId(chart), payload });
+    else await createChart(payload);
     setLocalToothMap({});
     toast.success("Chart saqlandi");
   }
 
-  function loadChartToLocal() {
-    if (!chart?.toothMap) return;
-    setLocalToothMap(chart.toothMap);
-  }
-
   async function handleCreateCourse() {
-    if (selectedCourseTeeth.length === 0) {
-      toast.warning("Avval chart bo'yicha davolanadigan tishlarni tanlang");
-      return;
-    }
-
-    const diagnosisText = mainDiagnosis.trim() || buildCourseDiagnosis(selectedCourseTeeth);
-
-    if (!diagnosisText.trim()) {
-      toast.warning("Main diagnosis kiriting");
-      return;
-    }
-
-    const created = await createCourse({ patientId, mainDiagnosis: diagnosisText });
-
+    if (!selectedCourseTeeth.length) { toast.warning("Davolanadigan tishlarni tanlang"); return; }
+    const diagnosis = mainDiagnosis.trim() || buildDiagnosis(selectedCourseTeeth);
+    if (!diagnosis) { toast.warning("Diagnosis kiriting"); return; }
+    const created = await createCourse({ patientId, mainDiagnosis: diagnosis });
     setMainDiagnosis("");
     setSelectedCourseId(getId(created));
-    setSelectedTooth(selectedCourseTeeth[0]);
     setIsCreateCourseModalOpen(false);
-    setActiveTab("VISIT");
-  }
-
-  function handleSelectCourse(course: TreatmentCourse) {
-    setSelectedCourseId(getId(course));
-  }
-
-  function handleOpenAddVisitModal(course: TreatmentCourse) {
-    if (course.status === "COMPLETED") {
-      toast.warning("Bu course completed bo'lgan. Visit qo'shib bo'lmaydi.");
-      return;
-    }
-
-    const courseId = getId(course);
-    setSelectedCourseId(courseId);
-
-    const firstTooth = treatmentTeeth[0] || chartProblemTeeth[0]?.toothNumber;
-    if (firstTooth) setSelectedTooth(firstTooth);
-
-    setIsAddVisitModalOpen(true);
+    setActiveTab("COURSE");
+    toast.success("Kurs yaratildi");
   }
 
   function handleAddProcedure(procedure: DentalProcedure) {
     const procedureId = getId(procedure);
-
-    if (!procedureId) {
-      toast.error("Procedure ID topilmadi");
-      return;
+    if (!procedureId) { toast.error("Procedure ID topilmadi"); return; }
+    if (visitItems.some((i) => i.procedureId === procedureId && i.toothNumber === selectedTooth)) {
+      toast.warning("Bu procedure allaqachon qo'shilgan"); return;
     }
-
-    const exists = visitItems.some(
-      (item) => item.procedureId === procedureId && item.toothNumber === selectedTooth
-    );
-
-    if (exists) {
-      toast.warning("Bu procedure allaqachon qo'shilgan");
-      return;
-    }
-
     setVisitItems((prev) => [
       ...prev,
       {
@@ -527,353 +621,524 @@ export default function TreatmentPatientPage() {
         note: procedure.name,
       },
     ]);
-
     if (procedure.resultingCondition) {
       setLocalToothMap((prev) => {
         const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-        const current = base[selectedTooth] || emptyToothItem();
+        const cur = base[selectedTooth] || emptyTooth();
         return {
           ...base,
           [selectedTooth]: {
-            ...current,
+            ...cur,
             states: [procedure.resultingCondition as ToothCondition],
-            note: current.note || procedure.name,
+            note: cur.note || procedure.name,
           },
         };
       });
     }
   }
 
-  function handleRemoveVisitItem(index: number) {
-    setVisitItems((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function saveChartIfNeeded() {
-    if (!Object.keys(toothMap).length) return;
-    const payload = { patientId, toothMap };
-    if (chart && getId(chart)) {
-      await updateChart({ chartId: getId(chart), payload });
-    } else {
-      await createChart(payload);
-    }
-    setLocalToothMap({});
-  }
-
   async function handleAddVisit() {
-    if (!selectedCourseId) {
-      toast.warning("Treatment course tanlang");
-      setActiveTab("COURSE");
-      return;
-    }
-
-    if (selectedCourse?.status === "COMPLETED") {
-      toast.warning("Bu course completed bo'lgan. Visit qo'shib bo'lmaydi.");
-      setActiveTab("COURSE");
-      return;
-    }
-
-    if (!appointmentId) {
-      toast.warning("Appointment ID topilmadi. Appointmentdan Start Visit qilib kiring.");
-      return;
-    }
-
-    if (!doctorId.trim()) {
-      toast.warning("Doctor ID kiriting");
-      return;
-    }
-
-    if (!doctorNotes.trim()) {
-      toast.warning("Doctor notes kiriting");
-      return;
-    }
-
-    if (visitItems.length === 0) {
-      toast.warning("Kamida bitta procedure tanlang");
-      return;
-    }
-
+    if (!selectedCourseId) { toast.warning("Treatment course tanlang"); return; }
+    if (isSelectedCourseCompleted) { toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz"); return; }
+    if (!appointmentId) { toast.warning("Appointment ID topilmadi"); return; }
+    if (!doctorId) { toast.warning("Doctor tanlang"); return; }
+    if (!doctorNotes.trim()) { toast.warning("Shifokor izohi kiriting"); return; }
+    if (!visitItems.length) { toast.warning("Kamida bitta muolaja tanlang"); return; }
     try {
       await addVisit({
         courseId: selectedCourseId,
-        payload: {
-          appointmentId,
-          visitDate,
-          doctorId: doctorId.trim(),
-          doctorNotes: doctorNotes.trim(),
-          items: visitItems,
-        },
+        payload: { appointmentId, visitDate, doctorId, doctorNotes: doctorNotes.trim(), items: visitItems },
       });
-
-      await saveChartIfNeeded();
-
+      if (Object.keys(toothMap).length) {
+        const payload = { patientId, toothMap };
+        if (chart && getId(chart)) await updateChart({ chartId: getId(chart), payload });
+        else await createChart(payload);
+        setLocalToothMap({});
+      }
       setDoctorNotes("");
       setVisitItems([]);
       setIsAddVisitModalOpen(false);
       setActiveTab("COURSE");
-
-      toast.success("Visit saqlandi va chart yangilandi");
+      toast.success("Visit saqlandi");
     } catch {
-      toast.error("Visit saqlashda xatolik bo'ldi");
+      toast.error("Visit saqlashda xatolik");
     }
   }
 
   async function handleCompleteCourse(courseId: string) {
-    const yes = window.confirm("Davolanish kursini yakunlaysizmi?");
-    if (!yes) return;
-
+    if (!window.confirm("Davolanish kursini yakunlaysizmi?")) return;
     await completeCourse(courseId);
-
     if (selectedCourseId === courseId) {
       setSelectedCourseId("");
       setVisitItems([]);
     }
-
     setCourseStatusFilter("COMPLETED");
-    setActiveTab("COURSE");
+    toast.success("Kurs yakunlandi");
   }
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  function openAddVisitModal(courseId: string) {
+    const course = courses.find((c) => getId(c) === courseId);
+    if (course?.status === "COMPLETED") {
+      toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
+      return;
+    }
+    setSelectedCourseId(courseId);
+    setVisitItems([]);
+    setDoctorNotes("");
+    setVisitDate(nowLocalIso());
+    setIsAddVisitModalOpen(true);
+  }
+
+  const visitPanelProps: VisitPanelProps = {
+    activeCourses,
+    selectedCourseId,
+    onCourseChange: setSelectedCourseId,
+    doctors,
+    doctorId,
+    onDoctorChange: setDoctorId,
+    visitDate,
+    onVisitDateChange: setVisitDate,
+    doctorNotes,
+    onDoctorNotesChange: setDoctorNotes,
+    selectedTooth,
+    onToothChange: setSelectedTooth,
+    treatmentTeeth,
+    visitItems,
+    onRemoveItem: (idx) => setVisitItems((prev) => prev.filter((_, i) => i !== idx)),
+    onSave: handleAddVisit,
+    isSaving: isAddingVisit || isCreating || isUpdating,
+    isCompleted: isSelectedCourseCompleted,
+    procedures,
+    proceduresLoading,
+    procedureSearch,
+    onProcedureSearch: setProcedureSearch,
+    onAddProcedure: handleAddProcedure,
+    onGoToChart: () => setActiveTab("CHART"),
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <PatientInfoCard patient={patient} isLoading={patientLoading} />
+    <div className="space-y-5">
+      <PatientInfoCard patient={patient} isLoading={patientLoading} />
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <TreatmentTabButton active={activeTab === "CHART"} icon={<Activity className="h-5 w-5" />} label="Chart" onClick={() => setActiveTab("CHART")} />
-            <TreatmentTabButton active={activeTab === "COURSE"} icon={<ClipboardList className="h-5 w-5" />} label="Davolash bosqichi" onClick={() => setActiveTab("COURSE")} />
-            <TreatmentTabButton active={activeTab === "VISIT"} icon={<BadgeDollarSign className="h-5 w-5" />} label="Visit qo'shish" onClick={() => setActiveTab("VISIT")} />
+      {/* Tabs */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border-color bg-white p-3 shadow-sm">
+        <TabBtn
+          active={activeTab === "CHART"}
+          icon={<Activity size={16} />}
+          label="Dental Chart"
+          onClick={() => setActiveTab("CHART")}
+          badge={chartProblemTeeth.length || undefined}
+        />
+        <TabBtn
+          active={activeTab === "COURSE"}
+          icon={<ClipboardList size={16} />}
+          label="Davolash kursi"
+          onClick={() => setActiveTab("COURSE")}
+          badge={activeCourses.length || undefined}
+        />
 
-            {/* Add Visit Modal (portal) */}
-            {isAddVisitModalOpen && typeof document !== "undefined" && createPortal(
-              <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
-                <div className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
-                  <div className="mb-5 flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="flex items-center gap-2 text-2xl font-black text-slate-950">
-                        <CalendarDays className="h-6 w-6" />
-                        Visit qo'shish
-                      </h2>
-                      <p className="mt-1 text-sm font-bold text-slate-500">Active course uchun procedure tanlang va visit saqlang.</p>
-                    </div>
-                    <button type="button" onClick={() => setIsAddVisitModalOpen(false)} className="rounded-2xl bg-slate-100 p-3 text-slate-600 transition hover:bg-slate-200">
-                      <X className="h-5 w-5" />
+        {activeTab === "CHART" && chartProblemTeeth.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const from = chartProblemTeeth.map((i) => i.toothNumber);
+              if (!selectedCourseTeeth.length) {
+                setSelectedCourseTeeth(from);
+                if (from.length) setSelectedTooth(from[0]);
+              }
+              if (!mainDiagnosis.trim())
+                setMainDiagnosis(buildDiagnosis(selectedCourseTeeth.length ? selectedCourseTeeth : from));
+              setIsCreateCourseModalOpen(true);
+            }}
+            className="ml-auto rounded-xl bg-dark-navy px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+          >
+            <Plus size={16} className="mr-1.5 inline" />
+            Kurs ochish
+          </button>
+        )}
+      </div>
+
+      {/* ====== CHART tab ====== */}
+      {activeTab === "CHART" && (
+        <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+          <div className="space-y-4">
+            {chartLoading ? (
+              <div className="rounded-2xl border border-border-color bg-white">
+                <DentalLoader fullScreen={false} text="Chart yuklanmoqda..." />
+              </div>
+            ) : (
+              <>
+                {chart?.toothMap && (
+                  <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-blue-800">Avvalgi chart topildi</p>
+                    <button
+                      type="button"
+                      onClick={() => setLocalToothMap(chart.toothMap!)}
+                      className="rounded-lg bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white"
+                    >
+                      Yuklash
                     </button>
                   </div>
+                )}
 
-                  <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-                    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><FileText size={20} />Add Visit</h2>
-                      <p className="mt-1 text-sm text-slate-500">Course tanlang, doctor notes yozing, procedure qo'shing.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Chart holati", value: chart ? "Mavjud" : "Yangi", color: chart ? "text-emerald-600" : "text-[#35a8f5]" },
+                    { label: "Belgilangan tishlar", value: chartProblemTeeth.length, color: "text-dark-navy" },
+                    { label: "Tanlangan", value: `#${selectedTooth}`, color: "text-[#35a8f5]" },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-xl border border-border-color bg-white p-4 shadow-sm">
+                      <p className="text-xs text-text-light">{s.label}</p>
+                      <p className={`mt-1 text-xl font-extrabold ${s.color}`}>{s.value}</p>
+                    </div>
+                  ))}
+                </div>
 
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <label className="mb-2 block text-sm font-bold text-slate-700">Selected course</label>
-                          <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50">
-                            <option value="">Course tanlang</option>
-                            {activeCourses.map((course) => (
-                              <option key={getId(course)} value={getId(course)}>{course.mainDiagnosis} — {course.status}</option>
-                            ))}
-                          </select>
-                        </div>
+                <Dental3DChart
+                  selectedTooth={selectedTooth}
+                  toothMap={toothMap}
+                  onSelectTooth={(t) => {
+                    setSelectedTooth(t);
+                    setLocalToothMap((prev) => {
+                      const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
+                      return { ...base, [t]: base[t] || emptyTooth() };
+                    });
+                  }}
+                />
+              </>
+            )}
+          </div>
 
-                        <div>
-                          <label className="mb-2 block text-sm font-bold text-slate-700">Visit date</label>
-                          <input type="datetime-local" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                        </div>
+          {/* Tooth editor */}
+          <div className="h-fit rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-extrabold text-dark-navy">Tish #{selectedTooth}</h2>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#35a8f5]/10 text-[#35a8f5]">
+                <Edit3 size={18} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Diagnoz</label>
+                <select
+                  value={selectedToothData.diagnoses[0] || ""}
+                  onChange={(e) =>
+                    updateSelectedTooth({ diagnoses: e.target.value ? [e.target.value as ToothCondition] : [] })
+                  }
+                  className="w-full rounded-xl border border-border-color bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#35a8f5]"
+                >
+                  <option value="">Tanlang</option>
+                  {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{LABELS[d]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Holat</label>
+                <select
+                  value={selectedToothData.states[0] || ""}
+                  onChange={(e) =>
+                    updateSelectedTooth({ states: e.target.value ? [e.target.value as ToothCondition] : [] })
+                  }
+                  className="w-full rounded-xl border border-border-color bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#35a8f5]"
+                >
+                  <option value="">Tanlang</option>
+                  {STATE_OPTIONS.map((s) => <option key={s} value={s}>{LABELS[s]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Izoh</label>
+                <textarea
+                  value={selectedToothData.note}
+                  onChange={(e) => updateSelectedTooth({ note: e.target.value })}
+                  rows={4}
+                  placeholder="Shifokor izohi..."
+                  className="w-full resize-none rounded-xl border border-border-color bg-slate-50 p-3 text-sm outline-none focus:border-[#35a8f5]"
+                />
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-light">Diagnoz:</span>
+                  <span className="font-semibold">
+                    {selectedToothData.diagnoses[0] ? LABELS[selectedToothData.diagnoses[0] as ToothCondition] : "—"}
+                  </span>
+                </div>
+                <div className="mt-1 flex justify-between">
+                  <span className="text-text-light">Holat:</span>
+                  <span className="font-semibold">
+                    {selectedToothData.states[0] ? LABELS[selectedToothData.states[0] as ToothCondition] : "—"}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleClearTooth}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-border-color py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  <X size={16} /> Tozalash
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveChart}
+                  disabled={isCreating || isUpdating}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#35a8f5] py-2.5 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-60"
+                >
+                  <Save size={16} /> {isCreating || isUpdating ? "..." : "Saqlash"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                        <div>
-                          <label className="mb-2 block text-sm font-bold text-slate-700">Doctor ID</label>
-                          <input value={doctorId} onChange={(e) => setDoctorId(e.target.value)} placeholder="6a0b1ad5b1979b74246dd5d3" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                        </div>
+      {/* ====== COURSE tab ====== */}
+      {activeTab === "COURSE" && (
+        <div className="grid gap-5 xl:grid-cols-[1fr_1.4fr]">
+          {/* Course list */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-extrabold text-dark-navy">Davolash kurslari</h2>
+                <div className="flex rounded-xl border border-border-color bg-slate-50 p-1 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setCourseStatusFilter("ACTIVE")}
+                    className={`rounded-lg px-3 py-1.5 transition ${
+                      courseStatusFilter === "ACTIVE" ? "bg-[#35a8f5] text-white" : "text-slate-500"
+                    }`}
+                  >
+                    Aktiv ({activeCourses.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCourseStatusFilter("COMPLETED")}
+                    className={`rounded-lg px-3 py-1.5 transition ${
+                      courseStatusFilter === "COMPLETED" ? "bg-emerald-500 text-white" : "text-slate-500"
+                    }`}
+                  >
+                    Tugallangan ({completedCourses.length})
+                  </button>
+                </div>
+              </div>
 
-                        <div>
-                          <label className="mb-2 block text-sm font-bold text-slate-700">Doctor notes</label>
-                          <textarea value={doctorNotes} onChange={(e) => setDoctorNotes(e.target.value)} placeholder="Kanal doimiy material bilan to'ldirildi..." className="min-h-[120px] w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                        </div>
+              {coursesLoading ? (
+                <DentalLoader fullScreen={false} text="Kurslar yuklanmoqda..." />
+              ) : visibleCourses.length === 0 ? (
+                <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Kurs yo'q</p>
+              ) : (
+                <div className="space-y-3">
+                  {visibleCourses.map((course) => {
+                    const cId = getId(course);
+                    const isSelected = selectedHistoryCourse ? getId(selectedHistoryCourse) === cId : false;
+                    const isCompleted = course.status === "COMPLETED";
 
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                          <div className="mb-3 flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-bold text-slate-800">Davolanadigan tishni tanlang</p>
-                              <p className="mt-1 text-xs text-slate-500">Procedure bosilganda shu tanlangan tishga qo'shiladi.</p>
-                            </div>
-                            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">#{selectedTooth}</span>
+                    return (
+                      <div
+                        key={cId}
+                        className={`rounded-xl border p-4 transition ${
+                          isSelected
+                            ? "border-[#35a8f5] bg-blue-50"
+                            : "border-border-color bg-white hover:border-[#35a8f5]/40"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCourseId(cId)}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-bold text-dark-navy">{course.mainDiagnosis}</p>
+                            <span className="text-xs text-slate-500">{course.visits?.length || 0} visit</span>
                           </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            {treatmentTeeth.length === 0 ? (
-                              <button type="button" onClick={() => { setIsAddVisitModalOpen(false); setActiveTab("CHART"); }} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-700 ring-1 ring-slate-200 hover:bg-blue-50">
-                                Chartdan tish tanlash
-                              </button>
-                            ) : (
-                              treatmentTeeth.map((toothNumber) => (
-                                <button key={toothNumber} type="button" onClick={() => setSelectedTooth(toothNumber)} className={["rounded-xl px-4 py-2 text-sm font-bold transition", selectedTooth === toothNumber ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"].join(" ")}>
-                                  {toothNumber}-tish
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <p className="text-sm font-bold text-slate-800">Visit items</p>
-                            <p className="text-sm font-bold text-blue-700">{formatMoney(totalVisitPrice)}</p>
-                          </div>
-                          {visitItems.length === 0 ? (
-                            <p className="text-sm text-slate-500">Hali procedure tanlanmadi.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              {visitItems.map((item, index) => (
-                                <div key={`${item.procedureId}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white p-3">
-                                  <div>
-                                    <p className="text-sm font-bold text-slate-900">{item.toothNumber}-tish</p>
-                                    <p className="text-xs text-slate-500">{item.note}</p>
-                                    <p className="text-xs font-bold text-blue-700">{formatMoney(item.price)}</p>
-                                  </div>
-                                  <button onClick={() => handleRemoveVisitItem(index)} className="rounded-xl p-2 text-red-500 hover:bg-red-50"><Trash2 size={16} /></button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <button onClick={handleAddVisit} disabled={isAddingVisit || selectedCourse?.status === "COMPLETED" || visitItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                          {isAddingVisit || isCreating || isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CalendarDays size={16} />}
-                          {visitItems.length === 0 ? "Avval procedure tanlang" : "Add visit"}
+                          <p className="mt-1 text-sm font-bold text-[#35a8f5]">
+                            {formatMoney(course.totalCoursePrice)}
+                          </p>
+                          <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
+                            isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                          }`}>
+                            {isCompleted ? "Yakunlangan" : "Aktiv"}
+                          </span>
                         </button>
 
-                        {selectedCourse?.status === "COMPLETED" && (
-                          <p className="text-sm font-medium text-red-500">Bu course completed bo'lgan. Visit qo'shib bo'lmaydi.</p>
-                        )}
-                      </div>
-                    </section>
-
-                    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <h2 className="text-lg font-bold text-slate-900">Procedures</h2>
-                          <p className="mt-1 text-sm text-slate-500">Procedure bosilganda tanlangan tishga qo'shiladi: <span className="font-bold text-slate-900">{selectedTooth}-tish</span></p>
-                        </div>
-                        <div className="relative">
-                          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input value={procedureSearch} onChange={(e) => setProcedureSearch(e.target.value)} placeholder="Search procedure..." className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 md:w-[280px]" />
-                        </div>
-                      </div>
-
-                      <div className="mt-5 rounded-2xl bg-blue-50 p-4">
-                        <p className="text-sm font-bold text-blue-800">Tanlangan tish: {selectedTooth}-tish</p>
-                        <p className="mt-1 text-xs font-medium text-blue-600">Boshqa tishga procedure qo'shish uchun chap tomondagi chiplardan foydalaning.</p>
-                      </div>
-
-                      <div className="mt-5 grid gap-3 md:grid-cols-2">
-                        {proceduresLoading || proceduresFetching ? (
-                          <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading procedures...</div>
-                        ) : procedures.length === 0 ? (
-                          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 md:col-span-2">
-                            <p className="text-sm font-bold text-amber-900">Procedure topilmadi</p>
-                            <p className="mt-2 text-sm text-amber-700">Add Visit qilish uchun kamida bitta procedure kerak.</p>
-                            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                              <button type="button" onClick={() => setProcedureSearch("")} className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100">Searchni tozalash</button>
-                              <Link href="/procedures" className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-700"><Plus className="h-4 w-4" />Procedures sahifasiga o'tish</Link>
-                            </div>
-                          </div>
-                        ) : (
-                          procedures.map((procedure) => (
-                            <button key={getId(procedure)} onClick={() => handleAddProcedure(procedure)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 hover:bg-blue-50">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-bold text-slate-900">{procedure.name}</p>
-                                  <p className="mt-1 text-xs font-semibold text-slate-500">{procedure.code}</p>
-                                </div>
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{procedure.resultingCondition}</span>
-                              </div>
-                              <p className="mt-3 text-sm font-bold text-blue-700">{formatMoney(procedure.defaultPrice)}</p>
-                              <p className="mt-2 text-xs font-bold text-emerald-600">Bosish: visit itemsga qo'shish</p>
+                        {/* Actions — faqat active course uchun */}
+                        {!isCompleted && (
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openAddVisitModal(cId)}
+                              className="flex-1 rounded-lg bg-[#35a8f5] py-2 text-xs font-bold text-white hover:bg-[#1d8ee8]"
+                            >
+                              + Visit qo'shish
                             </button>
-                          ))
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteCourse(cId)}
+                              disabled={isCompleting}
+                              className="flex-1 rounded-lg bg-emerald-500 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:opacity-60"
+                            >
+                              ✓ Yakunlash
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Completed badge */}
+                        {isCompleted && (
+                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2">
+                            <Lock size={14} className="text-emerald-600" />
+                            <p className="text-xs font-bold text-emerald-700">Kurs yakunlangan</p>
+                          </div>
                         )}
                       </div>
-                    </section>
-                  </div>
+                    );
+                  })}
                 </div>
-              </div>,
-              document.body
-            )}
+              )}
+            </div>
+          </div>
 
-            {activeTab === "CHART" && (
-              <button type="button" onClick={handleOpenCreateCourseModal} disabled={chartProblemTeeth.length === 0} className="ml-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
-                <Plus className="h-5 w-5" />
-                Course ochish
-              </button>
+          {/* Visit history */}
+          <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-extrabold text-dark-navy">Visit tarixi</h2>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                {selectedHistoryVisits.length} ta
+              </span>
+            </div>
+
+            {!selectedHistoryCourse ? (
+              <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Kurs tanlang</p>
+            ) : selectedHistoryVisits.length === 0 ? (
+              <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Bu kursda visit yo'q</p>
+            ) : (
+              <div className="relative space-y-4 pl-7">
+                <div className="absolute bottom-4 left-[13px] top-4 w-px bg-slate-200" />
+                {selectedHistoryVisits.map((visit: any, idx: number) => (
+                  <div key={idx} className="relative">
+                    <div className={`absolute -left-7 top-4 flex h-8 w-8 items-center justify-center rounded-full text-xs font-extrabold text-white ring-4 ring-white ${
+                      idx === 0 ? "bg-emerald-500" : "bg-[#35a8f5]"
+                    }`}>
+                      {idx + 1}
+                    </div>
+                    <div className="rounded-xl border border-border-color bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-dark-navy">Visit {idx + 1}</p>
+                          <p className="text-xs text-text-light">{formatVisitDateTime(visit.visitDate)}</p>
+                        </div>
+                        <p className="text-sm font-bold text-[#35a8f5]">{formatMoney(getVisitTotal(visit))}</p>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        <span className="font-semibold">Shifokor:</span> {getVisitDoctorName(visit)}
+                      </p>
+                      {visit.doctorNotes && (
+                        <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                          {visit.doctorNotes}
+                        </p>
+                      )}
+                      {visit.items?.length > 0 && (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {visit.items.map((item: any, i: number) => (
+                            <div key={i} className="rounded-lg bg-slate-50 p-2.5">
+                              <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
+                              <p className="text-xs text-slate-500">{item.note}</p>
+                              <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(Number(item.price || 0))}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
+      )}
 
-        {/* Create Course Modal (portal) */}
-        {isCreateCourseModalOpen && typeof document !== "undefined" && createPortal(
-          <div className="fixed inset-0 z-[9999] flex min-h-dvh items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
-            <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="mb-5 flex items-start justify-between gap-4">
+      {/* ====== Create Course Modal ====== */}
+      {isCreateCourseModalOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
                 <div>
-                  <h2 className="flex items-center gap-2 text-2xl font-black text-slate-950"><Plus className="h-6 w-6" />Create Treatment Course</h2>
-                  <p className="mt-1 text-sm font-bold text-slate-500">Dental chartdan keyin asosiy diagnosis yozib course ochiladi.</p>
+                  <h2 className="font-extrabold text-dark-navy">Davolash kursi ochish</h2>
+                  <p className="mt-0.5 text-sm text-text-light">Davolanadigan tishlarni tanlang</p>
                 </div>
-                <button type="button" onClick={() => setIsCreateCourseModalOpen(false)} className="rounded-2xl bg-slate-100 p-3 text-slate-600 transition hover:bg-slate-200"><X className="h-5 w-5" /></button>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateCourseModalOpen(false)}
+                  className="rounded-lg p-2 hover:bg-slate-100"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              <div className="space-y-5">
-                <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-base font-black text-blue-900">Chart bo'yicha davolanadigan tishlar</p>
-                      <p className="mt-1 text-sm font-semibold text-blue-700">Masalan chartda 21 va 11 belgilangan bo'lsa, course ochishda shu tishlarni tanlang.</p>
-                    </div>
-                    <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-blue-700">{selectedCourseTeeth.length} tanlandi</span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    {chartProblemTeeth.length === 0 ? (
-                      <button type="button" onClick={() => { setIsCreateCourseModalOpen(false); setActiveTab("CHART"); }} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-blue-700 ring-1 ring-blue-100 transition hover:bg-blue-100">
-                        Avval chartda tish belgilang
-                      </button>
-                    ) : (
-                      chartProblemTeeth.map((item) => {
-                        const active = selectedCourseTeeth.includes(item.toothNumber);
-                        return (
-                          <button key={item.toothNumber} type="button" onClick={() => handleToggleCourseTooth(item.toothNumber)} className={["min-w-[130px] rounded-2xl px-5 py-4 text-left text-sm font-black ring-1 transition", active ? "bg-blue-600 text-white ring-blue-600 shadow-lg shadow-blue-600/20" : "bg-white text-slate-700 ring-blue-100 hover:bg-blue-100 hover:text-blue-700"].join(" ")}>
-                            <span className="block text-xl">#{item.toothNumber}</span>
-                            <span className={active ? "mt-1 block text-xs text-blue-100" : "mt-1 block text-xs text-slate-500"}>
-                              {getToothLabel(item.toothNumber).replace(`${item.toothNumber}-tish — `, "")}
-                            </span>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="block text-sm font-black text-slate-700">Main diagnosis</label>
-                    <button type="button" onClick={handleAutoFillDiagnosis} disabled={selectedCourseTeeth.length === 0} className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">
+              <div className="space-y-5 p-6">
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="font-bold text-blue-900">
+                      Davolanadigan tishlar ({selectedCourseTeeth.length} ta tanlandi)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setMainDiagnosis(buildDiagnosis(selectedCourseTeeth))}
+                      disabled={!selectedCourseTeeth.length}
+                      className="rounded-lg bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40"
+                    >
                       Auto to'ldirish
                     </button>
                   </div>
-                  <textarea value={mainDiagnosis} onChange={(e) => setMainDiagnosis(e.target.value)} placeholder="Masalan: 11 va 21-tish karies davolanishi" className="min-h-[140px] w-full resize-none rounded-3xl border border-slate-200 bg-white p-5 text-base font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
+                  <div className="flex flex-wrap gap-2">
+                    {chartProblemTeeth.map((item) => {
+                      const isActive = selectedCourseTeeth.includes(item.toothNumber);
+                      return (
+                        <button
+                          key={item.toothNumber}
+                          type="button"
+                          onClick={() => handleToggleTooth(item.toothNumber)}
+                          className={`rounded-xl px-4 py-3 text-left text-sm font-bold transition ${
+                            isActive
+                              ? "bg-[#35a8f5] text-white"
+                              : "bg-white text-slate-700 ring-1 ring-border-color hover:bg-blue-50"
+                          }`}
+                        >
+                          <span className="block text-lg">#{item.toothNumber}</span>
+                          <span className="block text-xs opacity-70">
+                            {LABELS[item.diagnosis as ToothCondition] || item.diagnosis || "—"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button type="button" onClick={() => setIsCreateCourseModalOpen(false)} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-black text-slate-700 transition hover:bg-slate-50">
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-slate-700">Asosiy tashxis</label>
+                  <textarea
+                    value={mainDiagnosis}
+                    onChange={(e) => setMainDiagnosis(e.target.value)}
+                    placeholder="Masalan: 11 va 21-tish karies davolanishi"
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-border-color bg-slate-50 p-3 text-sm outline-none focus:border-[#35a8f5]"
+                  />
+                </div>
+
+                <div className="flex gap-3 border-t border-border-color pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateCourseModalOpen(false)}
+                    className="flex-1 rounded-xl border border-border-color py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  >
                     Bekor qilish
                   </button>
-                  <button onClick={handleCreateCourse} disabled={isCreatingCourse || selectedCourseTeeth.length === 0} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
-                    {isCreatingCourse ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
-                    Create course
+                  <button
+                    type="button"
+                    onClick={handleCreateCourse}
+                    disabled={isCreatingCourse || !selectedCourseTeeth.length}
+                    className="flex-1 rounded-xl bg-dark-navy py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {isCreatingCourse ? "Yaratilmoqda..." : "Kurs yaratish"}
                   </button>
                 </div>
               </div>
@@ -882,398 +1147,38 @@ export default function TreatmentPatientPage() {
           document.body
         )}
 
-        {/* CHART tab */}
-        {activeTab === "CHART" && (
-          <section className="grid gap-6 xl:grid-cols-[1fr_390px]">
-            <div className="space-y-4">
-              {chartLoading ? (
-                <div className="flex h-96 items-center justify-center rounded-3xl border border-slate-200 bg-white">
-                  <Loader2 className="animate-spin text-blue-600" size={36} />
-                </div>
-              ) : (
-                <>
-                  {chart?.toothMap ? (
-                    <div className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="font-semibold text-blue-900">Oldingi chart topildi</p>
-                        <p className="text-sm text-blue-700">Chart ID: {getId(chart)}</p>
-                      </div>
-                      <button onClick={loadChartToLocal} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Chartni yuklash</button>
-                    </div>
-                  ) : null}
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <p className="text-sm text-slate-500">Chart status</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        {chart ? (
-                          <><CheckCircle2 className="text-emerald-500" size={20} /><span className="font-bold text-slate-900">Mavjud</span></>
-                        ) : (
-                          <><Plus className="text-blue-500" size={20} /><span className="font-bold text-slate-900">Yangi</span></>
-                        )}
-                      </div>
-                    </div>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <p className="text-sm text-slate-500">Belgilangan tishlar</p>
-                      <p className="mt-2 text-2xl font-bold text-slate-900">{totalSelectedTeeth}</p>
-                    </div>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <p className="text-sm text-slate-500">Tanlangan tish</p>
-                      <p className="mt-2 text-2xl font-bold text-blue-600">#{selectedTooth}</p>
-                    </div>
-                  </div>
-
-                  <Dental3DChart selectedTooth={selectedTooth} toothMap={toothMap} onSelectTooth={handleSelectTooth} />
-
-                  {chartProblemTeeth.length === 0 && (
-                    <div className="rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-700">
-                      Avval chartda kamida bitta tishga diagnoz yoki holat belgilang.
-                    </div>
+      {/* ====== Add Visit Modal ====== */}
+      {isAddVisitModalOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+            <div className="my-8 w-full max-w-5xl rounded-2xl bg-white shadow-2xl">
+              {/* Header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-border-color bg-white px-6 py-4">
+                <div>
+                  <h2 className="font-extrabold text-dark-navy">Visit qo'shish</h2>
+                  {selectedCourse && (
+                    <p className="mt-0.5 text-sm text-text-light">
+                      Kurs: <span className="font-semibold text-dark-navy">{selectedCourse.mainDiagnosis}</span>
+                    </p>
                   )}
-                </>
-              )}
-            </div>
-
-            <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Tish #{selectedTooth}</h2>
-                  <p className="mt-1 text-sm text-slate-500">Diagnoz va holatni tanlang.</p>
                 </div>
-                <div className="rounded-2xl bg-blue-50 p-3 text-blue-600"><Edit3 size={22} /></div>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="diagnosis" className="mb-3 block text-sm font-bold text-slate-800">Diagnoz</label>
-                  <select id="diagnosis" value={selectedToothData.diagnoses[0] || ""} onChange={(e) => updateSelectedTooth({ diagnoses: e.target.value ? [e.target.value as ToothCondition] : [] })} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50">
-                    <option value="">Diagnoz tanlang</option>
-                    {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{diagnosisLabels[d]}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="state" className="mb-3 block text-sm font-bold text-slate-800">Tish holati</label>
-                  <select id="state" value={selectedToothData.states[0] || ""} onChange={(e) => updateSelectedTooth({ states: e.target.value ? [e.target.value as ToothCondition] : [] })} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50">
-                    <option value="">Holat tanlang</option>
-                    {STATE_OPTIONS.map((s) => <option key={s} value={s}>{stateLabels[s]}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="note" className="mb-3 block text-sm font-bold text-slate-800">Shifokor izohi</label>
-                  <textarea id="note" value={selectedToothData.note} onChange={(e) => updateSelectedTooth({ note: e.target.value })} placeholder="Masalan: Chaynash yuzasida chuqur karies bor..." rows={6} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-bold text-slate-900">Tanlangan qiymatlar</p>
-                  <div className="mt-3 space-y-2 text-sm text-slate-600">
-                    <div className="flex justify-between gap-3">
-                      <span>Diagnoz:</span>
-                      <span className="font-semibold text-slate-900">{selectedToothData.diagnoses[0] ? diagnosisLabels[selectedToothData.diagnoses[0] as ToothCondition] || selectedToothData.diagnoses[0] : "Tanlanmagan"}</span>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <span>Holat:</span>
-                      <span className="font-semibold text-slate-900">{selectedToothData.states[0] ? stateLabels[selectedToothData.states[0] as ToothCondition] || selectedToothData.states[0] : "Tanlanmagan"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={handleClearTooth} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50"><X size={18} />Tozalash</button>
-                  <button onClick={handleSaveChart} disabled={isCreating || isUpdating} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                    {isCreating || isUpdating ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    Saqlash
-                  </button>
-                </div>
-
-                <button type="button" onClick={() => setActiveTab("COURSE")} className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
-                  Keyingi: Davolash bosqichi
+                <button
+                  type="button"
+                  onClick={() => setIsAddVisitModalOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                >
+                  <X size={20} />
                 </button>
               </div>
-            </aside>
-          </section>
-        )}
 
-        {/* COURSE tab */}
-        {activeTab === "COURSE" && (
-          <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-            <div className="space-y-6">
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><ClipboardList size={20} />Treatment Courses</h2>
-                  <div className="inline-flex rounded-2xl bg-slate-100 p-1">
-                    <button type="button" onClick={() => setCourseStatusFilter("ACTIVE")} className={["rounded-xl px-4 py-2 text-sm font-black transition", courseStatusFilter === "ACTIVE" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-800"].join(" ")}>
-                      Active ({activeCourses.length})
-                    </button>
-                    <button type="button" onClick={() => setCourseStatusFilter("COMPLETED")} className={["rounded-xl px-4 py-2 text-sm font-black transition", courseStatusFilter === "COMPLETED" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-800"].join(" ")}>
-                      Completed ({completedCourses.length})
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  {coursesLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading courses...</div>
-                  ) : visibleCourses.length === 0 ? (
-                    <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">{courseStatusFilter === "ACTIVE" ? "Active treatment course yo'q." : "Completed treatment course yo'q."}</p>
-                  ) : (
-                    visibleCourses.map((course) => {
-                      const courseId = getId(course);
-                      return (
-                        <div key={courseId} className={["rounded-2xl border p-4 transition", selectedHistoryCourseId === courseId ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white"].join(" ")}>
-                          <button type="button" onClick={() => handleSelectCourse(course)} className="w-full text-left">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="font-bold text-slate-900">{course.mainDiagnosis}</p>
-                                <p className="mt-1 text-xs font-semibold text-slate-500">Status: {course.status}</p>
-                              </div>
-                              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">{course.visits?.length || 0} visits</span>
-                            </div>
-                            <p className="mt-3 text-sm font-bold text-blue-700">{formatMoney(course.totalCoursePrice)}</p>
-                            <p className={["mt-2 text-xs font-bold", course.status === "COMPLETED" ? "text-slate-500" : "text-blue-600"].join(" ")}>
-                              {course.status === "COMPLETED" ? "Completed course — visit ochilmaydi" : "Active course — Visit qo'shish button orqali ochiladi"}
-                            </p>
-                          </button>
-
-                          {course.status !== "COMPLETED" && (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <button type="button" onClick={() => handleOpenAddVisitModal(course)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"><Plus size={14} />Visit qo'shish</button>
-                              <button type="button" onClick={() => handleCompleteCourse(courseId)} disabled={isCompleting} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><CheckCircle2 size={14} />Complete</button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
+              <div className="p-6">
+                <VisitPanel {...visitPanelProps} />
+              </div>
             </div>
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Visit history</h2>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">Har bir visit, shifokor, muolaja soni va summa timeline ko'rinishida.</p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black text-slate-600">{selectedHistoryVisits.length} visit</span>
-              </div>
-
-              <div className="mt-6 space-y-5">
-                {visibleCourses.length === 0 ? (
-                  <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">{courseStatusFilter === "ACTIVE" ? "Active course visit history yo'q." : "Completed course visit history yo'q."}</p>
-                ) : !selectedHistoryCourse ? (
-                  <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Visit history ko'rish uchun treatment course tanlang.</p>
-                ) : (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="font-black text-slate-950">{selectedHistoryCourse.mainDiagnosis}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className={["rounded-full px-3 py-1 text-xs font-black", selectedHistoryCourse.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"].join(" ")}>
-                            {selectedHistoryCourse.status}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{selectedHistoryVisits.length} visits</span>
-                        </div>
-                      </div>
-                      <p className="font-black text-blue-700">{formatMoney(selectedHistoryCourse.totalCoursePrice)}</p>
-                    </div>
-
-                    {selectedHistoryVisits.length === 0 ? (
-                      <p className="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">Bu courseda visit yo'q.</p>
-                    ) : (
-                      <div className="relative pl-8">
-                        <div className="absolute bottom-4 left-[17px] top-4 w-px bg-blue-100" />
-                        <div className="space-y-4">
-                          {selectedHistoryVisits.map((visit: any, visitIndex: number) => {
-                            const isFirst = visitIndex === 0;
-                            const visitTotal = getVisitTotal(visit);
-                            const itemsCount = visit.items?.length || 0;
-                            return (
-                              <div key={`${visit.appointmentId || visitIndex}-${visitIndex}`} className="relative">
-                                <div className={["absolute -left-8 top-4 flex h-9 w-9 items-center justify-center rounded-full text-sm font-black text-white shadow-sm ring-4 ring-white", isFirst ? "bg-emerald-500" : "bg-blue-500"].join(" ")}>
-                                  {visitIndex + 1}
-                                </div>
-                                <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md">
-                                  <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr_0.7fr_0.8fr] md:items-center">
-                                    <div>
-                                      <p className="text-sm font-black text-slate-950">Visit {visitIndex + 1}</p>
-                                      <p className="mt-1 text-sm font-semibold text-slate-500">{formatVisitDateTime(visit.visitDate)}</p>
-                                    </div>
-                                    <div className="md:border-l md:border-slate-100 md:pl-5">
-                                      <p className="text-xs font-bold text-slate-400">Shifokor</p>
-                                      <p className="mt-1 text-sm font-black text-slate-800">{getVisitDoctorName(visit)}</p>
-                                    </div>
-                                    <div className="md:border-l md:border-slate-100 md:pl-5">
-                                      <p className="text-xs font-bold text-slate-400">Muolajalar</p>
-                                      <p className="mt-1 text-sm font-black text-slate-800">{itemsCount} ta</p>
-                                    </div>
-                                    <div className="md:border-l md:border-slate-100 md:pl-5">
-                                      <p className="text-xs font-bold text-slate-400">Summasi</p>
-                                      <p className="mt-1 text-sm font-black text-slate-900">{formatMoney(visitTotal)}</p>
-                                    </div>
-                                  </div>
-                                  {visit.doctorNotes && <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm font-medium text-slate-600">{visit.doctorNotes}</p>}
-                                  {visit.items?.length > 0 && (
-                                    <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                      {visit.items.map((item: any, itemIndex: number) => (
-                                        <div key={`${item.procedureId || itemIndex}-${itemIndex}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                                          <p className="text-sm font-black text-slate-900">{item.toothNumber}-tish</p>
-                                          <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500">{item.note || "Muolaja"}</p>
-                                          <p className="mt-2 text-xs font-black text-blue-700">{formatMoney(Number(item.price || item.amount || 0))}</p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
+          </div>,
+          document.body
         )}
-
-        {/* VISIT tab */}
-        {activeTab === "VISIT" && (
-          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><FileText size={20} />Add Visit</h2>
-              <p className="mt-1 text-sm text-slate-500">Course tanlang, doctor notes yozing, procedure qo'shing.</p>
-
-              <div className="mt-5 space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">Selected course</label>
-                  <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50">
-                    <option value="">Course tanlang</option>
-                    {activeCourses.map((course) => <option key={getId(course)} value={getId(course)}>{course.mainDiagnosis} — {course.status}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">Visit date</label>
-                  <input type="datetime-local" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">Doctor ID</label>
-                  <input value={doctorId} onChange={(e) => setDoctorId(e.target.value)} placeholder="6a0b1ad5b1979b74246dd5d3" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">Doctor notes</label>
-                  <textarea value={doctorNotes} onChange={(e) => setDoctorNotes(e.target.value)} placeholder="Kanal doimiy material bilan to'ldirildi..." className="min-h-[120px] w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50" />
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">Davolanadigan tishni tanlang</p>
-                      <p className="mt-1 text-xs text-slate-500">Procedure bosilganda shu tanlangan tishga qo'shiladi.</p>
-                    </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">#{selectedTooth}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {treatmentTeeth.length === 0 ? (
-                      <button type="button" onClick={() => setActiveTab("CHART")} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-700 ring-1 ring-slate-200 hover:bg-blue-50">Chartdan tish tanlash</button>
-                    ) : (
-                      treatmentTeeth.map((toothNumber) => (
-                        <button key={toothNumber} type="button" onClick={() => setSelectedTooth(toothNumber)} className={["rounded-xl px-4 py-2 text-sm font-bold transition", selectedTooth === toothNumber ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"].join(" ")}>
-                          {toothNumber}-tish
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-800">Visit items</p>
-                    <p className="text-sm font-bold text-blue-700">{formatMoney(totalVisitPrice)}</p>
-                  </div>
-                  {visitItems.length === 0 ? (
-                    <p className="text-sm text-slate-500">Hali procedure tanlanmadi.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {visitItems.map((item, index) => (
-                        <div key={`${item.procedureId}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white p-3">
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{item.toothNumber}-tish</p>
-                            <p className="text-xs text-slate-500">{item.note}</p>
-                            <p className="text-xs font-bold text-blue-700">{formatMoney(item.price)}</p>
-                          </div>
-                          <button onClick={() => handleRemoveVisitItem(index)} className="rounded-xl p-2 text-red-500 hover:bg-red-50"><Trash2 size={16} /></button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <button onClick={handleAddVisit} disabled={isAddingVisit || selectedCourse?.status === "COMPLETED" || visitItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                  {isAddingVisit || isCreating || isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CalendarDays size={16} />}
-                  {visitItems.length === 0 ? "Avval procedure tanlang" : "Add visit"}
-                </button>
-
-                {selectedCourse?.status === "COMPLETED" && (
-                  <p className="text-sm font-medium text-red-500">Bu course completed bo'lgan. Visit qo'shib bo'lmaydi.</p>
-                )}
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Procedures</h2>
-                  <p className="mt-1 text-sm text-slate-500">Procedure bosilganda tanlangan tishga qo'shiladi: <span className="font-bold text-slate-900">{selectedTooth}-tish</span></p>
-                </div>
-                <div className="relative">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input value={procedureSearch} onChange={(e) => setProcedureSearch(e.target.value)} placeholder="Search procedure..." className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 md:w-[280px]" />
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-2xl bg-blue-50 p-4">
-                <p className="text-sm font-bold text-blue-800">Tanlangan tish: {selectedTooth}-tish</p>
-                <p className="mt-1 text-xs font-medium text-blue-600">Boshqa tishga procedure qo'shish uchun chap tomondagi chiplardan foydalaning.</p>
-              </div>
-
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {proceduresLoading || proceduresFetching ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading procedures...</div>
-                ) : procedures.length === 0 ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 md:col-span-2">
-                    <p className="text-sm font-bold text-amber-900">Procedure topilmadi</p>
-                    <p className="mt-2 text-sm text-amber-700">Add Visit qilish uchun kamida bitta procedure kerak.</p>
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      <button type="button" onClick={() => setProcedureSearch("")} className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100">Searchni tozalash</button>
-                      <Link href="/procedures" className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-700"><Plus className="h-4 w-4" />Procedures sahifasiga o'tish</Link>
-                    </div>
-                  </div>
-                ) : (
-                  procedures.map((procedure) => (
-                    <button key={getId(procedure)} onClick={() => handleAddProcedure(procedure)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 hover:bg-blue-50">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">{procedure.name}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-500">{procedure.code}</p>
-                        </div>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{procedure.resultingCondition}</span>
-                      </div>
-                      <p className="mt-3 text-sm font-bold text-blue-700">{formatMoney(procedure.defaultPrice)}</p>
-                      <p className="mt-2 text-xs font-bold text-emerald-600">Bosish: visit itemsga qo'shish</p>
-                    </button>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
