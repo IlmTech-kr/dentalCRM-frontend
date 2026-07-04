@@ -6,6 +6,16 @@ const RESERVED_SUBDOMAINS = new Set([
   "www", "app", "admin", "api", "dashboard",
 ]);
 
+/**
+ * Subdomain'siz (root domain) ochilishi mumkin bo'lgan pathlar.
+ * Bularga kirganda "/" ga redirect qilinmaydi.
+ */
+const ALLOWED_ROOT_PATHS = new Set([
+  "/",
+  "/register",
+  "/login",
+]);
+
 function getSubdomain(host: string): string | null {
   const hostname = host.split(":")[0].trim().toLowerCase();
   const rootDomain = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
@@ -50,7 +60,8 @@ export function middleware(req: NextRequest) {
   const subDomain = getSubdomain(host);
 
   if (!subDomain) {
-    if (pathname !== "/") {
+    // Root domain: faqat ALLOWED_ROOT_PATHS ochiq, qolgani "/" ga redirect
+    if (!ALLOWED_ROOT_PATHS.has(pathname)) {
       const url = req.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
