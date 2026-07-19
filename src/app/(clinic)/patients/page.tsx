@@ -4,7 +4,8 @@
  * File: src/app/(dashboard)/patients/page.tsx
  */
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   AlertCircle,
   CheckCircle,
@@ -12,8 +13,10 @@ import {
   ChevronRight,
   Eye,
   Pencil,
+  Play,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -53,7 +56,13 @@ const emptyAppointmentForm = {
   notes: "",
 };
 
-type ModalState = "none" | "form" | "view" | "phone-search" | "appointment";
+type ModalState =
+  | "none"
+  | "form"
+  | "view"
+  | "phone-search"
+  | "appointment"
+  | "start-confirm";
 
 function formatPhoneNumber(input: string): string {
   const digits = input.replace(/\D/g, "");
@@ -98,6 +107,7 @@ function getGenderBadgeClass(gender?: string) {
 
 export default function PatientsPage() {
   const toast = useToast();
+  const router = useRouter();
 
   const { data: patients = [], isLoading, error: patientsError } = useGetPatients();
   const { data: doctors = [] } = useGetDoctors();
@@ -111,6 +121,9 @@ export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [modalState, setModalState] = useState<ModalState>("none");
 
+  // Yangi yaratilgan patient — "start-confirm" modalida ishlatiladi
+  const [pendingNewPatient, setPendingNewPatient] = useState<Patient | null>(null);
+
   const updateMutation = useUpdatePatient(editingPatient?.id || "");
 
   const [phoneSearch, setPhoneSearch] = useState<string>("+998");
@@ -118,13 +131,34 @@ export default function PatientsPage() {
   const [phoneSearchAttempted, setPhoneSearchAttempted] = useState(false);
   const [appointmentForm, setAppointmentForm] = useState(emptyAppointmentForm);
 
+  // Jadval qidiruvi — telefon raqami bo'yicha
+  const [tableSearch, setTableSearch] = useState("");
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(patients.length / PAGE_SIZE));
-  const paginatedPatients = patients.slice(
+
+  const filteredPatients = useMemo(() => {
+    const digits = extractDigits(tableSearch);
+    if (!digits) return patients;
+
+    return patients.filter((patient) => {
+      const patientDigits = extractDigits(
+        patient.phone || patient.phoneNumber || ""
+      );
+      return patientDigits.includes(digits);
+    });
+  }, [patients, tableSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE));
+  const paginatedPatients = filteredPatients.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
+
+  function handleTableSearchChange(value: string) {
+    setTableSearch(value);
+    setCurrentPage(1);
+  }
 
   const phoneDigits = extractDigits(phoneSearch);
   const shouldSearch = phoneDigits.length === 12 && phoneSearchAttempted;
@@ -138,6 +172,24 @@ export default function PatientsPage() {
   const appointmentDoctors = doctors.filter((doctor: any) =>
     doctor.roles?.includes(Role.DOCTOR)
   );
+
+  // ---------------------------------------------------------------------------
+  // Navigation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * "Molajani boshlash" — patientning treatment sahifasiga to'g'ridan-to'g'ri
+   * o'tkazadi (appointmentId bermasdan). Treatment sahifasida "Visit qo'shish"
+   * bosilganda backend appointmentId'siz visitni qabul qiladi va doctorId +
+   * joriy vaqt asosida appointmentni avtomatik yaratadi.
+   */
+  function goToTreatment(patient: Patient | null) {
+    if (!patient?.id) {
+      toast.error("Patient ID topilmadi");
+      return;
+    }
+    router.push(`/treatments/${patient.id}`);
+  }
 
   // ---------------------------------------------------------------------------
   // Modal handlers
@@ -178,6 +230,7 @@ export default function PatientsPage() {
     setModalState("none");
     setEditingPatient(null);
     setSelectedPatient(null);
+    setPendingNewPatient(null);
     setForm(emptyForm);
     setAppointmentForm(emptyAppointmentForm);
     setPhoneSearch("+998");
@@ -221,14 +274,21 @@ export default function PatientsPage() {
     e.preventDefault();
     try {
       const payload = { ...form, phone: formatPhoneNumber(form.phone) };
+
       if (editingPatient) {
         await updateMutation.mutateAsync({ id: editingPatient.id, ...payload });
         toast.success("Patient updated successfully");
-      } else {
-        await createMutation.mutateAsync(payload);
-        toast.success("Patient created successfully");
+        closeModal();
+        return;
       }
-      closeModal();
+
+      const createdPatient = await createMutation.mutateAsync(payload);
+      toast.success("Patient created successfully");
+
+      // Yangi patient yaratilgandan keyin — modal ichida so'raymiz
+      setForm(emptyForm);
+      setPendingNewPatient(createdPatient);
+      setModalState("start-confirm");
     } catch {
       toast.error("Failed to save patient");
     }
@@ -291,11 +351,33 @@ export default function PatientsPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
-          <h2 className="text-lg font-semibold text-dark-navy">Patient List</h2>
-          <span className="rounded-full bg-[#35a8f5]/10 px-3 py-1 text-sm font-medium text-[#35a8f5]">
-            {patients.length} patients
-          </span>
+        <div className="flex flex-col gap-4 border-b border-border-color px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-dark-navy">Patient List</h2>
+            <span className="rounded-full bg-[#35a8f5]/10 px-3 py-1 text-sm font-medium text-[#35a8f5]">
+              {filteredPatients.length} patients
+            </span>
+          </div>
+
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="tel"
+              value={tableSearch}
+              onChange={(e) => handleTableSearchChange(e.target.value)}
+              placeholder="Telefon raqami bo'yicha qidirish..."
+              className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-9 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+            />
+            {tableSearch && (
+              <button
+                type="button"
+                onClick={() => handleTableSearchChange("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -362,6 +444,14 @@ export default function PatientsPage() {
                             </button>
                             <button
                               type="button"
+                              onClick={() => goToTreatment(patient)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                              title="Molajani boshlash"
+                            >
+                              <Play size={16} />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => openAppointmentModal(patient)}
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
                               title="Create Appointment"
@@ -392,7 +482,9 @@ export default function PatientsPage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                        No patients found. Create your first patient.
+                        {tableSearch
+                          ? "Bu raqam bo'yicha bemor topilmadi."
+                          : "No patients found. Create your first patient."}
                       </td>
                     </tr>
                   )}
@@ -405,9 +497,9 @@ export default function PatientsPage() {
               <div className="flex items-center justify-between border-t border-border-color px-6 py-4">
                 {/* Left: counter */}
                 <p className="text-sm text-text-light">
-                  <span className="font-semibold text-dark-navy">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, patients.length)}</span>
+                  <span className="font-semibold text-dark-navy">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredPatients.length)}</span>
                   {" "}/{" "}
-                  <span className="font-semibold text-dark-navy">{patients.length}</span> ta bemor
+                  <span className="font-semibold text-dark-navy">{filteredPatients.length}</span> ta bemor
                 </p>
 
                 {/* Right: pagination */}
@@ -496,13 +588,25 @@ export default function PatientsPage() {
                     <Info label="Birth Date" value={phoneSearchResult.birthDate} />
                     <Info label="Anamnesis" value={phoneSearchResult.anamnesis || "-"} />
                   </div>
-                  <div className="flex gap-3 border-t border-border-color pt-4">
-                    <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
-                      Close
+                  <div className="flex flex-col gap-3 border-t border-border-color pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeModal();
+                        goToTreatment(phoneSearchResult);
+                      }}
+                      className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Molajani boshlash
                     </button>
-                    <button type="button" onClick={() => openAppointmentModal(phoneSearchResult)} className="flex-1 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8]">
-                      Create Appointment
-                    </button>
+                    <div className="flex gap-3">
+                      <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
+                        Close
+                      </button>
+                      <button type="button" onClick={() => openAppointmentModal(phoneSearchResult)} className="flex-1 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8]">
+                        Create Appointment
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -730,6 +834,49 @@ export default function PatientsPage() {
         </div>
       )}
 
+      {/* Start Treatment Confirm Modal — patient yaratilgandan keyin chiqadi */}
+      {modalState === "start-confirm" && pendingNewPatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <Sparkles size={28} />
+              </div>
+              <h2 className="mt-4 text-xl font-bold text-dark-navy">
+                Bemor muvaffaqiyatli qo'shildi!
+              </h2>
+              <p className="mt-2 text-sm text-text-light">
+                <span className="font-semibold text-dark-navy">
+                  {pendingNewPatient.firstName} {pendingNewPatient.lastName}
+                </span>{" "}
+                uchun hozir molajani boshlaymizmi?
+              </p>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Yo'q, keyinroq
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const patient = pendingNewPatient;
+                  closeModal();
+                  goToTreatment(patient);
+                }}
+                className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
+              >
+                Ha, boshlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* View Patient Modal */}
       {modalState === "view" && selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -747,9 +894,12 @@ export default function PatientsPage() {
               <Info label="Birth Date" value={selectedPatient.birthDate} />
               <Info label="Anamnesis" value={selectedPatient.anamnesis || "-"} />
             </div>
-            <div className="mt-6 flex gap-3 border-t border-border-color pt-4">
+            <div className="mt-6 flex flex-col gap-3 border-t border-border-color pt-4 sm:flex-row">
               <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
                 Close
+              </button>
+              <button type="button" onClick={() => goToTreatment(selectedPatient)} className="flex-1 rounded-xl bg-cyan-600 px-4 py-3 font-semibold text-white hover:bg-cyan-700">
+                Molajani boshlash
               </button>
               <button type="button" onClick={() => openAppointmentModal(selectedPatient)} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
                 Create Appointment

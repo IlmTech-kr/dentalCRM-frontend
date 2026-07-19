@@ -47,8 +47,15 @@ export interface CreateTreatmentCourseDto {
   mainDiagnosis: string;
 }
 
+/**
+ * appointmentId endi IXTIYORIY:
+ * - Bo'lsa — mavjud appointmentga visit biriktiriladi (eski oqim).
+ * - Bo'lmasa — backend doctorId + joriy vaqt asosida
+ *   appointmentni avtomatik yaratadi va shu visitga biriktiradi
+ *   ("Molajani hoziroq boshlash" oqimi).
+ */
 export interface AddTreatmentVisitDto {
-  appointmentId: string;
+  appointmentId?: string;
   visitDate: string;
   doctorId: string;
   doctorNotes: string;

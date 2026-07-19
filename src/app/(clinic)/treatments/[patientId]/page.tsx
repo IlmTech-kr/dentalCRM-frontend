@@ -9,6 +9,9 @@
  * 3. "Visit qo'shish" tab olib tashlandi — faqat modal
  * 4. Modal chiroyliroq
  * 5. Modal z-index 9999 — error toast ustida ko'rinadi
+ * 6. appointmentId endi ixtiyoriy — Patients sahifasidan to'g'ridan-to'g'ri
+ *    kirilganda ("Molajani boshlash") appointmentId yo'q bo'ladi va backend
+ *    doctorId + joriy vaqt asosida appointmentni avtomatik yaratadi.
  */
 
 import React, { useMemo, useState } from "react";
@@ -256,6 +259,7 @@ type VisitPanelProps = {
   onSave: () => void;
   isSaving: boolean;
   isCompleted: boolean;
+  isNewAppointment: boolean;
   procedures: DentalProcedure[];
   proceduresLoading: boolean;
   procedureSearch: string;
@@ -270,7 +274,7 @@ function VisitPanel({
   visitDate, onVisitDateChange,
   doctorNotes, onDoctorNotesChange,
   selectedTooth, onToothChange, treatmentTeeth,
-  visitItems, onRemoveItem, onSave, isSaving, isCompleted,
+  visitItems, onRemoveItem, onSave, isSaving, isCompleted, isNewAppointment,
   procedures, proceduresLoading, procedureSearch, onProcedureSearch, onAddProcedure,
   onGoToChart,
 }: VisitPanelProps) {
@@ -390,6 +394,15 @@ function VisitPanel({
           )}
         </div>
 
+        {/* Info: yangi appointment avtomatik yaratiladi */}
+        {!isCompleted && isNewAppointment && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-sm font-semibold text-blue-700">
+              Bu visit uchun appointment hali mavjud emas — saqlanganda joriy vaqt bilan avtomatik yaratiladi.
+            </p>
+          </div>
+        )}
+
         {/* Save button */}
         {isCompleted ? (
           <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -467,6 +480,8 @@ export default function TreatmentPatientPage() {
   const toast = useToast();
 
   const patientId = params.patientId;
+  // appointmentId endi IXTIYORIY — bo'lmasa ("Molajani boshlash" orqali
+  // Patients sahifasidan kirilgan bo'lsa), backend avtomatik yaratadi.
   const appointmentId = searchParams.get("appointmentId") || "";
 
   const { data: patient, isLoading: patientLoading } = useQuery({
@@ -640,14 +655,21 @@ export default function TreatmentPatientPage() {
   async function handleAddVisit() {
     if (!selectedCourseId) { toast.warning("Treatment course tanlang"); return; }
     if (isSelectedCourseCompleted) { toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz"); return; }
-    if (!appointmentId) { toast.warning("Appointment ID topilmadi"); return; }
     if (!doctorId) { toast.warning("Doctor tanlang"); return; }
     if (!doctorNotes.trim()) { toast.warning("Shifokor izohi kiriting"); return; }
     if (!visitItems.length) { toast.warning("Kamida bitta muolaja tanlang"); return; }
     try {
       await addVisit({
         courseId: selectedCourseId,
-        payload: { appointmentId, visitDate, doctorId, doctorNotes: doctorNotes.trim(), items: visitItems },
+        payload: {
+          // appointmentId bo'lsa — mavjud appointmentga biriktiriladi.
+          // Bo'lmasa — backend doctorId + joriy vaqt bilan avtomatik yaratadi.
+          ...(appointmentId ? { appointmentId } : {}),
+          visitDate,
+          doctorId,
+          doctorNotes: doctorNotes.trim(),
+          items: visitItems,
+        },
       });
       if (Object.keys(toothMap).length) {
         const payload = { patientId, toothMap };
@@ -659,7 +681,7 @@ export default function TreatmentPatientPage() {
       setVisitItems([]);
       setIsAddVisitModalOpen(false);
       setActiveTab("COURSE");
-      toast.success("Visit saqlandi");
+      toast.success(appointmentId ? "Visit saqlandi" : "Molaja boshlandi, appointment avtomatik yaratildi");
     } catch {
       toast.error("Visit saqlashda xatolik");
     }
@@ -708,6 +730,7 @@ export default function TreatmentPatientPage() {
     onSave: handleAddVisit,
     isSaving: isAddingVisit || isCreating || isUpdating,
     isCompleted: isSelectedCourseCompleted,
+    isNewAppointment: !appointmentId,
     procedures,
     proceduresLoading,
     procedureSearch,
