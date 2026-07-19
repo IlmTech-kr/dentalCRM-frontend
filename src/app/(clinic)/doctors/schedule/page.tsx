@@ -473,7 +473,7 @@ function ScheduleModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
-      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
+      <div className="relative z-100 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -919,8 +919,8 @@ export default function DoctorSchedulePage() {
   const isDataLoading = isLoading || isDoctorsLoading;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
+    <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50">
+      <div className="relative top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6 py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
