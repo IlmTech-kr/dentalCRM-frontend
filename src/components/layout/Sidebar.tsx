@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/src/components/shared/BrandLogo";
+import { useAuthStore } from "@/src/store/auth.store";
 
 type SubLink = {
   href: string;
@@ -39,50 +40,101 @@ type NavItem = {
   children?: SubLink[];
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/patients",  label: "Patients",  icon: Users },
+type RoleFlags = {
+  isStaffAdmin: boolean; // SUPER_ADMIN yoki CLINIC_ADMIN
+  isDoctor: boolean;
+  isReceptionist: boolean;
+  isAssistant: boolean;
+};
 
-  {
-    href: "/doctors",
-    label: "Doctors",
-    icon: Stethoscope,
-    children: [
-      { href: "/doctors",          label: "Doctors List",   icon: List },
-      { href: "/doctors/schedule", label: "Doctor Schedule", icon: Clock },
-    ],
-  },
+/**
+ * Nav ro'yxatini rolga qarab quradi.
+ *
+ * Ko'rinish qoidalari:
+ * - Dashboard, Patients, Appointments, Treatments, Settings (Profile/Change Password) — hammaga.
+ * - Doctors bo'limi — Doctor'dan tashqari hammaga (Receptionist/Assistant faqat "Doctors List"ni
+ *   ko'radi, invite/edit huquqisiz — bu doctors/page.tsx da alohida cheklangan).
+ * - Doctor Schedule, Procedures, Settings > Plans — faqat admin (SUPER_ADMIN/CLINIC_ADMIN).
+ */
+function buildNavItems({
+  isStaffAdmin,
+  isDoctor,
+  isReceptionist,
+  isAssistant,
+}: RoleFlags): NavItem[] {
+  const canSeeDoctorsSection = isStaffAdmin || isReceptionist || isAssistant;
 
-  // { href: "/assistants",   label: "Assistants",   icon: UserRound },
-  { href: "/appointments", label: "Appointments", icon: CalendarDays },
-  { href: "/treatments",   label: "Treatments",   icon: Activity },
-  { href: "/procedures",   label: "Procedures",   icon: BadgeDollarSign },
-  // { href: "/reports",      label: "Reports",      icon: FileBarChart },
+  const items: NavItem[] = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/patients", label: "Patients", icon: Users },
+  ];
 
-  {
+  if (canSeeDoctorsSection) {
+    const children: SubLink[] = [
+      { href: "/doctors", label: "Doctors List", icon: List },
+    ];
+
+    if (isStaffAdmin) {
+      children.push({ href: "/doctors/schedule", label: "Doctor Schedule", icon: Clock });
+    }
+
+    items.push({
+      href: "/doctors",
+      label: "Doctors",
+      icon: Stethoscope,
+      children,
+    });
+  }
+
+  items.push({ href: "/appointments", label: "Appointments", icon: CalendarDays });
+  items.push({ href: "/treatments", label: "Treatments", icon: Activity });
+
+  if (isStaffAdmin) {
+    items.push({ href: "/procedures", label: "Procedures", icon: BadgeDollarSign });
+  }
+
+  const settingsChildren: SubLink[] = [
+    { href: "/settings/profile", label: "Profile" },
+    { href: "/settings/change-password", label: "Change Password" },
+  ];
+
+  if (isStaffAdmin) {
+    settingsChildren.push({ href: "/settings/plans", label: "Plans", icon: CreditCard });
+  }
+
+  items.push({
     href: "/settings",
     label: "Settings",
     icon: Settings,
-    children: [
-      { href: "/settings/profile",         label: "Profile" },
-      { href: "/settings/change-password", label: "Change Password" },
-      { href: "/settings/plans",           label: "Plans", icon: CreditCard },
-    ],
-  },
-];
+    children: settingsChildren,
+  });
+
+  return items;
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const [openMenus, setOpenMenus] = useState<Set<string>>(() => {
-    const initial = new Set<string>();
-    NAV_ITEMS.forEach((item) => {
-      if (item.children && pathname.startsWith(item.href)) {
-        initial.add(item.href);
-      }
-    });
-    return initial;
-  });
+  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
+  const isDoctorRole = useAuthStore((s) => s.isDoctor());
+  const isReceptionistRole = useAuthStore((s) => s.isReceptionist());
+  const isAssistantRole = useAuthStore((s) => s.isAssistant());
+
+  const isStaffAdmin = isAdmin || isClinicAdmin;
+
+  const NAV_ITEMS = useMemo(
+    () =>
+      buildNavItems({
+        isStaffAdmin,
+        isDoctor: isDoctorRole,
+        isReceptionist: isReceptionistRole,
+        isAssistant: isAssistantRole,
+      }),
+    [isStaffAdmin, isDoctorRole, isReceptionistRole, isAssistantRole]
+  );
+
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setOpenMenus((prev) => {
@@ -94,7 +146,7 @@ export default function Sidebar() {
       });
       return next;
     });
-  }, [pathname]);
+  }, [pathname, NAV_ITEMS]);
 
   function toggleMenu(href: string) {
     setOpenMenus((prev) => {

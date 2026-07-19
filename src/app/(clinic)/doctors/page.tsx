@@ -15,6 +15,7 @@ import {
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role, UserStatus } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useAuthStore } from "@/src/store/auth.store";
 import type {
   CompensationType,
   Doctor,
@@ -72,6 +73,15 @@ function getRoleBadgeClass(role: string) {
 
 export default function DoctorsPage() {
   const toast = useToast();
+
+  // Faqat SUPER_ADMIN / CLINIC_ADMIN — invite/edit/delete huquqiga ega.
+  // Boshqa rollar (Receptionist, Assistant) ro'yxatni ko'radi, lekin
+  // hech qanday boshqaruv tugmasini ko'rmaydi.
+  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
+  const isStaffAdmin = isAdmin || isClinicAdmin;
+
+  const tableColSpan = isStaffAdmin ? 6 : 5;
 
   /**
    * getDoctors() service da allaqachon isStaffUser filter qilingan.
@@ -315,13 +325,15 @@ export default function DoctorsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenInviteModal}
-          className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
-        >
-          + Add Staff
-        </button>
+        {isStaffAdmin && (
+          <button
+            type="button"
+            onClick={handleOpenInviteModal}
+            className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
+          >
+            + Add Staff
+          </button>
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -378,9 +390,11 @@ export default function DoctorsPage() {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Status
                   </th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Actions
-                  </th>
+                  {isStaffAdmin && (
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
 
@@ -388,7 +402,7 @@ export default function DoctorsPage() {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
                       Loading staff...
@@ -397,7 +411,7 @@ export default function DoctorsPage() {
                 ) : filteredDoctors.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
                       No staff found
@@ -474,26 +488,28 @@ export default function DoctorsPage() {
                         </span>
                       </td>
 
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditModal(doctor)}
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
-                          >
-                            Edit
-                          </button>
+                      {isStaffAdmin && (
+                        <td className="px-5 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(doctor)}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                            >
+                              Edit
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteDoctor(doctor)}
-                            disabled={deleteDoctorMutation.isPending}
-                            className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDoctor(doctor)}
+                              disabled={deleteDoctorMutation.isPending}
+                              className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -503,8 +519,8 @@ export default function DoctorsPage() {
         )}
       </div>
 
-      {/* Invite Modal */}
-      {isInviteModalOpen && (
+      {/* Invite Modal — faqat isStaffAdmin bo'lsa ochilishi mumkin (tugma yashirin) */}
+      {isInviteModalOpen && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
@@ -651,8 +667,8 @@ export default function DoctorsPage() {
         </div>
       )}
 
-      {/* Edit Modal */}
-      {selectedDoctor && (
+      {/* Edit Modal — faqat isStaffAdmin bo'lsa ochilishi mumkin (Edit tugmasi yashirin) */}
+      {selectedDoctor && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
