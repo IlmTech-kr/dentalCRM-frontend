@@ -94,48 +94,78 @@ export const ENDPOINTS = {
   },
 
   statistics: {
-    /**
-     * CLINIC_ADMIN & SUPER_ADMIN
-     * GET /api/dental/statistics/revenue?fromDate=&toDate=&filter=DAY&sort=REVENUE&direction=DESC
-     * filter: DAY | MONTH | YEAR
-     * sort: PERIOD | REVENUE | CLINIC
-     * direction: ASC | DESC
-     */
-    revenue: (params: {
-      fromDate: string;
-      toDate: string;
-      filter?: "DAY" | "MONTH" | "YEAR";
-      sort?: "PERIOD" | "REVENUE" | "CLINIC";
-      direction?: "ASC" | "DESC";
-    }) => {
-      const q = new URLSearchParams({
-        fromDate: params.fromDate,
-        toDate: params.toDate,
-        filter: params.filter ?? "DAY",
-        sort: params.sort ?? "REVENUE",
-        direction: params.direction ?? "DESC",
-      });
-      return `/api/dental/statistics/revenue?${q.toString()}`;
-    },
-
-    /**
-     * SUPER_ADMIN only — mainHttp (root domain)
-     * GET /api/dental/statistics/revenue/clinics?fromDate=&toDate=&sort=REVENUE&direction=DESC
-     */
-    revenueByClinic: (params: {
-      fromDate: string;
-      toDate: string;
-      sort?: "PERIOD" | "REVENUE" | "CLINIC";
-      direction?: "ASC" | "DESC";
-    }) => {
-      const q = new URLSearchParams({
-        fromDate: params.fromDate,
-        toDate: params.toDate,
-        sort: params.sort ?? "REVENUE",
-        direction: params.direction ?? "DESC",
-      });
-      return `/api/dental/statistics/revenue/clinics?${q.toString()}`;
-    },
+  /**
+   * CLINIC_ADMIN & SUPER_ADMIN
+   * GET /api/dental/statistics/revenue?fromDate=&toDate=&filter=DAY&sort=REVENUE&direction=DESC
+   * filter: DAY | MONTH | YEAR
+   * sort: PERIOD | REVENUE | CLINIC
+   * direction: ASC | DESC
+   */
+  revenue: (params: {
+    fromDate: string;
+    toDate: string;
+    filter?: "DAY" | "MONTH" | "YEAR";
+    sort?: "PERIOD" | "REVENUE" | "CLINIC";
+    direction?: "ASC" | "DESC";
+  }) => {
+    const q = new URLSearchParams({
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      filter: params.filter ?? "DAY",
+      sort: params.sort ?? "REVENUE",
+      direction: params.direction ?? "DESC",
+    });
+    return `/api/dental/statistics/revenue?${q.toString()}`;
   },
+
+  /**
+   * SUPER_ADMIN only — mainHttp (root domain)
+   * GET /api/dental/statistics/revenue/clinics?fromDate=&toDate=&sort=REVENUE&direction=DESC
+   */
+  revenueByClinic: (params: {
+    fromDate: string;
+    toDate: string;
+    sort?: "PERIOD" | "REVENUE" | "CLINIC";
+    direction?: "ASC" | "DESC";
+  }) => {
+    const q = new URLSearchParams({
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      sort: params.sort ?? "REVENUE",
+      direction: params.direction ?? "DESC",
+    });
+    return `/api/dental/statistics/revenue/clinics?${q.toString()}`;
+  },
+
+  /**
+   * CLINIC_ADMIN — barcha doctorlarni yoki bitta doctorni ko'radi.
+   * DOCTOR — faqat o'zinikini ko'radi (doctorId berilmasa backend token orqali aniqlaydi).
+   * GET /api/dental/statistics/revenue/doctors?doctorId=&fromDate=&toDate=
+   */
+  doctorRevenue: (params: {
+    fromDate: string;
+    toDate: string;
+    doctorId?: string;
+  }) => {
+    const q = new URLSearchParams({
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+    });
+    if (params.doctorId) q.set("doctorId", params.doctorId);
+    return `/api/dental/statistics/revenue/doctors?${q.toString()}`;
+  },
+
+  /**
+   * CLINIC_ADMIN only — klinikaning umumiy daromad/chiqim (payroll) hisoboti.
+   * GET /api/dental/statistics/payroll?fromDate=&toDate=
+   */
+  payroll: (params: { fromDate: string; toDate: string }) => {
+    const q = new URLSearchParams({
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+    });
+    return `/api/dental/statistics/payroll?${q.toString()}`;
+  },
+},
 };
 

@@ -9,12 +9,18 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Users, Calendar, Stethoscope,
   CheckCircle2, Clock, BarChart3,
+  Wallet, TrendingUp, Percent,
 } from "lucide-react";
 
 import { tenantHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import { useAuthStore } from "@/src/store/auth.store";
-import { useRevenue } from "@/src/features/statistics/hooks/useStatistics";
+import { Role } from "@/src/lib/enums/enums.types";
+import {
+  useRevenue,
+  useDoctorRevenueStatistics,
+  usePayrollSummary,
+} from "@/src/features/statistics/hooks/useStatistics";
 import type { RevenueFilterType } from "@/src/features/statistics/services/statistics.service";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
@@ -64,6 +70,10 @@ function formatMoney(amount: number) {
   if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
   if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`;
   return amount.toLocaleString();
+}
+
+function formatFullMoney(amount: number) {
+  return `${amount.toLocaleString()} so'm`;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,6 +182,105 @@ function AppointmentRow({ apt }: { apt: any }) {
 }
 
 // ---------------------------------------------------------------------------
+// Doctor revenue row
+// ---------------------------------------------------------------------------
+
+function DoctorRevenueRow({
+  item,
+}: {
+  item: {
+    doctorId: string;
+    doctorName: string;
+    revenue: number;
+    transactionCount: number;
+    compensationType: "PERCENTAGE" | "SALARY";
+    commissionPercentage: number | null;
+    estimatedCommissionAmount: number | null;
+  };
+}) {
+  return (
+    <tr className="border-t border-border-color">
+      <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
+        {item.doctorName}
+      </td>
+      <td className="px-4 py-3 text-sm text-text-light">
+        {formatFullMoney(item.revenue)}
+      </td>
+      <td className="px-4 py-3 text-sm text-text-light">
+        {item.transactionCount} ta
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            item.compensationType === "PERCENTAGE"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-emerald-100 text-emerald-700"
+          }`}
+        >
+          {item.compensationType === "PERCENTAGE"
+            ? `${item.commissionPercentage}%`
+            : "Oylik"}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-sm font-bold text-dark-navy">
+        {item.compensationType === "PERCENTAGE"
+          ? formatFullMoney(item.estimatedCommissionAmount ?? 0)
+          : "-"}
+      </td>
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Payroll doctor/staff row
+// ---------------------------------------------------------------------------
+
+function PayrollDoctorRow({
+  item,
+}: {
+  item: {
+    doctorId: string;
+    doctorName: string;
+    compensationType: "PERCENTAGE" | "SALARY";
+    salaryAmount: number | null;
+    revenue: number;
+    commissionPercentage: number | null;
+    commissionAmount: number;
+    totalCost: number;
+  };
+}) {
+  return (
+    <tr className="border-t border-border-color">
+      <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
+        {item.doctorName}
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            item.compensationType === "PERCENTAGE"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-emerald-100 text-emerald-700"
+          }`}
+        >
+          {item.compensationType === "PERCENTAGE" ? "Foiz" : "Oylik"}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-sm text-text-light">
+        {formatFullMoney(item.revenue)}
+      </td>
+      <td className="px-4 py-3 text-sm text-text-light">
+        {item.compensationType === "PERCENTAGE"
+          ? `${item.commissionPercentage}%`
+          : "-"}
+      </td>
+      <td className="px-4 py-3 text-sm font-bold text-dark-navy">
+        {formatFullMoney(item.totalCost)}
+      </td>
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -180,11 +289,18 @@ export default function DashboardPage() {
   const isAdmin     = useAuthStore((s) => s.isAdmin());
   const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
 
+  // Foydalanuvchi DOCTOR rolida ekanligini roles massividan aniqlaymiz
+  const isDoctorUser = Boolean(user?.roles?.includes(Role.DOCTOR));
+
   const today = todayYMD();
 
   const [revenueFilter, setRevenueFilter] = useState<RevenueFilterType>("DAY");
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate,   setToDate]   = useState<string | null>(null);
+
+  // Doctor revenue / Payroll uchun alohida sana filtri
+  const [statsFromDate, setStatsFromDate] = useState<string>(startOfMonthYMD());
+  const [statsToDate, setStatsToDate]     = useState<string>(today);
 
   // Patients
   const { data: patients, isLoading: patientsLoading } = useQuery({
@@ -227,6 +343,28 @@ export default function DashboardPage() {
     enabled: Boolean(fromDate && toDate),
   });
 
+  // Doctor Revenue Statistics
+  // CLINIC_ADMIN/ADMIN -> doctorId bermaymiz, barcha doctorlar keladi
+  // DOCTOR -> o'zinikini ko'radi (backend token orqali aniqlaydi)
+  const {
+    data: doctorRevenueData,
+    isLoading: doctorRevenueLoading,
+  } = useDoctorRevenueStatistics({
+    fromDate: statsFromDate,
+    toDate: statsToDate,
+    enabled: isClinicAdmin || isAdmin || isDoctorUser,
+  });
+
+  // Payroll Summary — faqat CLINIC_ADMIN
+  const {
+    data: payrollData,
+    isLoading: payrollLoading,
+  } = usePayrollSummary({
+    fromDate: statsFromDate,
+    toDate: statsToDate,
+    enabled: isClinicAdmin || isAdmin,
+  });
+
   const revenueList  = revenueData?.points ?? [];
   const totalRevenue = revenueData?.totalRevenue ?? 0;
   const totalTxCount = revenueData?.totalTransactionCount ?? 0;
@@ -237,6 +375,8 @@ export default function DashboardPage() {
   const cancelledCount = todayList.filter((a: any) => a.status === "CANCELLED").length;
   const patientsTotal  = patients?.totalCount ?? patients?.totalElements ?? patients?.total ?? 0;
   const doctorsTotal   = doctors?.totalCount ?? doctors?.totalElements ?? doctors?.total ?? 0;
+
+  const doctorRevenueList = doctorRevenueData ?? [];
 
   return (
     <div className="space-y-6">
@@ -394,6 +534,201 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Doctor Revenue / Payroll — sana filtri */}
+      {(isClinicAdmin || isAdmin || isDoctorUser) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-color bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={18} className="text-[#35a8f5]" />
+            <h2 className="font-extrabold text-dark-navy">
+              Shifokorlar daromadi va to'lovlar
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={statsFromDate}
+              onChange={(e) => setStatsFromDate(e.target.value)}
+              className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
+            />
+            <span className="text-xs text-slate-400">—</span>
+            <input
+              type="date"
+              value={statsToDate}
+              onChange={(e) => setStatsToDate(e.target.value)}
+              className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Payroll Summary — faqat CLINIC_ADMIN */}
+      {(isClinicAdmin || isAdmin) && (
+        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <Wallet size={18} className="text-emerald-500" />
+            <h2 className="font-extrabold text-dark-navy">Payroll — umumiy chiqimlar</h2>
+          </div>
+
+          {payrollLoading ? (
+            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+          ) : !payrollData ? (
+            <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
+              <Wallet size={32} className="opacity-30" />
+              <p className="text-sm">Ma'lumot topilmadi</p>
+            </div>
+          ) : (
+            <>
+              {/* Summary cards */}
+              <div className="mb-5 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold text-slate-500">Oylik chiqimlar</p>
+                  <p className="mt-1 text-xl font-extrabold text-dark-navy">
+                    {formatFullMoney(payrollData.totalSalaryExpense)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold text-slate-500">Komissiya chiqimlari</p>
+                  <p className="mt-1 text-xl font-extrabold text-dark-navy">
+                    {formatFullMoney(payrollData.totalCommissionExpense)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-[#35a8f5]/10 p-4">
+                  <p className="text-xs font-semibold text-[#35a8f5]">Jami chiqim</p>
+                  <p className="mt-1 text-xl font-extrabold text-[#35a8f5]">
+                    {formatFullMoney(payrollData.totalExpense)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Doctor details table */}
+              {payrollData.doctorDetails.length > 0 && (
+                <div className="mb-5 overflow-x-auto">
+                  <p className="mb-2 text-sm font-bold text-dark-navy">Shifokorlar</p>
+                  <table className="w-full min-w-[600px] border-collapse text-left">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Ism
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Turi
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Daromad
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Foiz
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Jami xarajat
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payrollData.doctorDetails.map((item) => (
+                        <PayrollDoctorRow key={item.doctorId} item={item} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Staff details table */}
+              {payrollData.staffDetails.length > 0 && (
+                <div className="overflow-x-auto">
+                  <p className="mb-2 text-sm font-bold text-dark-navy">
+                    Boshqa xodimlar (reseption, assistent)
+                  </p>
+                  <table className="w-full min-w-[500px] border-collapse text-left">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Ism
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Rol
+                        </th>
+                        <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                          Oylik
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payrollData.staffDetails.map((item) => (
+                        <tr key={item.staffId} className="border-t border-border-color">
+                          <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
+                            {item.staffName}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-text-light">
+                            {item.role}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-bold text-dark-navy">
+                            {formatFullMoney(item.totalCost)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Doctor Revenue Statistics */}
+      {(isClinicAdmin || isAdmin || isDoctorUser) && (
+        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <Percent size={18} className="text-amber-500" />
+            <h2 className="font-extrabold text-dark-navy">
+              {isDoctorUser && !(isClinicAdmin || isAdmin)
+                ? "Mening daromadim"
+                : "Shifokorlar bo'yicha daromad"}
+            </h2>
+          </div>
+
+          {doctorRevenueLoading ? (
+            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+          ) : !doctorRevenueList.length ? (
+            <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
+              <Percent size={32} className="opacity-30" />
+              <p className="text-sm">Ma'lumot topilmadi</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] border-collapse text-left">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                      Shifokor
+                    </th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                      Daromad
+                    </th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                      Tranzaksiyalar
+                    </th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                      Kompensatsiya
+                    </th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+                      Komissiya summasi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {doctorRevenueList.map((item) => (
+                    <DoctorRevenueRow key={item.doctorId} item={item} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
