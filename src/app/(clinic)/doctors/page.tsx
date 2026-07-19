@@ -442,9 +442,6 @@ export default function DoctorsPage() {
                             <p className="font-semibold text-slate-900">
                               {doctor.firstName} {doctor.lastName}
                             </p>
-                            <p className="text-xs text-slate-500">
-                              ID: {getDoctorId(doctor)}
-                            </p>
                           </div>
                         </div>
                       </td>
