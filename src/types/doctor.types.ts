@@ -34,10 +34,6 @@ export interface Doctor {
   updatedAt?: string;
 }
 
-export interface InviteDoctorDto {
-  email: string;
-  role: StaffRole;
-}
 
 export interface UpdateDoctorDto {
   firstName: string;
@@ -62,4 +58,13 @@ export interface DoctorListResponse {
   page?: number;
   limit?: number;
   size?: number;
+}
+
+export type CompensationType = "PERCENTAGE" | "SALARY";
+
+export interface InviteDoctorDto {
+  email: string;
+  role: StaffRole;
+  compensationType?: CompensationType;
+  commissionPercentage?: number;
 }

@@ -15,7 +15,12 @@ import {
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role, UserStatus } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
-import type { Doctor, DoctorStatus, StaffRole } from "@/src/types/doctor.types";
+import type {
+  CompensationType,
+  Doctor,
+  DoctorStatus,
+  StaffRole,
+} from "@/src/types/doctor.types";
 
 const staffRoleOptions: StaffRole[] = [
   Role.DOCTOR,
@@ -29,6 +34,12 @@ const statusOptions: DoctorStatus[] = [
   UserStatus.PENDING,
   UserStatus.DELETED,
 ];
+
+const compensationTypeOptions: CompensationType[] = ["PERCENTAGE", "SALARY"];
+
+// DOCTOR va ASSISTANT uchun compensation turi tanlanadi (PERCENTAGE yoki SALARY)
+// RECEPTIONIST uchun faqat SALARY (tanlov ko'rsatilmaydi, avtomatik SALARY)
+const rolesWithCompensationChoice: StaffRole[] = [Role.DOCTOR, Role.ASSISTANT];
 
 const initialEditForm = {
   firstName: "",
@@ -76,12 +87,29 @@ export default function DoctorsPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<StaffRole>(Role.DOCTOR);
+  const [inviteCompensationType, setInviteCompensationType] =
+    useState<CompensationType>("PERCENTAGE");
+  const [inviteCommissionPercentage, setInviteCommissionPercentage] =
+    useState("");
+  const [inviteSalaryAmount, setInviteSalaryAmount] = useState("");
 
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [editForm, setEditForm] = useState(initialEditForm);
 
   const selectedDoctorId = selectedDoctor ? getDoctorId(selectedDoctor) : "";
   const updateDoctorMutation = useUpdateDoctor(selectedDoctorId);
+
+  // DOCTOR/ASSISTANT -> compensation type tanlash ko'rsatiladi
+  // RECEPTIONIST -> compensation type tanlanmaydi, doim SALARY
+  const showsCompensationTypeChoice =
+    rolesWithCompensationChoice.includes(inviteRole);
+  const isReceptionistRole = inviteRole === Role.RECEPTIONIST;
+  const showsCompensationFields =
+    showsCompensationTypeChoice || isReceptionistRole;
+
+  const effectiveCompensationType: CompensationType = isReceptionistRole
+    ? "SALARY"
+    : inviteCompensationType;
 
   /**
    * Client-side search — service da allaqachon staff filter bo'lgani uchun
@@ -117,13 +145,27 @@ export default function DoctorsPage() {
   function handleOpenInviteModal() {
     setInviteEmail("");
     setInviteRole(Role.DOCTOR);
+    setInviteCompensationType("PERCENTAGE");
+    setInviteCommissionPercentage("");
+    setInviteSalaryAmount("");
     setIsInviteModalOpen(true);
   }
 
   function handleCloseInviteModal() {
     setInviteEmail("");
     setInviteRole(Role.DOCTOR);
+    setInviteCompensationType("PERCENTAGE");
+    setInviteCommissionPercentage("");
+    setInviteSalaryAmount("");
     setIsInviteModalOpen(false);
+  }
+
+  function handleInviteRoleChange(nextRole: StaffRole) {
+    setInviteRole(nextRole);
+    // Role almashganda eski compensation qiymatlari qolib ketmasin
+    setInviteCompensationType("PERCENTAGE");
+    setInviteCommissionPercentage("");
+    setInviteSalaryAmount("");
   }
 
   function handleOpenEditModal(doctor: Doctor) {
@@ -156,10 +198,34 @@ export default function DoctorsPage() {
       return;
     }
 
+    if (showsCompensationFields) {
+      if (
+        effectiveCompensationType === "PERCENTAGE" &&
+        !inviteCommissionPercentage.trim()
+      ) {
+        toast.warning("Commission percentage kiriting");
+        return;
+      }
+
+      if (
+        effectiveCompensationType === "SALARY" &&
+        !inviteSalaryAmount.trim()
+      ) {
+        toast.warning("Salary amount kiriting");
+        return;
+      }
+    }
+
     try {
       await inviteDoctorMutation.mutateAsync({
         email: inviteEmail.trim(),
         role: inviteRole,
+        ...(showsCompensationFields && {
+          compensationType: effectiveCompensationType,
+          ...(effectiveCompensationType === "PERCENTAGE"
+            ? { commissionPercentage: Number(inviteCommissionPercentage) }
+            : { salaryAmount: Number(inviteSalaryAmount) }),
+        }),
       });
 
       handleCloseInviteModal();
@@ -480,7 +546,9 @@ export default function DoctorsPage() {
 
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as StaffRole)}
+                  onChange={(e) =>
+                    handleInviteRoleChange(e.target.value as StaffRole)
+                  }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 >
                   {staffRoleOptions.map((role) => (
@@ -490,6 +558,71 @@ export default function DoctorsPage() {
                   ))}
                 </select>
               </div>
+
+              {showsCompensationFields && (
+                <>
+                  {showsCompensationTypeChoice && (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Compensation Type
+                      </label>
+
+                      <select
+                        value={inviteCompensationType}
+                        onChange={(e) =>
+                          setInviteCompensationType(
+                            e.target.value as CompensationType
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      >
+                        {compensationTypeOptions.map((type) => (
+                          <option key={type} value={type}>
+                            {type === "PERCENTAGE" ? "Percentage" : "Salary"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {effectiveCompensationType === "PERCENTAGE" ? (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Commission Percentage
+                      </label>
+
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step="0.1"
+                        value={inviteCommissionPercentage}
+                        onChange={(e) =>
+                          setInviteCommissionPercentage(e.target.value)
+                        }
+                        placeholder="40"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Salary Amount
+                      </label>
+
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={inviteSalaryAmount}
+                        onChange={(e) => setInviteSalaryAmount(e.target.value)}
+                        placeholder="5000000"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
                 User emaildagi linkni bosadi, keyin name va password kiritib
