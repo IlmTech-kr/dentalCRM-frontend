@@ -137,17 +137,29 @@ export default function PatientsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredPatients = useMemo(() => {
-    const digits = extractDigits(tableSearch);
-    if (!digits) return patients;
+const filteredPatients = useMemo(() => {
+  const query = tableSearch.trim().toLowerCase();
+  if (!query) return patients;
 
-    return patients.filter((patient) => {
+  const digits = extractDigits(tableSearch);
+  const isPhoneQuery = digits.length > 0 && /^[\d\s+()-]+$/.test(tableSearch.trim());
+
+  return patients.filter((patient) => {
+    // Telefon raqami bo'yicha moslik
+    if (isPhoneQuery) {
       const patientDigits = extractDigits(
         patient.phone || patient.phoneNumber || ""
       );
-      return patientDigits.includes(digits);
-    });
-  }, [patients, tableSearch]);
+      if (patientDigits.includes(digits)) return true;
+    }
+
+    // Ism / familiya bo'yicha moslik
+    const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.toLowerCase();
+    const reversedName = `${patient.lastName || ""} ${patient.firstName || ""}`.toLowerCase();
+
+    return fullName.includes(query) || reversedName.includes(query);
+  });
+}, [patients, tableSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE));
   const paginatedPatients = filteredPatients.slice(
@@ -362,10 +374,10 @@ export default function PatientsPage() {
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
-              type="tel"
+              type="text"
               value={tableSearch}
               onChange={(e) => handleTableSearchChange(e.target.value)}
-              placeholder="Telefon raqami bo'yicha qidirish..."
+              placeholder="Ism yoki telefon raqami bo'yicha qidirish..."
               className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-9 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
             />
             {tableSearch && (
@@ -483,7 +495,7 @@ export default function PatientsPage() {
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                         {tableSearch
-                          ? "Bu raqam bo'yicha bemor topilmadi."
+                          ? "Bu ism yoki raqam bo'yicha bemor topilmadi."
                           : "No patients found. Create your first patient."}
                       </td>
                     </tr>
