@@ -4,7 +4,7 @@
  * File: src/app/(clinic)/dashboard/page.tsx
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users, Calendar, Stethoscope,
@@ -15,7 +15,7 @@ import {
 import { tenantHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import { useAuthStore } from "@/src/store/auth.store";
-import { Role } from "@/src/lib/enums/enums.types";
+import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import {
   useRevenue,
   useDoctorRevenueStatistics,
@@ -74,6 +74,18 @@ function formatMoney(amount: number) {
 
 function formatFullMoney(amount: number) {
   return `${amount.toLocaleString()} so'm`;
+}
+
+function getDoctorId(doctor: any) {
+  return doctor?.id || doctor?._id || "";
+}
+
+function getDoctorFullName(doctor: any) {
+  return (
+    doctor?.fullName ||
+    doctor?.name ||
+    `${doctor?.firstName || ""} ${doctor?.lastName || ""}`.trim()
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -147,18 +159,20 @@ function RevenueChart({
 // Appointment row
 // ---------------------------------------------------------------------------
 
-function AppointmentRow({ apt }: { apt: any }) {
+function AppointmentRow({ apt, doctorName }: { apt: any; doctorName: string }) {
   const statusColors: Record<string, string> = {
-    SCHEDULED:  "bg-blue-100 text-blue-700",
-    COMPLETED:  "bg-emerald-100 text-emerald-700",
-    CANCELLED:  "bg-red-100 text-red-700",
-    NO_SHOW:    "bg-amber-100 text-amber-700",
+    SCHEDULED:    "bg-blue-100 text-blue-700",
+    IN_PROGRESS:  "bg-amber-100 text-amber-700",
+    COMPLETED:    "bg-emerald-100 text-emerald-700",
+    CANCELLED:    "bg-red-100 text-red-700",
+    NO_SHOW:      "bg-slate-200 text-slate-600",
   };
   const statusLabels: Record<string, string> = {
-    SCHEDULED:  "Kutilmoqda",
-    COMPLETED:  "Bajarildi",
-    CANCELLED:  "Bekor",
-    NO_SHOW:    "Kelmadi",
+    SCHEDULED:    "Kutilmoqda",
+    IN_PROGRESS:  "Jarayonda",
+    COMPLETED:    "Bajarildi",
+    CANCELLED:    "Bekor",
+    NO_SHOW:      "Kelmadi",
   };
 
   return (
@@ -171,7 +185,7 @@ function AppointmentRow({ apt }: { apt: any }) {
           {apt.patient?.firstName} {apt.patient?.lastName}
         </p>
         <p className="text-xs text-text-light">
-          {apt.doctor?.firstName} {apt.doctor?.lastName}
+          {doctorName || "Shifokor noma'lum"}
         </p>
       </div>
       <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}>
@@ -285,12 +299,14 @@ function PayrollDoctorRow({
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const user        = useAuthStore((s) => s.user);
-  const isAdmin     = useAuthStore((s) => s.isAdmin());
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = useAuthStore((s) => s.isAdmin());
   const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
+  const isDoctorUser = useAuthStore((s) => s.isDoctor());
 
-  // Foydalanuvchi DOCTOR rolida ekanligini roles massividan aniqlaymiz
-  const isDoctorUser = Boolean(user?.roles?.includes(Role.DOCTOR));
+  const isStaffAdmin = isAdmin || isClinicAdmin;
+
+  const currentUserId = (user as any)?.id || (user as any)?._id || "";
 
   const today = todayYMD();
 
@@ -302,7 +318,27 @@ export default function DashboardPage() {
   const [statsFromDate, setStatsFromDate] = useState<string>(startOfMonthYMD());
   const [statsToDate, setStatsToDate]     = useState<string>(today);
 
-  // Patients
+  // Doctorlar ro'yxati — appointment qatorlarida doctorId'dan ismga o'girish uchun
+  const { data: allStaff = [] } = useGetDoctors();
+
+  const doctorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    allStaff.forEach((doctor: any) => {
+      const id = getDoctorId(doctor);
+      if (id) map.set(id, getDoctorFullName(doctor));
+    });
+    return map;
+  }, [allStaff]);
+
+  function resolveDoctorName(apt: any): string {
+    // Agar backend kelajakda to'liq doctor obyektini qaytarsa — shuni ustuvor olamiz.
+    const embeddedName = getDoctorFullName(apt?.doctor);
+    if (embeddedName) return embeddedName;
+
+    return doctorNameById.get(apt?.doctorId) || "";
+  }
+
+  // Patients — hammaga
   const { data: patients, isLoading: patientsLoading } = useQuery({
     queryKey: ["patients-count"],
     queryFn: async () => {
@@ -312,7 +348,7 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  // Today appointments
+  // Today appointments — hammaga
   const { data: todayApts, isLoading: aptsLoading } = useQuery({
     queryKey: ["appointments-today", today],
     queryFn: async () => {
@@ -322,7 +358,7 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  // Doctors (admin only)
+  // Doctors soni — faqat admin
   const { data: doctors, isLoading: doctorsLoading } = useQuery({
     queryKey: ["doctors-count"],
     queryFn: async () => {
@@ -330,46 +366,61 @@ export default function DashboardPage() {
       return res.data;
     },
     retry: false,
-    enabled: isClinicAdmin || isAdmin,
+    enabled: isStaffAdmin,
   });
 
-  // Revenue — faqat sana tanlanganda so'rov ketadi
+  // Revenue chart — faqat admin (moliyaviy ma'lumot)
   const { data: revenueData, isLoading: revenueLoading } = useRevenue({
     fromDate: fromDate ?? "",
     toDate: toDate ?? "",
     filter: revenueFilter,
     sort: "PERIOD",
     direction: "ASC",
-    enabled: Boolean(fromDate && toDate),
+    enabled: isStaffAdmin && Boolean(fromDate && toDate),
   });
 
   // Doctor Revenue Statistics
-  // CLINIC_ADMIN/ADMIN -> doctorId bermaymiz, barcha doctorlar keladi
-  // DOCTOR -> o'zinikini ko'radi (backend token orqali aniqlaydi)
+  // CLINIC_ADMIN/ADMIN -> doctorId bermaymiz, barcha doctorlar keladi.
+  // DOCTOR -> o'z ID'sini ANIQ yuboramiz, faqat o'zinikini ko'radi.
   const {
     data: doctorRevenueData,
     isLoading: doctorRevenueLoading,
   } = useDoctorRevenueStatistics({
     fromDate: statsFromDate,
     toDate: statsToDate,
-    enabled: isClinicAdmin || isAdmin || isDoctorUser,
+    doctorId: isDoctorUser && !isStaffAdmin ? currentUserId : undefined,
+    enabled: isStaffAdmin || isDoctorUser,
   });
 
-  // Payroll Summary — faqat CLINIC_ADMIN
+  // Payroll Summary — faqat CLINIC_ADMIN/ADMIN
   const {
     data: payrollData,
     isLoading: payrollLoading,
   } = usePayrollSummary({
     fromDate: statsFromDate,
     toDate: statsToDate,
-    enabled: isClinicAdmin || isAdmin,
+    enabled: isStaffAdmin,
   });
 
   const revenueList  = revenueData?.points ?? [];
   const totalRevenue = revenueData?.totalRevenue ?? 0;
   const totalTxCount = revenueData?.totalTransactionCount ?? 0;
 
-  const todayList      = Array.isArray(todayApts) ? todayApts : todayApts?.content ?? [];
+  /**
+   * Backend javob shakli har xil bo'lishi mumkin:
+   * - to'g'ridan-to'g'ri array
+   * - { content: [...] }
+   * - { appointments: [...], total: N }   <-- haqiqiy holat
+   * - { data: [...] }
+   * Barcha variantlar qo'llab-quvvatlanadi.
+   */
+  const todayList =
+    (Array.isArray(todayApts) && todayApts) ||
+    todayApts?.appointments ||
+    todayApts?.content ||
+    todayApts?.data ||
+    [];
+
   const todayCount     = todayList.length;
   const completedCount = todayList.filter((a: any) => a.status === "COMPLETED").length;
   const cancelledCount = todayList.filter((a: any) => a.status === "CANCELLED").length;
@@ -412,7 +463,7 @@ export default function DashboardPage() {
           color="bg-emerald-500"
           loading={aptsLoading}
         />
-        {(isClinicAdmin || isAdmin) && (
+        {isStaffAdmin && (
           <StatCard
             icon={Stethoscope}
             label="Shifokorlar"
@@ -423,90 +474,92 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Revenue + Today appointments */}
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      {/* Revenue (faqat admin) + Today appointments (hammaga) */}
+      <div className={`grid gap-6 ${isStaffAdmin ? "lg:grid-cols-[1.4fr_1fr]" : ""}`}>
 
-        {/* Revenue chart */}
-        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 size={18} className="text-[#35a8f5]" />
-              <h2 className="font-extrabold text-dark-navy">Daromad statistikasi</h2>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Filter toggle */}
-              <div className="flex overflow-hidden rounded-xl border border-border-color text-xs font-semibold">
-                {(["DAY", "MONTH", "YEAR"] as RevenueFilterType[]).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => {
-                      setRevenueFilter(f);
-                      const t = todayYMD();
-                      if (f === "DAY") {
-                        setFromDate(t);
-                        setToDate(t);
-                      } else if (f === "MONTH") {
-                        setFromDate(startOfMonthYMD());
-                        setToDate(t);
-                      } else {
-                        setFromDate(startOfYearYMD());
-                        setToDate(t);
-                      }
-                    }}
-                    className={`px-3 py-1.5 transition-colors ${
-                      revenueFilter === f
-                        ? "bg-[#35a8f5] text-white"
-                        : "bg-white text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    {f === "DAY" ? "Kun" : f === "MONTH" ? "Oy" : "Yil"}
-                  </button>
-                ))}
+        {/* Revenue chart — faqat CLINIC_ADMIN/ADMIN */}
+        {isStaffAdmin && (
+          <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={18} className="text-[#35a8f5]" />
+                <h2 className="font-extrabold text-dark-navy">Daromad statistikasi</h2>
               </div>
 
-              <input
-                type="date"
-                value={fromDate ?? ""}
-                onChange={(e) => setFromDate(e.target.value || null)}
-                className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
-              />
-              <span className="text-xs text-slate-400">—</span>
-              <input
-                type="date"
-                value={toDate ?? ""}
-                onChange={(e) => setToDate(e.target.value || null)}
-                className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Filter toggle */}
+                <div className="flex overflow-hidden rounded-xl border border-border-color text-xs font-semibold">
+                  {(["DAY", "MONTH", "YEAR"] as RevenueFilterType[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => {
+                        setRevenueFilter(f);
+                        const t = todayYMD();
+                        if (f === "DAY") {
+                          setFromDate(t);
+                          setToDate(t);
+                        } else if (f === "MONTH") {
+                          setFromDate(startOfMonthYMD());
+                          setToDate(t);
+                        } else {
+                          setFromDate(startOfYearYMD());
+                          setToDate(t);
+                        }
+                      }}
+                      className={`px-3 py-1.5 transition-colors ${
+                        revenueFilter === f
+                          ? "bg-[#35a8f5] text-white"
+                          : "bg-white text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      {f === "DAY" ? "Kun" : f === "MONTH" ? "Oy" : "Yil"}
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  type="date"
+                  value={fromDate ?? ""}
+                  onChange={(e) => setFromDate(e.target.value || null)}
+                  className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
+                />
+                <span className="text-xs text-slate-400">—</span>
+                <input
+                  type="date"
+                  value={toDate ?? ""}
+                  onChange={(e) => setToDate(e.target.value || null)}
+                  className="rounded-lg border border-border-color px-2 py-1 text-xs text-slate-600 outline-none"
+                />
+              </div>
             </div>
+
+            <div className="mb-3 flex items-baseline gap-3">
+              <span className="text-3xl font-extrabold text-dark-navy">
+                {formatMoney(totalRevenue)}
+              </span>
+              <span className="text-sm text-text-light">so'm</span>
+              <span className="text-xs text-slate-400">• {totalTxCount} ta to'lov</span>
+            </div>
+
+            {!fromDate || !toDate ? (
+              <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
+                <BarChart3 size={32} className="opacity-30" />
+                <p className="text-sm">Sanani tanlang</p>
+              </div>
+            ) : revenueLoading ? (
+              <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+            ) : !revenueList.length ? (
+              <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
+                <BarChart3 size={32} className="opacity-30" />
+                <p className="text-sm">Ma'lumot topilmadi</p>
+              </div>
+            ) : (
+              <RevenueChart data={revenueList} filter={revenueFilter} />
+            )}
           </div>
+        )}
 
-          <div className="mb-3 flex items-baseline gap-3">
-            <span className="text-3xl font-extrabold text-dark-navy">
-              {formatMoney(totalRevenue)}
-            </span>
-            <span className="text-sm text-text-light">so'm</span>
-            <span className="text-xs text-slate-400">• {totalTxCount} ta to'lov</span>
-          </div>
-
-          {!fromDate || !toDate ? (
-            <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
-              <BarChart3 size={32} className="opacity-30" />
-              <p className="text-sm">Sanani tanlang</p>
-            </div>
-          ) : revenueLoading ? (
-            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
-          ) : !revenueList.length ? (
-            <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
-              <BarChart3 size={32} className="opacity-30" />
-              <p className="text-sm">Ma'lumot topilmadi</p>
-            </div>
-          ) : (
-            <RevenueChart data={revenueList} filter={revenueFilter} />
-          )}
-        </div>
-
-        {/* Today appointments */}
+        {/* Today appointments — hammaga */}
         <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -528,15 +581,15 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 320 }}>
               {todayList.map((apt: any) => (
-                <AppointmentRow key={apt.id} apt={apt} />
+                <AppointmentRow key={apt.id} apt={apt} doctorName={resolveDoctorName(apt)} />
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Doctor Revenue / Payroll — sana filtri */}
-      {(isClinicAdmin || isAdmin || isDoctorUser) && (
+      {/* Doctor Revenue / Payroll — sana filtri (admin va doctor uchun) */}
+      {(isStaffAdmin || isDoctorUser) && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-color bg-white p-4 shadow-sm">
           <div className="flex items-center gap-2">
             <TrendingUp size={18} className="text-[#35a8f5]" />
@@ -563,8 +616,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Payroll Summary — faqat CLINIC_ADMIN */}
-      {(isClinicAdmin || isAdmin) && (
+      {/* Payroll Summary — faqat CLINIC_ADMIN/ADMIN */}
+      {isStaffAdmin && (
         <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Wallet size={18} className="text-emerald-500" />
@@ -678,13 +731,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Doctor Revenue Statistics */}
-      {(isClinicAdmin || isAdmin || isDoctorUser) && (
+      {/* Doctor Revenue Statistics — admin (barcha doctorlar) yoki doctor (o'ziniki) */}
+      {(isStaffAdmin || isDoctorUser) && (
         <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Percent size={18} className="text-amber-500" />
             <h2 className="font-extrabold text-dark-navy">
-              {isDoctorUser && !(isClinicAdmin || isAdmin)
+              {isDoctorUser && !isStaffAdmin
                 ? "Mening daromadim"
                 : "Shifokorlar bo'yicha daromad"}
             </h2>
