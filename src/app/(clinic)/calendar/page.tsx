@@ -7,6 +7,7 @@
  * Kunga bosilganda modal ochiladi — o'sha kundagi barcha appointmentlar
  * to'liq ko'rinishda (bemor, shifokor, vaqt, izoh, status).
  * Header'da sana tanlash (date picker) orqali istalgan sanaga o'tish mumkin.
+ * Bugungi kun rangli border bilan alohida ajratib ko'rsatiladi.
  *
  * Rol bo'yicha ko'rinish:
  * - DOCTOR: faqat o'z appointmentlarini ko'radi, doctor filter yashirin
@@ -72,6 +73,9 @@ const DOCTOR_ACCENTS = [
   { border: "border-l-fuchsia-400", chip: "bg-fuchsia-500" },
   { border: "border-l-lime-500",    chip: "bg-lime-500" },
 ];
+
+// Bugungi kunni ajratib ko'rsatish uchun alohida rang (kalendar accentlaridan farqli)
+const TODAY_RING_COLOR = "#35a8f5";
 
 // ---------------------------------------------------------------------------
 // Date helpers (no date-fns — loyihaning umumiy uslubiga mos)
@@ -610,6 +614,10 @@ export default function CalendarPage() {
             {s.label}
           </span>
         ))}
+        <span className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+          <span className="h-2.5 w-2.5 rounded-full border-2" style={{ borderColor: TODAY_RING_COLOR }} />
+          Bugun
+        </span>
       </div>
 
       {isLoading ? (
@@ -638,9 +646,10 @@ export default function CalendarPage() {
                   key={idx}
                   type="button"
                   onClick={() => openDay(date)}
-                  className={`min-h-[130px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-blue-50/40 ${
+                  className={`relative min-h-[130px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-blue-50/40 ${
                     inCurrentMonth ? "bg-white" : "bg-slate-50/60"
-                  }`}
+                  } ${isToday ? "z-10 ring-2 ring-inset" : ""}`}
+                  style={isToday ? { boxShadow: `inset 0 0 0 2px ${TODAY_RING_COLOR}` } : undefined}
                 >
                   <div className="mb-1.5 flex items-center justify-between">
                     <span
@@ -684,7 +693,10 @@ export default function CalendarPage() {
                   key={date.toISOString()}
                   type="button"
                   onClick={() => openDay(date)}
-                  className="border-l border-border-color px-2 py-2.5 text-center transition hover:bg-blue-50/40"
+                  className={`border-l border-border-color px-2 py-2.5 text-center transition hover:bg-blue-50/40 ${
+                    isToday ? "bg-[#35a8f5]/5" : ""
+                  }`}
+                  style={isToday ? { boxShadow: `inset 0 -2px 0 0 ${TODAY_RING_COLOR}` } : undefined}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                     {WEEKDAY_LABELS[(date.getDay() + 6) % 7]}
@@ -719,11 +731,15 @@ export default function CalendarPage() {
             {/* Day columns */}
             {weekDays.map((date) => {
               const dayAppointments = appointmentsByDate.get(toYMD(date)) || [];
+              const isToday = isSameDay(date, today);
               return (
                 <div
                   key={date.toISOString()}
-                  className="relative border-l border-border-color"
-                  style={{ height: HOUR_HEIGHT * hours.length }}
+                  className={`relative border-l border-border-color ${isToday ? "bg-[#35a8f5]/5" : ""}`}
+                  style={{
+                    height: HOUR_HEIGHT * hours.length,
+                    ...(isToday ? { boxShadow: `inset 2px 0 0 0 ${TODAY_RING_COLOR}, inset -2px 0 0 0 ${TODAY_RING_COLOR}` } : {}),
+                  }}
                 >
                   {hours.map((h) => (
                     <div
