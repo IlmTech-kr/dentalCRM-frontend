@@ -12,9 +12,12 @@
  * 6. appointmentId endi ixtiyoriy — Patients sahifasidan to'g'ridan-to'g'ri
  *    kirilganda ("Molajani boshlash") appointmentId yo'q bo'ladi va backend
  *    doctorId + joriy vaqt asosida appointmentni avtomatik yaratadi.
+ * 7. DOCTOR rolida kirgan foydalanuvchi uchun "Shifokor" maydoni endi
+ *    select emas — o'zi avtomatik tanlanadi va o'zgartirib bo'lmaydi.
+ *    Boshqa rollar (admin, receptionist, assistant) uchun select qoladi.
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
@@ -40,6 +43,7 @@ import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { Role } from "@/src/lib/enums/enums.types";
+import { useAuthStore } from "@/src/store/auth.store";
 import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
 import { ToothCondition } from "@/src/lib/enums/enums.types";
 import type { DentalProcedure } from "@/src/types/dental-procedure.types";
@@ -129,6 +133,10 @@ function getVisitDoctorName(visit: any) {
 function nowLocalIso() {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+function getFullName(person?: { firstName?: string; lastName?: string; fullName?: string } | null) {
+  if (!person) return "";
+  return person.fullName || `${person.firstName || ""} ${person.lastName || ""}`.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +255,8 @@ type VisitPanelProps = {
   doctors: any[];
   doctorId: string;
   onDoctorChange: (id: string) => void;
+  isDoctorLocked: boolean;
+  lockedDoctorName: string;
   visitDate: string;
   onVisitDateChange: (v: string) => void;
   doctorNotes: string;
@@ -270,7 +280,7 @@ type VisitPanelProps = {
 
 function VisitPanel({
   activeCourses, selectedCourseId, onCourseChange,
-  doctors, doctorId, onDoctorChange,
+  doctors, doctorId, onDoctorChange, isDoctorLocked, lockedDoctorName,
   visitDate, onVisitDateChange,
   doctorNotes, onDoctorNotesChange,
   selectedTooth, onToothChange, treatmentTeeth,
@@ -299,10 +309,25 @@ function VisitPanel({
           </select>
         </div>
 
-        {/* Doctor */}
+        {/* Doctor — DOCTOR rolida kirgan foydalanuvchi uchun o'zi avtomatik
+            tanlanadi va tahrirlanmaydi; boshqa rollar uchun select ko'rinadi. */}
         <div>
           <label className="mb-1.5 block text-sm font-bold text-slate-700">Shifokor</label>
-          <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
+          {isDoctorLocked ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-4 py-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#35a8f5]/10 text-[#35a8f5]">
+                <UserRound size={16} />
+              </div>
+              <span className="text-sm font-semibold text-dark-navy">
+                {lockedDoctorName || "Siz"}
+              </span>
+              <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                Siz
+              </span>
+            </div>
+          ) : (
+            <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
+          )}
         </div>
 
         {/* Date */}
@@ -484,6 +509,12 @@ export default function TreatmentPatientPage() {
   // Patients sahifasidan kirilgan bo'lsa), backend avtomatik yaratadi.
   const appointmentId = searchParams.get("appointmentId") || "";
 
+  // Joriy foydalanuvchi — DOCTOR bo'lsa, "Shifokor" maydoni o'zi bilan qulflanadi.
+  const currentUser = useAuthStore((s) => s.user);
+  const isDoctorUser = useAuthStore((s) => s.isDoctor());
+  const currentUserId = (currentUser as any)?.id || (currentUser as any)?._id || "";
+  const currentUserName = getFullName(currentUser as any);
+
   const { data: patient, isLoading: patientLoading } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: () => getPatientById(patientId),
@@ -523,6 +554,13 @@ export default function TreatmentPatientPage() {
   const [doctorNotes, setDoctorNotes] = useState("");
   const [visitDate, setVisitDate] = useState(nowLocalIso);
   const [visitItems, setVisitItems] = useState<TreatmentVisitItem[]>([]);
+
+  // DOCTOR rolida kirgan foydalanuvchi uchun doctorId har doim o'zinikiga tenglashadi.
+  useEffect(() => {
+    if (isDoctorUser && currentUserId) {
+      setDoctorId(currentUserId);
+    }
+  }, [isDoctorUser, currentUserId]);
 
   const toothMap: ToothMap = useMemo(
     () => Object.keys(localToothMap).length > 0 ? localToothMap : chart?.toothMap || {},
@@ -708,6 +746,8 @@ export default function TreatmentPatientPage() {
     setVisitItems([]);
     setDoctorNotes("");
     setVisitDate(nowLocalIso());
+    // DOCTOR rolida bo'lsa — doctorId darhol o'ziniki bilan to'ldiriladi.
+    setDoctorId(isDoctorUser && currentUserId ? currentUserId : "");
     setIsAddVisitModalOpen(true);
   }
 
@@ -718,6 +758,8 @@ export default function TreatmentPatientPage() {
     doctors,
     doctorId,
     onDoctorChange: setDoctorId,
+    isDoctorLocked: isDoctorUser,
+    lockedDoctorName: currentUserName,
     visitDate,
     onVisitDateChange: setVisitDate,
     doctorNotes,
