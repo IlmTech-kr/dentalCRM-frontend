@@ -14,6 +14,7 @@ const ALLOWED_ROOT_PATHS = new Set([
   "/",
   "/register",
   "/login",
+  "/tariffs",
 ]);
 
 function getSubdomain(host: string): string | null {
