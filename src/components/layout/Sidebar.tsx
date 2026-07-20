@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
+  CalendarRange,
   LayoutDashboard,
   Stethoscope,
   Users,
@@ -41,21 +42,12 @@ type NavItem = {
 };
 
 type RoleFlags = {
-  isStaffAdmin: boolean; // SUPER_ADMIN yoki CLINIC_ADMIN
+  isStaffAdmin: boolean;
   isDoctor: boolean;
   isReceptionist: boolean;
   isAssistant: boolean;
 };
 
-/**
- * Nav ro'yxatini rolga qarab quradi.
- *
- * Ko'rinish qoidalari:
- * - Dashboard, Patients, Appointments, Treatments, Settings (Profile/Change Password) — hammaga.
- * - Doctors bo'limi — Doctor'dan tashqari hammaga (Receptionist/Assistant faqat "Doctors List"ni
- *   ko'radi, invite/edit huquqisiz — bu doctors/page.tsx da alohida cheklangan).
- * - Doctor Schedule, Procedures, Settings > Plans — faqat admin (SUPER_ADMIN/CLINIC_ADMIN).
- */
 function buildNavItems({
   isStaffAdmin,
   isDoctor,
@@ -67,6 +59,8 @@ function buildNavItems({
   const items: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/patients", label: "Patients", icon: Users },
+    // Calendar — hammaga ochiq (Doctor, Receptionist, Assistant, Admin)
+    { href: "/calendar", label: "Calendar", icon: CalendarRange },
   ];
 
   if (canSeeDoctorsSection) {
