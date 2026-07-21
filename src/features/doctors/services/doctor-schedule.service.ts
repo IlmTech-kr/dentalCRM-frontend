@@ -182,6 +182,7 @@ export async function updateDoctorSchedule(
     const response = await tenantHttp().put(
       `/api/dental/doctor-schedules/${scheduleId}`,
       {
+        doctorId: payload.doctorId,
         dayOfWeek: payload.dayOfWeek,
         startTime: normalizeTime(payload.startTime),
         endTime: normalizeTime(payload.endTime),

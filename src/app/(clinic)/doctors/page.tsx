@@ -4,7 +4,8 @@
  * File: src/app/(dashboard)/doctors/page.tsx
  */
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Check, ChevronDown } from "lucide-react";
 
 import {
   useDeleteDoctor,
@@ -71,6 +72,128 @@ function getRoleBadgeClass(role: string) {
   return "bg-slate-100 text-slate-600";
 }
 
+function getStatusBadgeClass(status?: string) {
+  if (status === UserStatus.ACTIVE) return "bg-green-100 text-green-700";
+  if (status === UserStatus.PENDING) return "bg-yellow-100 text-yellow-700";
+  return "bg-red-100 text-red-700";
+}
+
+// ─── Beautiful Dropdown ───────────────────────────────────────────────────────
+
+interface DropdownOption {
+  value: string;
+  label: string;
+  count?: number;
+}
+
+interface DropdownProps {
+  value: string;
+  options: DropdownOption[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  buttonClassName?: string;
+  menuClassName?: string;
+  align?: "left" | "right";
+}
+
+function Dropdown({
+  value,
+  options,
+  onChange,
+  placeholder = "Select",
+  buttonClassName,
+  menuClassName,
+  align = "left",
+}: DropdownProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={
+          buttonClassName ??
+          "flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40 focus:outline-none focus:ring-4 focus:ring-blue-100"
+        }
+      >
+        <span className="truncate">{selected?.label ?? placeholder}</span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+            open ? "rotate-180 text-blue-500" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={
+            menuClassName ??
+            `absolute top-full z-30 mt-2 max-h-72 w-full min-w-[200px] overflow-y-auto rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl shadow-slate-200/70 ${
+              align === "right" ? "right-0" : "left-0"
+            }`
+          }
+        >
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
+                  isSelected
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  {option.label}
+                  {typeof option.count === "number" && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        isSelected
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {option.count}
+                    </span>
+                  )}
+                </span>
+                {isSelected && <Check className="h-4 w-4 shrink-0 text-blue-600" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DoctorsPage() {
   const toast = useToast();
 
@@ -93,6 +216,8 @@ export default function DoctorsPage() {
   const deleteDoctorMutation = useDeleteDoctor();
 
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<DoctorStatus | "ALL">("ALL");
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -122,15 +247,46 @@ export default function DoctorsPage() {
     : inviteCompensationType;
 
   /**
-   * Client-side search — service da allaqachon staff filter bo'lgani uchun
-   * faqat search filter qilamiz.
+   * Har bir role/status uchun nechta staff borligini hisoblaymiz —
+   * filter chiplarida son ko'rsatish uchun.
+   */
+  const roleCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    doctors.forEach((doctor) => {
+      doctor.roles?.forEach((role) => {
+        counts.set(role, (counts.get(role) ?? 0) + 1);
+      });
+    });
+    return counts;
+  }, [doctors]);
+
+  const statusCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    doctors.forEach((doctor) => {
+      const status = doctor.status || UserStatus.ACTIVE;
+      counts.set(status, (counts.get(status) ?? 0) + 1);
+    });
+    return counts;
+  }, [doctors]);
+
+  /**
+   * Client-side search + role + status filter — service da allaqachon
+   * staff filter bo'lgani uchun bu yerda faqat qo'shimcha filterlar.
    */
   const filteredDoctors = useMemo(() => {
     const value = search.toLowerCase().trim();
 
-    if (!value) return doctors;
-
     return doctors.filter((doctor) => {
+      if (roleFilter !== "ALL" && !doctor.roles?.includes(roleFilter)) {
+        return false;
+      }
+
+      if (statusFilter !== "ALL" && doctor.status !== statusFilter) {
+        return false;
+      }
+
+      if (!value) return true;
+
       const fullName =
         `${doctor.firstName || ""} ${doctor.lastName || ""}`.toLowerCase();
       const email = doctor.email?.toLowerCase() || "";
@@ -146,7 +302,7 @@ export default function DoctorsPage() {
         roles.includes(value)
       );
     });
-  }, [doctors, search]);
+  }, [doctors, search, roleFilter, statusFilter]);
 
   // ---------------------------------------------------------------------------
   // Modal handlers
@@ -194,6 +350,12 @@ export default function DoctorsPage() {
   function handleCloseEditModal() {
     setSelectedDoctor(null);
     setEditForm(initialEditForm);
+  }
+
+  function handleResetFilters() {
+    setSearch("");
+    setRoleFilter("ALL");
+    setStatusFilter("ALL");
   }
 
   // ---------------------------------------------------------------------------
@@ -315,6 +477,9 @@ export default function DoctorsPage() {
   // Render
   // ---------------------------------------------------------------------------
 
+  const hasActiveFilters =
+    Boolean(search.trim()) || roleFilter !== "ALL" || statusFilter !== "ALL";
+
   return (
     <div className="min-h-screen p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -337,22 +502,69 @@ export default function DoctorsPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Staff List</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              All clinic users with DOCTOR, RECEPTIONIST and ASSISTANT roles.
-            </p>
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Staff List</h2>
+            </div>
           </div>
 
-          <div className="w-full md:w-80">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search staff..."
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            />
+          {/* Role va Status filterlar */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-full sm:w-56">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Role
+              </label>
+              <Dropdown
+                value={roleFilter}
+                onChange={(v) => setRoleFilter(v as StaffRole | "ALL")}
+                options={[
+                  { value: "ALL", label: "Barcha rollar", count: doctors.length },
+                  ...staffRoleOptions.map((role) => ({
+                    value: role,
+                    label: role,
+                    count: roleCounts.get(role) ?? 0,
+                  })),
+                ]}
+              />
+            </div>
+
+            <div className="w-full sm:w-56">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Status
+              </label>
+              <Dropdown
+                value={statusFilter}
+                onChange={(v) => setStatusFilter(v as DoctorStatus | "ALL")}
+                options={[
+                  { value: "ALL", label: "Barcha statuslar", count: doctors.length },
+                  ...statusOptions.map((status) => ({
+                    value: status,
+                    label: status,
+                    count: statusCounts.get(status) ?? 0,
+                  })),
+                ]}
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="rounded-xl px-3.5 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+              >
+                Filterlarni tozalash
+              </button>
+            )}
+            <div className="w-full md:ml-auto md:w-80">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search staff..."
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
           </div>
         </div>
 
@@ -414,7 +626,9 @@ export default function DoctorsPage() {
                       colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      No staff found
+                      {hasActiveFilters
+                        ? "Filterga mos staff topilmadi"
+                        : "No staff found"}
                     </td>
                   </tr>
                 ) : (
@@ -473,13 +687,7 @@ export default function DoctorsPage() {
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            doctor.status === UserStatus.ACTIVE
-                              ? "bg-green-100 text-green-700"
-                              : doctor.status === UserStatus.PENDING
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                          }`}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(doctor.status)}`}
                         >
                           {doctor.status}
                         </span>
@@ -557,19 +765,15 @@ export default function DoctorsPage() {
                   Role
                 </label>
 
-                <select
+                <Dropdown
                   value={inviteRole}
-                  onChange={(e) =>
-                    handleInviteRoleChange(e.target.value as StaffRole)
-                  }
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                >
-                  {staffRoleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => handleInviteRoleChange(v as StaffRole)}
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  options={staffRoleOptions.map((role) => ({
+                    value: role,
+                    label: role,
+                  }))}
+                />
               </div>
 
               {showsCompensationFields && (
@@ -580,21 +784,17 @@ export default function DoctorsPage() {
                         Compensation Type
                       </label>
 
-                      <select
+                      <Dropdown
                         value={inviteCompensationType}
-                        onChange={(e) =>
-                          setInviteCompensationType(
-                            e.target.value as CompensationType
-                          )
+                        onChange={(v) =>
+                          setInviteCompensationType(v as CompensationType)
                         }
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      >
-                        {compensationTypeOptions.map((type) => (
-                          <option key={type} value={type}>
-                            {type === "PERCENTAGE" ? "Percentage" : "Salary"}
-                          </option>
-                        ))}
-                      </select>
+                        buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                        options={compensationTypeOptions.map((type) => ({
+                          value: type,
+                          label: type === "PERCENTAGE" ? "Percentage" : "Salary",
+                        }))}
+                      />
                     </div>
                   )}
 
@@ -755,19 +955,17 @@ export default function DoctorsPage() {
                   Role
                 </label>
 
-                <select
+                <Dropdown
                   value={editForm.role}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, role: e.target.value as StaffRole })
+                  onChange={(v) =>
+                    setEditForm({ ...editForm, role: v as StaffRole })
                   }
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                >
-                  {staffRoleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  options={staffRoleOptions.map((role) => ({
+                    value: role,
+                    label: role,
+                  }))}
+                />
               </div>
 
               <div>
@@ -775,22 +973,17 @@ export default function DoctorsPage() {
                   Status
                 </label>
 
-                <select
+                <Dropdown
                   value={editForm.status}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      status: e.target.value as DoctorStatus,
-                    })
+                  onChange={(v) =>
+                    setEditForm({ ...editForm, status: v as DoctorStatus })
                   }
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  options={statusOptions.map((status) => ({
+                    value: status,
+                    label: status,
+                  }))}
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-3">

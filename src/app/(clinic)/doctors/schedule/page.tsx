@@ -758,14 +758,15 @@ export default function DoctorSchedulePage() {
   const hasExistingSchedule = Boolean(existingScheduleForDoctor);
 
   /**
-   * MUHIM: update endpoint URL'ida schedule hujjatining o'z _id'si emas,
-   * balki DOCTOR ID yuboriladi — masalan:
-   * PATCH /api/dental/doctor-schedules/{doctorId}
-   * Backend shu doctorId bo'yicha schedule hujjatini topib, kerakli kunni yangilaydi.
-   * (openEditModal ham, doctor tanlash ham form.doctorId'ni to'g'ri o'rnatadi,
-   * shuning uchun bu yerda faqat form.doctorId ishlatiladi.)
+   * MUHIM: update endpoint URL'ida schedule HUJJATINING O'Z _id'si yuboriladi:
+   * PATCH /api/dental/doctor-schedules/{scheduleId}
+   * Body ichida esa doctorId, dayOfWeek, startTime, endTime, active qaytariladi. Masalan:
+   * PATCH /api/dental/doctor-schedules/6a5ff83291fe43f327cbfcc3
+   * { "doctorId": "...", "dayOfWeek": "TUESDAY", "startTime": "09:00", "endTime": "18:00", "active": true }
    */
-  const selectedScheduleId = form.doctorId;
+  const selectedScheduleId = selectedSchedule
+    ? selectedSchedule.scheduleParentId ?? getScheduleId(selectedSchedule)
+    : getScheduleId(existingScheduleForDoctor);
 
   /**
    * Faqat role = "DOCTOR" bo'lgan userlar schedule create qila oladi.
@@ -1000,6 +1001,7 @@ export default function DoctorSchedulePage() {
         // ── Bitta kunni tahrirlash (mavjud row) ──
         if (!selectedScheduleId) { toast.error("Schedule ID not found."); return; }
         await updateScheduleMutation.mutateAsync({
+          doctorId: form.doctorId,
           dayOfWeek: form.dayOfWeek,
           startTime,
           endTime,
@@ -1015,6 +1017,7 @@ export default function DoctorSchedulePage() {
 
         for (const day of daysToUpdate) {
           await updateScheduleMutation.mutateAsync({
+            doctorId: form.doctorId,
             dayOfWeek: day,
             startTime,
             endTime,

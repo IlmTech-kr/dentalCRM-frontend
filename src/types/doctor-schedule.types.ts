@@ -39,6 +39,7 @@ export interface DoctorSchedulePayload {
 }
 
 export interface UpdateDoctorSchedulePayload {
+  doctorId: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
