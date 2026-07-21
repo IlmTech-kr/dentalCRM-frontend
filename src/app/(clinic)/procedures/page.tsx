@@ -413,8 +413,14 @@ export default function ProceduresPage() {
                   <label className="mb-2 block text-sm font-black text-slate-700">Default price</label>
                   <input
                     type="number"
-                    value={form.defaultPrice}
-                    onChange={(e) => setForm((prev) => ({ ...prev, defaultPrice: Number(e.target.value) }))}
+                    value={form.defaultPrice === 0 ? "" : form.defaultPrice}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultPrice: raw === "" ? 0 : Number(raw),
+                      }));
+                    }}
                     placeholder="550000"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                   />
