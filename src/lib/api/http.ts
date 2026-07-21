@@ -5,6 +5,11 @@
  * 401 bo'lganda avval /api/auth/refresh ga uriniladi,
  * muvaffaqiyatli bo'lsa asl request qayta yuboriladi.
  * Refresh ham 401 bersa — /login ga redirect.
+ *
+ * mainHttp — subdomainsiz, to'g'ridan-to'g'ri MAIN_API_URL
+ * (masalan https://dental.api.ilmtech.uz) ga so'rov yuboradi.
+ * SUPERADMIN paneli (admin.dental.ilmtech.uz) shu instance orqali ishlaydi —
+ * hech qanday tenant/subdomain header qo'shilmaydi.
  */
 
 import axios, {
@@ -282,6 +287,15 @@ export const mainHttp = axios.create({
     "Accept-Language": "uz",
   },
 });
+
+/**
+ * mainHttp ham xuddi tenantHttp kabi 401-refresh-retry oqimidan foydalanadi.
+ * SUPERADMIN doim shu instance orqali ishlaydi — subdomain header'lari
+ * qo'shilmaydi, so'rov to'g'ridan-to'g'ri MAIN_API_URL (masalan
+ * https://dental.api.ilmtech.uz) ga ketadi, hostdan qat'i nazar
+ * (admin.dental.ilmtech.uz'da ochilgan bo'lsa ham).
+ */
+attachTenantInterceptors(mainHttp, MAIN_API_URL);
 
 export const publicMainHttp = axios.create({
   baseURL: MAIN_API_URL,
