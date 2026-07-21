@@ -452,7 +452,12 @@ interface ScheduleModalProps {
   onCreateForWholeWeekChange: (value: boolean) => void;
   onClose: () => void;
   onChange: (form: ScheduleForm) => void;
+  onDoctorChange: (doctorId: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  selectedDays: DayOfWeek[];
+  onToggleDay: (day: DayOfWeek) => void;
+  busyDaysForDoctor: Set<DayOfWeek>;
+  hasExistingSchedule: boolean;
 }
 
 function ScheduleModal({
@@ -465,7 +470,12 @@ function ScheduleModal({
   onCreateForWholeWeekChange,
   onClose,
   onChange,
+  onDoctorChange,
   onSubmit,
+  selectedDays,
+  onToggleDay,
+  busyDaysForDoctor,
+  hasExistingSchedule,
 }: ScheduleModalProps) {
   if (!open) return null;
 
@@ -483,6 +493,8 @@ function ScheduleModal({
               <p className="mt-2 text-sm font-medium text-slate-600">
                 {createForWholeWeek && !selectedSchedule
                   ? "Create same working time for all days of the week."
+                  : !selectedSchedule && hasExistingSchedule
+                  ? "Bu doctor uchun schedule mavjud — bo'sh kunlarga qo'shiladi (update)."
                   : "Set doctor working day, start time and end time."}
               </p>
             </div>
@@ -504,7 +516,7 @@ function ScheduleModal({
             <select
               value={form.doctorId}
               disabled={Boolean(selectedSchedule)}
-              onChange={(e) => onChange({ ...form, doctorId: e.target.value })}
+              onChange={(e) => onDoctorChange(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
               <option value="">Select doctor</option>
@@ -518,14 +530,23 @@ function ScheduleModal({
                 );
               })}
             </select>
+            {doctors.length === 0 && (
+              <p className="mt-2 text-xs font-semibold text-amber-600">
+                Role = DOCTOR bo'lgan hech qanday foydalanuvchi topilmadi.
+              </p>
+            )}
           </div>
 
           {!selectedSchedule && (
             <div className="flex items-center justify-between rounded-2xl border-2 border-blue-100 bg-blue-50 px-4 py-4">
               <div>
-                <p className="text-sm font-extrabold text-slate-900">Create for whole week</p>
+                <p className="text-sm font-extrabold text-slate-900">
+                  {hasExistingSchedule ? "Update for whole week" : "Create for whole week"}
+                </p>
                 <p className="mt-1 text-xs font-medium text-slate-500">
-                  This will create the same schedule for all days.
+                  {hasExistingSchedule
+                    ? "Barcha 7 kun shu vaqt bilan yangilanadi (mavjudlari ustidan yoziladi)."
+                    : "This will create the same schedule for all days."}
                 </p>
               </div>
               <button
@@ -543,23 +564,52 @@ function ScheduleModal({
           {!createForWholeWeek && (
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-900">
-                Working Day <span className="text-red-500">*</span>
+                {selectedSchedule ? "Working Day" : "Working Day(s)"} <span className="text-red-500">*</span>
               </label>
+
+              {!selectedSchedule && hasExistingSchedule && (
+                <p className="mb-3 text-xs font-semibold text-blue-600">
+                  Band kunlar o'chirilgan (disabled). Bo'sh kunlardan xohlagancha tanlashingiz mumkin.
+                </p>
+              )}
+
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {DAYS.map((day) => (
-                  <button
-                    key={day.value}
-                    type="button"
-                    onClick={() => onChange({ ...form, dayOfWeek: day.value })}
-                    className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
-                      form.dayOfWeek === day.value
-                        ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
-                    }`}
-                  >
-                    {day.short}
-                  </button>
-                ))}
+                {DAYS.map((day) => {
+                  const isBusy = !selectedSchedule && busyDaysForDoctor.has(day.value);
+                  const isSelected = selectedSchedule
+                    ? form.dayOfWeek === day.value
+                    : selectedDays.includes(day.value);
+
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => {
+                        if (isBusy) return;
+                        if (selectedSchedule) {
+                          onChange({ ...form, dayOfWeek: day.value });
+                        } else {
+                          onToggleDay(day.value);
+                        }
+                      }}
+                      className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
+                        isBusy
+                          ? "cursor-not-allowed border-slate-100 bg-slate-100 text-slate-300"
+                          : isSelected
+                          ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                      }`}
+                    >
+                      {day.short}
+                      {isBusy && (
+                        <span className="mt-0.5 block text-[9px] font-bold normal-case text-slate-400">
+                          band
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -649,6 +699,8 @@ function ScheduleModal({
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {selectedSchedule
                 ? "Save Changes"
+                : hasExistingSchedule
+                ? "Kunlarni qo'shish"
                 : createForWholeWeek
                 ? "Create Weekly Schedule"
                 : "Create Schedule"}
@@ -682,9 +734,7 @@ export default function DoctorSchedulePage() {
   const [selectedSchedule, setSelectedSchedule] = useState<FlatDoctorSchedule | null>(null);
   const [form, setForm] = useState<ScheduleForm>(initialForm);
   const [createForWholeWeek, setCreateForWholeWeek] = useState(false);
-
-  const selectedScheduleId =
-    selectedSchedule?.scheduleParentId ?? getScheduleId(selectedSchedule);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
 
   const {
     data: schedules = [],
@@ -695,6 +745,44 @@ export default function DoctorSchedulePage() {
   } = useGetDoctorSchedules(page, limit);
 
   const { data: doctors = [], isLoading: isDoctorsLoading } = useGetDoctors();
+
+  /**
+   * Doctor tanlanganda, agar shu doctor uchun schedule (parent hujjat) allaqachon
+   * mavjud bo'lsa — create emas, shu hujjatga update qilinishi kerak.
+   */
+  const existingScheduleForDoctor = useMemo(() => {
+    if (!form.doctorId) return null;
+    return (schedules as any[]).find((s: any) => s.doctorId === form.doctorId) ?? null;
+  }, [schedules, form.doctorId]);
+
+  const hasExistingSchedule = Boolean(existingScheduleForDoctor);
+
+  /**
+   * MUHIM: update endpoint URL'ida schedule hujjatining o'z _id'si emas,
+   * balki DOCTOR ID yuboriladi — masalan:
+   * PATCH /api/dental/doctor-schedules/{doctorId}
+   * Backend shu doctorId bo'yicha schedule hujjatini topib, kerakli kunni yangilaydi.
+   * (openEditModal ham, doctor tanlash ham form.doctorId'ni to'g'ri o'rnatadi,
+   * shuning uchun bu yerda faqat form.doctorId ishlatiladi.)
+   */
+  const selectedScheduleId = form.doctorId;
+
+  /**
+   * Faqat role = "DOCTOR" bo'lgan userlar schedule create qila oladi.
+   * Boshqa xodimlar (admin, reception va h.k.) doctor select dropdownida chiqmaydi.
+   */
+  const doctorOptions = useMemo(
+    () =>
+      doctors.filter((d: any) => {
+        const roles: string[] = Array.isArray(d.roles)
+          ? d.roles
+          : d.role
+          ? [d.role]
+          : [];
+        return roles.includes("DOCTOR") && d.status !== "DELETED";
+      }),
+    [doctors]
+  );
 
   const createScheduleMutation = useCreateDoctorSchedule();
   const createWeeklyScheduleMutation = useCreateWeeklyDoctorSchedule();
@@ -760,6 +848,21 @@ export default function DoctorSchedulePage() {
       return true;
     });
   }, [schedules]);
+
+  /**
+   * Tanlangan doctor uchun allaqachon active bo'lgan kunlar to'plami.
+   * Modalda bu kunlar tanlab bo'lmaydigan (band) qilib ko'rsatiladi.
+   */
+  const busyDaysForDoctor = useMemo(() => {
+    const set = new Set<DayOfWeek>();
+    if (!form.doctorId) return set;
+    flatSchedules.forEach((s) => {
+      if (s.doctorId === form.doctorId && s.active && s.dayOfWeek) {
+        set.add(s.dayOfWeek);
+      }
+    });
+    return set;
+  }, [flatSchedules, form.doctorId]);
 
   const enrichedSchedules = useMemo(() => {
     return flatSchedules.map((s) => {
@@ -827,6 +930,7 @@ export default function DoctorSchedulePage() {
   function openCreateModal(prefillDoctorId?: string) {
     setSelectedSchedule(null);
     setCreateForWholeWeek(false);
+    setSelectedDays([]);
     setForm({ ...initialForm, doctorId: prefillDoctorId ?? "" });
     setIsModalOpen(true);
   }
@@ -834,6 +938,7 @@ export default function DoctorSchedulePage() {
   function openEditModal(schedule: FlatDoctorSchedule) {
     setSelectedSchedule(schedule);
     setCreateForWholeWeek(false);
+    setSelectedDays([]);
     setForm({
       doctorId: schedule.doctorId ?? "",
       dayOfWeek: schedule.dayOfWeek ?? DayOfWeek.MONDAY,
@@ -848,8 +953,20 @@ export default function DoctorSchedulePage() {
   function closeModal() {
     setSelectedSchedule(null);
     setCreateForWholeWeek(false);
+    setSelectedDays([]);
     setForm(initialForm);
     setIsModalOpen(false);
+  }
+
+  function handleDoctorChange(doctorId: string) {
+    setForm((prev) => ({ ...prev, doctorId }));
+    setSelectedDays([]);
+  }
+
+  function handleToggleDay(day: DayOfWeek) {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   }
 
   function openDoctorCalendar(doctorId: string) {
@@ -872,10 +989,15 @@ export default function DoctorSchedulePage() {
     if (!startTime) { toast.warning("Start time is invalid."); return; }
     if (!endTime) { toast.warning("End time is invalid."); return; }
     if (startTime >= endTime) { toast.warning("End time must be later than start time."); return; }
-    if (!createForWholeWeek && !form.dayOfWeek) { toast.warning("Please select a working day."); return; }
+
+    if (!selectedSchedule && !createForWholeWeek && selectedDays.length === 0) {
+      toast.warning("Kamida bitta ish kunini tanlang.");
+      return;
+    }
 
     try {
       if (selectedSchedule) {
+        // ── Bitta kunni tahrirlash (mavjud row) ──
         if (!selectedScheduleId) { toast.error("Schedule ID not found."); return; }
         await updateScheduleMutation.mutateAsync({
           dayOfWeek: form.dayOfWeek,
@@ -885,7 +1007,24 @@ export default function DoctorSchedulePage() {
           slotDurationMinutes: Number(form.slotDurationMinutes ?? 30),
         });
         toast.success("Doctor schedule updated successfully.");
+      } else if (hasExistingSchedule) {
+        // ── Doctorda schedule allaqachon mavjud → create emas, update qilinadi ──
+        const daysToUpdate = createForWholeWeek
+          ? DAYS.map((d) => d.value)
+          : selectedDays;
+
+        for (const day of daysToUpdate) {
+          await updateScheduleMutation.mutateAsync({
+            dayOfWeek: day,
+            startTime,
+            endTime,
+            active: Boolean(form.active),
+            slotDurationMinutes: Number(form.slotDurationMinutes ?? 30),
+          });
+        }
+        toast.success("Doctor schedule yangilandi.");
       } else if (createForWholeWeek) {
+        // ── Doctorda hali schedule yo'q, butun hafta uchun yaratish ──
         await createWeeklyScheduleMutation.mutateAsync({
           doctorId: form.doctorId,
           startTime,
@@ -894,15 +1033,24 @@ export default function DoctorSchedulePage() {
         } as WeeklyDoctorSchedulePayload);
         toast.success("Weekly doctor schedule created successfully.");
       } else {
+        // ── Doctorda hali schedule yo'q, yangi hujjat bitta kun bilan yaratiladi ──
+        const [firstDay] = selectedDays;
         await createScheduleMutation.mutateAsync({
           doctorId: form.doctorId,
-          dayOfWeek: form.dayOfWeek,
+          dayOfWeek: firstDay,
           startTime,
           endTime,
           active: Boolean(form.active),
           slotDurationMinutes: Number(form.slotDurationMinutes ?? 30),
         } as DoctorSchedulePayload);
-        toast.success("Doctor schedule created successfully.");
+
+        if (selectedDays.length > 1) {
+          toast.warning(
+            "Faqat birinchi kun yaratildi. Qolgan kunlarni qo'shish uchun 'Add day' tugmasini yana bosing."
+          );
+        } else {
+          toast.success("Doctor schedule created successfully.");
+        }
       }
 
       /**
@@ -1100,14 +1248,19 @@ export default function DoctorSchedulePage() {
       <ScheduleModal
         open={isModalOpen}
         form={form}
-        doctors={doctors}
+        doctors={doctorOptions}
         selectedSchedule={selectedSchedule}
         isSubmitting={isSubmitting}
         createForWholeWeek={createForWholeWeek}
         onCreateForWholeWeekChange={setCreateForWholeWeek}
         onClose={closeModal}
         onChange={setForm}
+        onDoctorChange={handleDoctorChange}
         onSubmit={handleSubmit}
+        selectedDays={selectedDays}
+        onToggleDay={handleToggleDay}
+        busyDaysForDoctor={busyDaysForDoctor}
+        hasExistingSchedule={hasExistingSchedule}
       />
     </div>
   );
