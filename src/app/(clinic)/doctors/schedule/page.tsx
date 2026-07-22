@@ -733,20 +733,25 @@ export default function DoctorSchedulePage() {
    * Doctor rolidagi user faqat O'ZINING schedule'ini ko'rishi va
    * boshqarishi kerak — boshqa doctorlar ro'yxati/tanlovi yashiriladi.
    *
-   * DIQQAT: `useAuthStore((s) => s.user)` bu yerda joriy login qilgan
-   * userning profilini qaytaradi deb faraz qilinmoqda (Sidebar.tsx dagi
-   * isAdmin()/isDoctor() kabi flag'lar bilan bir xil store). Agar
-   * auth.store.ts da user obyekti boshqacha nomlangan bo'lsa
-   * (masalan useAuthStore((s) => s.currentUser)), shu qatorni almashtirish
-   * kifoya.
+   * auth.store.ts dagi `user` allaqachon getMe() natijasi bilan to'ldirilgan
+   * (login paytida setAuthData({user: me}) orqali) va sahifa ochilishda
+   * localStorage'dan sinxron hydrate bo'ladi — shuning uchun qo'shimcha
+   * so'rov (useGetProfile) shart emas, to'g'ridan-to'g'ri store'dan olinadi.
+   *
+   * Turli backend javoblarida ID maydoni `id`, `_id` yoki `userId` bo'lishi
+   * mumkin — barchasi tekshiriladi.
    */
   const isAdminRole = useAuthStore((s) => s.isAdmin());
   const isClinicAdminRole = useAuthStore((s) => s.isClinicAdmin());
   const isStaffAdmin = isAdminRole || isClinicAdminRole;
   const isDoctorRole = useAuthStore((s) => s.isDoctor());
+
   const currentUser = useAuthStore((s) => s.user);
   const ownDoctorId = currentUser
-    ? (currentUser as any)?.id ?? (currentUser as any)?._id ?? ""
+    ? (currentUser as any)?.id ??
+      (currentUser as any)?._id ??
+      (currentUser as any)?.userId ??
+      ""
     : "";
 
   /**
@@ -778,6 +783,24 @@ export default function DoctorSchedulePage() {
   const { data: doctors = [], isLoading: isDoctorsLoading } = useGetDoctors();
 
   /**
+   * MUHIM: Doctor role bilan kirilganda `useGetDoctors()` (masalan faqat
+   * admin/staff uchun ochiq endpoint bo'lsa) o'zini o'ziga qaytarmasligi
+   * mumkin — natijada "Role = DOCTOR bo'lgan hech qanday foydalanuvchi
+   * topilmadi" xatosi chiqadi, garchi auth.store'da (Header/Profile'da
+   * ko'ringandek) to'liq va to'g'ri user ma'lumoti bo'lsa ham.
+   *
+   * Shuning uchun isSelfOnlyMode'da `doctors` ro'yxatiga umuman
+   * tayanmasdan — agar u yerda o'zi topilmasa — auth.store'dagi
+   * `currentUser`dan "doctor"ga o'xshash obyekt qo'shib qo'yiladi.
+   */
+  const effectiveDoctors = useMemo(() => {
+    if (!isSelfOnlyMode) return doctors;
+    const alreadyIncluded = doctors.some((d: any) => getDoctorId(d) === ownDoctorId);
+    if (alreadyIncluded || !currentUser || !ownDoctorId) return doctors;
+    return [...doctors, currentUser as any];
+  }, [doctors, isSelfOnlyMode, ownDoctorId, currentUser]);
+
+  /**
    * Doctor tanlanganda, agar shu doctor uchun schedule (parent hujjat) allaqachon
    * mavjud bo'lsa — create emas, shu hujjatga update qilinishi kerak.
    */
@@ -807,7 +830,7 @@ export default function DoctorSchedulePage() {
    * o'zining nomi chiqadi, boshqa doctorlarni tanlay olmaydi.
    */
   const doctorOptions = useMemo(() => {
-    const roleFiltered = doctors.filter((d: any) => {
+    const roleFiltered = effectiveDoctors.filter((d: any) => {
       const roles: string[] = Array.isArray(d.roles)
         ? d.roles
         : d.role
@@ -821,7 +844,7 @@ export default function DoctorSchedulePage() {
     }
 
     return roleFiltered;
-  }, [doctors, isSelfOnlyMode, ownDoctorId]);
+  }, [effectiveDoctors, isSelfOnlyMode, ownDoctorId]);
 
   const createScheduleMutation = useCreateDoctorSchedule();
   const createWeeklyScheduleMutation = useCreateWeeklyDoctorSchedule();
@@ -834,12 +857,12 @@ export default function DoctorSchedulePage() {
 
   const doctorsMap = useMemo(() => {
     const map = new Map<string, any>();
-    doctors.forEach((d: any) => {
+    effectiveDoctors.forEach((d: any) => {
       const id = getDoctorId(d);
       if (id) map.set(id, d);
     });
     return map;
-  }, [doctors]);
+  }, [effectiveDoctors]);
 
   const flatSchedules = useMemo<FlatDoctorSchedule[]>(() => {
     const seen = new Set<string>();
