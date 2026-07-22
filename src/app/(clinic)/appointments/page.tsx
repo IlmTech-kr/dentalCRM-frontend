@@ -158,7 +158,7 @@ function getStatusLabel(status?: AppointmentStatus | string) {
 
 function Avatar({ name }: { name: string }) {
   return (
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-sm font-extrabold text-white shadow-lg shadow-blue-200">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-xs font-extrabold text-white shadow-sm">
       {getInitials(name)}
     </div>
   );
@@ -817,63 +817,111 @@ export default function AppointmentsPage() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-[2rem] border border-white bg-white shadow-sm">
-              <div className="divide-y divide-slate-100">
-                {paginatedAppointments.map((appointment, index) => {
-                  const appointmentId = getAppointmentId(appointment);
-                  const currentStatus = ((appointment as any).status as AppointmentStatus) || AppointmentStatus.SCHEDULED;
-                  const globalIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">#</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Patient</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Doctor</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Date</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Time</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Notes</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Status</th>
+                      <th className="px-5 py-3.5 text-right text-xs font-black uppercase tracking-wider text-slate-500">Actions</th>
+                    </tr>
+                  </thead>
 
-                  return (
-                    <article key={appointmentId || index} className="group transition hover:bg-slate-50/50">
-                      <div className="grid gap-0 lg:grid-cols-[1.4fr_1fr_auto]">
-                        <div className="flex gap-4 p-5 sm:p-6">
-                          <div className="flex flex-col items-center">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-base font-black text-white shadow-lg shadow-slate-300">
-                              {globalIndex}
-                            </div>
-                            <div className="mt-3 h-full w-px bg-slate-100" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
+                  <tbody className="divide-y divide-slate-100">
+                    {paginatedAppointments.map((appointment, index) => {
+                      const appointmentId = getAppointmentId(appointment);
+                      const currentStatus = ((appointment as any).status as AppointmentStatus) || AppointmentStatus.SCHEDULED;
+                      const globalIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
+
+                      return (
+                        <tr key={appointmentId || index} className="transition hover:bg-slate-50/60">
+                          <td className="px-5 py-4 align-middle text-sm font-bold text-slate-400">{globalIndex}</td>
+
+                          <td className="px-5 py-4 align-middle">
+                            <div className="flex items-center gap-3">
                               <Avatar name={(appointment as any).patientName} />
-                              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${getStatusClass(currentStatus)}`}>
-                                <span className={`h-2 w-2 rounded-full ${getStatusDotClass(currentStatus)}`} />
-                                {getStatusLabel(currentStatus)}
-                              </span>
+                              <p className="max-w-[180px] truncate text-sm font-black text-slate-950">
+                                {(appointment as any).patientName}
+                              </p>
                             </div>
-                            <h3 className="mt-4 truncate text-xl font-black text-slate-950">{(appointment as any).patientName}</h3>
-                            <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-500 sm:grid-cols-2">
-                              <span className="inline-flex items-center gap-2"><UserRound className="h-4 w-4 text-blue-600" />{(appointment as any).doctorName}</span>
-                              <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4 text-blue-600" />{appointment.appointmentDate}</span>
-                              <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4 text-blue-600" />{formatTime(appointment.startTime)}{(appointment as any).endTime ? ` - ${formatTime((appointment as any).endTime)}` : ""}</span>
-                            </div>
-                            {appointment.notes && (
-                              <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">{appointment.notes}</p>
+                          </td>
+
+                          <td className="px-5 py-4 align-middle">
+                            <span className="inline-flex max-w-[160px] items-center gap-1.5 truncate text-sm font-semibold text-slate-600">
+                              <UserRound className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              <span className="truncate">{(appointment as any).doctorName}</span>
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 align-middle">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                              <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              {appointment.appointmentDate}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 align-middle">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                              <Clock className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              {formatTime(appointment.startTime)}
+                              {(appointment as any).endTime ? ` - ${formatTime((appointment as any).endTime)}` : ""}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 align-middle">
+                            {appointment.notes ? (
+                              <p
+                                title={appointment.notes}
+                                className="max-w-[200px] truncate text-sm font-medium text-slate-500"
+                              >
+                                {appointment.notes}
+                              </p>
+                            ) : (
+                              <span className="text-sm text-slate-300">-</span>
                             )}
-                          </div>
-                        </div>
+                          </td>
 
-                        <div className="border-t border-slate-100 p-5 lg:border-l lg:border-t-0 sm:p-6">
-                          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">Change Status</label>
-                          <select value={currentStatus} disabled={changingStatusId === appointmentId} onChange={(e) => handleStatusChange(appointment, e.target.value as AppointmentStatus)} className={`w-full rounded-2xl border px-4 py-3 text-sm font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(currentStatus)}`}>
-                            {STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>{getStatusLabel(status)}</option>
-                            ))}
-                          </select>
-                        </div>
+                          <td className="px-5 py-4 align-middle">
+                            <select
+                              value={currentStatus}
+                              disabled={changingStatusId === appointmentId}
+                              onChange={(e) => handleStatusChange(appointment, e.target.value as AppointmentStatus)}
+                              className={`w-full min-w-[140px] rounded-xl border px-3 py-2 text-xs font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(currentStatus)}`}
+                            >
+                              {STATUS_OPTIONS.map((status) => (
+                                <option key={status} value={status}>{getStatusLabel(status)}</option>
+                              ))}
+                            </select>
+                          </td>
 
-                        <div className="flex items-center gap-2 border-t border-slate-100 p-5 lg:border-l lg:border-t-0 sm:p-6">
-                          <button type="button" onClick={() => openEditModal(appointment)} className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100">
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button type="button" onClick={() => handleDelete(appointment)} className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-700 transition hover:bg-red-100">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                          <td className="px-5 py-4 align-middle">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(appointment)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(appointment)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-700 transition hover:bg-red-100"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {/* Pagination */}
