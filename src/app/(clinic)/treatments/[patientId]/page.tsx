@@ -15,6 +15,10 @@
  * 7. DOCTOR rolida kirgan foydalanuvchi uchun "Shifokor" maydoni endi
  *    select emas — o'zi avtomatik tanlanadi va o'zgartirib bo'lmaydi.
  *    Boshqa rollar (admin, receptionist, assistant) uchun select qoladi.
+ * 8. Visit tarixida narx "0 so'm" va shifokor o'rniga ID chiqishi tuzatildi —
+ *    backend item narxini `price` emas `priceSnapshot` deb qaytaradi, va
+ *    visit ichida tayyor doctor obyekti kelmaydi (faqat doctorId) — endi
+ *    doctors ro'yxatidan (doctorsMap) nomi qidirib topiladi.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -120,15 +124,45 @@ function formatVisitDateTime(value?: string) {
   const min = String(date.getMinutes()).padStart(2, "0");
   return `${d}.${m}.${date.getFullYear()}, ${h}:${min}`;
 }
+
+/**
+ * Bitta visit item narxini o'qiydi. Backend hozircha narxni
+ * `priceSnapshot` deb qaytaradi (eski `price` fieldi ham bo'lishi mumkin —
+ * shuning uchun ikkalasi ham tekshiriladi).
+ */
+function getItemPrice(item: any): number {
+  return Number(item?.priceSnapshot ?? item?.price ?? 0);
+}
+
+/**
+ * Bitta visitning umumiy narxi. Avval tayyor `totalPrice`/`totalAmount`
+ * fieldlarini tekshiradi, bo'lmasa itemlar narxini (priceSnapshot) yig'adi.
+ */
 function getVisitTotal(visit: any) {
   if (typeof visit?.totalPrice === "number") return visit.totalPrice;
   if (typeof visit?.totalAmount === "number") return visit.totalAmount;
-  return (visit?.items || []).reduce((s: number, i: any) => s + Number(i?.price || 0), 0);
+  return (visit?.items || []).reduce((s: number, i: any) => s + getItemPrice(i), 0);
 }
-function getVisitDoctorName(visit: any) {
-  const doctor = visit?.doctor || visit?.doctorInfo;
-  const full = [doctor?.firstName, doctor?.lastName].filter(Boolean).join(" ").trim();
-  return visit?.doctorName || doctor?.fullName || full || visit?.doctorId || "-";
+
+/**
+ * Visit ichida tayyor doctor obyekti kelmaydi — faqat `doctorId` bor.
+ * Shuning uchun `doctorsMap` orqali ismi qidirib topiladi; topilmasa
+ * (masalan doctor keyinchalik o'chirilgan bo'lsa) ID ko'rsatiladi.
+ */
+function getVisitDoctorName(visit: any, doctorsMap?: Map<string, any>) {
+  const embeddedDoctor = visit?.doctor || visit?.doctorInfo;
+  if (embeddedDoctor) {
+    const full = [embeddedDoctor.firstName, embeddedDoctor.lastName].filter(Boolean).join(" ").trim();
+    if (visit?.doctorName || embeddedDoctor.fullName || full) {
+      return visit.doctorName || embeddedDoctor.fullName || full;
+    }
+  }
+  const fromMap = doctorsMap?.get(visit?.doctorId);
+  if (fromMap) {
+    const full = [fromMap.firstName, fromMap.lastName].filter(Boolean).join(" ").trim();
+    return fromMap.fullName || full || visit?.doctorId || "-";
+  }
+  return visit?.doctorId || "-";
 }
 function nowLocalIso() {
   const now = new Date();
@@ -524,6 +558,19 @@ export default function TreatmentPatientPage() {
 
   const { data: allStaff = [] } = useGetDoctors();
   const doctors = allStaff.filter((s: any) => s.roles?.includes(Role.DOCTOR));
+
+  /**
+   * Visit tarixida faqat `doctorId` keladi (tayyor doctor obyekti yo'q),
+   * shuning uchun ismni shu map orqali qidiramiz.
+   */
+  const doctorsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    allStaff.forEach((d: any) => {
+      const id = getId(d);
+      if (id) map.set(id, d);
+    });
+    return map;
+  }, [allStaff]);
 
   const [activeTab, setActiveTab] = useState<TreatmentTab>("CHART");
   const [courseStatusFilter, setCourseStatusFilter] = useState<CourseStatusFilter>("ACTIVE");
@@ -1092,7 +1139,7 @@ export default function TreatmentPatientPage() {
                         <p className="text-sm font-bold text-[#35a8f5]">{formatMoney(getVisitTotal(visit))}</p>
                       </div>
                       <p className="mt-2 text-sm text-slate-600">
-                        <span className="font-semibold">Shifokor:</span> {getVisitDoctorName(visit)}
+                        <span className="font-semibold">Shifokor:</span> {getVisitDoctorName(visit, doctorsMap)}
                       </p>
                       {visit.doctorNotes && (
                         <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
@@ -1104,8 +1151,10 @@ export default function TreatmentPatientPage() {
                           {visit.items.map((item: any, i: number) => (
                             <div key={i} className="rounded-lg bg-slate-50 p-2.5">
                               <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
-                              <p className="text-xs text-slate-500">{item.note}</p>
-                              <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(Number(item.price || 0))}</p>
+                              <p className="text-xs text-slate-500">
+                                {item.note || item.procedureNameSnapshot}
+                              </p>
+                              <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(getItemPrice(item))}</p>
                             </div>
                           ))}
                         </div>
