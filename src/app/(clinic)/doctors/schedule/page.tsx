@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -31,7 +31,6 @@ import type {
 import { DayOfWeek } from "@/src/lib/enums/enums.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { useToast } from "@/src/lib/hooks/Usetoast";
-import { useAuthStore } from "@/src/store/auth.store";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -730,35 +729,14 @@ export default function DoctorSchedulePage() {
   const limit = 20;
 
   /**
-   * Doctor rolidagi user faqat O'ZINING schedule'ini ko'rishi va
-   * boshqarishi kerak — boshqa doctorlar ro'yxati/tanlovi yashiriladi.
-   *
-   * auth.store.ts dagi `user` allaqachon getMe() natijasi bilan to'ldirilgan
-   * (login paytida setAuthData({user: me}) orqali) va sahifa ochilishda
-   * localStorage'dan sinxron hydrate bo'ladi — shuning uchun qo'shimcha
-   * so'rov (useGetProfile) shart emas, to'g'ridan-to'g'ri store'dan olinadi.
-   *
-   * Turli backend javoblarida ID maydoni `id`, `_id` yoki `userId` bo'lishi
-   * mumkin — barchasi tekshiriladi.
+   * MUHIM: bu sahifa endi FAQAT admin/staff (CLINIC_ADMIN, SUPER_ADMIN)
+   * uchun — Sidebar'da ham shu sahifaga link faqat isStaffAdmin bo'lsa
+   * chiqadi. Doctor role uchun butunlay alohida /my-schedule sahifasi bor
+   * (useGetDoctors umuman chaqirilmaydi, faqat auth.store + o'z
+   * schedule'i). Shuning uchun bu yerda "isSelfOnlyMode" kabi doctor-role
+   * shartlari kerak emas — sahifa doim to'liq doctorlar ro'yxatini
+   * ko'rsatadi.
    */
-  const isAdminRole = useAuthStore((s) => s.isAdmin());
-  const isClinicAdminRole = useAuthStore((s) => s.isClinicAdmin());
-  const isStaffAdmin = isAdminRole || isClinicAdminRole;
-  const isDoctorRole = useAuthStore((s) => s.isDoctor());
-
-  const currentUser = useAuthStore((s) => s.user);
-  const ownDoctorId = currentUser
-    ? (currentUser as any)?.id ??
-      (currentUser as any)?._id ??
-      (currentUser as any)?.userId ??
-      ""
-    : "";
-
-  /**
-   * Faqat o'z schedule'ini ko'radigan/boshqaradigan rejim:
-   * doctor role bo'lib, staff admin bo'lmasa yoqiladi.
-   */
-  const isSelfOnlyMode = isDoctorRole && !isStaffAdmin;
 
   const [pageView, setPageView] = useState<PageView>("cards");
   const [calendarDoctorId, setCalendarDoctorId] = useState<string | null>(null);
@@ -781,24 +759,6 @@ export default function DoctorSchedulePage() {
   } = useGetDoctorSchedules(page, limit);
 
   const { data: doctors = [], isLoading: isDoctorsLoading } = useGetDoctors();
-
-  /**
-   * MUHIM: Doctor role bilan kirilganda `useGetDoctors()` (masalan faqat
-   * admin/staff uchun ochiq endpoint bo'lsa) o'zini o'ziga qaytarmasligi
-   * mumkin — natijada "Role = DOCTOR bo'lgan hech qanday foydalanuvchi
-   * topilmadi" xatosi chiqadi, garchi auth.store'da (Header/Profile'da
-   * ko'ringandek) to'liq va to'g'ri user ma'lumoti bo'lsa ham.
-   *
-   * Shuning uchun isSelfOnlyMode'da `doctors` ro'yxatiga umuman
-   * tayanmasdan — agar u yerda o'zi topilmasa — auth.store'dagi
-   * `currentUser`dan "doctor"ga o'xshash obyekt qo'shib qo'yiladi.
-   */
-  const effectiveDoctors = useMemo(() => {
-    if (!isSelfOnlyMode) return doctors;
-    const alreadyIncluded = doctors.some((d: any) => getDoctorId(d) === ownDoctorId);
-    if (alreadyIncluded || !currentUser || !ownDoctorId) return doctors;
-    return [...doctors, currentUser as any];
-  }, [doctors, isSelfOnlyMode, ownDoctorId, currentUser]);
 
   /**
    * Doctor tanlanganda, agar shu doctor uchun schedule (parent hujjat) allaqachon
@@ -825,12 +785,9 @@ export default function DoctorSchedulePage() {
   /**
    * Faqat role = "DOCTOR" bo'lgan userlar schedule create qila oladi.
    * Boshqa xodimlar (admin, reception va h.k.) doctor select dropdownida chiqmaydi.
-   *
-   * isSelfOnlyMode (doctor o'zi kirgan bo'lsa) — dropdownda faqat
-   * o'zining nomi chiqadi, boshqa doctorlarni tanlay olmaydi.
    */
   const doctorOptions = useMemo(() => {
-    const roleFiltered = effectiveDoctors.filter((d: any) => {
+    return doctors.filter((d: any) => {
       const roles: string[] = Array.isArray(d.roles)
         ? d.roles
         : d.role
@@ -838,13 +795,7 @@ export default function DoctorSchedulePage() {
         : [];
       return roles.includes("DOCTOR") && d.status !== "DELETED";
     });
-
-    if (isSelfOnlyMode) {
-      return roleFiltered.filter((d: any) => getDoctorId(d) === ownDoctorId);
-    }
-
-    return roleFiltered;
-  }, [effectiveDoctors, isSelfOnlyMode, ownDoctorId]);
+  }, [doctors]);
 
   const createScheduleMutation = useCreateDoctorSchedule();
   const createWeeklyScheduleMutation = useCreateWeeklyDoctorSchedule();
@@ -857,12 +808,12 @@ export default function DoctorSchedulePage() {
 
   const doctorsMap = useMemo(() => {
     const map = new Map<string, any>();
-    effectiveDoctors.forEach((d: any) => {
+    doctors.forEach((d: any) => {
       const id = getDoctorId(d);
       if (id) map.set(id, d);
     });
     return map;
-  }, [effectiveDoctors]);
+  }, [doctors]);
 
   const flatSchedules = useMemo<FlatDoctorSchedule[]>(() => {
     const seen = new Set<string>();
@@ -945,10 +896,6 @@ export default function DoctorSchedulePage() {
     let palIdx = 0;
 
     enrichedSchedules.forEach((s) => {
-      // isSelfOnlyMode: doctor faqat o'z schedule guruhini ko'radi,
-      // boshqa doctorlarning yozuvlari umuman group'ga qo'shilmaydi.
-      if (isSelfOnlyMode && s.doctorId !== ownDoctorId) return;
-
       if (!map.has(s.doctorId)) {
         map.set(s.doctorId, {
           doctorId: s.doctorId,
@@ -961,13 +908,12 @@ export default function DoctorSchedulePage() {
     });
 
     return Array.from(map.values());
-  }, [enrichedSchedules, isSelfOnlyMode, ownDoctorId]);
+  }, [enrichedSchedules]);
 
   const filteredSchedules = useMemo(() => {
     const value = search.trim().toLowerCase();
     return enrichedSchedules
       .filter((s) => {
-        if (isSelfOnlyMode && s.doctorId !== ownDoctorId) return false;
         if (selectedDay !== "ALL" && s.dayOfWeek !== selectedDay) return false;
         if (!value) return true;
         return (
@@ -985,7 +931,7 @@ export default function DoctorSchedulePage() {
           normalizeScheduleTime(b.startTime)
         );
       });
-  }, [enrichedSchedules, selectedDay, search, isSelfOnlyMode, ownDoctorId]);
+  }, [enrichedSchedules, selectedDay, search]);
 
   /**
    * MUHIM: Doctors kartalar grid'i shu vaqtgacha filterlanmagan `doctorGroups`
@@ -1018,18 +964,6 @@ export default function DoctorSchedulePage() {
     [doctorGroups, calendarDoctorId]
   );
 
-  /**
-   * isSelfOnlyMode: doctor login qilganda "Doctors" kartalar ro'yxatini
-   * ko'rsatmasdan, to'g'ridan-to'g'ri o'zining haftalik calendar
-   * ko'rinishiga olib o'tiladi.
-   */
-  useEffect(() => {
-    if (isSelfOnlyMode && ownDoctorId) {
-      setCalendarDoctorId(ownDoctorId);
-      setPageView("calendar");
-    }
-  }, [isSelfOnlyMode, ownDoctorId]);
-
   // ── Actions ──
 
   function openCreateModal(prefillDoctorId?: string) {
@@ -1038,7 +972,7 @@ export default function DoctorSchedulePage() {
     setSelectedDays([]);
     setForm({
       ...initialForm,
-      doctorId: prefillDoctorId ?? (isSelfOnlyMode ? ownDoctorId : ""),
+      doctorId: prefillDoctorId ?? "",
     });
     setIsModalOpen(true);
   }
@@ -1186,13 +1120,9 @@ export default function DoctorSchedulePage() {
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">
-                  {isSelfOnlyMode ? "My Schedule" : "Doctor Schedule"}
-                </h1>
+                <h1 className="text-2xl font-extrabold text-slate-900">Doctor Schedule</h1>
                 <p className="text-sm font-medium text-slate-500">
-                  {isSelfOnlyMode
-                    ? "Manage your own working days and appointment slots."
-                    : "Manage doctors working days and appointment slots."}
+                  Manage doctors working days and appointment slots.
                 </p>
               </div>
             </div>
@@ -1221,9 +1151,6 @@ export default function DoctorSchedulePage() {
             </div>
           </div>
 
-          {/* isSelfOnlyMode: doctorda faqat bitta ("o'zi") schedule bo'lgani uchun
-              Doctors/Calendar tab toggle keraksiz — shuning uchun yashiriladi. */}
-          {!isSelfOnlyMode && (
           <div className="mt-4 flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
             {(["cards", "calendar"] as PageView[]).map((v) => (
               <button
@@ -1240,7 +1167,6 @@ export default function DoctorSchedulePage() {
               </button>
             ))}
           </div>
-          )}
         </div>
       </div>
 
@@ -1271,29 +1197,7 @@ export default function DoctorSchedulePage() {
             onBack={backToCards}
             onEdit={openEditModal}
             onAddSchedule={() => openCreateModal(activeCalendarGroup.doctorId)}
-            showBackButton={!isSelfOnlyMode}
           />
-        ) : isSelfOnlyMode ? (
-          // Doctorda hali umuman schedule yo'q — soddalashtirilgan holat
-          <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
-              <CalendarDays className="h-7 w-7" />
-            </div>
-            <p className="text-lg font-extrabold text-slate-900">
-              Sizda hali schedule mavjud emas
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              Ish kunlaringizni belgilash uchun schedule yarating.
-            </p>
-            <button
-              type="button"
-              onClick={() => openCreateModal()}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              Schedule yaratish
-            </button>
-          </div>
         ) : (
           <>
             <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

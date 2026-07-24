@@ -82,10 +82,12 @@ function buildNavItems({
 
   // Doctor role uchun alohida "My Schedule" link — Doctors bo'limisiz,
   // to'g'ridan-to'g'ri o'zining schedule sahifasiga olib boradi.
-  // /doctors/schedule sahifasi doctor uchun avtomatik faqat o'z
-  // schedule'ini ko'rsatadigan qilib cheklangan.
+  // Doctor role uchun alohida "My Schedule" link — /doctors/schedule
+  // (admin sahifasi, useGetDoctors chaqiradi) dan MUSTAQIL sahifa:
+  // /my-schedule useGetDoctors'ni umuman chaqirmaydi, faqat auth.store
+  // va useGetDoctorSchedules'dan foydalanadi.
   if (isDoctor) {
-    items.push({ href: "/doctors/schedule", label: "My Schedule", icon: Clock });
+    items.push({ href: "/my-schedule", label: "My Schedule", icon: Clock });
   }
 
   items.push({ href: "/appointments", label: "Appointments", icon: CalendarDays });
