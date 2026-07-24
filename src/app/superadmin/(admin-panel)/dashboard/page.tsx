@@ -1030,7 +1030,7 @@ function ClinicDetailModal({
           <DetailSection
             title="Subscription ma’lumotlari"
             data={
-              subscription as DetailData
+              subscription as any
             }
             hiddenKeys={
               HIDDEN_SUBSCRIPTION_FIELDS

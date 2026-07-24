@@ -16,11 +16,8 @@ import * as api from "./subscriptions-admin.service";
 import type {
   ActivateSubscriptionPayload,
   TenantListParams,
+  UpdateSubscriptionPlanPayload,
 } from "./subscriptions-admin.service";
-
-/* =====================================================
- * TENANTS
- * ===================================================== */
 
 export function useTenants(
   params: TenantListParams = {}
@@ -31,17 +28,10 @@ export function useTenants(
       "tenants",
       params,
     ],
-
     queryFn: () =>
       api.getTenants(params),
-
-    staleTime: 30_000,
   });
 }
-
-/* =====================================================
- * SUSPEND TENANT
- * ===================================================== */
 
 export function useSuspendTenant() {
   const queryClient =
@@ -51,9 +41,7 @@ export function useSuspendTenant() {
     mutationFn: (
       tenantId: string
     ) =>
-      api.suspendTenant(
-        tenantId
-      ),
+      api.suspendTenant(tenantId),
 
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -62,20 +50,9 @@ export function useSuspendTenant() {
           "tenants",
         ],
       });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "superadmin",
-          "clinics",
-        ],
-      });
     },
   });
 }
-
-/* =====================================================
- * TENANT LIMITS
- * ===================================================== */
 
 export function useTenantLimits(
   tenantId: string | null
@@ -92,17 +69,9 @@ export function useTenantLimits(
         tenantId as string
       ),
 
-    enabled: Boolean(
-      tenantId
-    ),
-
-    staleTime: 30_000,
+    enabled: Boolean(tenantId),
   });
 }
-
-/* =====================================================
- * UPDATE LIMITS
- * ===================================================== */
 
 export function useUpdateTenantLimits() {
   const queryClient =
@@ -114,10 +83,7 @@ export function useUpdateTenantLimits() {
       payload,
     }: {
       tenantId: string;
-      payload: Record<
-        string,
-        unknown
-      >;
+      payload: Record<string, unknown>;
     }) =>
       api.updateTenantLimits(
         tenantId,
@@ -133,13 +99,6 @@ export function useUpdateTenantLimits() {
           "superadmin",
           "tenant-limits",
           variables.tenantId,
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "superadmin",
-          "tenants",
         ],
       });
     },
@@ -159,8 +118,6 @@ export function usePlans() {
 
     queryFn: () =>
       api.getPlans(),
-
-    staleTime: 60_000,
   });
 }
 
@@ -179,16 +136,51 @@ export function usePlan(
         planType as string
       ),
 
-    enabled: Boolean(
-      planType
-    ),
+    enabled: Boolean(planType),
+  });
+}
 
-    staleTime: 60_000,
+export function useUpdatePlan() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      planType,
+      payload,
+    }: {
+      planType: string;
+      payload: UpdateSubscriptionPlanPayload;
+    }) =>
+      api.updatePlan(
+        planType,
+        payload
+      ),
+
+    onSuccess: async (
+      _data,
+      variables
+    ) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "superadmin",
+          "plans",
+        ],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "superadmin",
+          "plan",
+          variables.planType,
+        ],
+      });
+    },
   });
 }
 
 /* =====================================================
- * ACTIVATE SUBSCRIPTION
+ * ACTIVATE
  * ===================================================== */
 
 export function useActivateSubscription() {
@@ -203,29 +195,11 @@ export function useActivateSubscription() {
         payload
       ),
 
-    onSuccess: async (
-      _data,
-      variables
-    ) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: [
           "superadmin",
           "tenants",
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "superadmin",
-          "tenant-limits",
-          variables.tenantId,
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "superadmin",
-          "clinics",
         ],
       });
     },
