@@ -66,14 +66,25 @@ function formatDisplayDate(d: Date) {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function formatMoney(amount: number) {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`;
-  return amount.toLocaleString();
+/**
+ * MUHIM: `amount` backend'dan `undefined`/`null` bo'lib kelishi mumkin
+ * (masalan revenue statistikasi hali hisoblanmagan doctor uchun, yoki
+ * commission/salary maydoni bo'sh bo'lsa). Shuning uchun ikkala money
+ * formatter ham avval xavfsiz songa (`Number(amount) || 0`) o'giradi —
+ * aks holda `undefined.toLocaleString()` xatosi ("Cannot read properties
+ * of undefined (reading 'toLocaleString')") Array.map ichida sahifani
+ * butunlay buzib qo'yardi.
+ */
+function formatMoney(amount?: number | null) {
+  const value = Number(amount) || 0;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return value.toLocaleString();
 }
 
-function formatFullMoney(amount: number) {
-  return `${amount.toLocaleString()} so'm`;
+function formatFullMoney(amount?: number | null) {
+  const value = Number(amount) || 0;
+  return `${value.toLocaleString()} so'm`;
 }
 
 function getDoctorId(doctor: any) {
@@ -131,7 +142,7 @@ function RevenueChart({
   data: { period: string; revenue: number }[];
   filter: RevenueFilterType;
 }) {
-  const max = Math.max(...data.map((d) => d.revenue), 1);
+  const max = Math.max(...data.map((d) => Number(d.revenue) || 0), 1);
 
   function label(period: string) {
     if (filter === "DAY") return period.slice(5);   // MM-DD
@@ -141,16 +152,19 @@ function RevenueChart({
 
   return (
     <div className="flex h-44 items-end gap-1.5 overflow-x-auto pb-1">
-      {data.map((d) => (
-        <div key={d.period} className="flex min-w-[28px] flex-1 flex-col items-center gap-1">
-          <span className="text-[10px] text-slate-400">{formatMoney(d.revenue)}</span>
-          <div
-            className="w-full rounded-t-md bg-[#35a8f5] transition-all"
-            style={{ height: `${Math.max((d.revenue / max) * 140, 4)}px` }}
-          />
-          <span className="text-[9px] text-slate-400">{label(d.period)}</span>
-        </div>
-      ))}
+      {data.map((d) => {
+        const value = Number(d.revenue) || 0;
+        return (
+          <div key={d.period} className="flex min-w-[28px] flex-1 flex-col items-center gap-1">
+            <span className="text-[10px] text-slate-400">{formatMoney(value)}</span>
+            <div
+              className="w-full rounded-t-md bg-[#35a8f5] transition-all"
+              style={{ height: `${Math.max((value / max) * 140, 4)}px` }}
+            />
+            <span className="text-[9px] text-slate-400">{label(d.period)}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -221,7 +235,7 @@ function DoctorRevenueRow({
         {formatFullMoney(item.revenue)}
       </td>
       <td className="px-4 py-3 text-sm text-text-light">
-        {item.transactionCount} ta
+        {item.transactionCount ?? 0} ta
       </td>
       <td className="px-4 py-3">
         <span
@@ -232,7 +246,7 @@ function DoctorRevenueRow({
           }`}
         >
           {item.compensationType === "PERCENTAGE"
-            ? `${item.commissionPercentage}%`
+            ? `${item.commissionPercentage ?? 0}%`
             : "Oylik"}
         </span>
       </td>
@@ -284,7 +298,7 @@ function PayrollDoctorRow({
       </td>
       <td className="px-4 py-3 text-sm text-text-light">
         {item.compensationType === "PERCENTAGE"
-          ? `${item.commissionPercentage}%`
+          ? `${item.commissionPercentage ?? 0}%`
           : "-"}
       </td>
       <td className="px-4 py-3 text-sm font-bold text-dark-navy">
