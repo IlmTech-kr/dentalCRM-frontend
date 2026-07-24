@@ -1,20 +1,47 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getClinics, getClinic } from "./clinics.admin.service";
-import type { ClinicListParams } from "./clinics.admin.service";
+/**
+ * File:
+ * src/features/superadmin/clinics/UseClinicsAdmin.ts
+ */
 
-export function useClinics(params: ClinicListParams) {
+import { useQuery } from "@tanstack/react-query";
+
+import {
+  getClinic,
+  getClinics,
+} from "./clinics.admin.service";
+
+import type {
+  ClinicListParams,
+} from "./clinics.admin.service";
+
+export function useClinics(
+  params: ClinicListParams = {}
+) {
   return useQuery({
-    queryKey: ["superadmin", "clinics", params],
+    queryKey: [
+      "superadmin",
+      "clinics",
+      params,
+    ],
     queryFn: () => getClinics(params),
+    staleTime: 30_000,
   });
 }
 
-export function useClinic(id: string | null) {
+export function useClinic(
+  clinicId: string | null
+) {
   return useQuery({
-    queryKey: ["superadmin", "clinic", id],
-    queryFn: () => getClinic(id as string),
-    enabled: Boolean(id),
+    queryKey: [
+      "superadmin",
+      "clinic",
+      clinicId,
+    ],
+    queryFn: () =>
+      getClinic(clinicId as string),
+    enabled: Boolean(clinicId),
+    staleTime: 30_000,
   });
 }
