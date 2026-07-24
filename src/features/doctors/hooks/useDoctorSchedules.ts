@@ -12,8 +12,11 @@ import {
   createDoctorSchedule,
   createWeeklyDoctorSchedule,
   updateDoctorSchedule,
+  updateDoctorScheduleByDay,
   deleteDoctorSchedule,
 } from "../services/doctor-schedule.service";
+
+import type { UpdateScheduleByDayPayload } from "../services/doctor-schedule.service";
 
 import { useAuthStore } from "@/src/store/auth.store";
 
@@ -62,6 +65,9 @@ export function useGetDoctorSchedule(scheduleId: string | null) {
   });
 }
 
+/**
+ * @deprecated Yangi kod uchun useUpdateScheduleByDay ishlatilsin.
+ */
 export function useCreateDoctorSchedule() {
   const queryClient = useQueryClient();
 
@@ -74,6 +80,9 @@ export function useCreateDoctorSchedule() {
   });
 }
 
+/**
+ * @deprecated Yangi kod uchun useUpdateScheduleByDay ishlatilsin.
+ */
 export function useCreateWeeklyDoctorSchedule() {
   const queryClient = useQueryClient();
 
@@ -86,6 +95,9 @@ export function useCreateWeeklyDoctorSchedule() {
   });
 }
 
+/**
+ * @deprecated Yangi kod uchun useUpdateScheduleByDay ishlatilsin.
+ */
 export function useUpdateDoctorSchedule(scheduleId: string) {
   const queryClient = useQueryClient();
 
@@ -98,6 +110,27 @@ export function useUpdateDoctorSchedule(scheduleId: string) {
         updatedSchedule
       );
 
+      queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
+    },
+  });
+}
+
+/**
+ * PUT /api/dental/doctor-schedules/by-day
+ *
+ * Butun haftalik schedule'ni BIR SO'ROVDA to'liq belgilaydi/yangilaydi.
+ * - Doctor o'zi chaqirsa: payload.doctorId bermang (undefined qoldiring) —
+ *   backend joriy login qilgan userni token orqali aniqlaydi.
+ * - CLINIC_ADMIN/SUPER_ADMIN boshqa doctor uchun chaqirsa: payload.doctorId
+ *   MAJBURIY.
+ */
+export function useUpdateScheduleByDay() {
+  const queryClient = useQueryClient();
+
+  return useMutation<DoctorSchedule, Error, UpdateScheduleByDayPayload>({
+    mutationFn: updateDoctorScheduleByDay,
+
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: doctorScheduleKeys.lists() });
     },
   });

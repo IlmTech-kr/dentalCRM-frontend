@@ -49,6 +49,12 @@ export const ENDPOINTS = {
     createWeekly: "/api/dental/doctor-schedules/weekly",
     update: (id: string) => `/api/dental/doctor-schedules/${id}`,
     delete: (id: string) => `/api/dental/doctor-schedules/${id}`,
+    /**
+     * PUT /api/dental/doctor-schedules/by-day
+     * Butun haftalik schedule'ni bir so'rovda to'liq belgilaydi/yangilaydi.
+     * Body: { doctorId? (admin boshqa doctor uchun majburiy), days: [...] }
+     */
+    byDay: "/api/dental/doctor-schedules/by-day",
   },
 
   appointments: {

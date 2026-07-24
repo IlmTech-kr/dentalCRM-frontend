@@ -29,6 +29,26 @@ function normalizeTime(time?: string | null): string {
 }
 
 // ---------------------------------------------------------------------------
+// by-day types
+// ---------------------------------------------------------------------------
+
+export interface DoctorScheduleDayInput {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+}
+
+export interface UpdateScheduleByDayPayload {
+  /**
+   * Doctor o'zi update qilsa — YUBORILMAYDI (backend token orqali aniqlaydi).
+   * CLINIC_ADMIN/SUPER_ADMIN boshqa doctor uchun update qilsa — MAJBURIY.
+   */
+  doctorId?: string;
+  days: DoctorScheduleDayInput[];
+}
+
+// ---------------------------------------------------------------------------
 // Response normalizers
 // ---------------------------------------------------------------------------
 
@@ -121,6 +141,9 @@ export async function getDoctorScheduleById(
 
 /**
  * POST /api/dental/doctor-schedules
+ * @deprecated Yangi kod uchun updateDoctorScheduleByDay ishlatilsin.
+ * Eski bitta-kunlik create hali boshqa joylarda ishlatilayotgan bo'lishi
+ * mumkin bo'lgani uchun olib tashlanmadi.
  */
 export async function createDoctorSchedule(
   payload: DoctorSchedulePayload
@@ -146,6 +169,7 @@ export async function createDoctorSchedule(
 
 /**
  * POST /api/dental/doctor-schedules/weekly
+ * @deprecated Yangi kod uchun updateDoctorScheduleByDay ishlatilsin.
  */
 export async function createWeeklyDoctorSchedule(
   payload: WeeklyDoctorSchedulePayload
@@ -173,6 +197,7 @@ export async function createWeeklyDoctorSchedule(
 
 /**
  * PUT /api/dental/doctor-schedules/:id
+ * @deprecated Yangi kod uchun updateDoctorScheduleByDay ishlatilsin.
  */
 export async function updateDoctorSchedule(
   scheduleId: string,
@@ -194,6 +219,40 @@ export async function updateDoctorSchedule(
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[Doctor Schedule Service] updateDoctorSchedule failed:", getApiErrorMessage(error));
+    }
+
+    throw new Error(getApiErrorMessage(error, "Failed to update schedule"));
+  }
+}
+
+/**
+ * PUT /api/dental/doctor-schedules/by-day
+ *
+ * Butun haftalik schedule'ni BIR SO'ROVDA to'liq belgilaydi/yangilaydi
+ * (7 kunning barchasi yuboriladi — mavjud bo'lmagan/o'chirilgan kunlar
+ * active:false bilan qaytariladi).
+ *
+ * - Doctor o'zi update qilsa: `doctorId` YUBORILMAYDI (token orqali aniqlanadi).
+ * - CLINIC_ADMIN/SUPER_ADMIN boshqa doctor uchun update qilsa: `doctorId` MAJBURIY.
+ */
+export async function updateDoctorScheduleByDay(
+  payload: UpdateScheduleByDayPayload
+): Promise<DoctorSchedule> {
+  try {
+    const response = await tenantHttp().put("/api/dental/doctor-schedules/by-day", {
+      ...(payload.doctorId ? { doctorId: payload.doctorId } : {}),
+      days: payload.days.map((day) => ({
+        dayOfWeek: day.dayOfWeek,
+        startTime: normalizeTime(day.startTime) || "00:00",
+        endTime: normalizeTime(day.endTime) || "00:00",
+        active: Boolean(day.active),
+      })),
+    });
+
+    return normalizeDoctorSchedule(response.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Doctor Schedule Service] updateDoctorScheduleByDay failed:", getApiErrorMessage(error));
     }
 
     throw new Error(getApiErrorMessage(error, "Failed to update schedule"));
