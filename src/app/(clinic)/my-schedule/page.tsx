@@ -6,21 +6,37 @@
  * Doctor role uchun MUSTAQIL sahifa — /doctors/schedule (admin sahifasi)
  * dan butunlay ajratilgan. useGetDoctors() UMUMAN chaqirilmaydi.
  *
- * PUT /api/dental/doctor-schedules/by-day orqali BUTUN hafta bir so'rovda
- * yuboriladi. Doctor o'zi update qilgani uchun `doctorId` YUBORILMAYDI —
- * backend joriy login qilgan userni token orqali aniqlaydi.
+ * Backend kontraktlari admin sahifasi bilan bir xil:
+ * - EDIT (schedule allaqachon mavjud) → PUT /doctor-schedules/by-day
+ *   { days: [...] } — doctorId YUBORILMAYDI, backend token orqali aniqlaydi.
+ * - CREATE + Weekly (schedule hali yo'q) → POST /doctor-schedules/weekly
+ *   { doctorId, startTime, endTime, active }
+ * - CREATE + Daily (schedule hali yo'q) → POST /doctor-schedules (har bir
+ *   tanlangan kun uchun alohida so'rov)
+ *   { doctorId, dayOfWeek, startTime, endTime, slotDurationMinutes, active }
+ *
+ * MUHIM: create endpointlari (weekly/daily) doctorId talab qiladi — bu
+ * yerda "boshqa doctor uchun" emas, "o'zining ID'sini yuborish" ma'nosida
+ * ishlatiladi (backend buni token bilan solishtirib tekshiradi deb
+ * taxmin qilinmoqda). Faqat by-day (edit) so'rovida doctorId shart emas.
  */
 
 import { FormEvent, useMemo, useState } from "react";
 import { CalendarDays, Clock, Edit2, Loader2, Plus, RefreshCcw, Trash2, X } from "lucide-react";
 
 import {
+  useCreateDoctorSchedule,
+  useCreateWeeklyDoctorSchedule,
   useDeleteDoctorSchedule,
   useGetDoctorSchedules,
   useUpdateScheduleByDay,
 } from "@/src/features/doctors/hooks/useDoctorSchedules";
 
-import type { DoctorSchedule } from "@/src/types/doctor-schedule.types";
+import type {
+  DoctorSchedule,
+  DoctorSchedulePayload,
+  WeeklyDoctorSchedulePayload,
+} from "@/src/types/doctor-schedule.types";
 
 import { DayOfWeek } from "@/src/lib/enums/enums.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
@@ -40,8 +56,11 @@ const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
 ];
 
 const CALENDAR_HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00–18:00
+const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type CreateMode = "WEEKLY" | "DAILY";
 
 type DayRow = {
   dayOfWeek: DayOfWeek;
@@ -57,6 +76,10 @@ function normalizeScheduleTime(time?: string | null): string {
   const value = String(time).trim();
   if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 5);
   return value;
+}
+
+function getDayShort(day?: DayOfWeek | string): string {
+  return DAYS.find((d) => d.value === day)?.short ?? String(day ?? "-");
 }
 
 function getDoctorInitials(name: string): string {
@@ -96,28 +119,53 @@ function buildDayRowsFromSchedules(schedules: DoctorSchedule[], ownDoctorId: str
   });
 }
 
-// ─── Week editor modal (doctor select yo'q) ───────────────────────────────────
+// ─── Week editor modal (EDIT: har kuni alohida / CREATE: Weekly yoki Daily) ──
 
 interface WeekEditorModalProps {
   open: boolean;
+  hasExistingSchedule: boolean;
+
+  // EDIT mode
   dayRows: DayRow[];
   onChangeDayRows: (rows: DayRow[]) => void;
+
+  // CREATE mode
+  createMode: CreateMode;
+  onCreateModeChange: (mode: CreateMode) => void;
+  createStartTime: string;
+  createEndTime: string;
+  onCreateStartTimeChange: (v: string) => void;
+  onCreateEndTimeChange: (v: string) => void;
+  createSelectedDays: DayOfWeek[];
+  onToggleCreateDay: (day: DayOfWeek) => void;
+  createSlotDuration: number;
+  onCreateSlotDurationChange: (v: number) => void;
+
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  hasExistingSchedule: boolean;
   onDeleteSchedule: () => void;
   isDeleting: boolean;
 }
 
 function WeekEditorModal({
   open,
+  hasExistingSchedule,
   dayRows,
   onChangeDayRows,
+  createMode,
+  onCreateModeChange,
+  createStartTime,
+  createEndTime,
+  onCreateStartTimeChange,
+  onCreateEndTimeChange,
+  createSelectedDays,
+  onToggleCreateDay,
+  createSlotDuration,
+  onCreateSlotDurationChange,
   isSubmitting,
   onClose,
   onSubmit,
-  hasExistingSchedule,
   onDeleteSchedule,
   isDeleting,
 }: WeekEditorModalProps) {
@@ -137,9 +185,13 @@ function WeekEditorModal({
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">My Weekly Schedule</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900">
+                {hasExistingSchedule ? "Edit My Weekly Schedule" : "Create My Schedule"}
+              </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
-                Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi.
+                {hasExistingSchedule
+                  ? "Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi."
+                  : "Ish vaqtingizni butun hafta (Weekly) yoki aniq kunlar (Daily) bo'yicha belgilang."}
               </p>
             </div>
             <button
@@ -153,45 +205,146 @@ function WeekEditorModal({
         </div>
 
         <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
-          <div className="space-y-2.5">
-            {DAYS.map((day, index) => {
-              const row = dayRows[index];
-              return (
-                <div
-                  key={day.value}
-                  className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
-                    row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+          {hasExistingSchedule ? (
+            // ── EDIT: har kuni alohida qator (mavjud holat) ──
+            <div className="space-y-2.5">
+              {DAYS.map((day, index) => {
+                const row = dayRows[index];
+                return (
+                  <div
+                    key={day.value}
+                    className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
+                      row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+                    }`}
+                  >
+                    <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={row.active}
+                        onChange={(e) => updateRow(index, { active: e.target.checked })}
+                        className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
+                    </label>
+
+                    <input
+                      type="time"
+                      value={row.startTime}
+                      disabled={!row.active}
+                      onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    />
+                    <span className="text-xs text-slate-400">—</span>
+                    <input
+                      type="time"
+                      value={row.endTime}
+                      disabled={!row.active}
+                      onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // ── CREATE: Weekly yoki Daily ──
+            <div className="space-y-5">
+              <div className="flex overflow-hidden rounded-2xl border-2 border-slate-200 text-sm font-bold">
+                <button
+                  type="button"
+                  onClick={() => onCreateModeChange("WEEKLY")}
+                  className={`flex-1 py-3 transition ${
+                    createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={row.active}
-                      onChange={(e) => updateRow(index, { active: e.target.checked })}
-                      className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
-                  </label>
+                  Weekly (butun hafta)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCreateModeChange("DAILY")}
+                  className={`flex-1 py-3 transition ${
+                    createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  Daily (aniq kunlar)
+                </button>
+              </div>
 
+              {createMode === "DAILY" && (
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    Ish kunlari <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {DAYS.map((day) => {
+                      const isSelected = createSelectedDays.includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => onToggleCreateDay(day.value)}
+                          className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
+                            isSelected
+                              ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                          }`}
+                        >
+                          {day.short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {createMode === "DAILY" && (
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">Slot Duration</label>
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
+                    {DURATION_OPTIONS.map((duration) => (
+                      <button
+                        key={duration}
+                        type="button"
+                        onClick={() => onCreateSlotDurationChange(duration)}
+                        className={`rounded-2xl border-2 px-3 py-3 text-sm font-extrabold transition ${
+                          createSlotDuration === duration
+                            ? "border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {duration}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    Start Time <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="time"
-                    value={row.startTime}
-                    disabled={!row.active}
-                    onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                    className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                  <span className="text-xs text-slate-400">—</span>
-                  <input
-                    type="time"
-                    value={row.endTime}
-                    disabled={!row.active}
-                    onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                    className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    value={createStartTime}
+                    onChange={(e) => onCreateStartTimeChange(normalizeScheduleTime(e.target.value))}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
-              );
-            })}
-          </div>
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    End Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={createEndTime}
+                    onChange={(e) => onCreateEndTimeChange(normalizeScheduleTime(e.target.value))}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-6">
             {hasExistingSchedule ? (
@@ -222,7 +375,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save Schedule
+                {hasExistingSchedule ? "Save Schedule" : "Create Schedule"}
               </button>
             </div>
           </div>
@@ -252,6 +405,8 @@ export default function MySchedulePage() {
 
   const { data: schedules = [], isLoading, isError, error, refetch } = useGetDoctorSchedules(page, limit);
   const updateScheduleByDayMutation = useUpdateScheduleByDay();
+  const createScheduleMutation = useCreateDoctorSchedule();
+  const createWeeklyScheduleMutation = useCreateWeeklyDoctorSchedule();
   const deleteScheduleMutation = useDeleteDoctorSchedule();
 
   const ownSchedules = useMemo(
@@ -282,15 +437,42 @@ export default function MySchedulePage() {
   const ROW_H = 52;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // EDIT mode state
   const [dayRows, setDayRows] = useState<DayRow[]>([]);
 
+  // CREATE mode state — Weekly / Daily
+  const [createMode, setCreateMode] = useState<CreateMode>("WEEKLY");
+  const [createStartTime, setCreateStartTime] = useState("09:00");
+  const [createEndTime, setCreateEndTime] = useState("18:00");
+  const [createSelectedDays, setCreateSelectedDays] = useState<DayOfWeek[]>([]);
+  const [createSlotDuration, setCreateSlotDuration] = useState(30);
+
+  function resetCreateState() {
+    setCreateMode("WEEKLY");
+    setCreateStartTime("09:00");
+    setCreateEndTime("18:00");
+    setCreateSelectedDays([]);
+    setCreateSlotDuration(30);
+  }
+
   function openEditor() {
-    setDayRows(buildDayRowsFromSchedules(schedules as any[], ownDoctorId));
+    if (hasExistingSchedule) {
+      setDayRows(buildDayRowsFromSchedules(schedules as any[], ownDoctorId));
+    } else {
+      resetCreateState();
+    }
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
+  }
+
+  function handleToggleCreateDay(day: DayOfWeek) {
+    setCreateSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   }
 
   async function handleDeleteSchedule() {
@@ -317,28 +499,74 @@ export default function MySchedulePage() {
       return;
     }
 
-    for (const row of dayRows) {
-      if (row.active && (!row.startTime || !row.endTime)) {
-        toast.warning(`${row.dayOfWeek} uchun vaqt kiritilmagan.`);
-        return;
+    if (hasExistingSchedule) {
+      // ── EDIT: PUT /doctor-schedules/by-day (doctorId yuborilmaydi) ──
+      for (const row of dayRows) {
+        if (row.active && (!row.startTime || !row.endTime)) {
+          toast.warning(`${getDayShort(row.dayOfWeek)} uchun vaqt kiritilmagan.`);
+          return;
+        }
+        if (row.active && row.startTime >= row.endTime) {
+          toast.warning(`${getDayShort(row.dayOfWeek)}: End time start time'dan keyin bo'lishi kerak.`);
+          return;
+        }
       }
-      if (row.active && row.startTime >= row.endTime) {
-        toast.warning(`${row.dayOfWeek}: End time start time'dan keyin bo'lishi kerak.`);
-        return;
+
+      try {
+        await updateScheduleByDayMutation.mutateAsync({ days: dayRows });
+        toast.success("Schedule saved successfully.");
+        closeModal();
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, "Schedule saqlashda xatolik yuz berdi."));
       }
+      return;
+    }
+
+    // ── CREATE: Weekly yoki Daily (doctorId = o'zining ID'si) ──
+    if (!createStartTime || !createEndTime) {
+      toast.warning("Start/End time kiriting.");
+      return;
+    }
+    if (createStartTime >= createEndTime) {
+      toast.warning("End time start time'dan keyin bo'lishi kerak.");
+      return;
     }
 
     try {
-      // Doctor o'zi update qilyapti — doctorId YUBORILMAYDI.
-      await updateScheduleByDayMutation.mutateAsync({
-        days: dayRows,
-      });
-      toast.success("Schedule saved successfully.");
+      if (createMode === "WEEKLY") {
+        await createWeeklyScheduleMutation.mutateAsync({
+          doctorId: ownDoctorId,
+          startTime: createStartTime,
+          endTime: createEndTime,
+          active: true,
+        } as WeeklyDoctorSchedulePayload);
+      } else {
+        if (createSelectedDays.length === 0) {
+          toast.warning("Kamida bitta ish kunini tanlang.");
+          return;
+        }
+        for (const day of createSelectedDays) {
+          await createScheduleMutation.mutateAsync({
+            doctorId: ownDoctorId,
+            dayOfWeek: day,
+            startTime: createStartTime,
+            endTime: createEndTime,
+            slotDurationMinutes: createSlotDuration,
+            active: true,
+          } as DoctorSchedulePayload);
+        }
+      }
+      toast.success("Schedule created successfully.");
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Schedule saqlashda xatolik yuz berdi."));
+      toast.error(getApiErrorMessage(err, "Schedule yaratishda xatolik yuz berdi."));
     }
   }
+
+  const isSubmitting =
+    updateScheduleByDayMutation.isPending ||
+    createScheduleMutation.isPending ||
+    createWeeklyScheduleMutation.isPending;
 
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50">
@@ -543,12 +771,22 @@ export default function MySchedulePage() {
 
       <WeekEditorModal
         open={isModalOpen}
+        hasExistingSchedule={hasExistingSchedule}
         dayRows={dayRows}
         onChangeDayRows={setDayRows}
-        isSubmitting={updateScheduleByDayMutation.isPending}
+        createMode={createMode}
+        onCreateModeChange={setCreateMode}
+        createStartTime={createStartTime}
+        createEndTime={createEndTime}
+        onCreateStartTimeChange={setCreateStartTime}
+        onCreateEndTimeChange={setCreateEndTime}
+        createSelectedDays={createSelectedDays}
+        onToggleCreateDay={handleToggleCreateDay}
+        createSlotDuration={createSlotDuration}
+        onCreateSlotDurationChange={setCreateSlotDuration}
+        isSubmitting={isSubmitting}
         onClose={closeModal}
         onSubmit={handleSubmit}
-        hasExistingSchedule={hasExistingSchedule}
         onDeleteSchedule={handleDeleteSchedule}
         isDeleting={deleteScheduleMutation.isPending}
       />

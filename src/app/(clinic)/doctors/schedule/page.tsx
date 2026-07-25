@@ -16,13 +16,19 @@ import {
 } from "lucide-react";
 
 import {
+  useCreateDoctorSchedule,
+  useCreateWeeklyDoctorSchedule,
   useDeleteDoctorSchedule,
   useGetDoctorSchedules,
   useUpdateScheduleByDay,
 } from "@/src/features/doctors/hooks/useDoctorSchedules";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 
-import type { DoctorSchedule } from "@/src/types/doctor-schedule.types";
+import type {
+  DoctorSchedule,
+  DoctorSchedulePayload,
+  WeeklyDoctorSchedulePayload,
+} from "@/src/types/doctor-schedule.types";
 
 import { DayOfWeek } from "@/src/lib/enums/enums.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
@@ -41,6 +47,7 @@ const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
 ];
 
 const CALENDAR_HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00–18:00
+const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
 
 const AVATAR_PALETTE = [
   { bg: "bg-blue-100",   text: "text-blue-800"   },
@@ -53,6 +60,8 @@ const AVATAR_PALETTE = [
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PageView = "cards" | "calendar";
+
+type CreateMode = "WEEKLY" | "DAILY";
 
 type DayRow = {
   dayOfWeek: DayOfWeek;
@@ -112,7 +121,7 @@ function pad2(n: number): string {
 /**
  * Berilgan doctorId uchun mavjud schedule qatorlaridan (flat, useGetDoctorSchedules
  * natijasi) 7 kunlik DayRow[] quradi. Mavjud bo'lmagan kunlar active:false bilan
- * default vaqt (09:00–18:00) bilan to'ldiriladi.
+ * default vaqt (09:00–18:00) bilan to'ldiriladi. EDIT rejimida ishlatiladi.
  */
 function buildDayRowsForDoctor(schedules: FlatDoctorSchedule[], doctorId: string): DayRow[] {
   const byDay = new Map<string, FlatDoctorSchedule>();
@@ -439,7 +448,7 @@ function WeeklyCalendar({
   );
 }
 
-// ─── Week editor modal (bitta so'rovda 7 kun) ─────────────────────────────────
+// ─── Week editor modal (EDIT: har kuni alohida / CREATE: Weekly yoki Daily) ──
 
 interface WeekEditorModalProps {
   open: boolean;
@@ -447,12 +456,27 @@ interface WeekEditorModalProps {
   doctors: any[];
   isDoctorLocked: boolean;
   onDoctorChange: (doctorId: string) => void;
+  hasExistingSchedule: boolean;
+
+  // EDIT mode (mavjud schedule) — har kuni alohida qator
   dayRows: DayRow[];
   onChangeDayRows: (rows: DayRow[]) => void;
+
+  // CREATE mode (schedule hali yo'q) — Weekly yoki Daily
+  createMode: CreateMode;
+  onCreateModeChange: (mode: CreateMode) => void;
+  createStartTime: string;
+  createEndTime: string;
+  onCreateStartTimeChange: (v: string) => void;
+  onCreateEndTimeChange: (v: string) => void;
+  createSelectedDays: DayOfWeek[];
+  onToggleCreateDay: (day: DayOfWeek) => void;
+  createSlotDuration: number;
+  onCreateSlotDurationChange: (v: number) => void;
+
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  hasExistingSchedule: boolean;
   onDeleteSchedule: () => void;
   isDeleting: boolean;
 }
@@ -463,12 +487,22 @@ function WeekEditorModal({
   doctors,
   isDoctorLocked,
   onDoctorChange,
+  hasExistingSchedule,
   dayRows,
   onChangeDayRows,
+  createMode,
+  onCreateModeChange,
+  createStartTime,
+  createEndTime,
+  onCreateStartTimeChange,
+  onCreateEndTimeChange,
+  createSelectedDays,
+  onToggleCreateDay,
+  createSlotDuration,
+  onCreateSlotDurationChange,
   isSubmitting,
   onClose,
   onSubmit,
-  hasExistingSchedule,
   onDeleteSchedule,
   isDeleting,
 }: WeekEditorModalProps) {
@@ -488,9 +522,13 @@ function WeekEditorModal({
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">Weekly Schedule</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900">
+                {hasExistingSchedule ? "Edit Weekly Schedule" : "Create Schedule"}
+              </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
-                Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi.
+                {hasExistingSchedule
+                  ? "Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi."
+                  : "Doctor uchun ish vaqtini butun hafta (Weekly) yoki aniq kunlar (Daily) bo'yicha belgilang."}
               </p>
             </div>
             <button
@@ -532,45 +570,146 @@ function WeekEditorModal({
             )}
           </div>
 
-          <div className="space-y-2.5">
-            {DAYS.map((day, index) => {
-              const row = dayRows[index];
-              return (
-                <div
-                  key={day.value}
-                  className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
-                    row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+          {hasExistingSchedule ? (
+            // ── EDIT: har kuni alohida qator (mavjud holat) ──
+            <div className="space-y-2.5">
+              {DAYS.map((day, index) => {
+                const row = dayRows[index];
+                return (
+                  <div
+                    key={day.value}
+                    className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
+                      row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+                    }`}
+                  >
+                    <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={row.active}
+                        onChange={(e) => updateRow(index, { active: e.target.checked })}
+                        className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
+                    </label>
+
+                    <input
+                      type="time"
+                      value={row.startTime}
+                      disabled={!row.active}
+                      onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    />
+                    <span className="text-xs text-slate-400">—</span>
+                    <input
+                      type="time"
+                      value={row.endTime}
+                      disabled={!row.active}
+                      onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // ── CREATE: Weekly yoki Daily (avvalgi holat) ──
+            <div className="space-y-5">
+              <div className="flex overflow-hidden rounded-2xl border-2 border-slate-200 text-sm font-bold">
+                <button
+                  type="button"
+                  onClick={() => onCreateModeChange("WEEKLY")}
+                  className={`flex-1 py-3 transition ${
+                    createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={row.active}
-                      onChange={(e) => updateRow(index, { active: e.target.checked })}
-                      className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
-                  </label>
+                  Weekly (butun hafta)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCreateModeChange("DAILY")}
+                  className={`flex-1 py-3 transition ${
+                    createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  Daily (aniq kunlar)
+                </button>
+              </div>
 
+              {createMode === "DAILY" && (
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    Ish kunlari <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {DAYS.map((day) => {
+                      const isSelected = createSelectedDays.includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => onToggleCreateDay(day.value)}
+                          className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
+                            isSelected
+                              ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                          }`}
+                        >
+                          {day.short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {createMode === "DAILY" && (
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">Slot Duration</label>
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
+                    {DURATION_OPTIONS.map((duration) => (
+                      <button
+                        key={duration}
+                        type="button"
+                        onClick={() => onCreateSlotDurationChange(duration)}
+                        className={`rounded-2xl border-2 px-3 py-3 text-sm font-extrabold transition ${
+                          createSlotDuration === duration
+                            ? "border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {duration}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    Start Time <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="time"
-                    value={row.startTime}
-                    disabled={!row.active}
-                    onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                    className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                  <span className="text-xs text-slate-400">—</span>
-                  <input
-                    type="time"
-                    value={row.endTime}
-                    disabled={!row.active}
-                    onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                    className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    value={createStartTime}
+                    onChange={(e) => onCreateStartTimeChange(normalizeScheduleTime(e.target.value))}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
-              );
-            })}
-          </div>
+                <div>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">
+                    End Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={createEndTime}
+                    onChange={(e) => onCreateEndTimeChange(normalizeScheduleTime(e.target.value))}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-6">
             {hasExistingSchedule ? (
@@ -601,7 +740,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save Schedule
+                {hasExistingSchedule ? "Save Schedule" : "Create Schedule"}
               </button>
             </div>
           </div>
@@ -627,7 +766,16 @@ export default function DoctorSchedulePage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalDoctorId, setModalDoctorId] = useState("");
+
+  // EDIT mode state (mavjud schedule bo'lganda)
   const [dayRows, setDayRows] = useState<DayRow[]>(buildEmptyDayRows());
+
+  // CREATE mode state (schedule hali yo'q bo'lganda) — Weekly / Daily
+  const [createMode, setCreateMode] = useState<CreateMode>("WEEKLY");
+  const [createStartTime, setCreateStartTime] = useState("09:00");
+  const [createEndTime, setCreateEndTime] = useState("18:00");
+  const [createSelectedDays, setCreateSelectedDays] = useState<DayOfWeek[]>([]);
+  const [createSlotDuration, setCreateSlotDuration] = useState(30);
 
   const {
     data: schedules = [],
@@ -656,6 +804,8 @@ export default function DoctorSchedulePage() {
   }, [doctors]);
 
   const updateScheduleByDayMutation = useUpdateScheduleByDay();
+  const createScheduleMutation = useCreateDoctorSchedule();
+  const createWeeklyScheduleMutation = useCreateWeeklyDoctorSchedule();
   const deleteScheduleMutation = useDeleteDoctorSchedule();
 
   const enrichedSchedules = useMemo<FlatDoctorSchedule[]>(() => {
@@ -735,11 +885,29 @@ export default function DoctorSchedulePage() {
     [doctorGroups, calendarDoctorId]
   );
 
+  const hasExistingScheduleForModalDoctor = Boolean(
+    modalDoctorId && getScheduleIdForDoctor(enrichedSchedules, modalDoctorId)
+  );
+
   // ── Actions ──
+
+  function resetCreateState() {
+    setCreateMode("WEEKLY");
+    setCreateStartTime("09:00");
+    setCreateEndTime("18:00");
+    setCreateSelectedDays([]);
+    setCreateSlotDuration(30);
+  }
 
   function openEditorFor(doctorId: string) {
     setModalDoctorId(doctorId);
-    setDayRows(doctorId ? buildDayRowsForDoctor(enrichedSchedules, doctorId) : buildEmptyDayRows());
+    const hasExisting = doctorId && Boolean(getScheduleIdForDoctor(enrichedSchedules, doctorId));
+    if (hasExisting) {
+      setDayRows(buildDayRowsForDoctor(enrichedSchedules, doctorId));
+    } else {
+      setDayRows(buildEmptyDayRows());
+      resetCreateState();
+    }
     setIsModalOpen(true);
   }
 
@@ -749,13 +917,26 @@ export default function DoctorSchedulePage() {
 
   function handleModalDoctorChange(doctorId: string) {
     setModalDoctorId(doctorId);
-    setDayRows(doctorId ? buildDayRowsForDoctor(enrichedSchedules, doctorId) : buildEmptyDayRows());
+    const hasExisting = doctorId && Boolean(getScheduleIdForDoctor(enrichedSchedules, doctorId));
+    if (hasExisting) {
+      setDayRows(buildDayRowsForDoctor(enrichedSchedules, doctorId));
+    } else {
+      setDayRows(buildEmptyDayRows());
+      resetCreateState();
+    }
   }
 
   function closeModal() {
     setModalDoctorId("");
     setDayRows(buildEmptyDayRows());
+    resetCreateState();
     setIsModalOpen(false);
+  }
+
+  function handleToggleCreateDay(day: DayOfWeek) {
+    setCreateSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   }
 
   function openDoctorCalendar(doctorId: string) {
@@ -794,27 +975,74 @@ export default function DoctorSchedulePage() {
       return;
     }
 
-    for (const row of dayRows) {
-      if (row.active && (!row.startTime || !row.endTime)) {
-        toast.warning(`${getDayShort(row.dayOfWeek)} uchun vaqt kiritilmagan.`);
-        return;
+    if (hasExistingScheduleForModalDoctor) {
+      // ── EDIT: PUT /doctor-schedules/by-day (har kuni alohida qatordan) ──
+      for (const row of dayRows) {
+        if (row.active && (!row.startTime || !row.endTime)) {
+          toast.warning(`${getDayShort(row.dayOfWeek)} uchun vaqt kiritilmagan.`);
+          return;
+        }
+        if (row.active && row.startTime >= row.endTime) {
+          toast.warning(`${getDayShort(row.dayOfWeek)}: End time start time'dan keyin bo'lishi kerak.`);
+          return;
+        }
       }
-      if (row.active && row.startTime >= row.endTime) {
-        toast.warning(`${getDayShort(row.dayOfWeek)}: End time start time'dan keyin bo'lishi kerak.`);
-        return;
+
+      try {
+        // CLINIC_ADMIN/SUPER_ADMIN boshqa doctor uchun yuboryapti — doctorId MAJBURIY.
+        await updateScheduleByDayMutation.mutateAsync({
+          doctorId: modalDoctorId,
+          days: dayRows,
+        });
+        toast.success("Doctor schedule saved successfully.");
+        closeModal();
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, "An error occurred while saving the schedule."));
       }
+      return;
+    }
+
+    // ── CREATE: Weekly yoki Daily ──
+    if (!createStartTime || !createEndTime) {
+      toast.warning("Start/End time kiriting.");
+      return;
+    }
+    if (createStartTime >= createEndTime) {
+      toast.warning("End time start time'dan keyin bo'lishi kerak.");
+      return;
     }
 
     try {
-      // CLINIC_ADMIN/SUPER_ADMIN boshqa doctor uchun yuboryapti — doctorId MAJBURIY.
-      await updateScheduleByDayMutation.mutateAsync({
-        doctorId: modalDoctorId,
-        days: dayRows,
-      });
-      toast.success("Doctor schedule saved successfully.");
+      if (createMode === "WEEKLY") {
+        // POST /doctor-schedules/weekly — { doctorId, startTime, endTime, active }
+        await createWeeklyScheduleMutation.mutateAsync({
+          doctorId: modalDoctorId,
+          startTime: createStartTime,
+          endTime: createEndTime,
+          active: true,
+        } as WeeklyDoctorSchedulePayload);
+      } else {
+        // POST /doctor-schedules — bitta kun uchun, shuning uchun har bir
+        // tanlangan kun uchun ketma-ket alohida so'rov yuboriladi.
+        if (createSelectedDays.length === 0) {
+          toast.warning("Kamida bitta ish kunini tanlang.");
+          return;
+        }
+        for (const day of createSelectedDays) {
+          await createScheduleMutation.mutateAsync({
+            doctorId: modalDoctorId,
+            dayOfWeek: day,
+            startTime: createStartTime,
+            endTime: createEndTime,
+            slotDurationMinutes: createSlotDuration,
+            active: true,
+          } as DoctorSchedulePayload);
+        }
+      }
+      toast.success("Doctor schedule created successfully.");
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "An error occurred while saving the schedule."));
+      toast.error(getApiErrorMessage(err, "An error occurred while creating the schedule."));
     }
   }
 
@@ -852,7 +1080,7 @@ export default function DoctorSchedulePage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
               >
                 <Plus className="h-4 w-4" />
-                Edit Schedule
+                Add Schedule
               </button>
             </div>
           </div>
@@ -977,7 +1205,7 @@ export default function DoctorSchedulePage() {
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4" />
-                  Edit Schedule
+                  Add Schedule
                 </button>
               </div>
             ) : filteredDoctorGroups.length === 0 ? (
@@ -1024,12 +1252,26 @@ export default function DoctorSchedulePage() {
         doctors={doctorOptions}
         isDoctorLocked={false}
         onDoctorChange={handleModalDoctorChange}
+        hasExistingSchedule={hasExistingScheduleForModalDoctor}
         dayRows={dayRows}
         onChangeDayRows={setDayRows}
-        isSubmitting={updateScheduleByDayMutation.isPending}
+        createMode={createMode}
+        onCreateModeChange={setCreateMode}
+        createStartTime={createStartTime}
+        createEndTime={createEndTime}
+        onCreateStartTimeChange={setCreateStartTime}
+        onCreateEndTimeChange={setCreateEndTime}
+        createSelectedDays={createSelectedDays}
+        onToggleCreateDay={handleToggleCreateDay}
+        createSlotDuration={createSlotDuration}
+        onCreateSlotDurationChange={setCreateSlotDuration}
+        isSubmitting={
+          updateScheduleByDayMutation.isPending ||
+          createScheduleMutation.isPending ||
+          createWeeklyScheduleMutation.isPending
+        }
         onClose={closeModal}
         onSubmit={handleSubmit}
-        hasExistingSchedule={Boolean(getScheduleIdForDoctor(enrichedSchedules, modalDoctorId))}
         onDeleteSchedule={() => handleDeleteSchedule(modalDoctorId)}
         isDeleting={deleteScheduleMutation.isPending}
       />
