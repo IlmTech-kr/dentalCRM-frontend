@@ -101,10 +101,10 @@ export default function HomePage() {
 
               <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
                 <Link
-                  href="#contact"
+                  href="/subdomains"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-100 transition-all hover:scale-[1.02] sm:px-7 sm:py-3.5 sm:text-base"
                 >
-                  Demo olish <ArrowRight className="h-4 w-4" />
+                  Login <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/register"

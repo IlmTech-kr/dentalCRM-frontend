@@ -16,11 +16,7 @@ const NAV_LINKS = [
   { label: "Aloqa", href: "/#contact" },
 ];
 
-interface LandingHeaderProps {
-  onDemoClick?: () => void;
-}
-
-export default function LandingHeader({ onDemoClick }: LandingHeaderProps) {
+export default function LandingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -49,13 +45,12 @@ export default function LandingHeader({ onDemoClick }: LandingHeaderProps) {
           >
             Ro'yxatdan o'tish
           </Link>
-          <button
-            type="button"
-            onClick={onDemoClick}
+          <Link
+            href="/subdomains"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
           >
-            Demo olish <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+            Login <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
 
         {/* Mobile burger */}
@@ -90,13 +85,13 @@ export default function LandingHeader({ onDemoClick }: LandingHeaderProps) {
             >
               Ro'yxatdan o'tish
             </Link>
-            <button
-              type="button"
-              onClick={() => { setMenuOpen(false); onDemoClick?.(); }}
-              className="rounded-2xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 py-3 text-sm font-bold text-white"
+            <Link
+              href="/subdomains"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-2xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 py-3 text-center text-sm font-bold text-white"
             >
-              Demo olish
-            </button>
+              Login
+            </Link>
           </div>
         </div>
       )}
