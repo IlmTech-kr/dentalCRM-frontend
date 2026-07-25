@@ -12,7 +12,7 @@ const SUPER_ADMIN_SUBDOMAIN = "admin";
  * Subdomain'siz (root domain) ochilishi mumkin bo'lgan pathlar.
  * Bularga kirganda "/" ga redirect qilinmaydi.
  */
-const ALLOWED_ROOT_PATHS = new Set(["/", "/register", "/login", "/tariffs"]);
+const ALLOWED_ROOT_PATHS = new Set(["/", "/register", "/login", "/tariffs","/subdomains"]);
 
 type HostContext =
   | { type: "root" }

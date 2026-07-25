@@ -23,7 +23,7 @@ import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { clearAuthStorage } from "@/src/lib/auth/storage";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 
-const MAIN_API_URL =
+export const MAIN_API_URL =
   process.env.NEXT_PUBLIC_MAIN_API_URL || "https://dental.api.ilmtech.uz";
 
 const TENANT_API_PROTOCOL =
