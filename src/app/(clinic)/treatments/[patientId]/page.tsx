@@ -3,22 +3,10 @@
 /**
  * File: src/app/(clinic)/treatments/[patientId]/page.tsx
  *
- * Fixes:
- * 1. COMPLETED course ga visit qo'sha olmaslik
- * 2. Note textarea re-render muammosi (VisitPanel extracted)
- * 3. "Visit qo'shish" tab olib tashlandi — faqat modal
- * 4. Modal chiroyliroq
- * 5. Modal z-index 9999 — error toast ustida ko'rinadi
- * 6. appointmentId endi ixtiyoriy — Patients sahifasidan to'g'ridan-to'g'ri
- *    kirilganda ("Molajani boshlash") appointmentId yo'q bo'ladi va backend
- *    doctorId + joriy vaqt asosida appointmentni avtomatik yaratadi.
- * 7. DOCTOR rolida kirgan foydalanuvchi uchun "Shifokor" maydoni endi
- *    select emas — o'zi avtomatik tanlanadi va o'zgartirib bo'lmaydi.
- *    Boshqa rollar (admin, receptionist, assistant) uchun select qoladi.
- * 8. Visit tarixida narx "0 so'm" va shifokor o'rniga ID chiqishi tuzatildi —
- *    backend item narxini `price` emas `priceSnapshot` deb qaytaradi, va
- *    visit ichida tayyor doctor obyekti kelmaydi (faqat doctorId) — endi
- *    doctors ro'yxatidan (doctorsMap) nomi qidirib topiladi.
+ * UI qayta dizayn qilindi (professional, zamonaviy, doctor-friendly) —
+ * BARCHA mantiq/hooklar/handlerlar, narx (priceSnapshot) va doctor nomi
+ * (doctorsMap) fixlari, DOCTOR role qulflash o'zgarishsiz qoldi. Faqat
+ * JSX/className qayta qurildi.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -28,14 +16,19 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Activity,
+  Calendar,
+  CheckCircle2,
   ClipboardList,
   Edit3,
   Lock,
   Plus,
   Save,
   Search,
+  Sparkles,
+  Stethoscope,
   Trash2,
   UserRound,
+  Wallet,
   X,
 } from "lucide-react";
 
@@ -172,6 +165,10 @@ function getFullName(person?: { firstName?: string; lastName?: string; fullName?
   if (!person) return "";
   return person.fullName || `${person.firstName || ""} ${person.lastName || ""}`.trim();
 }
+function getInitials(name: string) {
+  if (!name) return "?";
+  return name.split(" ").filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
 
 // ---------------------------------------------------------------------------
 // PatientInfoCard
@@ -185,12 +182,12 @@ function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoad
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+      <div className="rounded-3xl border border-border-color bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 animate-pulse rounded-full bg-slate-100" />
-          <div className="flex-1 space-y-2">
-            <div className="h-6 w-48 animate-pulse rounded-lg bg-slate-100" />
-            <div className="h-4 w-32 animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="flex-1 space-y-2.5">
+            <div className="h-6 w-52 animate-pulse rounded-lg bg-slate-100" />
+            <div className="h-4 w-36 animate-pulse rounded-lg bg-slate-100" />
           </div>
         </div>
       </div>
@@ -198,27 +195,32 @@ function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoad
   }
 
   return (
-    <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+    <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-6 shadow-sm">
+      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#35a8f5]/[0.06]" />
+      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#35a8f5]/10 text-[#35a8f5]">
-            <UserRound size={32} />
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#35a8f5] to-[#1d8ee8] text-lg font-black text-white shadow-md shadow-blue-200">
+            {getInitials(name) || <UserRound size={26} />}
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-dark-navy">{name || "Bemor"}</h1>
-            <p className="mt-1 font-semibold text-slate-600">{phone}</p>
+            <h1 className="text-xl font-extrabold leading-tight text-dark-navy">{name || "Bemor"}</h1>
+            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+              {phone}
+            </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 sm:ml-auto">
-          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center">
-            <p className="text-xs text-text-light">Yoshi</p>
-            <p className="font-extrabold text-dark-navy">{age}</p>
+
+        <div className="flex flex-wrap gap-2.5">
+          <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">Yoshi</p>
+            <p className="mt-0.5 text-sm font-extrabold text-dark-navy">{age}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center">
-            <p className="text-xs text-text-light">Holat</p>
-            <span className={`text-xs font-bold ${isActive ? "text-emerald-600" : "text-slate-500"}`}>
+          <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">Holat</p>
+            <p className={`mt-0.5 inline-flex items-center gap-1 text-sm font-extrabold ${isActive ? "text-emerald-600" : "text-slate-400"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
               {isActive ? "Active" : "Inactive"}
-            </span>
+            </p>
           </div>
         </div>
       </div>
@@ -237,14 +239,16 @@ function TabBtn({ active, icon, label, badge, onClick }: {
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-        active ? "bg-[#35a8f5] text-white shadow-sm" : "border border-border-color bg-white text-slate-600 hover:bg-slate-50"
+      className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold transition ${
+        active
+          ? "bg-[#35a8f5] text-white shadow-md shadow-blue-200"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       }`}
     >
       {icon} {label}
       {badge !== undefined && (
         <span className={`rounded-full px-1.5 py-0.5 text-xs font-extrabold ${
-          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+          active ? "bg-white/25 text-white" : "bg-slate-200 text-slate-600"
         }`}>
           {badge}
         </span>
@@ -267,7 +271,7 @@ function DoctorSelect({ value, onChange, doctors }: {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+      className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
     >
       <option value="">Doctor tanlang</option>
       {doctors.map((d) => {
@@ -275,6 +279,18 @@ function DoctorSelect({ value, onChange, doctors }: {
         return <option key={id} value={id}>{getName(d)}</option>;
       })}
     </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SectionLabel — kichik heading, formadagi bo'limlarni ajratish uchun
+// ---------------------------------------------------------------------------
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-400">
+      {children}
+    </label>
   );
 }
 
@@ -325,73 +341,72 @@ function VisitPanel({
   const totalPrice = visitItems.reduce((s, i) => s + i.price, 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
       {/* Left: form */}
-      <div className="space-y-4">
-        {/* Course */}
-        <div>
-          <label className="mb-1.5 block text-sm font-bold text-slate-700">Course tanlang</label>
-          <select
-            value={selectedCourseId}
-            onChange={(e) => onCourseChange(e.target.value)}
-            className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
-          >
-            <option value="">Course tanlang</option>
-            {activeCourses.map((c) => (
-              <option key={getId(c)} value={getId(c)}>{c.mainDiagnosis}</option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <SectionLabel>Course</SectionLabel>
+            <select
+              value={selectedCourseId}
+              onChange={(e) => onCourseChange(e.target.value)}
+              className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+            >
+              <option value="">Course tanlang</option>
+              {activeCourses.map((c) => (
+                <option key={getId(c)} value={getId(c)}>{c.mainDiagnosis}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Doctor — DOCTOR rolida kirgan foydalanuvchi uchun o'zi avtomatik
-            tanlanadi va tahrirlanmaydi; boshqa rollar uchun select ko'rinadi. */}
-        <div>
-          <label className="mb-1.5 block text-sm font-bold text-slate-700">Shifokor</label>
-          {isDoctorLocked ? (
-            <div className="flex items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-4 py-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#35a8f5]/10 text-[#35a8f5]">
-                <UserRound size={16} />
+          {/* Doctor — DOCTOR rolida kirgan foydalanuvchi uchun o'zi avtomatik
+              tanlanadi va tahrirlanmaydi; boshqa rollar uchun select ko'rinadi. */}
+          <div>
+            <SectionLabel>Shifokor</SectionLabel>
+            {isDoctorLocked ? (
+              <div className="flex h-[46px] items-center gap-2.5 rounded-2xl border border-border-color bg-slate-50 px-4">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#35a8f5]/10 text-[#35a8f5]">
+                  <Stethoscope size={14} />
+                </div>
+                <span className="truncate text-sm font-bold text-dark-navy">
+                  {lockedDoctorName || "Siz"}
+                </span>
+                <span className="ml-auto shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                  SIZ
+                </span>
               </div>
-              <span className="text-sm font-semibold text-dark-navy">
-                {lockedDoctorName || "Siz"}
-              </span>
-              <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
-                Siz
-              </span>
-            </div>
-          ) : (
-            <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
-          )}
+            ) : (
+              <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
+            )}
+          </div>
         </div>
 
-        {/* Date */}
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-slate-700">Tashrif sanasi</label>
+          <SectionLabel>Tashrif sanasi</SectionLabel>
           <input
             type="datetime-local"
             value={visitDate}
             onChange={(e) => onVisitDateChange(e.target.value)}
-            className="w-full rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+            className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
           />
         </div>
 
-        {/* Notes — key prop prevents re-mount */}
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-slate-700">Shifokor izohi</label>
+          <SectionLabel>Shifokor izohi</SectionLabel>
           <textarea
             value={doctorNotes}
             onChange={(e) => onDoctorNotesChange(e.target.value)}
             placeholder="Kanal doimiy material bilan to'ldirildi..."
-            rows={4}
-            className="w-full resize-none rounded-xl border border-border-color bg-white px-4 py-3 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+            rows={3}
+            className="w-full resize-none rounded-2xl border border-border-color bg-white px-4 py-3 text-sm text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
           />
         </div>
 
         {/* Tooth selector */}
-        <div className="rounded-xl border border-border-color bg-slate-50 p-4">
+        <div className="rounded-2xl border border-border-color bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-bold text-slate-700">Davolanadigan tish</p>
-            <span className="rounded-lg bg-[#35a8f5]/10 px-2 py-1 text-xs font-bold text-[#35a8f5]">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">Davolanadigan tish</p>
+            <span className="rounded-full bg-[#35a8f5] px-2.5 py-1 text-xs font-black text-white">
               #{selectedTooth}
             </span>
           </div>
@@ -400,7 +415,7 @@ function VisitPanel({
               <button
                 type="button"
                 onClick={onGoToChart}
-                className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-[#35a8f5] ring-1 ring-border-color hover:bg-blue-50"
+                className="rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#35a8f5] ring-1 ring-inset ring-border-color transition hover:bg-blue-50"
               >
                 Chartdan tish tanlash →
               </button>
@@ -410,10 +425,10 @@ function VisitPanel({
                   key={t}
                   type="button"
                   onClick={() => onToothChange(t)}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition ${
+                  className={`h-9 min-w-[38px] rounded-xl px-2.5 text-sm font-black transition ${
                     selectedTooth === t
-                      ? "bg-[#35a8f5] text-white"
-                      : "bg-white text-slate-700 ring-1 ring-border-color hover:bg-blue-50"
+                      ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
+                      : "bg-white text-slate-700 ring-1 ring-inset ring-border-color hover:bg-blue-50"
                   }`}
                 >
                   {t}
@@ -424,26 +439,27 @@ function VisitPanel({
         </div>
 
         {/* Visit items */}
-        <div className="rounded-xl border border-border-color bg-slate-50 p-4">
+        <div className="rounded-2xl border border-border-color bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-bold text-slate-700">Tanlangan muolajalar</p>
-            <p className="text-sm font-extrabold text-[#35a8f5]">{formatMoney(totalPrice)}</p>
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">Tanlangan muolajalar</p>
+            <p className="text-sm font-black text-[#35a8f5]">{formatMoney(totalPrice)}</p>
           </div>
           {visitItems.length === 0 ? (
-            <p className="text-sm text-slate-400">Hali muolaja tanlanmadi</p>
+            <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-400">
+              Hali muolaja tanlanmadi
+            </p>
           ) : (
             <div className="space-y-2">
               {visitItems.map((item, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 rounded-lg bg-white p-3">
-                  <div>
-                    <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
-                    <p className="text-xs text-slate-500">{item.note}</p>
+                <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border-color bg-white p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-dark-navy">{item.toothNumber}-tish · {item.note}</p>
                     <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(item.price)}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => onRemoveItem(i)}
-                    className="rounded-lg p-1.5 text-red-400 hover:bg-red-50"
+                    className="shrink-0 rounded-lg p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -455,7 +471,8 @@ function VisitPanel({
 
         {/* Info: yangi appointment avtomatik yaratiladi */}
         {!isCompleted && isNewAppointment && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <div className="flex items-start gap-2.5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <Sparkles size={16} className="mt-0.5 shrink-0 text-blue-500" />
             <p className="text-sm font-semibold text-blue-700">
               Bu visit uchun appointment hali mavjud emas — saqlanganda joriy vaqt bilan avtomatik yaratiladi.
             </p>
@@ -464,8 +481,8 @@ function VisitPanel({
 
         {/* Save button */}
         {isCompleted ? (
-          <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <Lock size={18} className="text-amber-600" />
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+            <Lock size={18} className="shrink-0 text-amber-600" />
             <p className="text-sm font-bold text-amber-800">Bu kurs yakunlangan — visit qo'sha olmaysiz</p>
           </div>
         ) : (
@@ -473,18 +490,27 @@ function VisitPanel({
             type="button"
             onClick={onSave}
             disabled={isSaving || visitItems.length === 0}
-            className="w-full rounded-xl bg-[#35a8f5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3.5 text-sm font-black text-white shadow-md shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
-            {isSaving ? "Saqlanmoqda..." : visitItems.length === 0 ? "Avval muolaja tanlang" : "✓ Visitni saqlash"}
+            {isSaving ? (
+              "Saqlanmoqda..."
+            ) : visitItems.length === 0 ? (
+              "Avval muolaja tanlang"
+            ) : (
+              <>
+                <CheckCircle2 size={18} />
+                Visitni saqlash
+              </>
+            )}
           </button>
         )}
       </div>
 
       {/* Right: procedures */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-slate-700">
-            Muolajalar — <span className="text-[#35a8f5]">{selectedTooth}-tish</span>
+      <div className="flex flex-col">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+            Muolajalar · <span className="text-[#35a8f5]">{selectedTooth}-tish</span>
           </p>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -492,7 +518,7 @@ function VisitPanel({
               value={procedureSearch}
               onChange={(e) => onProcedureSearch(e.target.value)}
               placeholder="Qidirish..."
-              className="rounded-lg border border-border-color bg-slate-50 py-2 pl-8 pr-3 text-sm outline-none focus:border-[#35a8f5]"
+              className="rounded-xl border border-border-color bg-white py-2 pl-8 pr-3 text-sm outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
             />
           </div>
         </div>
@@ -500,26 +526,30 @@ function VisitPanel({
         {proceduresLoading ? (
           <DentalLoader fullScreen={false} text="Muolajalar yuklanmoqda..." />
         ) : procedures.length === 0 ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <p className="font-bold text-amber-800">Muolaja topilmadi</p>
             <p className="mt-1 text-sm text-amber-700">Avval muolaja qo'shing.</p>
-            <Link href="/procedures" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white">
+            <Link href="/procedures" className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700">
               <Plus size={14} /> Muolajalar sahifasi
             </Link>
           </div>
         ) : (
-          <div className="grid max-h-[520px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          <div className="grid max-h-[540px] auto-rows-min gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {procedures.map((procedure) => (
               <button
                 key={getId(procedure)}
                 type="button"
                 onClick={() => onAddProcedure(procedure)}
-                className="rounded-xl border border-border-color bg-white p-4 text-left transition hover:border-[#35a8f5]/40 hover:bg-blue-50 hover:shadow-sm"
+                className="group rounded-2xl border border-border-color bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#35a8f5]/40 hover:shadow-md hover:shadow-blue-100"
               >
-                <p className="font-bold text-dark-navy">{procedure.name}</p>
+                <p className="font-bold leading-snug text-dark-navy">{procedure.name}</p>
                 <p className="mt-0.5 text-xs text-slate-400">{procedure.code}</p>
-                <p className="mt-2 text-sm font-bold text-[#35a8f5]">{formatMoney(procedure.defaultPrice)}</p>
-                <p className="mt-1 text-xs font-semibold text-emerald-600">+ Qo'shish</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-sm font-black text-[#35a8f5]">{formatMoney(procedure.defaultPrice)}</p>
+                  <span className="text-xs font-bold text-emerald-600 opacity-0 transition group-hover:opacity-100">
+                    + Qo'shish
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -829,11 +859,11 @@ export default function TreatmentPatientPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 bg-[#F7FAFC] pb-4">
       <PatientInfoCard patient={patient} isLoading={patientLoading} />
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border-color bg-white p-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-3xl border border-border-color bg-white p-2.5 shadow-sm">
         <TabBtn
           active={activeTab === "CHART"}
           icon={<Activity size={16} />}
@@ -862,9 +892,9 @@ export default function TreatmentPatientPage() {
                 setMainDiagnosis(buildDiagnosis(selectedCourseTeeth.length ? selectedCourseTeeth : from));
               setIsCreateCourseModalOpen(true);
             }}
-            className="ml-auto rounded-xl bg-dark-navy px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-2xl bg-dark-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
           >
-            <Plus size={16} className="mr-1.5 inline" />
+            <Plus size={16} />
             Kurs ochish
           </button>
         )}
@@ -872,21 +902,24 @@ export default function TreatmentPatientPage() {
 
       {/* ====== CHART tab ====== */}
       {activeTab === "CHART" && (
-        <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+        <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
           <div className="space-y-4">
             {chartLoading ? (
-              <div className="rounded-2xl border border-border-color bg-white">
+              <div className="rounded-3xl border border-border-color bg-white">
                 <DentalLoader fullScreen={false} text="Chart yuklanmoqda..." />
               </div>
             ) : (
               <>
                 {chart?.toothMap && (
-                  <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-                    <p className="text-sm font-semibold text-blue-800">Avvalgi chart topildi</p>
+                  <div className="flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3.5">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-blue-800">
+                      <Sparkles size={15} className="text-blue-500" />
+                      Avvalgi chart topildi
+                    </p>
                     <button
                       type="button"
                       onClick={() => setLocalToothMap(chart.toothMap!)}
-                      className="rounded-lg bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white"
+                      className="rounded-xl bg-[#35a8f5] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
                     >
                       Yuklash
                     </button>
@@ -899,92 +932,99 @@ export default function TreatmentPatientPage() {
                     { label: "Belgilangan tishlar", value: chartProblemTeeth.length, color: "text-dark-navy" },
                     { label: "Tanlangan", value: `#${selectedTooth}`, color: "text-[#35a8f5]" },
                   ].map((s) => (
-                    <div key={s.label} className="rounded-xl border border-border-color bg-white p-4 shadow-sm">
-                      <p className="text-xs text-text-light">{s.label}</p>
-                      <p className={`mt-1 text-xl font-extrabold ${s.color}`}>{s.value}</p>
+                    <div key={s.label} className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
+                      <p className="text-xs font-bold uppercase tracking-wide text-text-light">{s.label}</p>
+                      <p className={`mt-1.5 text-xl font-black ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <Dental3DChart
-                  selectedTooth={selectedTooth}
-                  toothMap={toothMap}
-                  onSelectTooth={(t) => {
-                    setSelectedTooth(t);
-                    setLocalToothMap((prev) => {
-                      const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-                      return { ...base, [t]: base[t] || emptyTooth() };
-                    });
-                  }}
-                />
+                <div className="overflow-hidden rounded-3xl border border-border-color bg-white shadow-sm">
+                  <Dental3DChart
+                    selectedTooth={selectedTooth}
+                    toothMap={toothMap}
+                    onSelectTooth={(t) => {
+                      setSelectedTooth(t);
+                      setLocalToothMap((prev) => {
+                        const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
+                        return { ...base, [t]: base[t] || emptyTooth() };
+                      });
+                    }}
+                  />
+                </div>
               </>
             )}
           </div>
 
           {/* Tooth editor */}
-          <div className="h-fit rounded-2xl border border-border-color bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-extrabold text-dark-navy">Tish #{selectedTooth}</h2>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#35a8f5]/10 text-[#35a8f5]">
+          <div className="h-fit rounded-3xl border border-border-color bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Tanlangan tish</p>
+                <h2 className="text-lg font-extrabold text-dark-navy">Tish #{selectedTooth}</h2>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#35a8f5]/10 text-[#35a8f5]">
                 <Edit3 size={18} />
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">Diagnoz</label>
+                <SectionLabel>Diagnoz</SectionLabel>
                 <select
                   value={selectedToothData.diagnoses[0] || ""}
                   onChange={(e) =>
                     updateSelectedTooth({ diagnoses: e.target.value ? [e.target.value as ToothCondition] : [] })
                   }
-                  className="w-full rounded-xl border border-border-color bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#35a8f5]"
+                  className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
                 >
                   <option value="">Tanlang</option>
                   {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{LABELS[d]}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">Holat</label>
+                <SectionLabel>Holat</SectionLabel>
                 <select
                   value={selectedToothData.states[0] || ""}
                   onChange={(e) =>
                     updateSelectedTooth({ states: e.target.value ? [e.target.value as ToothCondition] : [] })
                   }
-                  className="w-full rounded-xl border border-border-color bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#35a8f5]"
+                  className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
                 >
                   <option value="">Tanlang</option>
                   {STATE_OPTIONS.map((s) => <option key={s} value={s}>{LABELS[s]}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">Izoh</label>
+                <SectionLabel>Izoh</SectionLabel>
                 <textarea
                   value={selectedToothData.note}
                   onChange={(e) => updateSelectedTooth({ note: e.target.value })}
-                  rows={4}
+                  rows={3}
                   placeholder="Shifokor izohi..."
-                  className="w-full resize-none rounded-xl border border-border-color bg-slate-50 p-3 text-sm outline-none focus:border-[#35a8f5]"
+                  className="w-full resize-none rounded-2xl border border-border-color bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
                 />
               </div>
-              <div className="rounded-xl bg-slate-50 p-3 text-sm">
+
+              <div className="rounded-2xl border border-border-color bg-slate-50 p-3.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-text-light">Diagnoz:</span>
-                  <span className="font-semibold">
+                  <span className="text-text-light">Diagnoz</span>
+                  <span className="font-bold text-dark-navy">
                     {selectedToothData.diagnoses[0] ? LABELS[selectedToothData.diagnoses[0] as ToothCondition] : "—"}
                   </span>
                 </div>
-                <div className="mt-1 flex justify-between">
-                  <span className="text-text-light">Holat:</span>
-                  <span className="font-semibold">
+                <div className="mt-1.5 flex justify-between">
+                  <span className="text-text-light">Holat</span>
+                  <span className="font-bold text-dark-navy">
                     {selectedToothData.states[0] ? LABELS[selectedToothData.states[0] as ToothCondition] : "—"}
                   </span>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={handleClearTooth}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border-color py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-border-color py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                 >
                   <X size={16} /> Tozalash
                 </button>
@@ -992,7 +1032,7 @@ export default function TreatmentPatientPage() {
                   type="button"
                   onClick={handleSaveChart}
                   disabled={isCreating || isUpdating}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#35a8f5] py-2.5 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1d8ee8] disabled:opacity-60"
                 >
                   <Save size={16} /> {isCreating || isUpdating ? "..." : "Saqlash"}
                 </button>
@@ -1007,15 +1047,15 @@ export default function TreatmentPatientPage() {
         <div className="grid gap-5 xl:grid-cols-[1fr_1.4fr]">
           {/* Course list */}
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-border-color bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-extrabold text-dark-navy">Davolash kurslari</h2>
-                <div className="flex rounded-xl border border-border-color bg-slate-50 p-1 text-xs font-bold">
+                <h2 className="text-lg font-extrabold text-dark-navy">Davolash kurslari</h2>
+                <div className="flex rounded-2xl border border-border-color bg-slate-50 p-1 text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setCourseStatusFilter("ACTIVE")}
-                    className={`rounded-lg px-3 py-1.5 transition ${
-                      courseStatusFilter === "ACTIVE" ? "bg-[#35a8f5] text-white" : "text-slate-500"
+                    className={`rounded-xl px-3 py-1.5 transition ${
+                      courseStatusFilter === "ACTIVE" ? "bg-[#35a8f5] text-white shadow-sm" : "text-slate-500"
                     }`}
                   >
                     Aktiv ({activeCourses.length})
@@ -1023,8 +1063,8 @@ export default function TreatmentPatientPage() {
                   <button
                     type="button"
                     onClick={() => setCourseStatusFilter("COMPLETED")}
-                    className={`rounded-lg px-3 py-1.5 transition ${
-                      courseStatusFilter === "COMPLETED" ? "bg-emerald-500 text-white" : "text-slate-500"
+                    className={`rounded-xl px-3 py-1.5 transition ${
+                      courseStatusFilter === "COMPLETED" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-500"
                     }`}
                   >
                     Tugallangan ({completedCourses.length})
@@ -1035,7 +1075,10 @@ export default function TreatmentPatientPage() {
               {coursesLoading ? (
                 <DentalLoader fullScreen={false} text="Kurslar yuklanmoqda..." />
               ) : visibleCourses.length === 0 ? (
-                <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Kurs yo'q</p>
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                  <ClipboardList size={26} className="mx-auto text-slate-300" />
+                  <p className="mt-2 text-sm font-semibold text-slate-400">Kurs yo'q</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {visibleCourses.map((course) => {
@@ -1046,38 +1089,44 @@ export default function TreatmentPatientPage() {
                     return (
                       <div
                         key={cId}
-                        className={`rounded-xl border p-4 transition ${
+                        className={`overflow-hidden rounded-2xl border transition ${
                           isSelected
-                            ? "border-[#35a8f5] bg-blue-50"
-                            : "border-border-color bg-white hover:border-[#35a8f5]/40"
+                            ? "border-[#35a8f5] bg-blue-50/60 ring-1 ring-[#35a8f5]/20"
+                            : "border-border-color bg-white hover:border-[#35a8f5]/30"
                         }`}
                       >
                         <button
                           type="button"
                           onClick={() => setSelectedCourseId(cId)}
-                          className="w-full text-left"
+                          className="w-full p-4 text-left"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <p className="font-bold text-dark-navy">{course.mainDiagnosis}</p>
-                            <span className="text-xs text-slate-500">{course.visits?.length || 0} visit</span>
+                            <p className="font-bold leading-snug text-dark-navy">{course.mainDiagnosis}</p>
+                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${
+                              isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {isCompleted ? "Yakunlangan" : "Aktiv"}
+                            </span>
                           </div>
-                          <p className="mt-1 text-sm font-bold text-[#35a8f5]">
-                            {formatMoney(course.totalCoursePrice)}
-                          </p>
-                          <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
-                            isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                          }`}>
-                            {isCompleted ? "Yakunlangan" : "Aktiv"}
-                          </span>
+                          <div className="mt-2 flex items-center gap-3 text-xs font-semibold text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <ClipboardList size={13} />
+                              {course.visits?.length || 0} visit
+                            </span>
+                            <span className="flex items-center gap-1 text-[#35a8f5]">
+                              <Wallet size={13} />
+                              {formatMoney(course.totalCoursePrice)}
+                            </span>
+                          </div>
                         </button>
 
                         {/* Actions — faqat active course uchun */}
                         {!isCompleted && (
-                          <div className="mt-3 flex gap-2">
+                          <div className="flex gap-2 border-t border-border-color/70 bg-slate-50/60 p-3">
                             <button
                               type="button"
                               onClick={() => openAddVisitModal(cId)}
-                              className="flex-1 rounded-lg bg-[#35a8f5] py-2 text-xs font-bold text-white hover:bg-[#1d8ee8]"
+                              className="flex-1 rounded-xl bg-[#35a8f5] py-2 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
                             >
                               + Visit qo'shish
                             </button>
@@ -1085,7 +1134,7 @@ export default function TreatmentPatientPage() {
                               type="button"
                               onClick={() => handleCompleteCourse(cId)}
                               disabled={isCompleting}
-                              className="flex-1 rounded-lg bg-emerald-500 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:opacity-60"
+                              className="flex-1 rounded-xl bg-emerald-500 py-2 text-xs font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                             >
                               ✓ Yakunlash
                             </button>
@@ -1094,8 +1143,8 @@ export default function TreatmentPatientPage() {
 
                         {/* Completed badge */}
                         {isCompleted && (
-                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2">
-                            <Lock size={14} className="text-emerald-600" />
+                          <div className="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50/70 px-4 py-2.5">
+                            <Lock size={13} className="text-emerald-600" />
                             <p className="text-xs font-bold text-emerald-700">Kurs yakunlangan</p>
                           </div>
                         )}
@@ -1108,50 +1157,63 @@ export default function TreatmentPatientPage() {
           </div>
 
           {/* Visit history */}
-          <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-border-color bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-extrabold text-dark-navy">Visit tarixi</h2>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+              <h2 className="text-lg font-extrabold text-dark-navy">Visit tarixi</h2>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
                 {selectedHistoryVisits.length} ta
               </span>
             </div>
 
             {!selectedHistoryCourse ? (
-              <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Kurs tanlang</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
+                <Calendar size={26} className="mx-auto text-slate-300" />
+                <p className="mt-2 text-sm font-semibold text-slate-400">Kurs tanlang</p>
+              </div>
             ) : selectedHistoryVisits.length === 0 ? (
-              <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Bu kursda visit yo'q</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
+                <Calendar size={26} className="mx-auto text-slate-300" />
+                <p className="mt-2 text-sm font-semibold text-slate-400">Bu kursda visit yo'q</p>
+              </div>
             ) : (
-              <div className="relative space-y-4 pl-7">
-                <div className="absolute bottom-4 left-[13px] top-4 w-px bg-slate-200" />
+              <div className="relative space-y-4 pl-8">
+                <div className="absolute bottom-4 left-[15px] top-4 w-px bg-slate-200" />
                 {selectedHistoryVisits.map((visit: any, idx: number) => (
                   <div key={idx} className="relative">
-                    <div className={`absolute -left-7 top-4 flex h-8 w-8 items-center justify-center rounded-full text-xs font-extrabold text-white ring-4 ring-white ${
+                    <div className={`absolute -left-8 top-4 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black text-white ring-4 ring-white ${
                       idx === 0 ? "bg-emerald-500" : "bg-[#35a8f5]"
                     }`}>
                       {idx + 1}
                     </div>
-                    <div className="rounded-xl border border-border-color bg-white p-4 shadow-sm">
+                    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-bold text-dark-navy">Visit {idx + 1}</p>
-                          <p className="text-xs text-text-light">{formatVisitDateTime(visit.visitDate)}</p>
+                          <p className="font-extrabold text-dark-navy">Visit {idx + 1}</p>
+                          <p className="mt-0.5 flex items-center gap-1 text-xs text-text-light">
+                            <Calendar size={12} />
+                            {formatVisitDateTime(visit.visitDate)}
+                          </p>
                         </div>
-                        <p className="text-sm font-bold text-[#35a8f5]">{formatMoney(getVisitTotal(visit))}</p>
+                        <p className="shrink-0 text-sm font-black text-[#35a8f5]">{formatMoney(getVisitTotal(visit))}</p>
                       </div>
-                      <p className="mt-2 text-sm text-slate-600">
-                        <span className="font-semibold">Shifokor:</span> {getVisitDoctorName(visit, doctorsMap)}
+
+                      <p className="mt-3 flex items-center gap-1.5 text-sm text-slate-600">
+                        <Stethoscope size={14} className="text-slate-400" />
+                        <span className="font-semibold text-dark-navy">{getVisitDoctorName(visit, doctorsMap)}</span>
                       </p>
+
                       {visit.doctorNotes && (
-                        <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                        <p className="mt-2.5 rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
                           {visit.doctorNotes}
                         </p>
                       )}
+
                       {visit.items?.length > 0 && (
                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
                           {visit.items.map((item: any, i: number) => (
-                            <div key={i} className="rounded-lg bg-slate-50 p-2.5">
+                            <div key={i} className="rounded-xl bg-slate-50 p-2.5">
                               <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
-                              <p className="text-xs text-slate-500">
+                              <p className="truncate text-xs text-slate-500">
                                 {item.note || item.procedureNameSnapshot}
                               </p>
                               <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(getItemPrice(item))}</p>
@@ -1172,33 +1234,33 @@ export default function TreatmentPatientPage() {
       {isCreateCourseModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-border-color bg-slate-50/60 px-6 py-5">
                 <div>
-                  <h2 className="font-extrabold text-dark-navy">Davolash kursi ochish</h2>
+                  <h2 className="text-lg font-extrabold text-dark-navy">Davolash kursi ochish</h2>
                   <p className="mt-0.5 text-sm text-text-light">Davolanadigan tishlarni tanlang</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsCreateCourseModalOpen(false)}
-                  className="rounded-lg p-2 hover:bg-slate-100"
+                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-5 p-6">
-                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="max-h-[75vh] space-y-5 overflow-y-auto p-6">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="font-bold text-blue-900">
+                    <p className="text-sm font-bold text-blue-900">
                       Davolanadigan tishlar ({selectedCourseTeeth.length} ta tanlandi)
                     </p>
                     <button
                       type="button"
                       onClick={() => setMainDiagnosis(buildDiagnosis(selectedCourseTeeth))}
                       disabled={!selectedCourseTeeth.length}
-                      className="rounded-lg bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40"
+                      className="rounded-xl bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-40"
                     >
                       Auto to'ldirish
                     </button>
@@ -1211,14 +1273,14 @@ export default function TreatmentPatientPage() {
                           key={item.toothNumber}
                           type="button"
                           onClick={() => handleToggleTooth(item.toothNumber)}
-                          className={`rounded-xl px-4 py-3 text-left text-sm font-bold transition ${
+                          className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
                             isActive
-                              ? "bg-[#35a8f5] text-white"
-                              : "bg-white text-slate-700 ring-1 ring-border-color hover:bg-blue-50"
+                              ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
+                              : "bg-white text-slate-700 ring-1 ring-inset ring-border-color hover:bg-blue-50"
                           }`}
                         >
                           <span className="block text-lg">#{item.toothNumber}</span>
-                          <span className="block text-xs opacity-70">
+                          <span className="block text-xs opacity-80">
                             {LABELS[item.diagnosis as ToothCondition] || item.diagnosis || "—"}
                           </span>
                         </button>
@@ -1228,33 +1290,33 @@ export default function TreatmentPatientPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-bold text-slate-700">Asosiy tashxis</label>
+                  <SectionLabel>Asosiy tashxis</SectionLabel>
                   <textarea
                     value={mainDiagnosis}
                     onChange={(e) => setMainDiagnosis(e.target.value)}
                     placeholder="Masalan: 11 va 21-tish karies davolanishi"
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-border-color bg-slate-50 p-3 text-sm outline-none focus:border-[#35a8f5]"
+                    className="w-full resize-none rounded-2xl border border-border-color bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
                   />
                 </div>
+              </div>
 
-                <div className="flex gap-3 border-t border-border-color pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateCourseModalOpen(false)}
-                    className="flex-1 rounded-xl border border-border-color py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                  >
-                    Bekor qilish
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateCourse}
-                    disabled={isCreatingCourse || !selectedCourseTeeth.length}
-                    className="flex-1 rounded-xl bg-dark-navy py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-60"
-                  >
-                    {isCreatingCourse ? "Yaratilmoqda..." : "Kurs yaratish"}
-                  </button>
-                </div>
+              <div className="flex gap-3 border-t border-border-color bg-slate-50/60 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateCourseModalOpen(false)}
+                  className="flex-1 rounded-2xl border border-border-color bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateCourse}
+                  disabled={isCreatingCourse || !selectedCourseTeeth.length}
+                  className="flex-1 rounded-2xl bg-dark-navy py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isCreatingCourse ? "Yaratilmoqda..." : "Kurs yaratish"}
+                </button>
               </div>
             </div>
           </div>,
@@ -1265,12 +1327,12 @@ export default function TreatmentPatientPage() {
       {isAddVisitModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
-            <div className="my-8 w-full max-w-5xl rounded-2xl bg-white shadow-2xl">
+          <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
+            <div className="my-8 w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
               {/* Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-border-color bg-white px-6 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-color bg-slate-50/80 px-6 py-5 backdrop-blur">
                 <div>
-                  <h2 className="font-extrabold text-dark-navy">Visit qo'shish</h2>
+                  <h2 className="text-lg font-extrabold text-dark-navy">Visit qo'shish</h2>
                   {selectedCourse && (
                     <p className="mt-0.5 text-sm text-text-light">
                       Kurs: <span className="font-semibold text-dark-navy">{selectedCourse.mainDiagnosis}</span>
@@ -1280,7 +1342,7 @@ export default function TreatmentPatientPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddVisitModalOpen(false)}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                 >
                   <X size={20} />
                 </button>

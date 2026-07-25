@@ -694,8 +694,8 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {payrollData.doctorDetails.map((item) => (
-                        <PayrollDoctorRow key={item.doctorId} item={item} />
+                      {payrollData.doctorDetails.map((item, index) => (
+                        <PayrollDoctorRow key={item.doctorId || `${item.doctorName}-${index}`} item={item} />
                       ))}
                     </tbody>
                   </table>
@@ -723,8 +723,8 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {payrollData.staffDetails.map((item) => (
-                        <tr key={item.staffId} className="border-t border-border-color">
+                      {payrollData.staffDetails.map((item, index) => (
+                        <tr key={item.staffId || (item as any).id || `${item.staffName}-${index}`} className="border-t border-border-color">
                           <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
                             {item.staffName}
                           </td>
@@ -787,8 +787,8 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {doctorRevenueList.map((item) => (
-                    <DoctorRevenueRow key={item.doctorId} item={item} />
+                  {doctorRevenueList.map((item, index) => (
+                    <DoctorRevenueRow key={item.doctorId || `${item.doctorName}-${index}`} item={item} />
                   ))}
                 </tbody>
               </table>
