@@ -235,7 +235,7 @@ export default function TariffsPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <LandingHeader onDemoClick={() => setModalOpen(true)} />
+      <LandingHeader/>
 
       <main>
         {/* Hero */}
