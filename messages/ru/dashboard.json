@@ -1,0 +1,73 @@
+{
+  "header": {
+    "title": "Панель управления",
+    "welcome": "Добро пожаловать, {name} 👋 — {date}"
+  },
+  "months": [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ],
+  "stats": {
+    "totalPatients": "Всего пациентов",
+    "todayAppointments": "Приёмы на сегодня",
+    "completedCancelled": "Завершено / Отменено",
+    "doctors": "Врачи"
+  },
+  "revenue": {
+    "title": "Статистика дохода",
+    "filterDay": "День",
+    "filterMonth": "Месяц",
+    "filterYear": "Год",
+    "currency": "сум",
+    "transactions": "{count, plural, one {# платёж} few {# платежа} many {# платежей} other {# платежа}}",
+    "selectDate": "Выберите дату"
+  },
+  "todayAppointments": {
+    "title": "Приёмы на сегодня",
+    "count": "{count, plural, one {# приём} few {# приёма} many {# приёмов} other {# приёма}}",
+    "empty": "Сегодня приёмов нет"
+  },
+  "unknownDoctor": "Врач неизвестен",
+  "appointmentStatus": {
+    "scheduled": "Ожидается",
+    "inProgress": "В процессе",
+    "completed": "Завершено",
+    "cancelled": "Отменено",
+    "noShow": "Не пришёл"
+  },
+  "doctorPayments": {
+    "title": "Доход врачей и выплаты"
+  },
+  "payroll": {
+    "title": "Расчёт зарплаты — общие расходы",
+    "monthlyExpense": "Расходы на зарплату",
+    "commissionExpense": "Расходы на комиссию",
+    "totalExpense": "Общие расходы",
+    "doctorsTableTitle": "Врачи",
+    "staffTableTitle": "Прочий персонал (ресепшн, ассистент)",
+    "columns": {
+      "name": "Имя",
+      "type": "Тип",
+      "revenue": "Доход",
+      "percent": "Процент",
+      "totalCost": "Общие расходы",
+      "role": "Роль",
+      "salary": "Зарплата"
+    },
+    "percentageType": "Процент",
+    "salaryType": "Зарплата"
+  },
+  "doctorRevenue": {
+    "myTitle": "Мой доход",
+    "allTitle": "Доход по врачам",
+    "columns": {
+      "doctor": "Врач",
+      "revenue": "Доход",
+      "transactions": "Транзакции",
+      "compensation": "Компенсация",
+      "commissionAmount": "Сумма комиссии"
+    },
+    "transactionsCount": "{count, plural, one {# транзакция} few {# транзакции} many {# транзакций} other {# транзакции}}",
+    "salaryLabel": "Зарплата"
+  }
+}

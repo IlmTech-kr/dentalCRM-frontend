@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   Phone,
@@ -9,20 +10,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { BRAND, BrandLogo } from "@/src/components/shared/BrandLogo";
-
-const productLinks = [
-  { label: "Imkoniyatlar", href: "/#features" },
-  { label: "Qanday ishlaydi", href: "/#how-it-works" },
-  { label: "Tariflar", href: "/tariffs" },
-  { label: "Demo so'rovi", href: "/#contact" },
-];
-
-const companyLinks = [
-  { label: "Biz haqimizda", href: "/#about" },
-  { label: "Bog'lanish", href: "/#contact" },
-  { label: "Maxfiylik siyosati", href: "/#" },
-  { label: "Foydalanish shartlari", href: "/#" },
-];
 
 const socials = [
   {
@@ -68,6 +55,22 @@ interface FooterProps {
 }
 
 export default function Footer({ onDemoClick }: FooterProps = {}) {
+  const t = useTranslations("layout");
+
+  const productLinks = [
+    { label: t("footer.productFeatures"), href: "/#features" },
+    { label: t("footer.productHowItWorks"), href: "/#how-it-works" },
+    { label: t("footer.productPricing"), href: "/tariffs" },
+    { label: t("footer.productDemoRequest"), href: "/#contact" },
+  ];
+
+  const companyLinks = [
+    { label: t("footer.companyAbout"), href: "/#about" },
+    { label: t("footer.companyContact"), href: "/#contact" },
+    { label: t("footer.companyPrivacyPolicy"), href: "/#" },
+    { label: t("footer.companyTermsOfService"), href: "/#" },
+  ];
+
   return (
     <footer id="contact" className="bg-[#07105f]">
       <div className="border-b border-white/10">
@@ -75,11 +78,10 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
           <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h3 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                Klinikangizni raqamlashtirishga tayyormisiz?
+                {t("footer.ctaTitle")}
               </h3>
               <p className="mt-2 max-w-2xl text-sky-100/75">
-                Demo so'rang — jamoamiz klinikangizga mos START, PRO yoki
-                ENTERPRISE yechimni tanlab beradi.
+                {t("footer.ctaSubtitle")}
               </p>
             </div>
 
@@ -88,7 +90,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
               onClick={onDemoClick}
               className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-violet-500 to-rose-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition-all hover:scale-[1.02]"
             >
-              Demo olish
+              {t("footer.ctaButton")}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -101,9 +103,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
             <BrandLogo dark />
 
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-sky-100/70">
-              {BRAND} — stomatologiya klinikalari uchun zamonaviy CRM:
-              bemorlar, shifokorlar, qabullar, davolash kartalari, hisobotlar
-              va SMS eslatmalar bitta platformada.
+              {t("footer.description", { brand: BRAND })}
             </p>
 
             <div className="mt-6 flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white">Mahsulot</p>
+            <p className="text-sm font-semibold text-white">{t("footer.productHeading")}</p>
             <ul className="mt-4 space-y-3">
               {productLinks.map((link) => (
                 <li key={link.label}>
@@ -136,7 +136,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white">Kompaniya</p>
+            <p className="text-sm font-semibold text-white">{t("footer.companyHeading")}</p>
             <ul className="mt-4 space-y-3">
               {companyLinks.map((link) => (
                 <li key={link.label}>
@@ -149,34 +149,34 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white">Aloqa</p>
+            <p className="text-sm font-semibold text-white">{t("footer.contactHeading")}</p>
             <ul className="mt-4 space-y-4">
               <li className="flex items-start gap-3 text-sm text-sky-100/70">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
                 <div>
                   <p className="text-white">+998 90 123 45 67</p>
-                  <p className="text-xs text-sky-100/50">Dush-Shanba, 09:00–18:00</p>
+                  <p className="text-xs text-sky-100/50">{t("footer.phoneHours")}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-sky-100/70">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
                 <div>
                   <p className="text-white">info@dentalcrm.uz</p>
-                  <p className="text-xs text-sky-100/50">Savol va takliflar uchun</p>
+                  <p className="text-xs text-sky-100/50">{t("footer.emailNote")}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-sky-100/70">
                 <Send className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
                 <div>
                   <p className="text-white">@dentalcrm_support</p>
-                  <p className="text-xs text-sky-100/50">Tezkor javob — Telegram</p>
+                  <p className="text-xs text-sky-100/50">{t("footer.telegramNote")}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-sky-100/70">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
                 <div>
-                  <p className="text-white">Toshkent, O'zbekiston</p>
-                  <p className="text-xs text-sky-100/50">Online demo va joriy qilish xizmati</p>
+                  <p className="text-white">{t("footer.addressLine")}</p>
+                  <p className="text-xs text-sky-100/50">{t("footer.addressNote")}</p>
                 </div>
               </li>
             </ul>
@@ -187,11 +187,11 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-center sm:flex-row sm:text-left lg:px-8">
           <p className="text-sm text-sky-100/50">
-            © {new Date().getFullYear()} {BRAND}. Barcha huquqlar himoyalangan.
+            {t("footer.copyright", { year: new Date().getFullYear(), brand: BRAND })}
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/#" className="text-sm text-sky-100/50 transition-colors hover:text-white">Maxfiylik siyosati</Link>
-            <Link href="/#" className="text-sm text-sky-100/50 transition-colors hover:text-white">Foydalanish shartlari</Link>
+            <Link href="/#" className="text-sm text-sky-100/50 transition-colors hover:text-white">{t("footer.companyPrivacyPolicy")}</Link>
+            <Link href="/#" className="text-sm text-sky-100/50 transition-colors hover:text-white">{t("footer.companyTermsOfService")}</Link>
           </div>
         </div>
       </div>

@@ -1,0 +1,30 @@
+{
+  "title": "Kalendar",
+  "doctorOnlyBadge": "Faqat sizniki",
+  "weekdaysShort": ["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yak"],
+  "months": [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+    "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
+  ],
+  "allDoctorsOption": "Barcha shifokorlar",
+  "youFallback": "Siz",
+  "viewMonth": "Oy",
+  "viewWeek": "Hafta",
+  "today": "Bugun",
+  "legendStatus": "Holat:",
+  "status": {
+    "scheduled": "Kutilmoqda",
+    "inProgress": "Jarayonda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor",
+    "noShow": "Kelmadi"
+  },
+  "patientFallback": "Bemor",
+  "patientUnknown": "Bemor noma'lum",
+  "doctorUnknown": "Shifokor noma'lum",
+  "loading": "Kalendar yuklanmoqda...",
+  "dayModal": {
+    "appointmentsCount": "{count, plural, other {# ta qabul}}",
+    "empty": "Bu kunda qabul yo'q"
+  }
+}

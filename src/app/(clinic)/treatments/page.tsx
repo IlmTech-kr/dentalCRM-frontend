@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Activity,
   AlertCircle,
@@ -105,16 +106,17 @@ function getStartTimeSortValue(appointment: TreatmentAppointment) {
   return value;
 }
 
-function getReason(appointment: TreatmentAppointment) {
+function getReason(appointment: TreatmentAppointment, fallback: string) {
   return (
     appointment.reason ||
     appointment.complaint ||
     appointment.notes ||
-    "Ko‘rik / davolanish"
+    fallback
   );
 }
 
 export default function TreatmentsPage() {
+  const t = useTranslations("treatments");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("CARD");
 
@@ -137,7 +139,7 @@ export default function TreatmentsPage() {
 
     return sortedAppointments.filter((appointment) => {
       const patientName = getPersonName(appointment.patient, "").toLowerCase();
-      const reason = getReason(appointment).toLowerCase();
+      const reason = getReason(appointment, t("inProgress.defaultReason")).toLowerCase();
       const appointmentId = getId(appointment).toLowerCase();
       const time = formatAppointmentTime(appointment).toLowerCase();
 
@@ -161,17 +163,15 @@ export default function TreatmentsPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700 ring-1 ring-blue-100">
                 <Activity size={18} />
-                Treatment queue
+                {t("inProgress.badge")}
               </div>
 
               <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">
-                Bugungi davolanishdagi appointmentlar
+                {t("inProgress.title")}
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                Bu yerda faqat bugungi sana bo‘yicha statusi{" "}
-                <b>IN_PROGRESS</b> bo‘lgan appointmentlar chiqadi. Appointmentlar
-                vaqtiga qarab tartiblangan.
+                {t.rich("inProgress.subtitle", { b: (chunks) => <b>{chunks}</b> })}
               </p>
             </div>
 
@@ -184,7 +184,7 @@ export default function TreatmentsPage() {
                 size={18}
                 className={isFetching ? "animate-spin" : ""}
               />
-              Yangilash
+              {t("inProgress.refresh")}
             </button>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function TreatmentsPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-500">Bugungi sana</p>
+              <p className="text-sm font-bold text-slate-500">{t("inProgress.todayLabel")}</p>
               <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
                 <CalendarDays size={20} />
               </div>
@@ -216,7 +216,7 @@ export default function TreatmentsPage() {
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-500">Ko‘rinayotgan</p>
+              <p className="text-sm font-bold text-slate-500">{t("inProgress.visibleLabel")}</p>
               <div className="rounded-2xl bg-purple-50 p-3 text-purple-600">
                 <Users size={20} />
               </div>
@@ -232,11 +232,11 @@ export default function TreatmentsPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="text-xl font-black text-slate-950">
-                Davolanish navbati
+                {t("inProgress.queueTitle")}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Order number vaqtga qarab beriladi: eng erta vaqt #1 bo‘ladi.
+                {t("inProgress.queueSubtitle")}
               </p>
             </div>
 
@@ -252,7 +252,7 @@ export default function TreatmentsPage() {
                   }`}
                 >
                   <LayoutGrid size={17} />
-                  Card view
+                  {t("inProgress.cardView")}
                 </button>
 
                 <button
@@ -265,7 +265,7 @@ export default function TreatmentsPage() {
                   }`}
                 >
                   <List size={17} />
-                  List view
+                  {t("inProgress.listView")}
                 </button>
               </div>
 
@@ -278,7 +278,7 @@ export default function TreatmentsPage() {
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Patient, vaqt yoki sabab..."
+                  placeholder={t("inProgress.searchPlaceholder")}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 md:w-[360px]"
                 />
               </div>
@@ -289,11 +289,11 @@ export default function TreatmentsPage() {
             <div className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5 text-red-700">
               <div className="flex items-center gap-2 font-black">
                 <AlertCircle size={20} />
-                Appointmentlarni olishda xatolik
+                {t("inProgress.errorTitle")}
               </div>
 
               <p className="mt-2 text-sm font-semibold text-red-600">
-                Endpoint yoki tenant subdomainni tekshiring.
+                {t("inProgress.errorSubtitle")}
               </p>
             </div>
           ) : null}
@@ -303,7 +303,7 @@ export default function TreatmentsPage() {
               <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-slate-50 py-16">
                 <div className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-500">
                   <Loader2 size={20} className="animate-spin" />
-                  Bugungi appointmentlar yuklanmoqda...
+                  {t("inProgress.loading")}
                 </div>
               </div>
             ) : filteredAppointments.length === 0 ? (
@@ -313,12 +313,11 @@ export default function TreatmentsPage() {
                 </div>
 
                 <h3 className="mt-4 text-lg font-black text-slate-950">
-                  Bugun IN_PROGRESS appointment yo‘q
+                  {t("inProgress.emptyTitle")}
                 </h3>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Appointment statusi IN_PROGRESS bo‘lganda shu yerda
-                  ko‘rinadi.
+                  {t("inProgress.emptySubtitle")}
                 </p>
               </div>
             ) : viewMode === "CARD" ? (
@@ -329,7 +328,7 @@ export default function TreatmentsPage() {
 
                   const patientName = getPersonName(
                     appointment.patient,
-                    "Noma'lum bemor"
+                    t("inProgress.unknownPatient")
                   );
 
                   const treatmentHref =
@@ -368,7 +367,7 @@ export default function TreatmentsPage() {
                       <div className="mt-5 grid gap-3 md:grid-cols-2">
                         <div className="rounded-2xl bg-slate-50 p-4">
                           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                            Sana
+                            {t("table.date")}
                           </p>
 
                           <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-800">
@@ -379,7 +378,7 @@ export default function TreatmentsPage() {
 
                         <div className="rounded-2xl bg-slate-50 p-4">
                           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                            Vaqt
+                            {t("table.time")}
                           </p>
 
                           <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-800">
@@ -391,11 +390,11 @@ export default function TreatmentsPage() {
 
                       <div className="mt-4 rounded-2xl bg-slate-50 p-4">
                         <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                          Sabab
+                          {t("table.reason")}
                         </p>
 
                         <p className="mt-1 text-sm font-bold text-slate-700">
-                          {getReason(appointment)}
+                          {getReason(appointment, t("inProgress.defaultReason"))}
                         </p>
                       </div>
 
@@ -405,7 +404,7 @@ export default function TreatmentsPage() {
                             href={treatmentHref}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
                           >
-                            Davolashni ochish
+                            {t("inProgress.openTreatment")}
                             <ArrowRight size={18} />
                           </Link>
                         ) : (
@@ -414,7 +413,7 @@ export default function TreatmentsPage() {
                             disabled
                             className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500"
                           >
-                            Patient yoki Appointment ID yo‘q
+                            {t("inProgress.noIds")}
                           </button>
                         )}
                       </div>
@@ -429,22 +428,22 @@ export default function TreatmentsPage() {
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
-                          #
+                          {t("table.number")}
                         </th>
                         <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
-                          Vaqt
+                          {t("table.time")}
                         </th>
                         <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
-                          Patient
+                          {t("table.patient")}
                         </th>
                         <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
-                          Sabab
+                          {t("table.reason")}
                         </th>
                         <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
-                          Status
+                          {t("table.status")}
                         </th>
                         <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
-                          Action
+                          {t("table.action")}
                         </th>
                       </tr>
                     </thead>
@@ -456,7 +455,7 @@ export default function TreatmentsPage() {
 
                         const patientName = getPersonName(
                           appointment.patient,
-                          "Noma'lum bemor"
+                          t("inProgress.unknownPatient")
                         );
 
                         const treatmentHref =
@@ -498,7 +497,7 @@ export default function TreatmentsPage() {
 
                             <td className="px-5 py-4">
                               <p className="max-w-[260px] truncate text-sm font-bold text-slate-700">
-                                {getReason(appointment)}
+                                {getReason(appointment, t("inProgress.defaultReason"))}
                               </p>
                             </td>
 
@@ -514,7 +513,7 @@ export default function TreatmentsPage() {
                                   href={treatmentHref}
                                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
                                 >
-                                  Ochish
+                                  {t("inProgress.open")}
                                   <ArrowRight size={16} />
                                 </Link>
                               ) : (
@@ -523,7 +522,7 @@ export default function TreatmentsPage() {
                                   disabled
                                   className="inline-flex cursor-not-allowed items-center justify-center rounded-2xl bg-slate-200 px-4 py-2.5 text-sm font-black text-slate-500"
                                 >
-                                  ID yo‘q
+                                  {t("inProgress.noId")}
                                 </button>
                               )}
                             </td>

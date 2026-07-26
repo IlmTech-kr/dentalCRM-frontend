@@ -1,0 +1,73 @@
+{
+  "header": {
+    "title": "Boshqaruv paneli",
+    "welcome": "Xush kelibsiz, {name} 👋 — {date}"
+  },
+  "months": [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+    "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
+  ],
+  "stats": {
+    "totalPatients": "Jami bemorlar",
+    "todayAppointments": "Bugungi qabullar",
+    "completedCancelled": "Bajarildi / Bekor",
+    "doctors": "Shifokorlar"
+  },
+  "revenue": {
+    "title": "Daromad statistikasi",
+    "filterDay": "Kun",
+    "filterMonth": "Oy",
+    "filterYear": "Yil",
+    "currency": "so'm",
+    "transactions": "{count, plural, other {# ta to'lov}}",
+    "selectDate": "Sanani tanlang"
+  },
+  "todayAppointments": {
+    "title": "Bugungi qabullar",
+    "count": "{count, plural, other {# ta}}",
+    "empty": "Bugun qabul yo'q"
+  },
+  "unknownDoctor": "Shifokor noma'lum",
+  "appointmentStatus": {
+    "scheduled": "Kutilmoqda",
+    "inProgress": "Jarayonda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor",
+    "noShow": "Kelmadi"
+  },
+  "doctorPayments": {
+    "title": "Shifokorlar daromadi va to'lovlar"
+  },
+  "payroll": {
+    "title": "Payroll — umumiy chiqimlar",
+    "monthlyExpense": "Oylik chiqimlar",
+    "commissionExpense": "Komissiya chiqimlari",
+    "totalExpense": "Jami chiqim",
+    "doctorsTableTitle": "Shifokorlar",
+    "staffTableTitle": "Boshqa xodimlar (reseption, assistent)",
+    "columns": {
+      "name": "Ism",
+      "type": "Turi",
+      "revenue": "Daromad",
+      "percent": "Foiz",
+      "totalCost": "Jami xarajat",
+      "role": "Rol",
+      "salary": "Oylik"
+    },
+    "percentageType": "Foiz",
+    "salaryType": "Oylik"
+  },
+  "doctorRevenue": {
+    "myTitle": "Mening daromadim",
+    "allTitle": "Shifokorlar bo'yicha daromad",
+    "columns": {
+      "doctor": "Shifokor",
+      "revenue": "Daromad",
+      "transactions": "Tranzaksiyalar",
+      "compensation": "Kompensatsiya",
+      "commissionAmount": "Komissiya summasi"
+    },
+    "transactionsCount": "{count, plural, other {# ta}}",
+    "salaryLabel": "Oylik"
+  }
+}

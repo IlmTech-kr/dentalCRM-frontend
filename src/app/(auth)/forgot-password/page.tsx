@@ -5,6 +5,7 @@
  */
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -25,6 +26,7 @@ function isValidEmail(email: string): boolean {
 
 export default function ForgotPasswordPage() {
   const toast = useToast();
+  const t = useTranslations("auth");
 
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
@@ -57,7 +59,7 @@ export default function ForgotPasswordPage() {
     const subDomain = getCurrentSubdomain();
 
     if (!subDomain) {
-      toast.warning("Clinic subdomain topilmadi. clinic1.localhost:3000 formatida oching.");
+      toast.warning(t("forgotPassword.subdomainMissing"));
       return;
     }
 
@@ -98,22 +100,22 @@ export default function ForgotPasswordPage() {
             <ShieldCheck size={34} />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold">DentalCRM</h1>
-            <p className="text-white/80">Smart Clinic Management</p>
+            <h1 className="text-3xl font-extrabold">{t("brand.name")}</h1>
+            <p className="text-white/80">{t("forgotPassword.tagline")}</p>
           </div>
         </div>
 
         <div className="relative z-10 mt-[150px]">
-          <h2 className="text-5xl font-extrabold leading-tight">Recover Your Account</h2>
+          <h2 className="text-5xl font-extrabold leading-tight">{t("forgotPassword.heroTitle")}</h2>
           <p className="mt-8 text-xl leading-9 text-white/85">
-            Don't worry! We'll send you a secure link to reset your password in just a few seconds.
+            {t("forgotPassword.heroSubtitle")}
           </p>
 
           <div className="mt-12 space-y-4">
             {[
-              "Secure reset link sent via email",
-              "Link expires in 24 hours",
-              "Your data remains protected",
+              t("forgotPassword.heroPoint1"),
+              t("forgotPassword.heroPoint2"),
+              t("forgotPassword.heroPoint3"),
             ].map((text) => (
               <div key={text} className="flex items-start gap-3">
                 <CheckCircle size={24} className="mt-1 shrink-0 text-white/90" />
@@ -123,7 +125,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <p className="mt-auto text-white/70">© 2026 DentalCRM</p>
+        <p className="mt-auto text-white/70">{t("forgotPassword.copyright")}</p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-6 py-8">
@@ -133,9 +135,9 @@ export default function ForgotPasswordPage() {
         >
           {!success ? (
             <>
-              <h2 className="text-3xl font-extrabold text-dark-navy">Forgot Password?</h2>
+              <h2 className="text-3xl font-extrabold text-dark-navy">{t("forgotPassword.title")}</h2>
               <p className="mt-2 text-sm text-text-light">
-                Enter your clinic email and we'll send a password reset link.
+                {t("forgotPassword.subtitle")}
               </p>
 
               {forgotPasswordMutation.error && (
@@ -144,13 +146,13 @@ export default function ForgotPasswordPage() {
                   <div className="flex-1">
                     {forgotPasswordMutation.error instanceof Error
                       ? forgotPasswordMutation.error.message
-                      : "Failed to send reset link. Please try again."}
+                      : t("forgotPassword.errorFallback")}
                   </div>
                 </div>
               )}
 
               <div className="mt-8">
-                <label className="mb-2 block text-sm font-bold text-slate-600">Email Address</label>
+                <label className="mb-2 block text-sm font-bold text-slate-600">{t("forgotPassword.emailLabel")}</label>
 
                 <div className={`flex h-14 items-center gap-3 rounded-2xl border px-5 transition-colors ${
                   forgotPasswordMutation.error
@@ -172,7 +174,7 @@ export default function ForgotPasswordPage() {
                       setEmail(e.target.value);
                       forgotPasswordMutation.reset();
                     }}
-                    placeholder="admin@clinic.com"
+                    placeholder={t("forgotPassword.emailPlaceholder")}
                     autoComplete="email"
                     disabled={forgotPasswordMutation.isPending}
                     className="w-full bg-transparent outline-none placeholder-slate-400 disabled:opacity-50"
@@ -184,10 +186,10 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {email && !isValidEmailInput && (
-                  <p className="mt-2 text-xs font-medium text-red-600">Please enter a valid email</p>
+                  <p className="mt-2 text-xs font-medium text-red-600">{t("forgotPassword.invalidEmail")}</p>
                 )}
                 {isValidEmailInput && (
-                  <p className="mt-2 text-xs font-medium text-green-600">✓ Email looks good</p>
+                  <p className="mt-2 text-xs font-medium text-green-600">✓ {t("forgotPassword.emailValid")}</p>
                 )}
               </div>
 
@@ -197,20 +199,20 @@ export default function ForgotPasswordPage() {
                 className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {forgotPasswordMutation.isPending ? (
-                  <><Loader size={18} className="animate-spin" />Sending...</>
+                  <><Loader size={18} className="animate-spin" />{t("forgotPassword.submitting")}</>
                 ) : (
-                  "Send Reset Link"
+                  t("forgotPassword.submitButton")
                 )}
               </button>
 
               <Link href="/login" className="mt-6 flex items-center gap-2 text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark">
                 <ArrowLeft size={16} />
-                Back to Login
+                {t("forgotPassword.backToLogin")}
               </Link>
 
               {attemptCount > 0 && (
                 <p className="mt-4 text-center text-xs text-slate-500">
-                  {attemptCount === 1 ? "Reset link sent" : `${attemptCount} reset links sent`}
+                  {attemptCount === 1 ? t("forgotPassword.attemptSingle") : t("forgotPassword.attemptMultiple", { count: attemptCount })}
                 </p>
               )}
             </>
@@ -221,17 +223,17 @@ export default function ForgotPasswordPage() {
                   <CheckCircle size={48} className="text-green-600" />
                 </div>
 
-                <h2 className="text-2xl font-extrabold text-dark-navy">Check Your Email</h2>
-                <p className="mt-3 text-sm text-text-light">We've sent a password reset link to:</p>
+                <h2 className="text-2xl font-extrabold text-dark-navy">{t("forgotPassword.successTitle")}</h2>
+                <p className="mt-3 text-sm text-text-light">{t("forgotPassword.successSubtitle")}</p>
                 <p className="mt-2 break-all font-semibold text-slate-700">{email}</p>
 
                 <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-slate-700">
-                  <p className="mb-2 font-medium">What's next?</p>
+                  <p className="mb-2 font-medium">{t("forgotPassword.whatsNext")}</p>
                   <ul className="space-y-2 text-left">
                     {[
-                      "Check your email for the reset link",
-                      "Click the link to create a new password",
-                      "Log in with your new password",
+                      t("forgotPassword.step1"),
+                      t("forgotPassword.step2"),
+                      t("forgotPassword.step3"),
                     ].map((step, i) => (
                       <li key={i} className="flex gap-2">
                         <span className="font-bold text-blue-600">{i + 1}.</span>
@@ -241,7 +243,7 @@ export default function ForgotPasswordPage() {
                   </ul>
                 </div>
 
-                <p className="mt-4 text-xs text-slate-500">Link expires in 24 hours</p>
+                <p className="mt-4 text-xs text-slate-500">{t("forgotPassword.linkExpires")}</p>
               </div>
 
               <button
@@ -250,17 +252,17 @@ export default function ForgotPasswordPage() {
                 disabled={resendCountdown > 0}
                 className="mt-8 h-14 w-full rounded-2xl bg-slate-100 font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Send Another Link"}
+                {resendCountdown > 0 ? t("forgotPassword.resendCountdown", { seconds: resendCountdown }) : t("forgotPassword.resendButton")}
               </button>
 
               <Link href="/login" className="mt-4 flex items-center justify-center gap-2 text-sm font-bold text-primary-blue transition hover:text-primary-blue-dark">
                 <ArrowLeft size={16} />
-                Back to Login
+                {t("forgotPassword.backToLogin")}
               </Link>
 
               <p className="mt-6 text-center text-xs text-slate-500">
-                Didn't receive the email?{" "}
-                <span className="text-slate-400">Check your spam folder or try another email</span>
+                {t("forgotPassword.noEmailReceived")}{" "}
+                <span className="text-slate-400">{t("forgotPassword.checkSpam")}</span>
               </p>
             </>
           )}

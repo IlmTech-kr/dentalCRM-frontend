@@ -5,13 +5,24 @@
  */
 
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";
 import { clearAuthStorage, getStoredUser } from "@/src/lib/auth/storage";
+import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 
-const TITLES: Record<string, { title: string; subtitle: string }> = {
-  "/dashboard": { title: "Tenantlar", subtitle: "Klinikalar va obunalarni boshqarish" },
-  "/dashboard/plans": { title: "Tariflar", subtitle: "Tarif rejalari va faollashtirish" },
-  "/dashboard/statistics": { title: "Statistika", subtitle: "Klinikalar bo'yicha daromad hisoboti" },
+const TITLE_KEYS: Record<string, { titleKey: string; subtitleKey: string }> = {
+  "/dashboard": {
+    titleKey: "superadminHeader.tenantsTitle",
+    subtitleKey: "superadminHeader.tenantsSubtitle",
+  },
+  "/dashboard/plans": {
+    titleKey: "superadminHeader.plansTitle",
+    subtitleKey: "superadminHeader.plansSubtitle",
+  },
+  "/dashboard/statistics": {
+    titleKey: "superadminHeader.statisticsTitle",
+    subtitleKey: "superadminHeader.statisticsSubtitle",
+  },
 };
 
 interface StoredSuperAdminUser {
@@ -21,11 +32,17 @@ interface StoredSuperAdminUser {
 }
 
 export default function Header() {
+  const t = useTranslations("layout");
+  const tCommon = useTranslations("common");
+
   const pathname = usePathname();
   const router = useRouter();
   const user = getStoredUser<StoredSuperAdminUser>();
-  const meta = TITLES[pathname] || { title: "Dashboard", subtitle: "" };
-  const displayName = user?.fullName || user?.name || user?.email || "Super Admin";
+  const titleKeys = TITLE_KEYS[pathname];
+  const meta = titleKeys
+    ? { title: t(titleKeys.titleKey), subtitle: t(titleKeys.subtitleKey) }
+    : { title: t("superadminHeader.defaultTitle"), subtitle: "" };
+  const displayName = user?.fullName || user?.name || user?.email || t("superadminHeader.superAdminFallback");
   const initial = displayName.charAt(0).toUpperCase();
 
   function handleLogout() {
@@ -41,6 +58,8 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
+
         <div className="flex items-center gap-3 rounded-2xl border border-border-color px-3 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-xs font-bold text-white">
             {initial}
@@ -53,7 +72,7 @@ export default function Header() {
           className="flex items-center gap-2 rounded-xl border border-border-color px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
         >
           <LogOut size={16} />
-          Chiqish
+          {tCommon("actions.logout")}
         </button>
       </div>
     </header>

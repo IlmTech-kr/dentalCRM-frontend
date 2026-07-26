@@ -1,0 +1,31 @@
+{
+  "actions": {
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "delete": "O'chirish",
+    "edit": "Tahrirlash",
+    "add": "Qo'shish",
+    "search": "Qidirish",
+    "confirm": "Tasdiqlash",
+    "close": "Yopish",
+    "back": "Orqaga",
+    "next": "Keyingi",
+    "submit": "Yuborish",
+    "view": "Ko'rish",
+    "logout": "Chiqish"
+  },
+  "status": {
+    "active": "Faol",
+    "inactive": "Nofaol",
+    "pending": "Kutilmoqda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi"
+  },
+  "feedback": {
+    "loading": "Yuklanmoqda...",
+    "noData": "Ma'lumot topilmadi",
+    "error": "Xatolik yuz berdi",
+    "success": "Muvaffaqiyatli",
+    "required": "Majburiy maydon"
+  }
+}

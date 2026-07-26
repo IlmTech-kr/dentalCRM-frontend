@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   AlertCircle,
   CheckCircle2,
@@ -21,14 +22,16 @@ export function ChartStatusCard({
   hasExistingChart,
   onUseExisting,
 }: Props) {
+  const t = useTranslations("treatments");
+
   if (isLoading) {
     return (
       <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <Loader2 className="animate-spin text-blue-600" size={22} />
           <div>
-            <h3 className="font-black text-slate-900">Chart tekshirilmoqda</h3>
-            <p className="text-sm text-slate-500">Bemor kartasi yuklanmoqda.</p>
+            <h3 className="font-black text-slate-900">{t("chartStatusCard.checkingTitle")}</h3>
+            <p className="text-sm text-slate-500">{t("chartStatusCard.checkingSubtitle")}</p>
           </div>
         </div>
       </div>
@@ -45,18 +48,17 @@ export function ChartStatusCard({
 
           <div className="flex-1">
             <h3 className="font-black text-emerald-900">
-              Mavjud karta topildi
+              {t("chartStatusCard.foundTitle")}
             </h3>
             <p className="mt-1 text-sm leading-6 text-emerald-700">
-              Doctor mavjud tish holatini o‘qib, kerak bo‘lsa yangilashi
-              mumkin.
+              {t("chartStatusCard.foundSubtitle")}
             </p>
 
             <button
               onClick={onUseExisting}
               className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700"
             >
-              Kartani yuklash
+              {t("chartStatusCard.loadChart")}
               <ChevronRight size={17} />
             </button>
           </div>
@@ -74,9 +76,9 @@ export function ChartStatusCard({
           </div>
 
           <div>
-            <h3 className="font-black text-orange-900">Karta topilmadi</h3>
+            <h3 className="font-black text-orange-900">{t("chartStatusCard.notFoundTitle")}</h3>
             <p className="mt-1 text-sm leading-6 text-orange-700">
-              Bu bemor uchun yangi ko‘rik kartasi ochiladi.
+              {t("chartStatusCard.notFoundSubtitle")}
             </p>
           </div>
         </div>
@@ -92,9 +94,9 @@ export function ChartStatusCard({
         </div>
 
         <div>
-          <h3 className="font-black text-blue-900">Yangi ko‘rik</h3>
+          <h3 className="font-black text-blue-900">{t("chartStatusCard.newTitle")}</h3>
           <p className="mt-1 text-sm leading-6 text-blue-700">
-            Bemor tishlarining joriy holatini kiriting va karta yarating.
+            {t("chartStatusCard.newSubtitle")}
           </p>
         </div>
       </div>

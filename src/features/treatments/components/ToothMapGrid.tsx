@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import type { ToothMap } from "@/src/types/treatment.types";
 
@@ -9,15 +10,16 @@ type Props = {
 };
 
 export function ToothMapGrid({ toothMap, onRemoveTooth }: Props) {
+  const t = useTranslations("treatments");
   const teeth = Object.entries(toothMap);
 
   if (teeth.length === 0) {
     return (
       <div className="flex min-h-[320px] items-center justify-center rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
         <div>
-          <h3 className="font-black text-slate-900">Tish holati yo‘q</h3>
+          <h3 className="font-black text-slate-900">{t("toothMapGrid.emptyTitle")}</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Chap tomondan tish holatini kiriting.
+            {t("toothMapGrid.emptySubtitle")}
           </p>
         </div>
       </div>
@@ -38,9 +40,9 @@ export function ToothMapGrid({ toothMap, onRemoveTooth }: Props) {
               </div>
 
               <div>
-                <p className="font-black text-slate-900">Tish #{tooth}</p>
+                <p className="font-black text-slate-900">{t("toothMapGrid.toothLabel", { number: tooth })}</p>
                 <p className="text-xs font-bold text-slate-400">
-                  Current condition
+                  {t("toothMapGrid.currentCondition")}
                 </p>
               </div>
             </div>
@@ -53,7 +55,7 @@ export function ToothMapGrid({ toothMap, onRemoveTooth }: Props) {
             </button>
           </div>
 
-          <InfoGroup label="Diagnosis">
+          <InfoGroup label={t("toothMapGrid.diagnosisLabel")}>
             {data.diagnoses.length > 0 ? (
               data.diagnoses.map((item) => (
                 <Badge key={item} color="orange">
@@ -66,7 +68,7 @@ export function ToothMapGrid({ toothMap, onRemoveTooth }: Props) {
           </InfoGroup>
 
           <div className="mt-4">
-            <InfoGroup label="State">
+            <InfoGroup label={t("toothMapGrid.stateLabel")}>
               {data.states.length > 0 ? (
                 data.states.map((item) => (
                   <Badge key={item} color="blue">
@@ -81,10 +83,10 @@ export function ToothMapGrid({ toothMap, onRemoveTooth }: Props) {
 
           <div className="mt-4">
             <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-400">
-              Doctor note
+              {t("toothMapGrid.doctorNoteLabel")}
             </p>
             <p className="rounded-2xl bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-              {data.note || "Note yo‘q"}
+              {data.note || t("toothMapGrid.noNote")}
             </p>
           </div>
         </div>
@@ -130,5 +132,6 @@ function Badge({
 }
 
 function EmptyText() {
-  return <span className="text-sm font-medium text-slate-400">Yo‘q</span>;
+  const t = useTranslations("treatments");
+  return <span className="text-sm font-medium text-slate-400">{t("toothMapGrid.none")}</span>;
 }

@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Lock, Mail, ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
@@ -16,13 +17,13 @@ import { useAuthStore } from "@/src/store/auth.store";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
-function getErrorMessage(error: unknown): string {
-  if (!error) return "Login failed";
-  if (error instanceof Error) return error.message || "Login failed";
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (!error) return fallback;
+  if (error instanceof Error) return error.message || fallback;
   if (typeof error === "object" && error !== null && "message" in error) {
-    return String((error as { message?: string }).message || "Login failed");
+    return String((error as { message?: string }).message || fallback);
   }
-  return "Login failed";
+  return fallback;
 }
 
 function getErrorStatus(error: unknown): number | null {
@@ -35,6 +36,7 @@ function getErrorStatus(error: unknown): number | null {
 export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("auth");
   const loginMutation = useLogin();
   const setAuthData = useAuthStore((state) => state.setAuthData);
 
@@ -119,7 +121,7 @@ export default function LoginPage() {
 
   // Session tekshirilayotganda — DentalLoader
   if (checkingSession) {
-    return <DentalLoader text="Checking session..." />;
+    return <DentalLoader text={t("login.checkingSession")} />;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -128,8 +130,8 @@ export default function LoginPage() {
     const email = form.email.trim();
     const password = form.password;
 
-    if (!tenantSubdomain) { toast.error("Clinic subdomain not found"); return; }
-    if (!email || !password) { toast.error("Email and password are required"); return; }
+    if (!tenantSubdomain) { toast.error(t("login.errors.tenantNotFound")); return; }
+    if (!email || !password) { toast.error(t("login.errors.missingFields")); return; }
 
     try {
       await loginMutation.mutateAsync({ email, password });
@@ -140,10 +142,10 @@ export default function LoginPage() {
         localStorage.removeItem("savedLogin");
       }
 
-      toast.success("Welcome back!");
+      toast.success(t("login.success"));
       router.replace("/dashboard");
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(getErrorMessage(error, t("login.errors.loginFailed")));
     }
   }
 
@@ -157,19 +159,19 @@ export default function LoginPage() {
             <ShieldCheck size={34} />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">DentalCRM</h1>
-            <p className="text-base text-white/85">Smart Clinic Management System</p>
+            <h1 className="text-3xl font-extrabold tracking-tight">{t("brand.name")}</h1>
+            <p className="text-base text-white/85">{t("login.tagline")}</p>
           </div>
         </div>
         <div className="relative z-10 mt-[150px] max-w-[620px]">
           <h2 className="text-[54px] font-extrabold leading-[1.15] tracking-tight">
-            Manage Your Clinic Efficiently
+            {t("login.heroTitle")}
           </h2>
           <p className="mt-8 text-xl leading-9 text-white/90">
-            Patients, doctors, appointments, treatments and reports — everything in one modern platform.
+            {t("login.heroSubtitle")}
           </p>
         </div>
-        <p className="relative z-10 mt-auto text-sm text-white/75">© 2026 DentalCRM. All rights reserved.</p>
+        <p className="relative z-10 mt-auto text-sm text-white/75">{t("login.copyright")}</p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-6">
@@ -177,16 +179,16 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="w-full max-w-[500px] rounded-[28px] border border-border-color bg-white px-9 py-10 shadow-2xl shadow-slate-300/40"
         >
-          <h2 className="text-[38px] font-extrabold leading-tight text-dark-navy">Welcome Back</h2>
-          <p className="mt-3 text-base text-text-light">Login to your clinic dashboard</p>
+          <h2 className="text-[38px] font-extrabold leading-tight text-dark-navy">{t("login.title")}</h2>
+          <p className="mt-3 text-base text-text-light">{t("login.subtitle")}</p>
 
           {tenantMissing && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle size={20} className="mt-0.5 text-red-500" />
                 <div>
-                  <p className="text-sm font-bold text-red-700">Clinic subdomain not found</p>
-                  <p className="mt-1 text-sm text-red-600">Please open your clinic URL:</p>
+                  <p className="text-sm font-bold text-red-700">{t("login.tenantMissingTitle")}</p>
+                  <p className="mt-1 text-sm text-red-600">{t("login.tenantMissingHint")}</p>
                   <p className="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-red-700">
                     http://clinic1.localhost:3000/login
                   </p>
@@ -198,20 +200,20 @@ export default function LoginPage() {
           {loginMutation.error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
               <p className="text-sm font-semibold text-red-700">
-                {getErrorMessage(loginMutation.error)}
+                {getErrorMessage(loginMutation.error, t("login.errors.loginFailed"))}
               </p>
             </div>
           )}
 
           <div className="mt-8 space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-600">Email Address</label>
+              <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.emailLabel")}</label>
               <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
                 <Mail size={21} className="text-slate-400" />
                 <input
                   type="email"
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
-                  placeholder="admin@clinic1.com"
+                  placeholder={t("login.emailPlaceholder")}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   disabled={loginMutation.isPending || tenantMissing}
@@ -220,13 +222,13 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-600">Password</label>
+              <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.passwordLabel")}</label>
               <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
                 <Lock size={21} className="text-slate-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
-                  placeholder="Enter your password"
+                  placeholder={t("login.passwordPlaceholder")}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   disabled={loginMutation.isPending || tenantMissing}
@@ -236,7 +238,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="text-slate-400 transition hover:text-primary-blue"
                   disabled={loginMutation.isPending || tenantMissing}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
                 >
                   {showPassword ? <EyeOff size={21} /> : <Eye size={21} />}
                 </button>
@@ -252,7 +254,7 @@ export default function LoginPage() {
                   className="h-4 w-4 accent-[#35a8f5]"
                   disabled={loginMutation.isPending || tenantMissing}
                 />
-                Remember me
+                {t("login.rememberMe")}
               </label>
             </div>
 
@@ -261,7 +263,7 @@ export default function LoginPage() {
               disabled={tenantMissing || loginMutation.isPending || !form.email.trim() || !form.password}
               className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loginMutation.isPending ? "Signing in..." : "Sign In"}
+              {loginMutation.isPending ? t("login.submitting") : t("login.submitButton")}
             </button>
           </div>
         </form>
