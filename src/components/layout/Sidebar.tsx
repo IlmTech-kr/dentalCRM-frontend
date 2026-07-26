@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CalendarDays,
   CalendarRange,
@@ -48,33 +49,31 @@ type RoleFlags = {
   isAssistant: boolean;
 };
 
-function buildNavItems({
-  isStaffAdmin,
-  isDoctor,
-  isReceptionist,
-  isAssistant,
-}: RoleFlags): NavItem[] {
+function buildNavItems(
+  t: (key: string) => string,
+  { isStaffAdmin, isDoctor, isReceptionist, isAssistant }: RoleFlags
+): NavItem[] {
   const canSeeDoctorsSection = isStaffAdmin || isReceptionist || isAssistant;
 
   const items: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/patients", label: "Patients", icon: Users },
+    { href: "/dashboard", label: t("sidebar.navDashboard"), icon: LayoutDashboard },
+    { href: "/patients", label: t("sidebar.navPatients"), icon: Users },
     // Calendar — hammaga ochiq (Doctor, Receptionist, Assistant, Admin)
-    { href: "/calendar", label: "Calendar", icon: CalendarRange },
+    { href: "/calendar", label: t("sidebar.navCalendar"), icon: CalendarRange },
   ];
 
   if (canSeeDoctorsSection) {
     const children: SubLink[] = [
-      { href: "/doctors", label: "Doctors List", icon: List },
+      { href: "/doctors", label: t("sidebar.navDoctorsList"), icon: List },
     ];
 
     if (isStaffAdmin) {
-      children.push({ href: "/doctors/schedule", label: "Doctor Schedule", icon: Clock });
+      children.push({ href: "/doctors/schedule", label: t("sidebar.navDoctorSchedule"), icon: Clock });
     }
 
     items.push({
       href: "/doctors",
-      label: "Doctors",
+      label: t("sidebar.navDoctors"),
       icon: Stethoscope,
       children,
     });
@@ -87,28 +86,28 @@ function buildNavItems({
   // /my-schedule useGetDoctors'ni umuman chaqirmaydi, faqat auth.store
   // va useGetDoctorSchedules'dan foydalanadi.
   if (isDoctor) {
-    items.push({ href: "/my-schedule", label: "My Schedule", icon: Clock });
+    items.push({ href: "/my-schedule", label: t("sidebar.navMySchedule"), icon: Clock });
   }
 
-  items.push({ href: "/appointments", label: "Appointments", icon: CalendarDays });
-  items.push({ href: "/treatments", label: "Treatments", icon: Activity });
+  items.push({ href: "/appointments", label: t("sidebar.navAppointments"), icon: CalendarDays });
+  items.push({ href: "/treatments", label: t("sidebar.navTreatments"), icon: Activity });
 
   if (isStaffAdmin) {
-    items.push({ href: "/procedures", label: "Procedures", icon: BadgeDollarSign });
+    items.push({ href: "/procedures", label: t("sidebar.navProcedures"), icon: BadgeDollarSign });
   }
 
   const settingsChildren: SubLink[] = [
-    { href: "/settings/profile", label: "Profile" },
-    { href: "/settings/change-password", label: "Change Password" },
+    { href: "/settings/profile", label: t("sidebar.navProfile") },
+    { href: "/settings/change-password", label: t("sidebar.navChangePassword") },
   ];
 
   if (isStaffAdmin) {
-    settingsChildren.push({ href: "/settings/plans", label: "Plans", icon: CreditCard });
+    settingsChildren.push({ href: "/settings/plans", label: t("sidebar.navPlans"), icon: CreditCard });
   }
 
   items.push({
     href: "/settings",
-    label: "Settings",
+    label: t("sidebar.navSettings"),
     icon: Settings,
     children: settingsChildren,
   });
@@ -117,6 +116,8 @@ function buildNavItems({
 }
 
 export default function Sidebar() {
+  const t = useTranslations("layout");
+
   const pathname = usePathname();
 
   const isAdmin = useAuthStore((s) => s.isAdmin());
@@ -129,13 +130,13 @@ export default function Sidebar() {
 
   const NAV_ITEMS = useMemo(
     () =>
-      buildNavItems({
+      buildNavItems(t, {
         isStaffAdmin,
         isDoctor: isDoctorRole,
         isReceptionist: isReceptionistRole,
         isAssistant: isAssistantRole,
       }),
-    [isStaffAdmin, isDoctorRole, isReceptionistRole, isAssistantRole]
+    [t, isStaffAdmin, isDoctorRole, isReceptionistRole, isAssistantRole]
   );
 
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
@@ -182,12 +183,12 @@ export default function Sidebar() {
             </span>
           </h1>
           <p className="text-[10px] font-medium text-white/60">
-            Clinic Management
+            {t("sidebar.tagline")}
           </p>
         </div>
       </Link>
 
-      <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">Main menu</p>
+      <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">{t("sidebar.mainMenu")}</p>
       <nav className="space-y-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;

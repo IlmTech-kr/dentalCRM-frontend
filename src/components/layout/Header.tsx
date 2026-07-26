@@ -14,13 +14,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { useLogout } from "@/src/features/auth/hooks/useAuth";
 import { useStorageImage } from "@/src/features/storage/hooks/useStorage";
 import { STORAGE_BUCKET } from "@/src/types/storage.types";
 import { useAuthStore } from "@/src/store/auth.store";
+import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 
 export default function Header() {
+  const t = useTranslations("layout");
+  const tCommon = useTranslations("common");
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
 
@@ -89,11 +94,11 @@ export default function Header() {
       <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border-color bg-white/80 px-8 backdrop-blur">
         <div>
           <h2 className="text-2xl font-extrabold text-dark-navy">
-            Dashboard
+            {t("header.dashboardTitle")}
           </h2>
 
           <p className="text-sm text-text-light">
-            Welcome back to your clinic
+            {t("header.welcomeSubtitle")}
           </p>
         </div>
 
@@ -106,9 +111,11 @@ export default function Header() {
 
             <input
               className="bg-transparent text-sm outline-none"
-              placeholder="Search..."
+              placeholder={t("header.searchPlaceholder")}
             />
           </div>
+
+          <LanguageSwitcher />
 
           <button
             type="button"
@@ -195,7 +202,7 @@ export default function Header() {
 
                     <div className="min-w-0">
                       <p className="text-xs text-slate-500">
-                        Logged in as
+                        {t("header.loggedInAs")}
                       </p>
 
                       <p className="truncate font-bold text-slate-900">
@@ -228,7 +235,7 @@ export default function Header() {
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                   >
-                    👤 Profile Settings
+                    👤 {t("header.profileSettings")}
                   </Link>
 
                   <Link
@@ -236,7 +243,7 @@ export default function Header() {
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                   >
-                    🔐 Change Password
+                    🔐 {t("header.changePassword")}
                   </Link>
 
                   <div className="my-1 border-t border-border-color" />
@@ -257,8 +264,8 @@ export default function Header() {
                     )}
 
                     {logoutMutation.isPending
-                      ? "Logging out..."
-                      : "Logout"}
+                      ? t("header.loggingOut")
+                      : tCommon("actions.logout")}
                   </button>
                 </div>
               </div>

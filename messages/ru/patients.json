@@ -1,0 +1,101 @@
+{
+  "list": {
+    "title": "Пациенты",
+    "subtitle": "Управление пациентами стоматологической клиники",
+    "addButton": "Добавить пациента",
+    "sectionTitle": "Список пациентов",
+    "patientsCount": "{count, plural, one {# пациент} few {# пациента} many {# пациентов} other {# пациентов}}",
+    "searchPlaceholder": "Поиск по имени или номеру телефона...",
+    "loading": "Загрузка пациентов...",
+    "loadError": "Не удалось загрузить пациентов",
+    "emptyNoResults": "По этому имени или номеру пациент не найден.",
+    "emptyNoPatients": "Пациенты не найдены. Создайте первого пациента.",
+    "paginationSummary": "<b>{from}–{to}</b> из <b>{total}</b> пациентов"
+  },
+  "table": {
+    "patient": "Пациент",
+    "phone": "Телефон",
+    "gender": "Пол",
+    "birthDate": "Дата рождения",
+    "anamnesis": "Анамнез",
+    "actionsHeader": "Действия"
+  },
+  "actions": {
+    "startTreatment": "Начать лечение",
+    "createAppointment": "Создать запись",
+    "editPatient": "Редактировать пациента"
+  },
+  "info": {
+    "name": "Имя",
+    "phone": "Телефон",
+    "gender": "Пол",
+    "birthDate": "Дата рождения",
+    "anamnesis": "Анамнез"
+  },
+  "gender": {
+    "male": "Мужской",
+    "female": "Женский"
+  },
+  "phoneSearchModal": {
+    "title": "Проверить пациента по номеру телефона",
+    "foundTitle": "Пациент найден!",
+    "foundSubtitle": "Этот пациент уже есть в системе",
+    "phoneLabel": "Номер телефона",
+    "phonePlaceholder": "+998934919100",
+    "phonePreview": "Телефон: <b>{value}</b>",
+    "phoneHelp": "Введите номер без пробелов. Например: +998934919100",
+    "incompleteError": "Пожалуйста, введите полный номер телефона",
+    "notFoundTitle": "Пациент не найден",
+    "notFoundSubtitle": "Этого номера телефона нет в системе. Вы можете создать нового пациента.",
+    "searching": "Поиск...",
+    "searchButton": "Найти пациента",
+    "createNewButton": "Создать нового пациента"
+  },
+  "appointmentModal": {
+    "title": "Создать запись",
+    "subtitle": "Запись для {name}",
+    "patientLabel": "Пациент",
+    "doctorLabel": "Врач",
+    "selectDoctorOption": "Выберите врача",
+    "dateLabel": "Дата",
+    "startTimeLabel": "Время начала",
+    "slotDurationLabel": "Продолжительность",
+    "durationMinutes": "{minutes} мин",
+    "notesLabel": "Примечания",
+    "notesPlaceholder": "Первый осмотр",
+    "creating": "Создание..."
+  },
+  "form": {
+    "createTitle": "Создать пациента",
+    "editTitle": "Редактировать пациента",
+    "firstNamePlaceholder": "Имя",
+    "lastNamePlaceholder": "Фамилия",
+    "anamnesisPlaceholder": "Анамнез (история болезни)",
+    "createButton": "Создать пациента",
+    "saveChangesButton": "Сохранить изменения"
+  },
+  "startConfirm": {
+    "title": "Пациент успешно добавлен!",
+    "message": "Начать лечение для <b>{name}</b> прямо сейчас?",
+    "no": "Нет, позже",
+    "yes": "Да, начать"
+  },
+  "viewModal": {
+    "title": "Информация о пациенте"
+  },
+  "deleteConfirm": {
+    "message": "Удалить этого пациента?"
+  },
+  "toast": {
+    "patientIdNotFound": "ID пациента не найден",
+    "selectDoctor": "Выберите врача",
+    "selectDate": "Выберите дату записи",
+    "appointmentCreated": "Запись успешно создана",
+    "appointmentCreateFailed": "Не удалось создать запись",
+    "patientUpdated": "Данные пациента успешно обновлены",
+    "patientCreated": "Пациент успешно создан",
+    "saveFailed": "Не удалось сохранить пациента",
+    "patientDeleted": "Пациент успешно удален",
+    "deleteFailed": "Не удалось удалить пациента"
+  }
+}

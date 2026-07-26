@@ -1,0 +1,101 @@
+{
+  "list": {
+    "title": "Bemorlar",
+    "subtitle": "Stomatologiya klinikasi bemorlarini boshqarish",
+    "addButton": "Bemor qo'shish",
+    "sectionTitle": "Bemorlar ro'yxati",
+    "patientsCount": "{count, plural, other {# bemor}}",
+    "searchPlaceholder": "Ism yoki telefon raqami bo'yicha qidirish...",
+    "loading": "Bemorlar yuklanmoqda...",
+    "loadError": "Bemorlarni yuklashda xatolik yuz berdi",
+    "emptyNoResults": "Bu ism yoki raqam bo'yicha bemor topilmadi.",
+    "emptyNoPatients": "Bemorlar topilmadi. Birinchi bemoringizni yarating.",
+    "paginationSummary": "<b>{from}–{to}</b> / <b>{total}</b> ta bemor"
+  },
+  "table": {
+    "patient": "Bemor",
+    "phone": "Telefon",
+    "gender": "Jinsi",
+    "birthDate": "Tug'ilgan sana",
+    "anamnesis": "Anamnez",
+    "actionsHeader": "Amallar"
+  },
+  "actions": {
+    "startTreatment": "Muolajani boshlash",
+    "createAppointment": "Uchrashuv yaratish",
+    "editPatient": "Bemorni tahrirlash"
+  },
+  "info": {
+    "name": "Ism-familiya",
+    "phone": "Telefon",
+    "gender": "Jinsi",
+    "birthDate": "Tug'ilgan sana",
+    "anamnesis": "Anamnez"
+  },
+  "gender": {
+    "male": "Erkak",
+    "female": "Ayol"
+  },
+  "phoneSearchModal": {
+    "title": "Bemorni telefon raqami bo'yicha tekshirish",
+    "foundTitle": "Bemor topildi!",
+    "foundSubtitle": "Ushbu bemor tizimda allaqachon mavjud",
+    "phoneLabel": "Telefon raqami",
+    "phonePlaceholder": "+998934919100",
+    "phonePreview": "Telefon: <b>{value}</b>",
+    "phoneHelp": "Raqamni bo'shliqsiz kiriting. Masalan: +998934919100",
+    "incompleteError": "Iltimos, to'liq telefon raqamini kiriting",
+    "notFoundTitle": "Bemor topilmadi",
+    "notFoundSubtitle": "Ushbu telefon raqami tizimda mavjud emas. Yangi bemor yaratishingiz mumkin.",
+    "searching": "Qidirilmoqda...",
+    "searchButton": "Bemorni qidirish",
+    "createNewButton": "Yangi bemor yaratish"
+  },
+  "appointmentModal": {
+    "title": "Uchrashuv yaratish",
+    "subtitle": "{name} uchun qabul",
+    "patientLabel": "Bemor",
+    "doctorLabel": "Shifokor",
+    "selectDoctorOption": "Shifokorni tanlang",
+    "dateLabel": "Sana",
+    "startTimeLabel": "Boshlanish vaqti",
+    "slotDurationLabel": "Davomiyligi",
+    "durationMinutes": "{minutes} daqiqa",
+    "notesLabel": "Izoh",
+    "notesPlaceholder": "Birinchi ko'rik",
+    "creating": "Yaratilmoqda..."
+  },
+  "form": {
+    "createTitle": "Bemor yaratish",
+    "editTitle": "Bemorni tahrirlash",
+    "firstNamePlaceholder": "Ism",
+    "lastNamePlaceholder": "Familiya",
+    "anamnesisPlaceholder": "Anamnez (kasallik tarixi)",
+    "createButton": "Bemor yaratish",
+    "saveChangesButton": "O'zgarishlarni saqlash"
+  },
+  "startConfirm": {
+    "title": "Bemor muvaffaqiyatli qo'shildi!",
+    "message": "<b>{name}</b> uchun hozir muolajani boshlaymizmi?",
+    "no": "Yo'q, keyinroq",
+    "yes": "Ha, boshlash"
+  },
+  "viewModal": {
+    "title": "Bemor ma'lumotlari"
+  },
+  "deleteConfirm": {
+    "message": "Ushbu bemorni o'chirasizmi?"
+  },
+  "toast": {
+    "patientIdNotFound": "Bemor ID raqami topilmadi",
+    "selectDoctor": "Shifokorni tanlang",
+    "selectDate": "Uchrashuv sanasini tanlang",
+    "appointmentCreated": "Uchrashuv muvaffaqiyatli yaratildi",
+    "appointmentCreateFailed": "Uchrashuv yaratishda xatolik yuz berdi",
+    "patientUpdated": "Bemor ma'lumotlari muvaffaqiyatli yangilandi",
+    "patientCreated": "Bemor muvaffaqiyatli qo'shildi",
+    "saveFailed": "Bemorni saqlashda xatolik yuz berdi",
+    "patientDeleted": "Bemor muvaffaqiyatli o'chirildi",
+    "deleteFailed": "Bemorni o'chirib bo'lmadi"
+  }
+}

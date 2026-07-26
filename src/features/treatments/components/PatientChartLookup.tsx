@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Search, UserRound } from "lucide-react";
 
 type Props = {
@@ -13,6 +14,8 @@ export function PatientChartLookup({
   onPatientIdChange,
   onSearch,
 }: Props) {
+  const t = useTranslations("treatments");
+
   return (
     <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -23,10 +26,10 @@ export function PatientChartLookup({
 
           <div>
             <h2 className="text-xl font-black text-slate-900">
-              Bemorni ko‘rikka olish
+              {t("patientChartLookup.title")}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Patient ID orqali mavjud dental chart tekshiriladi.
+              {t("patientChartLookup.subtitle")}
             </p>
           </div>
         </div>
@@ -41,7 +44,7 @@ export function PatientChartLookup({
             <input
               value={patientId}
               onChange={(e) => onPatientIdChange(e.target.value)}
-              placeholder="Patient ID"
+              placeholder={t("patientChartLookup.placeholder")}
               className="input-ui pl-11"
             />
           </div>
@@ -51,7 +54,7 @@ export function PatientChartLookup({
             className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700"
           >
             <Search size={18} />
-            Tekshirish
+            {t("patientChartLookup.checkButton")}
           </button>
         </div>
       </div>

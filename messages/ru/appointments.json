@@ -1,0 +1,100 @@
+{
+  "header": {
+    "badge": "Приёмы Dental CRM",
+    "title": "Приёмы",
+    "subtitle": "Управляйте приёмами пациентов, временем визита, назначением врача и статусом приёма в едином рабочем пространстве.",
+    "refresh": "Обновить",
+    "addAppointment": "Добавить приём"
+  },
+  "stats": {
+    "total": "Всего",
+    "scheduled": "Запланировано",
+    "inProgress": "В процессе",
+    "completed": "Завершено",
+    "cancelled": "Отменено"
+  },
+  "filters": {
+    "byDate": "По дате",
+    "all": "Все приёмы",
+    "searchPlaceholder": "Поиск по пациенту, врачу, дате, времени..."
+  },
+  "list": {
+    "titleByDate": "Приёмы на {date}",
+    "titleAll": "Все приёмы",
+    "sortedByTime": "Отсортировано по времени: 09:00, 09:30, 10:00...",
+    "results": "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}",
+    "loading": "Загрузка приёмов...",
+    "errorTitle": "Не удалось загрузить приёмы",
+    "errorFallback": "Ошибка сервера.",
+    "tryAgain": "Повторить",
+    "emptyTitle": "Приёмы не найдены",
+    "emptyByDate": "Нет приёмов на выбранную дату.",
+    "emptyAll": "Создайте приём для визита пациента."
+  },
+  "table": {
+    "patient": "Пациент",
+    "doctor": "Врач",
+    "date": "Дата",
+    "time": "Время",
+    "notes": "Заметки",
+    "status": "Статус",
+    "actionsHeader": "Действия",
+    "doctorNotAssigned": "Врач не назначен"
+  },
+  "pagination": {
+    "unit": "{total, plural, one {приём} few {приёма} many {приёмов} other {приёма}}"
+  },
+  "doctorDropdown": {
+    "placeholder": "Выберите врача",
+    "clearSelection": "Сбросить выбор",
+    "noDoctors": "Врачи не найдены",
+    "unnamed": "Врач без имени"
+  },
+  "modal": {
+    "createTitle": "Создать приём",
+    "editTitle": "Редактировать приём",
+    "subtitle": "Найдите пациента по номеру телефона, затем выберите врача и время.",
+    "patientLabel": "Пациент",
+    "patientIdLabel": "ID: {id}",
+    "findPatientLabel": "Найти пациента по телефону",
+    "phonePlaceholder": "+998934919100",
+    "search": "Найти",
+    "invalidPhone": "Введите полный номер. Например: +998934919100",
+    "patientNotFound": "Пациент не найден",
+    "patientNotFoundHint": "Сначала создайте пациента, затем создайте приём.",
+    "patientFound": "Пациент найден",
+    "phoneLabel": "Телефон: {phone}",
+    "doctorLabel": "Врач",
+    "dateLabel": "Дата",
+    "startTimeLabel": "Время начала",
+    "slotDurationLabel": "Длительность приёма",
+    "notesLabel": "Заметки",
+    "notesPlaceholder": "Заметки о приёме...",
+    "cancel": "Отмена",
+    "saveChanges": "Сохранить изменения",
+    "createAppointment": "Создать приём"
+  },
+  "status": {
+    "scheduled": "Запланировано",
+    "inProgress": "В процессе",
+    "completed": "Завершено",
+    "cancelled": "Отменено"
+  },
+  "toast": {
+    "selectPatientByPhone": "Найдите пациента по номеру телефона",
+    "selectDoctor": "Выберите врача",
+    "enterDate": "Укажите дату приёма",
+    "enterStartTime": "Укажите время начала",
+    "invalidDuration": "Некорректная длительность приёма",
+    "appointmentIdNotFound": "ID приёма не найден",
+    "updated": "Приём успешно обновлён",
+    "created": "Приём успешно создан",
+    "saveError": "Не удалось сохранить приём",
+    "statusChanged": "Статус изменён на «{status}»",
+    "incompleteData": "Данные заполнены не полностью",
+    "statusUpdateError": "Не удалось обновить статус",
+    "deleteConfirm": "Удалить этот приём?",
+    "deleted": "Приём успешно удалён",
+    "deleteError": "Не удалось удалить приём"
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Activity, CalendarDays, ClipboardList, ShieldCheck } from "lucide-react";
 
 type Props = {
@@ -15,29 +16,31 @@ export function TreatmentOverviewCards({
   totalVisits,
   totalPrice,
 }: Props) {
+  const t = useTranslations("treatments");
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <MiniStat
         icon={<Activity size={19} />}
-        label="Tishlar"
+        label={t("overviewCards.teeth")}
         value={toothCount.toString()}
       />
 
       <MiniStat
         icon={<ClipboardList size={19} />}
-        label="Bosqichlar"
+        label={t("overviewCards.stages")}
         value={stageCount.toString()}
       />
 
       <MiniStat
         icon={<CalendarDays size={19} />}
-        label="Visit"
+        label={t("overviewCards.visit")}
         value={totalVisits.toString()}
       />
 
       <MiniStat
         icon={<ShieldCheck size={19} />}
-        label="Taxminiy"
+        label={t("overviewCards.estimated")}
         value={totalPrice.toLocaleString()}
       />
     </div>

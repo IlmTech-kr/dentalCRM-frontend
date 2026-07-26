@@ -1,0 +1,100 @@
+{
+  "header": {
+    "badge": "Dental CRM Appointments",
+    "title": "Appointments",
+    "subtitle": "Manage patient appointments, visit time, doctor assignment and appointment status in one clean workspace.",
+    "refresh": "Refresh",
+    "addAppointment": "Add Appointment"
+  },
+  "stats": {
+    "total": "Total",
+    "scheduled": "Scheduled",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "filters": {
+    "byDate": "By Date",
+    "all": "All Appointments",
+    "searchPlaceholder": "Search patient, doctor, date, time..."
+  },
+  "list": {
+    "titleByDate": "Appointments on {date}",
+    "titleAll": "All Appointments",
+    "sortedByTime": "Sorted by time: 09:00, 09:30, 10:00...",
+    "results": "{count, plural, one {# result} other {# results}}",
+    "loading": "Loading appointments...",
+    "errorTitle": "Failed to load appointments",
+    "errorFallback": "Server error.",
+    "tryAgain": "Try Again",
+    "emptyTitle": "No appointments found",
+    "emptyByDate": "No appointments for selected date.",
+    "emptyAll": "Create appointment for patient visit."
+  },
+  "table": {
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "date": "Date",
+    "time": "Time",
+    "notes": "Notes",
+    "status": "Status",
+    "actionsHeader": "Actions",
+    "doctorNotAssigned": "Doctor not assigned"
+  },
+  "pagination": {
+    "unit": "{total, plural, one {appointment} other {appointments}}"
+  },
+  "doctorDropdown": {
+    "placeholder": "Select doctor",
+    "clearSelection": "Clear selection",
+    "noDoctors": "No doctors found",
+    "unnamed": "Unnamed doctor"
+  },
+  "modal": {
+    "createTitle": "Create Appointment",
+    "editTitle": "Edit Appointment",
+    "subtitle": "Find patient by phone number, then choose doctor and time.",
+    "patientLabel": "Patient",
+    "patientIdLabel": "ID: {id}",
+    "findPatientLabel": "Find Patient by Phone",
+    "phonePlaceholder": "+998934919100",
+    "search": "Search",
+    "invalidPhone": "Enter the complete number. Example: +998934919100",
+    "patientNotFound": "Patient not found",
+    "patientNotFoundHint": "Create the patient first, then create the appointment.",
+    "patientFound": "Patient found",
+    "phoneLabel": "Phone: {phone}",
+    "doctorLabel": "Doctor",
+    "dateLabel": "Date",
+    "startTimeLabel": "Start Time",
+    "slotDurationLabel": "Slot Duration",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Appointment notes...",
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "createAppointment": "Create Appointment"
+  },
+  "status": {
+    "scheduled": "Scheduled",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "toast": {
+    "selectPatientByPhone": "Find the patient by phone number",
+    "selectDoctor": "Select a doctor",
+    "enterDate": "Enter the appointment date",
+    "enterStartTime": "Enter the start time",
+    "invalidDuration": "Invalid slot duration",
+    "appointmentIdNotFound": "Appointment ID not found",
+    "updated": "Appointment updated successfully",
+    "created": "Appointment created successfully",
+    "saveError": "Failed to save appointment",
+    "statusChanged": "Status changed to {status}",
+    "incompleteData": "Data is incomplete",
+    "statusUpdateError": "Failed to update status",
+    "deleteConfirm": "Delete this appointment?",
+    "deleted": "Appointment deleted successfully",
+    "deleteError": "Failed to delete appointment"
+  }
+}

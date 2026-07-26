@@ -22,6 +22,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   CalendarRange,
   ChevronLeft,
@@ -49,22 +50,26 @@ import DentalLoader from "@/src/components/ui/DentalLoader";
 
 type CalendarView = "MONTH" | "WEEK";
 
-const WEEKDAY_LABELS = ["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yak"];
-const MONTH_LABELS = [
-  "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
-  "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
-];
-
 const DAY_START_HOUR = 8;
 const DAY_END_HOUR = 20;
 const HOUR_HEIGHT = 64; // px
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string; label: string; badge: string }> = {
-  SCHEDULED:   { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500",    label: "Kutilmoqda", badge: "bg-blue-100 text-blue-700" },
-  IN_PROGRESS: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500",   label: "Jarayonda",  badge: "bg-amber-100 text-amber-700" },
-  COMPLETED:   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", label: "Bajarildi",  badge: "bg-emerald-100 text-emerald-700" },
-  CANCELLED:   { bg: "bg-red-50",     text: "text-red-700",     dot: "bg-red-500",     label: "Bekor",      badge: "bg-red-100 text-red-700" },
-  NO_SHOW:     { bg: "bg-slate-100",  text: "text-slate-600",   dot: "bg-slate-400",   label: "Kelmadi",    badge: "bg-slate-200 text-slate-600" },
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string; badge: string }> = {
+  SCHEDULED:   { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700" },
+  IN_PROGRESS: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-700" },
+  COMPLETED:   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700" },
+  CANCELLED:   { bg: "bg-red-50",     text: "text-red-700",     dot: "bg-red-500",     badge: "bg-red-100 text-red-700" },
+  NO_SHOW:     { bg: "bg-slate-100",  text: "text-slate-600",   dot: "bg-slate-400",   badge: "bg-slate-200 text-slate-600" },
+};
+
+// Status enum key -> i18n key ("calendar" namespace) mapping used to resolve
+// the localized status label wherever STATUS_STYLES is rendered.
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  SCHEDULED: "status.scheduled",
+  IN_PROGRESS: "status.inProgress",
+  COMPLETED: "status.completed",
+  CANCELLED: "status.cancelled",
+  NO_SHOW: "status.noShow",
 };
 
 const DOCTOR_ACCENTS = [
@@ -152,12 +157,12 @@ function formatTimeShort(time?: string) {
   return time.slice(0, 5);
 }
 
-function formatFullDate(d: Date) {
-  return `${d.getDate()} ${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}, ${WEEKDAY_LABELS[(d.getDay() + 6) % 7]}`;
+function formatFullDate(d: Date, monthLabels: string[], weekdayLabels: string[]) {
+  return `${d.getDate()} ${monthLabels[d.getMonth()]} ${d.getFullYear()}, ${weekdayLabels[(d.getDay() + 6) % 7]}`;
 }
 
-function formatShortDate(d: Date) {
-  return `${d.getDate()} ${MONTH_LABELS[d.getMonth()]}`;
+function formatShortDate(d: Date, monthLabels: string[]) {
+  return `${d.getDate()} ${monthLabels[d.getMonth()]}`;
 }
 
 function getDoctorId(doctor: any) {
@@ -185,6 +190,7 @@ function getDoctorAccent(doctorId: string) {
 // ---------------------------------------------------------------------------
 
 function MonthEventChip({ apt, doctorName }: { apt: any; doctorName: string }) {
+  const t = useTranslations("calendar");
   const status = STATUS_STYLES[apt.status] ?? STATUS_STYLES.SCHEDULED;
   const accent = getDoctorAccent(apt.doctorId || "");
   const patientName = `${apt.patient?.firstName || ""} ${apt.patient?.lastName || ""}`.trim();
@@ -195,7 +201,7 @@ function MonthEventChip({ apt, doctorName }: { apt: any; doctorName: string }) {
       title={`${formatTimeShort(apt.startTime)} — ${patientName}${apt.notes ? ` · ${apt.notes}` : ""}`}
     >
       <p className={`truncate font-bold ${status.text}`}>
-        {formatTimeShort(apt.startTime)} {patientName || "Bemor"}
+        {formatTimeShort(apt.startTime)} {patientName || t("patientFallback")}
       </p>
       {doctorName && (
         <p className="truncate text-[10px] text-slate-500">{doctorName}</p>
@@ -220,6 +226,7 @@ function WeekEventBlock({
   doctorName: string;
   onClick: () => void;
 }) {
+  const t = useTranslations("calendar");
   const status = STATUS_STYLES[apt.status] ?? STATUS_STYLES.SCHEDULED;
   const accent = getDoctorAccent(apt.doctorId || "");
   const patientName = `${apt.patient?.firstName || ""} ${apt.patient?.lastName || ""}`.trim();
@@ -240,7 +247,7 @@ function WeekEventBlock({
       title={`${formatTimeShort(apt.startTime)}–${formatTimeShort(apt.endTime)} · ${patientName}${apt.notes ? ` · ${apt.notes}` : ""}`}
     >
       <p className={`truncate text-[11px] font-bold ${status.text}`}>
-        {formatTimeShort(apt.startTime)} {patientName || "Bemor"}
+        {formatTimeShort(apt.startTime)} {patientName || t("patientFallback")}
       </p>
       {doctorName && (
         <p className="truncate text-[10px] text-slate-500">{doctorName}</p>
@@ -267,6 +274,10 @@ function DayDetailModal({
   resolveDoctorName: (apt: any) => string;
   onClose: () => void;
 }) {
+  const t = useTranslations("calendar");
+  const monthLabels = t.raw("months") as string[];
+  const weekdayLabels = t.raw("weekdaysShort") as string[];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -283,9 +294,9 @@ function DayDetailModal({
               <CalendarRange size={20} />
             </div>
             <div>
-              <h2 className="font-extrabold text-dark-navy">{formatFullDate(date)}</h2>
+              <h2 className="font-extrabold text-dark-navy">{formatFullDate(date, monthLabels, weekdayLabels)}</h2>
               <p className="text-xs text-text-light">
-                {appointments.length} ta qabul
+                {t("dayModal.appointmentsCount", { count: appointments.length })}
               </p>
             </div>
           </div>
@@ -303,7 +314,7 @@ function DayDetailModal({
           {appointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400">
               <CalendarRange size={32} className="opacity-30" />
-              <p className="text-sm">Bu kunda qabul yo'q</p>
+              <p className="text-sm">{t("dayModal.empty")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -331,14 +342,14 @@ function DayDetailModal({
                         </div>
                       </div>
                       <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${status.badge}`}>
-                        {status.label}
+                        {t(STATUS_LABEL_KEYS[apt.status] ?? STATUS_LABEL_KEYS.SCHEDULED)}
                       </span>
                     </div>
 
                     <div className="mt-3 flex items-center gap-2">
                       <UserRound size={15} className="text-slate-400" />
                       <p className="text-sm font-bold text-dark-navy">
-                        {patientName || "Bemor noma'lum"}
+                        {patientName || t("patientUnknown")}
                       </p>
                       {apt.patient?.phone && (
                         <span className="text-xs text-slate-400">· {apt.patient.phone}</span>
@@ -348,7 +359,7 @@ function DayDetailModal({
                     <div className="mt-1.5 flex items-center gap-2">
                       <Stethoscope size={15} className="text-slate-400" />
                       <p className="text-sm text-slate-600">
-                        {doctorName || "Shifokor noma'lum"}
+                        {doctorName || t("doctorUnknown")}
                       </p>
                     </div>
 
@@ -374,6 +385,10 @@ function DayDetailModal({
 // ---------------------------------------------------------------------------
 
 export default function CalendarPage() {
+  const t = useTranslations("calendar");
+  const monthLabels = t.raw("months") as string[];
+  const weekdayLabels = t.raw("weekdaysShort") as string[];
+
   const user = useAuthStore((s) => s.user);
   const isDoctorUser = useAuthStore((s) => s.isDoctor());
   const currentUserId = (user as any)?.id || (user as any)?._id || "";
@@ -497,12 +512,12 @@ export default function CalendarPage() {
   // sanadan (anchorDate) ergashadi.
   const highlightDate = anchorDate;
   const isAnchorRealToday = isSameDay(anchorDate, realToday);
-  const highlightLabel = isAnchorRealToday ? "Bugun" : formatShortDate(anchorDate);
+  const highlightLabel = isAnchorRealToday ? t("today") : formatShortDate(anchorDate, monthLabels);
 
   const headerLabel =
     view === "MONTH"
-      ? `${MONTH_LABELS[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`
-      : `${weekDays[0].getDate()} ${MONTH_LABELS[weekDays[0].getMonth()]} — ${weekDays[6].getDate()} ${MONTH_LABELS[weekDays[6].getMonth()]}, ${weekDays[6].getFullYear()}`;
+      ? `${monthLabels[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`
+      : `${weekDays[0].getDate()} ${monthLabels[weekDays[0].getMonth()]} — ${weekDays[6].getDate()} ${monthLabels[weekDays[6].getMonth()]}, ${weekDays[6].getFullYear()}`;
 
   const selectedDayAppointments = selectedDate
     ? appointmentsByDate.get(toYMD(selectedDate)) || []
@@ -518,12 +533,12 @@ export default function CalendarPage() {
             <CalendarRange size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-dark-navy">Calendar</h1>
+            <h1 className="text-xl font-extrabold text-dark-navy">{t("title")}</h1>
             <p className="text-sm text-text-light">
               {headerLabel}
               {isDoctorUser && (
                 <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
-                  Faqat sizniki
+                  {t("doctorOnlyBadge")}
                 </span>
               )}
             </p>
@@ -544,7 +559,7 @@ export default function CalendarPage() {
             <div className="flex items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-3 py-2">
               <Stethoscope size={14} className="text-[#35a8f5]" />
               <span className="text-sm font-semibold text-dark-navy">
-                {currentUserName || "Siz"}
+                {currentUserName || t("youFallback")}
               </span>
             </div>
           ) : (
@@ -555,7 +570,7 @@ export default function CalendarPage() {
                 onChange={(e) => setDoctorFilter(e.target.value)}
                 className="rounded-xl border border-border-color bg-white py-2 pl-8 pr-3 text-sm font-semibold text-dark-navy outline-none focus:border-[#35a8f5]"
               >
-                <option value="ALL">Barcha shifokorlar</option>
+                <option value="ALL">{t("allDoctorsOption")}</option>
                 {doctorOptions.map((d: any) => {
                   const id = getDoctorId(d);
                   return (
@@ -577,7 +592,7 @@ export default function CalendarPage() {
                 view === "MONTH" ? "bg-[#35a8f5] text-white" : "bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
-              <Grid3x3 size={14} /> Oy
+              <Grid3x3 size={14} /> {t("viewMonth")}
             </button>
             <button
               type="button"
@@ -586,7 +601,7 @@ export default function CalendarPage() {
                 view === "WEEK" ? "bg-[#35a8f5] text-white" : "bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
-              <LayoutList size={14} /> Hafta
+              <LayoutList size={14} /> {t("viewWeek")}
             </button>
           </div>
 
@@ -604,7 +619,7 @@ export default function CalendarPage() {
               onClick={goToday}
               className="rounded-xl border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#35a8f5] hover:text-[#35a8f5]"
             >
-              Bugun
+              {t("today")}
             </button>
             <button
               type="button"
@@ -620,12 +635,12 @@ export default function CalendarPage() {
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-color bg-white px-4 py-3 shadow-sm">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-          <Users size={14} /> Holat:
+          <Users size={14} /> {t("legendStatus")}
         </span>
-        {Object.entries(STATUS_STYLES).map(([key, s]) => (
+        {Object.keys(STATUS_STYLES).map((key) => (
           <span key={key} className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-            <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-            {s.label}
+            <span className={`h-2 w-2 rounded-full ${STATUS_STYLES[key].dot}`} />
+            {t(STATUS_LABEL_KEYS[key] ?? STATUS_LABEL_KEYS.SCHEDULED)}
           </span>
         ))}
         <span className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-slate-600">
@@ -636,13 +651,13 @@ export default function CalendarPage() {
 
       {isLoading ? (
         <div className="rounded-2xl border border-border-color bg-white">
-          <DentalLoader fullScreen={false} text="Calendar yuklanmoqda..." />
+          <DentalLoader fullScreen={false} text={t("loading")} />
         </div>
       ) : view === "MONTH" ? (
         // ====== MONTH VIEW ======
         <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
           <div className="grid grid-cols-7 border-b border-border-color bg-slate-50">
-            {WEEKDAY_LABELS.map((label) => (
+            {weekdayLabels.map((label) => (
               <div key={label} className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-500">
                 {label}
               </div>
@@ -713,7 +728,7 @@ export default function CalendarPage() {
                   style={isHighlighted ? { boxShadow: `inset 0 -2px 0 0 ${TODAY_RING_COLOR}` } : undefined}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                    {WEEKDAY_LABELS[(date.getDay() + 6) % 7]}
+                    {weekdayLabels[(date.getDay() + 6) % 7]}
                   </p>
                   <p
                     className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-extrabold ${

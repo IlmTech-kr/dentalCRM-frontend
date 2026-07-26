@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   Users, Calendar, Stethoscope,
   CheckCircle2, Clock, BarChart3,
@@ -58,11 +59,7 @@ function startOfYearYMD() {
   return toYMD(d);
 }
 
-function formatDisplayDate(d: Date) {
-  const months = [
-    "Yanvar","Fevral","Mart","Aprel","May","Iyun",
-    "Iyul","Avgust","Sentabr","Oktabr","Noyabr","Dekabr",
-  ];
+function formatDisplayDate(d: Date, months: string[]) {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -174,6 +171,8 @@ function RevenueChart({
 // ---------------------------------------------------------------------------
 
 function AppointmentRow({ apt, doctorName }: { apt: any; doctorName: string }) {
+  const t = useTranslations("dashboard");
+
   const statusColors: Record<string, string> = {
     SCHEDULED:    "bg-blue-100 text-blue-700",
     IN_PROGRESS:  "bg-amber-100 text-amber-700",
@@ -182,11 +181,11 @@ function AppointmentRow({ apt, doctorName }: { apt: any; doctorName: string }) {
     NO_SHOW:      "bg-slate-200 text-slate-600",
   };
   const statusLabels: Record<string, string> = {
-    SCHEDULED:    "Kutilmoqda",
-    IN_PROGRESS:  "Jarayonda",
-    COMPLETED:    "Bajarildi",
-    CANCELLED:    "Bekor",
-    NO_SHOW:      "Kelmadi",
+    SCHEDULED:    t("appointmentStatus.scheduled"),
+    IN_PROGRESS:  t("appointmentStatus.inProgress"),
+    COMPLETED:    t("appointmentStatus.completed"),
+    CANCELLED:    t("appointmentStatus.cancelled"),
+    NO_SHOW:      t("appointmentStatus.noShow"),
   };
 
   return (
@@ -199,7 +198,7 @@ function AppointmentRow({ apt, doctorName }: { apt: any; doctorName: string }) {
           {apt.patient?.firstName} {apt.patient?.lastName}
         </p>
         <p className="text-xs text-text-light">
-          {doctorName || "Shifokor noma'lum"}
+          {doctorName || t("unknownDoctor")}
         </p>
       </div>
       <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}>
@@ -226,6 +225,8 @@ function DoctorRevenueRow({
     estimatedCommissionAmount: number | null;
   };
 }) {
+  const t = useTranslations("dashboard");
+
   return (
     <tr className="border-t border-border-color">
       <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
@@ -235,7 +236,7 @@ function DoctorRevenueRow({
         {formatFullMoney(item.revenue)}
       </td>
       <td className="px-4 py-3 text-sm text-text-light">
-        {item.transactionCount ?? 0} ta
+        {t("doctorRevenue.transactionsCount", { count: item.transactionCount ?? 0 })}
       </td>
       <td className="px-4 py-3">
         <span
@@ -247,7 +248,7 @@ function DoctorRevenueRow({
         >
           {item.compensationType === "PERCENTAGE"
             ? `${item.commissionPercentage ?? 0}%`
-            : "Oylik"}
+            : t("doctorRevenue.salaryLabel")}
         </span>
       </td>
       <td className="px-4 py-3 text-sm font-bold text-dark-navy">
@@ -277,6 +278,8 @@ function PayrollDoctorRow({
     totalCost: number;
   };
 }) {
+  const t = useTranslations("dashboard");
+
   return (
     <tr className="border-t border-border-color">
       <td className="px-4 py-3 text-sm font-semibold text-dark-navy">
@@ -290,7 +293,7 @@ function PayrollDoctorRow({
               : "bg-emerald-100 text-emerald-700"
           }`}
         >
-          {item.compensationType === "PERCENTAGE" ? "Foiz" : "Oylik"}
+          {item.compensationType === "PERCENTAGE" ? t("payroll.percentageType") : t("payroll.salaryType")}
         </span>
       </td>
       <td className="px-4 py-3 text-sm text-text-light">
@@ -313,6 +316,10 @@ function PayrollDoctorRow({
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const months = t.raw("months") as string[];
+
   const user = useAuthStore((s) => s.user);
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
@@ -448,9 +455,9 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-dark-navy">Dashboard</h1>
+        <h1 className="text-2xl font-extrabold text-dark-navy">{t("header.title")}</h1>
         <p className="mt-1 text-sm text-text-light">
-          Xush kelibsiz, {user?.firstName} 👋 — {formatDisplayDate(new Date())}
+          {t("header.welcome", { name: user?.firstName ?? "", date: formatDisplayDate(new Date(), months) })}
         </p>
       </div>
 
@@ -458,21 +465,21 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Users}
-          label="Jami bemorlar"
+          label={t("stats.totalPatients")}
           value={patientsTotal.toLocaleString()}
           color="bg-[#35a8f5]"
           loading={patientsLoading}
         />
         <StatCard
           icon={Calendar}
-          label="Bugungi qabullar"
+          label={t("stats.todayAppointments")}
           value={todayCount}
           color="bg-violet-500"
           loading={aptsLoading}
         />
         <StatCard
           icon={CheckCircle2}
-          label="Bajarildi / Bekor"
+          label={t("stats.completedCancelled")}
           value={`${completedCount} / ${cancelledCount}`}
           color="bg-emerald-500"
           loading={aptsLoading}
@@ -480,7 +487,7 @@ export default function DashboardPage() {
         {isStaffAdmin && (
           <StatCard
             icon={Stethoscope}
-            label="Shifokorlar"
+            label={t("stats.doctors")}
             value={doctorsTotal}
             color="bg-amber-500"
             loading={doctorsLoading}
@@ -497,7 +504,7 @@ export default function DashboardPage() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <BarChart3 size={18} className="text-[#35a8f5]" />
-                <h2 className="font-extrabold text-dark-navy">Daromad statistikasi</h2>
+                <h2 className="font-extrabold text-dark-navy">{t("revenue.title")}</h2>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -508,16 +515,16 @@ export default function DashboardPage() {
                       key={f}
                       onClick={() => {
                         setRevenueFilter(f);
-                        const t = todayYMD();
+                        const todayStr = todayYMD();
                         if (f === "DAY") {
-                          setFromDate(t);
-                          setToDate(t);
+                          setFromDate(todayStr);
+                          setToDate(todayStr);
                         } else if (f === "MONTH") {
                           setFromDate(startOfMonthYMD());
-                          setToDate(t);
+                          setToDate(todayStr);
                         } else {
                           setFromDate(startOfYearYMD());
-                          setToDate(t);
+                          setToDate(todayStr);
                         }
                       }}
                       className={`px-3 py-1.5 transition-colors ${
@@ -526,7 +533,7 @@ export default function DashboardPage() {
                           : "bg-white text-slate-500 hover:bg-slate-50"
                       }`}
                     >
-                      {f === "DAY" ? "Kun" : f === "MONTH" ? "Oy" : "Yil"}
+                      {f === "DAY" ? t("revenue.filterDay") : f === "MONTH" ? t("revenue.filterMonth") : t("revenue.filterYear")}
                     </button>
                   ))}
                 </div>
@@ -551,21 +558,21 @@ export default function DashboardPage() {
               <span className="text-3xl font-extrabold text-dark-navy">
                 {formatMoney(totalRevenue)}
               </span>
-              <span className="text-sm text-text-light">so'm</span>
-              <span className="text-xs text-slate-400">• {totalTxCount} ta to'lov</span>
+              <span className="text-sm text-text-light">{t("revenue.currency")}</span>
+              <span className="text-xs text-slate-400">• {t("revenue.transactions", { count: totalTxCount })}</span>
             </div>
 
             {!fromDate || !toDate ? (
               <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
                 <BarChart3 size={32} className="opacity-30" />
-                <p className="text-sm">Sanani tanlang</p>
+                <p className="text-sm">{t("revenue.selectDate")}</p>
               </div>
             ) : revenueLoading ? (
-              <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+              <DentalLoader fullScreen={false} text={tCommon("feedback.loading")} />
             ) : !revenueList.length ? (
               <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
                 <BarChart3 size={32} className="opacity-30" />
-                <p className="text-sm">Ma'lumot topilmadi</p>
+                <p className="text-sm">{tCommon("feedback.noData")}</p>
               </div>
             ) : (
               <RevenueChart data={revenueList} filter={revenueFilter} />
@@ -578,19 +585,19 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={18} className="text-violet-500" />
-              <h2 className="font-extrabold text-dark-navy">Bugungi qabullar</h2>
+              <h2 className="font-extrabold text-dark-navy">{t("todayAppointments.title")}</h2>
             </div>
             <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-              {todayCount} ta
+              {t("todayAppointments.count", { count: todayCount })}
             </span>
           </div>
 
           {aptsLoading ? (
-            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+            <DentalLoader fullScreen={false} text={tCommon("feedback.loading")} />
           ) : !todayList.length ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400">
               <Calendar size={32} className="opacity-30" />
-              <p className="text-sm">Bugun qabul yo'q</p>
+              <p className="text-sm">{t("todayAppointments.empty")}</p>
             </div>
           ) : (
             <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 320 }}>
@@ -608,7 +615,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <TrendingUp size={18} className="text-[#35a8f5]" />
             <h2 className="font-extrabold text-dark-navy">
-              Shifokorlar daromadi va to'lovlar
+              {t("doctorPayments.title")}
             </h2>
           </div>
 
@@ -635,34 +642,34 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Wallet size={18} className="text-emerald-500" />
-            <h2 className="font-extrabold text-dark-navy">Payroll — umumiy chiqimlar</h2>
+            <h2 className="font-extrabold text-dark-navy">{t("payroll.title")}</h2>
           </div>
 
           {payrollLoading ? (
-            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+            <DentalLoader fullScreen={false} text={tCommon("feedback.loading")} />
           ) : !payrollData ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
               <Wallet size={32} className="opacity-30" />
-              <p className="text-sm">Ma'lumot topilmadi</p>
+              <p className="text-sm">{tCommon("feedback.noData")}</p>
             </div>
           ) : (
             <>
               {/* Summary cards */}
               <div className="mb-5 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">Oylik chiqimlar</p>
+                  <p className="text-xs font-semibold text-slate-500">{t("payroll.monthlyExpense")}</p>
                   <p className="mt-1 text-xl font-extrabold text-dark-navy">
                     {formatFullMoney(payrollData.totalSalaryExpense)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">Komissiya chiqimlari</p>
+                  <p className="text-xs font-semibold text-slate-500">{t("payroll.commissionExpense")}</p>
                   <p className="mt-1 text-xl font-extrabold text-dark-navy">
                     {formatFullMoney(payrollData.totalCommissionExpense)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#35a8f5]/10 p-4">
-                  <p className="text-xs font-semibold text-[#35a8f5]">Jami chiqim</p>
+                  <p className="text-xs font-semibold text-[#35a8f5]">{t("payroll.totalExpense")}</p>
                   <p className="mt-1 text-xl font-extrabold text-[#35a8f5]">
                     {formatFullMoney(payrollData.totalExpense)}
                   </p>
@@ -672,24 +679,24 @@ export default function DashboardPage() {
               {/* Doctor details table */}
               {payrollData.doctorDetails.length > 0 && (
                 <div className="mb-5 overflow-x-auto">
-                  <p className="mb-2 text-sm font-bold text-dark-navy">Shifokorlar</p>
+                  <p className="mb-2 text-sm font-bold text-dark-navy">{t("payroll.doctorsTableTitle")}</p>
                   <table className="w-full min-w-[600px] border-collapse text-left">
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Ism
+                          {t("payroll.columns.name")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Turi
+                          {t("payroll.columns.type")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Daromad
+                          {t("payroll.columns.revenue")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Foiz
+                          {t("payroll.columns.percent")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Jami xarajat
+                          {t("payroll.columns.totalCost")}
                         </th>
                       </tr>
                     </thead>
@@ -706,19 +713,19 @@ export default function DashboardPage() {
               {payrollData.staffDetails.length > 0 && (
                 <div className="overflow-x-auto">
                   <p className="mb-2 text-sm font-bold text-dark-navy">
-                    Boshqa xodimlar (reseption, assistent)
+                    {t("payroll.staffTableTitle")}
                   </p>
                   <table className="w-full min-w-[500px] border-collapse text-left">
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Ism
+                          {t("payroll.columns.name")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Rol
+                          {t("payroll.columns.role")}
                         </th>
                         <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                          Oylik
+                          {t("payroll.columns.salary")}
                         </th>
                       </tr>
                     </thead>
@@ -752,17 +759,17 @@ export default function DashboardPage() {
             <Percent size={18} className="text-amber-500" />
             <h2 className="font-extrabold text-dark-navy">
               {isDoctorUser && !isStaffAdmin
-                ? "Mening daromadim"
-                : "Shifokorlar bo'yicha daromad"}
+                ? t("doctorRevenue.myTitle")
+                : t("doctorRevenue.allTitle")}
             </h2>
           </div>
 
           {doctorRevenueLoading ? (
-            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
+            <DentalLoader fullScreen={false} text={tCommon("feedback.loading")} />
           ) : !doctorRevenueList.length ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
               <Percent size={32} className="opacity-30" />
-              <p className="text-sm">Ma'lumot topilmadi</p>
+              <p className="text-sm">{tCommon("feedback.noData")}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -770,19 +777,19 @@ export default function DashboardPage() {
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                      Shifokor
+                      {t("doctorRevenue.columns.doctor")}
                     </th>
                     <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                      Daromad
+                      {t("doctorRevenue.columns.revenue")}
                     </th>
                     <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                      Tranzaksiyalar
+                      {t("doctorRevenue.columns.transactions")}
                     </th>
                     <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                      Kompensatsiya
+                      {t("doctorRevenue.columns.compensation")}
                     </th>
                     <th className="px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-                      Komissiya summasi
+                      {t("doctorRevenue.columns.commissionAmount")}
                     </th>
                   </tr>
                 </thead>

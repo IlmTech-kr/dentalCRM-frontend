@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Activity,
   Calendar,
@@ -94,19 +95,19 @@ const STATE_OPTIONS: ToothCondition[] = [
   ToothCondition.BRIDGE, ToothCondition.ROOT_CANAL,
 ];
 
-const LABELS: Record<ToothCondition, string> = {
-  [ToothCondition.HEALTHY]: "Sog'lom",
-  [ToothCondition.CARIES]: "Karies",
-  [ToothCondition.EXTRACTED]: "Sug'urilgan",
-  [ToothCondition.PULPITIS]: "Pulpit",
-  [ToothCondition.FILLING]: "Plomba",
-  [ToothCondition.CROWN]: "Koronka",
-  [ToothCondition.IMPLANT]: "Implant",
-  [ToothCondition.MISSING]: "Yo'q",
-  [ToothCondition.CRACK]: "Yoriq",
-  [ToothCondition.BRIDGE]: "Ko'prik",
-  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
-  [ToothCondition.GINGIVITIS]: "Gingivit",
+const CONDITION_KEYS: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "healthy",
+  [ToothCondition.CARIES]: "caries",
+  [ToothCondition.EXTRACTED]: "extracted",
+  [ToothCondition.PULPITIS]: "pulpitis",
+  [ToothCondition.FILLING]: "filling",
+  [ToothCondition.CROWN]: "crown",
+  [ToothCondition.IMPLANT]: "implant",
+  [ToothCondition.MISSING]: "missing",
+  [ToothCondition.CRACK]: "crack",
+  [ToothCondition.BRIDGE]: "bridge",
+  [ToothCondition.ROOT_CANAL]: "rootCanal",
+  [ToothCondition.GINGIVITIS]: "gingivitis",
 };
 
 // ---------------------------------------------------------------------------
@@ -220,6 +221,8 @@ function createClientId(file: File): string {
 // ---------------------------------------------------------------------------
 
 function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoading: boolean }) {
+  const t = useTranslations("treatments");
+  const tCommon = useTranslations("common");
   const name = patient?.fullName || `${patient?.firstName || ""} ${patient?.lastName || ""}`.trim();
   const phone = patient?.phoneNumber || patient?.phone || "—";
   const age = calculateAge(patient?.birthDate || (patient as any)?.dateOfBirth);
@@ -248,7 +251,7 @@ function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoad
             {getInitials(name) || <UserRound size={26} />}
           </div>
           <div>
-            <h1 className="text-xl font-extrabold leading-tight text-dark-navy">{name || "Bemor"}</h1>
+            <h1 className="text-xl font-extrabold leading-tight text-dark-navy">{name || t("patientDetail.header.fallbackName")}</h1>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
               {phone}
             </p>
@@ -257,14 +260,14 @@ function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoad
 
         <div className="flex flex-wrap gap-2.5">
           <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">Yoshi</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">{t("patientDetail.header.ageLabel")}</p>
             <p className="mt-0.5 text-sm font-extrabold text-dark-navy">{age}</p>
           </div>
           <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">Holat</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">{t("patientDetail.header.statusLabel")}</p>
             <p className={`mt-0.5 inline-flex items-center gap-1 text-sm font-extrabold ${isActive ? "text-emerald-600" : "text-slate-400"}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-              {isActive ? "Active" : "Inactive"}
+              {isActive ? tCommon("status.active") : tCommon("status.inactive")}
             </p>
           </div>
         </div>
@@ -309,8 +312,9 @@ function TabBtn({ active, icon, label, badge, onClick }: {
 function DoctorSelect({ value, onChange, doctors }: {
   value: string; onChange: (id: string) => void; doctors: any[];
 }) {
+  const t = useTranslations("treatments");
   const getName = (d: any) =>
-    d?.fullName || `${d?.firstName || ""} ${d?.lastName || ""}`.trim() || "Doctor";
+    d?.fullName || `${d?.firstName || ""} ${d?.lastName || ""}`.trim() || t("patientDetail.addVisitModal.doctorFallback");
 
   return (
     <select
@@ -318,7 +322,7 @@ function DoctorSelect({ value, onChange, doctors }: {
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
     >
-      <option value="">Doctor tanlang</option>
+      <option value="">{t("patientDetail.addVisitModal.selectDoctor")}</option>
       {doctors.map((d) => {
         const id = d.id || d._id;
         return <option key={id} value={id}>{getName(d)}</option>;
@@ -775,9 +779,15 @@ function VisitPanel({
 // ---------------------------------------------------------------------------
 
 export default function TreatmentPatientPage() {
+  const t = useTranslations("treatments");
   const params = useParams<{ patientId: string }>();
   const searchParams = useSearchParams();
   const toast = useToast();
+
+  function conditionLabel(condition?: ToothCondition | "" | null) {
+    if (!condition) return "";
+    return t(`toothConditions.${CONDITION_KEYS[condition]}` as any);
+  }
 
   const patientId = params.patientId;
   // appointmentId endi IXTIYORIY — bo'lmasa ("Molajani boshlash" orqali
@@ -910,7 +920,7 @@ export default function TreatmentPatientPage() {
     const diagnoses = [
       ...new Set(teeth.map((t) => toothMap[t]?.diagnoses?.[0]).filter(Boolean)),
     ];
-    const diagText = diagnoses.map((d) => LABELS[d as ToothCondition] || d).join(", ");
+    const diagText = diagnoses.map((d) => conditionLabel(d as ToothCondition) || d).join(", ");
     return `${teethText} ${diagText || "davolanishi"}`;
   }
 
@@ -1337,7 +1347,7 @@ export default function TreatmentPatientPage() {
                   className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
                 >
                   <option value="">Tanlang</option>
-                  {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{LABELS[d]}</option>)}
+                  {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{conditionLabel(d)}</option>)}
                 </select>
               </div>
               <div>
@@ -1350,7 +1360,7 @@ export default function TreatmentPatientPage() {
                   className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
                 >
                   <option value="">Tanlang</option>
-                  {STATE_OPTIONS.map((s) => <option key={s} value={s}>{LABELS[s]}</option>)}
+                  {STATE_OPTIONS.map((s) => <option key={s} value={s}>{conditionLabel(s)}</option>)}
                 </select>
               </div>
               <div>
@@ -1368,13 +1378,13 @@ export default function TreatmentPatientPage() {
                 <div className="flex justify-between">
                   <span className="text-text-light">Diagnoz</span>
                   <span className="font-bold text-dark-navy">
-                    {selectedToothData.diagnoses[0] ? LABELS[selectedToothData.diagnoses[0] as ToothCondition] : "—"}
+                    {selectedToothData.diagnoses[0] ? conditionLabel(selectedToothData.diagnoses[0] as ToothCondition) : "—"}
                   </span>
                 </div>
                 <div className="mt-1.5 flex justify-between">
                   <span className="text-text-light">Holat</span>
                   <span className="font-bold text-dark-navy">
-                    {selectedToothData.states[0] ? LABELS[selectedToothData.states[0] as ToothCondition] : "—"}
+                    {selectedToothData.states[0] ? conditionLabel(selectedToothData.states[0] as ToothCondition) : "—"}
                   </span>
                 </div>
               </div>
@@ -1642,7 +1652,7 @@ export default function TreatmentPatientPage() {
                         >
                           <span className="block text-lg">#{item.toothNumber}</span>
                           <span className="block text-xs opacity-80">
-                            {LABELS[item.diagnosis as ToothCondition] || item.diagnosis || "—"}
+                            {conditionLabel(item.diagnosis as ToothCondition) || item.diagnosis || "—"}
                           </span>
                         </button>
                       );

@@ -1,0 +1,30 @@
+{
+  "title": "Calendar",
+  "doctorOnlyBadge": "Yours only",
+  "weekdaysShort": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  "months": [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ],
+  "allDoctorsOption": "All doctors",
+  "youFallback": "You",
+  "viewMonth": "Month",
+  "viewWeek": "Week",
+  "today": "Today",
+  "legendStatus": "Status:",
+  "status": {
+    "scheduled": "Scheduled",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "noShow": "No show"
+  },
+  "patientFallback": "Patient",
+  "patientUnknown": "Unknown patient",
+  "doctorUnknown": "Unknown doctor",
+  "loading": "Loading calendar...",
+  "dayModal": {
+    "appointmentsCount": "{count, plural, one {# appointment} other {# appointments}}",
+    "empty": "No appointments this day"
+  }
+}

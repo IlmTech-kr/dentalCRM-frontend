@@ -5,6 +5,7 @@
  */
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   useState,
   type FormEvent,
@@ -63,6 +64,7 @@ function normalizeContactNumber(value: string): string {
 
 export default function RegisterPage() {
   const toast = useToast();
+  const t = useTranslations("auth");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -87,7 +89,7 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-      toast.warning("Passwords do not match");
+      toast.warning(t("register.passwordsMismatch"));
       return;
     }
 
@@ -122,23 +124,22 @@ export default function RegisterPage() {
             <ShieldCheck size={30} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">DentalCRM</h1>
-            <p className="text-white/80">Smart Clinic Management System</p>
+            <h1 className="text-3xl font-bold">{t("brand.name")}</h1>
+            <p className="text-white/80">{t("register.tagline")}</p>
           </div>
         </div>
 
         <div className="relative z-10 max-w-xl">
           <h2 className="text-5xl font-bold leading-tight">
-            Build Your Modern Dental Clinic
+            {t("register.heroTitle")}
           </h2>
           <p className="mt-6 text-lg leading-8 text-white/85">
-            Manage patients, appointments, doctors, reports and treatments in
-            one secure cloud platform.
+            {t("register.heroSubtitle")}
           </p>
         </div>
 
         <p className="relative z-10 text-sm text-white/70">
-          © 2026 DentalCRM. All rights reserved.
+          {t("register.copyright")}
         </p>
       </section>
 
@@ -148,10 +149,10 @@ export default function RegisterPage() {
           className="w-full max-w-[470px] rounded-[26px] border border-[#d7e8f7] bg-white px-7 py-4 shadow-xl shadow-slate-300/30"
         >
           <h2 className="text-[28px] font-bold text-[#0f2f4f]">
-            Create Clinic
+            {t("register.title")}
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Start managing your clinic digitally
+            {t("register.subtitle")}
           </p>
 
           {registerMutation.error && (
@@ -159,42 +160,42 @@ export default function RegisterPage() {
               <p className="text-sm font-semibold text-red-700">
                 {registerMutation.error instanceof Error
                   ? registerMutation.error.message
-                  : "Registration failed. Please try again."}
+                  : t("register.errorFallback")}
               </p>
             </div>
           )}
 
           <div className="mt-4 space-y-2">
             <Input
-              label="First Name"
+              label={t("register.firstNameLabel")}
               icon={<User size={18} />}
               value={form.firstName}
               onChange={(v) => setForm({ ...form, firstName: v })}
-              placeholder="Ali"
+              placeholder={t("register.firstNamePlaceholder")}
               disabled={registerMutation.isPending}
             />
 
             <Input
-              label="Last Name"
+              label={t("register.lastNameLabel")}
               icon={<User size={18} />}
               value={form.lastName}
               onChange={(v) => setForm({ ...form, lastName: v })}
-              placeholder="Karimov"
+              placeholder={t("register.lastNamePlaceholder")}
               disabled={registerMutation.isPending}
             />
 
             <Input
-              label="Email Address"
+              label={t("register.emailLabel")}
               icon={<Mail size={18} />}
               value={form.email}
               onChange={(v) => setForm({ ...form, email: v })}
-              placeholder="admin@clinic1.com"
+              placeholder={t("register.emailPlaceholder")}
               type="email"
               disabled={registerMutation.isPending}
             />
 
             <Input
-              label="Contact Number"
+              label={t("register.contactNumberLabel")}
               icon={<Phone size={18} />}
               value={form.contactNumber}
               onChange={(v) =>
@@ -203,16 +204,16 @@ export default function RegisterPage() {
                   contactNumber: normalizeContactNumber(v),
                 })
               }
-              placeholder="+998934919100"
+              placeholder={t("register.contactNumberPlaceholder")}
               type="tel"
               inputMode="tel"
               disabled={registerMutation.isPending}
             />
 
             <PasswordInput
-              label="Password"
+              label={t("register.passwordLabel")}
               value={form.password}
-              placeholder="Create password"
+              placeholder={t("register.passwordPlaceholder")}
               show={showPassword}
               onToggle={() => setShowPassword((p) => !p)}
               onChange={(v) => setForm({ ...form, password: v })}
@@ -220,9 +221,9 @@ export default function RegisterPage() {
             />
 
             <PasswordInput
-              label="Confirm Password"
+              label={t("register.confirmPasswordLabel")}
               value={form.confirmPassword}
-              placeholder="Confirm password"
+              placeholder={t("register.confirmPasswordPlaceholder")}
               show={showConfirmPassword}
               onToggle={() => setShowConfirmPassword((p) => !p)}
               onChange={(v) => setForm({ ...form, confirmPassword: v })}
@@ -231,34 +232,34 @@ export default function RegisterPage() {
 
             {form.confirmPassword && !passwordsMatch && (
               <p className="text-xs font-semibold text-red-500">
-                Passwords do not match
+                {t("register.passwordsMismatch")}
               </p>
             )}
 
             {passwordsMatch && (
               <p className="text-xs font-semibold text-green-500">
-                Passwords match ✓
+                {t("register.passwordsMatch")} ✓
               </p>
             )}
 
             <Input
-              label="Clinic Name"
+              label={t("register.clinicNameLabel")}
               icon={<Building2 size={18} />}
               value={form.clinicName}
               onChange={(v) => setForm({ ...form, clinicName: v })}
-              placeholder="Dental Smile Clinic"
+              placeholder={t("register.clinicNamePlaceholder")}
               disabled={registerMutation.isPending}
             />
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-600">
-                Clinic Subdomain
+                {t("register.subdomainLabel")}
               </label>
               <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
                 <Building2 size={18} className="text-slate-400" />
                 <input
                   className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
-                  placeholder="clinic1"
+                  placeholder={t("register.subdomainPlaceholder")}
                   value={form.subDomain}
                   onChange={(e) =>
                     setForm({
@@ -288,14 +289,14 @@ export default function RegisterPage() {
               }
               className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {registerMutation.isPending ? "Creating..." : "Create Clinic"}
+              {registerMutation.isPending ? t("register.submitting") : t("register.submitButton")}
             </button>
           </div>
 
           <p className="mt-3 text-center text-sm text-slate-500">
-            Already have an account?{" "}
+            {t("register.alreadyHaveAccount")}{" "}
             <Link href="/login" className="font-bold text-[#35a8f5]">
-              Sign In
+              {t("register.signIn")}
             </Link>
           </p>
         </form>

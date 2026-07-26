@@ -1,0 +1,73 @@
+{
+  "header": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name} 👋 — {date}"
+  },
+  "months": [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ],
+  "stats": {
+    "totalPatients": "Total patients",
+    "todayAppointments": "Today's appointments",
+    "completedCancelled": "Completed / Cancelled",
+    "doctors": "Doctors"
+  },
+  "revenue": {
+    "title": "Revenue statistics",
+    "filterDay": "Day",
+    "filterMonth": "Month",
+    "filterYear": "Year",
+    "currency": "UZS",
+    "transactions": "{count, plural, one {# payment} other {# payments}}",
+    "selectDate": "Select a date"
+  },
+  "todayAppointments": {
+    "title": "Today's appointments",
+    "count": "{count, plural, one {# appointment} other {# appointments}}",
+    "empty": "No appointments today"
+  },
+  "unknownDoctor": "Unknown doctor",
+  "appointmentStatus": {
+    "scheduled": "Scheduled",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "noShow": "No show"
+  },
+  "doctorPayments": {
+    "title": "Doctor revenue and payments"
+  },
+  "payroll": {
+    "title": "Payroll — total expenses",
+    "monthlyExpense": "Monthly expenses",
+    "commissionExpense": "Commission expenses",
+    "totalExpense": "Total expense",
+    "doctorsTableTitle": "Doctors",
+    "staffTableTitle": "Other staff (reception, assistant)",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "revenue": "Revenue",
+      "percent": "Percent",
+      "totalCost": "Total cost",
+      "role": "Role",
+      "salary": "Salary"
+    },
+    "percentageType": "Percentage",
+    "salaryType": "Salary"
+  },
+  "doctorRevenue": {
+    "myTitle": "My revenue",
+    "allTitle": "Revenue by doctor",
+    "columns": {
+      "doctor": "Doctor",
+      "revenue": "Revenue",
+      "transactions": "Transactions",
+      "compensation": "Compensation",
+      "commissionAmount": "Commission amount"
+    },
+    "transactionsCount": "{count, plural, one {# transaction} other {# transactions}}",
+    "salaryLabel": "Salary"
+  }
+}

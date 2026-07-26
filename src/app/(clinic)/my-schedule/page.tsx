@@ -22,6 +22,7 @@
  */
 
 import { FormEvent, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { CalendarDays, Clock, Edit2, Loader2, Plus, RefreshCcw, Trash2, X } from "lucide-react";
 
 import {
@@ -45,15 +46,27 @@ import { useAuthStore } from "@/src/store/auth.store";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
-  { value: DayOfWeek.MONDAY,    label: "Monday",    short: "Mon" },
-  { value: DayOfWeek.TUESDAY,   label: "Tuesday",   short: "Tue" },
-  { value: DayOfWeek.WEDNESDAY, label: "Wednesday", short: "Wed" },
-  { value: DayOfWeek.THURSDAY,  label: "Thursday",  short: "Thu" },
-  { value: DayOfWeek.FRIDAY,    label: "Friday",    short: "Fri" },
-  { value: DayOfWeek.SATURDAY,  label: "Saturday",  short: "Sat" },
-  { value: DayOfWeek.SUNDAY,    label: "Sunday",    short: "Sun" },
+// Enum order used to build the localized DAYS array — the i18n key suffix
+// under the "days" namespace matches the lowercase enum name.
+const DAY_ORDER: DayOfWeek[] = [
+  DayOfWeek.MONDAY,
+  DayOfWeek.TUESDAY,
+  DayOfWeek.WEDNESDAY,
+  DayOfWeek.THURSDAY,
+  DayOfWeek.FRIDAY,
+  DayOfWeek.SATURDAY,
+  DayOfWeek.SUNDAY,
 ];
+
+const DAY_I18N_KEY: Record<DayOfWeek, string> = {
+  [DayOfWeek.MONDAY]: "monday",
+  [DayOfWeek.TUESDAY]: "tuesday",
+  [DayOfWeek.WEDNESDAY]: "wednesday",
+  [DayOfWeek.THURSDAY]: "thursday",
+  [DayOfWeek.FRIDAY]: "friday",
+  [DayOfWeek.SATURDAY]: "saturday",
+  [DayOfWeek.SUNDAY]: "sunday",
+};
 
 const CALENDAR_HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00–18:00
 const DURATION_OPTIONS = [10, 15, 20, 30, 45, 60, 90];
@@ -69,6 +82,8 @@ type DayRow = {
   active: boolean;
 };
 
+type DayDescriptor = { value: DayOfWeek; label: string; short: string };
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normalizeScheduleTime(time?: string | null): string {
@@ -78,8 +93,18 @@ function normalizeScheduleTime(time?: string | null): string {
   return value;
 }
 
-function getDayShort(day?: DayOfWeek | string): string {
-  return DAYS.find((d) => d.value === day)?.short ?? String(day ?? "-");
+// Builds the localized DAYS descriptor list from the "myschedule" namespace —
+// called inside components (which have access to `t`) rather than at module scope.
+function buildLocalizedDays(t: (key: string) => string): DayDescriptor[] {
+  return DAY_ORDER.map((value) => ({
+    value,
+    label: t(`days.${DAY_I18N_KEY[value]}.label`),
+    short: t(`days.${DAY_I18N_KEY[value]}.short`),
+  }));
+}
+
+function getDayShort(day: DayOfWeek | string | undefined, days: DayDescriptor[]): string {
+  return days.find((d) => d.value === day)?.short ?? String(day ?? "-");
 }
 
 function getDoctorInitials(name: string): string {
@@ -97,7 +122,7 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-function buildDayRowsFromSchedules(schedules: DoctorSchedule[], ownDoctorId: string): DayRow[] {
+function buildDayRowsFromSchedules(schedules: DoctorSchedule[], ownDoctorId: string, days: DayDescriptor[]): DayRow[] {
   const byDay = new Map<string, DoctorSchedule>();
   schedules
     .filter((s: any) => s.doctorId === ownDoctorId)
@@ -105,7 +130,7 @@ function buildDayRowsFromSchedules(schedules: DoctorSchedule[], ownDoctorId: str
       if (s.dayOfWeek) byDay.set(s.dayOfWeek, s);
     });
 
-  return DAYS.map((d) => {
+  return days.map((d) => {
     const existing: any = byDay.get(d.value);
     if (existing) {
       return {
@@ -169,6 +194,10 @@ function WeekEditorModal({
   onDeleteSchedule,
   isDeleting,
 }: WeekEditorModalProps) {
+  const t = useTranslations("myschedule");
+  const tCommon = useTranslations("common");
+  const DAYS = useMemo(() => buildLocalizedDays(t), [t]);
+
   if (!open) return null;
 
   function updateRow(index: number, patch: Partial<DayRow>) {
@@ -186,12 +215,12 @@ function WeekEditorModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-extrabold text-slate-900">
-                {hasExistingSchedule ? "Edit My Weekly Schedule" : "Create My Schedule"}
+                {hasExistingSchedule ? t("modal.editTitle") : t("modal.createTitle")}
               </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
                 {hasExistingSchedule
-                  ? "Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi."
-                  : "Ish vaqtingizni butun hafta (Weekly) yoki aniq kunlar (Daily) bo'yicha belgilang."}
+                  ? t("modal.editSubtitle")
+                  : t("modal.createSubtitle")}
               </p>
             </div>
             <button
@@ -257,7 +286,7 @@ function WeekEditorModal({
                     createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  Weekly (butun hafta)
+                  {t("modal.modeWeekly")}
                 </button>
                 <button
                   type="button"
@@ -266,14 +295,14 @@ function WeekEditorModal({
                     createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  Daily (aniq kunlar)
+                  {t("modal.modeDaily")}
                 </button>
               </div>
 
               {createMode === "DAILY" && (
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    Ish kunlari <span className="text-red-500">*</span>
+                    {t("modal.workDaysLabel")} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {DAYS.map((day) => {
@@ -299,7 +328,7 @@ function WeekEditorModal({
 
               {createMode === "DAILY" && (
                 <div>
-                  <label className="mb-3 block text-sm font-bold text-slate-900">Slot Duration</label>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">{t("modal.slotDurationLabel")}</label>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
                     {DURATION_OPTIONS.map((duration) => (
                       <button
@@ -312,7 +341,7 @@ function WeekEditorModal({
                             : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
                         }`}
                       >
-                        {duration}m
+                        {t("modal.durationUnit", { minutes: duration })}
                       </button>
                     ))}
                   </div>
@@ -322,7 +351,7 @@ function WeekEditorModal({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    Start Time <span className="text-red-500">*</span>
+                    {t("modal.startTimeLabel")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
@@ -333,7 +362,7 @@ function WeekEditorModal({
                 </div>
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    End Time <span className="text-red-500">*</span>
+                    {t("modal.endTimeLabel")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
@@ -355,7 +384,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Delete Schedule
+                {t("modal.deleteSchedule")}
               </button>
             ) : (
               <span />
@@ -367,7 +396,7 @@ function WeekEditorModal({
                 onClick={onClose}
                 className="rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {tCommon("actions.cancel")}
               </button>
               <button
                 type="submit"
@@ -375,7 +404,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {hasExistingSchedule ? "Save Schedule" : "Create Schedule"}
+                {hasExistingSchedule ? t("modal.saveSchedule") : t("modal.createScheduleButton")}
               </button>
             </div>
           </div>
@@ -388,6 +417,9 @@ function WeekEditorModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MySchedulePage() {
+  const t = useTranslations("myschedule");
+  const DAYS = useMemo(() => buildLocalizedDays(t), [t]);
+
   const toast = useToast();
 
   const currentUser = useAuthStore((s) => s.user);
@@ -398,7 +430,7 @@ export default function MySchedulePage() {
   const ownDoctorName =
     (currentUser as any)?.firstName || (currentUser as any)?.lastName
       ? `${(currentUser as any)?.firstName ?? ""} ${(currentUser as any)?.lastName ?? ""}`.trim()
-      : (currentUser as any)?.email || "Men";
+      : (currentUser as any)?.email || t("meFallback");
 
   const page = 0;
   const limit = 20;
@@ -458,7 +490,7 @@ export default function MySchedulePage() {
 
   function openEditor() {
     if (hasExistingSchedule) {
-      setDayRows(buildDayRowsFromSchedules(schedules as any[], ownDoctorId));
+      setDayRows(buildDayRowsFromSchedules(schedules as any[], ownDoctorId, DAYS));
     } else {
       resetCreateState();
     }
@@ -477,17 +509,17 @@ export default function MySchedulePage() {
 
   async function handleDeleteSchedule() {
     if (!ownScheduleId) {
-      toast.error("Schedule ID topilmadi.");
+      toast.error(t("toast.scheduleIdNotFound"));
       return;
     }
-    if (!window.confirm("Butun haftalik schedule'ingiz o'chirilsinmi?")) return;
+    if (!window.confirm(t("toast.confirmDelete"))) return;
 
     try {
       await deleteScheduleMutation.mutateAsync(ownScheduleId);
-      toast.success("Schedule o'chirildi.");
+      toast.success(t("toast.deleted"));
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Schedule o'chirishda xatolik yuz berdi."));
+      toast.error(getApiErrorMessage(err, t("toast.deleteError")));
     }
   }
 
@@ -495,7 +527,7 @@ export default function MySchedulePage() {
     e.preventDefault();
 
     if (!ownDoctorId) {
-      toast.error("Foydalanuvchi ID topilmadi. Qaytadan login qiling.");
+      toast.error(t("toast.userIdNotFound"));
       return;
     }
 
@@ -503,32 +535,32 @@ export default function MySchedulePage() {
       // ── EDIT: PUT /doctor-schedules/by-day (doctorId yuborilmaydi) ──
       for (const row of dayRows) {
         if (row.active && (!row.startTime || !row.endTime)) {
-          toast.warning(`${getDayShort(row.dayOfWeek)} uchun vaqt kiritilmagan.`);
+          toast.warning(t("toast.timeMissingForDay", { day: getDayShort(row.dayOfWeek, DAYS) }));
           return;
         }
         if (row.active && row.startTime >= row.endTime) {
-          toast.warning(`${getDayShort(row.dayOfWeek)}: End time start time'dan keyin bo'lishi kerak.`);
+          toast.warning(t("toast.endBeforeStartForDay", { day: getDayShort(row.dayOfWeek, DAYS) }));
           return;
         }
       }
 
       try {
         await updateScheduleByDayMutation.mutateAsync({ days: dayRows });
-        toast.success("Schedule saved successfully.");
+        toast.success(t("toast.saved"));
         closeModal();
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Schedule saqlashda xatolik yuz berdi."));
+        toast.error(getApiErrorMessage(err, t("toast.saveError")));
       }
       return;
     }
 
     // ── CREATE: Weekly yoki Daily (doctorId = o'zining ID'si) ──
     if (!createStartTime || !createEndTime) {
-      toast.warning("Start/End time kiriting.");
+      toast.warning(t("toast.timeMissing"));
       return;
     }
     if (createStartTime >= createEndTime) {
-      toast.warning("End time start time'dan keyin bo'lishi kerak.");
+      toast.warning(t("toast.endBeforeStart"));
       return;
     }
 
@@ -542,7 +574,7 @@ export default function MySchedulePage() {
         } as WeeklyDoctorSchedulePayload);
       } else {
         if (createSelectedDays.length === 0) {
-          toast.warning("Kamida bitta ish kunini tanlang.");
+          toast.warning(t("toast.selectAtLeastOneDay"));
           return;
         }
         for (const day of createSelectedDays) {
@@ -556,10 +588,10 @@ export default function MySchedulePage() {
           } as DoctorSchedulePayload);
         }
       }
-      toast.success("Schedule created successfully.");
+      toast.success(t("toast.created"));
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Schedule yaratishda xatolik yuz berdi."));
+      toast.error(getApiErrorMessage(err, t("toast.createError")));
     }
   }
 
@@ -578,9 +610,9 @@ export default function MySchedulePage() {
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">My Schedule</h1>
+                <h1 className="text-2xl font-extrabold text-slate-900">{t("header.title")}</h1>
                 <p className="text-sm font-medium text-slate-500">
-                  Manage your own working days and appointment slots.
+                  {t("header.subtitle")}
                 </p>
               </div>
             </div>
@@ -592,7 +624,7 @@ export default function MySchedulePage() {
                 className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 <RefreshCcw className="h-4 w-4" />
-                Refresh
+                {t("actions.refresh")}
               </button>
               <button
                 type="button"
@@ -600,7 +632,7 @@ export default function MySchedulePage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
               >
                 <Edit2 className="h-4 w-4" />
-                Edit Schedule
+                {t("actions.editSchedule")}
               </button>
             </div>
           </div>
@@ -610,29 +642,29 @@ export default function MySchedulePage() {
       <main className="mx-auto max-w-5xl px-6 py-8">
         {!isDoctorRole ? (
           <div className="rounded-3xl border border-amber-100 bg-white px-6 py-16 text-center shadow-sm">
-            <p className="text-lg font-extrabold text-slate-900">Bu sahifa faqat doctorlar uchun</p>
+            <p className="text-lg font-extrabold text-slate-900">{t("accessDenied.title")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              Sizning rolingiz doctor emas — bu sahifaga kirish huquqingiz yo'q.
+              {t("accessDenied.description")}
             </p>
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center gap-3 py-24 text-sm font-bold text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-            Loading schedule…
+            {t("loading")}
           </div>
         ) : isError ? (
           <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">!</div>
-            <p className="text-lg font-extrabold text-slate-900">Failed to load schedule</p>
+            <p className="text-lg font-extrabold text-slate-900">{t("error.title")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              {getApiErrorMessage(error, "Server error. Please check the backend API.")}
+              {getApiErrorMessage(error, t("error.fallback"))}
             </p>
             <button
               type="button"
               onClick={() => refetch()}
               className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
             >
-              Try Again
+              {t("error.retry")}
             </button>
           </div>
         ) : !hasExistingSchedule ? (
@@ -640,15 +672,15 @@ export default function MySchedulePage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
               <CalendarDays className="h-7 w-7" />
             </div>
-            <p className="text-lg font-extrabold text-slate-900">Sizda hali schedule mavjud emas</p>
-            <p className="mt-2 text-sm text-slate-500">Ish kunlaringizni belgilash uchun schedule yarating.</p>
+            <p className="text-lg font-extrabold text-slate-900">{t("empty.title")}</p>
+            <p className="mt-2 text-sm text-slate-500">{t("empty.description")}</p>
             <button
               type="button"
               onClick={openEditor}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
             >
               <Plus className="h-4 w-4" />
-              Schedule yaratish
+              {t("empty.cta")}
             </button>
           </div>
         ) : (
@@ -659,21 +691,23 @@ export default function MySchedulePage() {
               </div>
               <div>
                 <p className="text-sm font-extrabold text-slate-900">{ownDoctorName}</p>
-                <p className="text-xs text-slate-500">Weekly work schedule</p>
+                <p className="text-xs text-slate-500">{t("doctorCard.subtitle")}</p>
               </div>
             </div>
 
             <div className="mb-6 grid grid-cols-3 gap-3">
               {[
-                { label: "Work days", value: byDay.size, color: "text-slate-900" },
-                { label: "Active slots", value: ownSchedules.length, color: "text-emerald-600" },
+                { label: t("stats.workDays"), value: byDay.size, color: "text-slate-900" },
+                { label: t("stats.activeSlots"), value: ownSchedules.length, color: "text-emerald-600" },
                 {
-                  label: "Hours / week",
-                  value: `${ownSchedules.reduce((acc: number, s: any) => {
-                    const sh = parseInt(normalizeScheduleTime(s.startTime));
-                    const eh = parseInt(normalizeScheduleTime(s.endTime));
-                    return acc + (isNaN(sh) || isNaN(eh) ? 0 : eh - sh);
-                  }, 0)}h`,
+                  label: t("stats.hoursPerWeek"),
+                  value: t("stats.hoursValue", {
+                    hours: ownSchedules.reduce((acc: number, s: any) => {
+                      const sh = parseInt(normalizeScheduleTime(s.startTime));
+                      const eh = parseInt(normalizeScheduleTime(s.endTime));
+                      return acc + (isNaN(sh) || isNaN(eh) ? 0 : eh - sh);
+                    }, 0),
+                  }),
                   color: "text-blue-600",
                 },
               ].map((stat) => (
@@ -740,7 +774,7 @@ export default function MySchedulePage() {
                                         {start} – {end}
                                       </p>
                                       <span className="w-fit rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700">
-                                        Active
+                                        {t("table.active")}
                                       </span>
                                     </div>
                                   </div>
@@ -758,11 +792,11 @@ export default function MySchedulePage() {
             <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-blue-400 bg-blue-50" />
-                Work hours
+                {t("legend.workHours")}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-sm bg-slate-50" />
-                Day off
+                {t("legend.dayOff")}
               </span>
             </div>
           </div>

@@ -1,0 +1,31 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "view": "View",
+    "logout": "Logout"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "feedback": {
+    "loading": "Loading...",
+    "noData": "No data found",
+    "error": "An error occurred",
+    "success": "Success",
+    "required": "Required field"
+  }
+}

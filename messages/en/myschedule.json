@@ -1,0 +1,83 @@
+{
+  "header": {
+    "title": "My Schedule",
+    "subtitle": "Manage your own working days and appointment slots."
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "editSchedule": "Edit Schedule"
+  },
+  "accessDenied": {
+    "title": "This page is for doctors only",
+    "description": "Your role is not doctor — you don't have access to this page."
+  },
+  "loading": "Loading schedule…",
+  "error": {
+    "title": "Failed to load schedule",
+    "fallback": "Server error. Please check the backend API.",
+    "retry": "Try Again"
+  },
+  "empty": {
+    "title": "You don't have a schedule yet",
+    "description": "Create a schedule to set your working days.",
+    "cta": "Create Schedule"
+  },
+  "doctorCard": {
+    "subtitle": "Weekly work schedule"
+  },
+  "stats": {
+    "workDays": "Work days",
+    "activeSlots": "Active slots",
+    "hoursPerWeek": "Hours / week",
+    "hoursValue": "{hours}h"
+  },
+  "legend": {
+    "workHours": "Work hours",
+    "dayOff": "Day off"
+  },
+  "table": {
+    "active": "Active"
+  },
+  "days": {
+    "monday": { "label": "Monday", "short": "Mon" },
+    "tuesday": { "label": "Tuesday", "short": "Tue" },
+    "wednesday": { "label": "Wednesday", "short": "Wed" },
+    "thursday": { "label": "Thursday", "short": "Thu" },
+    "friday": { "label": "Friday", "short": "Fri" },
+    "saturday": { "label": "Saturday", "short": "Sat" },
+    "sunday": { "label": "Sunday", "short": "Sun" }
+  },
+  "modal": {
+    "editTitle": "Edit My Weekly Schedule",
+    "createTitle": "Create My Schedule",
+    "editSubtitle": "Checked days will become active; unchecked days will be saved as a day off.",
+    "createSubtitle": "Set your working hours for the whole week (Weekly) or specific days (Daily).",
+    "modeWeekly": "Weekly (whole week)",
+    "modeDaily": "Daily (specific days)",
+    "workDaysLabel": "Work days",
+    "slotDurationLabel": "Slot Duration",
+    "durationUnit": "{minutes}m",
+    "startTimeLabel": "Start Time",
+    "endTimeLabel": "End Time",
+    "deleteSchedule": "Delete Schedule",
+    "saveSchedule": "Save Schedule",
+    "createScheduleButton": "Create Schedule"
+  },
+  "toast": {
+    "scheduleIdNotFound": "Schedule ID not found.",
+    "confirmDelete": "Delete your entire weekly schedule?",
+    "deleted": "Schedule deleted.",
+    "deleteError": "Failed to delete schedule.",
+    "userIdNotFound": "User ID not found. Please log in again.",
+    "timeMissingForDay": "Time not set for {day}.",
+    "endBeforeStartForDay": "{day}: end time must be after start time.",
+    "saved": "Schedule saved successfully.",
+    "saveError": "Failed to save schedule.",
+    "timeMissing": "Please enter start/end time.",
+    "endBeforeStart": "End time must be after start time.",
+    "selectAtLeastOneDay": "Select at least one work day.",
+    "created": "Schedule created successfully.",
+    "createError": "Failed to create schedule."
+  },
+  "meFallback": "Me"
+}

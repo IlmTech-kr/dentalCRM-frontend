@@ -1,0 +1,30 @@
+{
+  "title": "Календарь",
+  "doctorOnlyBadge": "Только ваши",
+  "weekdaysShort": ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+  "months": [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ],
+  "allDoctorsOption": "Все врачи",
+  "youFallback": "Вы",
+  "viewMonth": "Месяц",
+  "viewWeek": "Неделя",
+  "today": "Сегодня",
+  "legendStatus": "Статус:",
+  "status": {
+    "scheduled": "Ожидается",
+    "inProgress": "В процессе",
+    "completed": "Завершено",
+    "cancelled": "Отменено",
+    "noShow": "Не пришёл"
+  },
+  "patientFallback": "Пациент",
+  "patientUnknown": "Пациент неизвестен",
+  "doctorUnknown": "Врач неизвестен",
+  "loading": "Загрузка календаря...",
+  "dayModal": {
+    "appointmentsCount": "{count, plural, one {# приём} few {# приёма} many {# приёмов} other {# приёма}}",
+    "empty": "В этот день приёмов нет"
+  }
+}

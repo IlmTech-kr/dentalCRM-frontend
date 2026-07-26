@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, Phone, User, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 
 const SHOW_DELAY_MS = 1000;
@@ -21,6 +22,9 @@ interface LeadModalProps {
 }
 
 export default function LeadModal({ open: controlledOpen, onClose }: LeadModalProps) {
+  const t = useTranslations("layout");
+  const tCommon = useTranslations("common");
+
   const isControlled = controlledOpen !== undefined;
 
   const [open, setOpen] = useState(false);
@@ -64,9 +68,9 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
     e.preventDefault();
     setError("");
 
-    if (!name.trim()) { setError("Ismingizni kiriting"); return; }
+    if (!name.trim()) { setError(t("leadModal.errorNameRequired")); return; }
     if (!phone.trim() || phone.replace(/\D/g, "").length < 9) {
-      setError("To'g'ri telefon raqam kiriting");
+      setError(t("leadModal.errorInvalidPhone"));
       return;
     }
 
@@ -106,18 +110,20 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
                 <CheckCircle2 size={36} className="text-emerald-500" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900">Rahmat! 🎉</h2>
+              <h2 className="text-2xl font-black text-slate-900">{t("leadModal.successTitle")}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Ma'lumotlaringiz qabul qilindi. Mutaxassisimiz{" "}
-                <span className="font-bold text-slate-700">24 soat ichida</span>{" "}
-                siz bilan bog'lanadi.
+                {t.rich("leadModal.successMessage", {
+                  b: (chunks) => (
+                    <span className="font-bold text-slate-700">{chunks}</span>
+                  ),
+                })}
               </p>
               <button
                 type="button"
                 onClick={handleClose}
                 className="mt-6 rounded-2xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-8 py-3 text-sm font-bold text-white transition hover:opacity-90"
               >
-                Yopish
+                {tCommon("actions.close")}
               </button>
             </div>
           ) : (
@@ -131,20 +137,29 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
                 </div>
 
                 <h2 className="text-2xl font-black leading-tight text-slate-900">
-                  Klinikangizni biznesini{" "}
-                  <span className="bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 bg-clip-text text-transparent">
-                    raqamlashtiring
-                  </span>
+                  {t.rich("leadModal.heading", {
+                    accent: (chunks) => (
+                      <span className="bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 bg-clip-text text-transparent">
+                        {chunks}
+                      </span>
+                    ),
+                  })}
                 </h2>
 
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Kontaktingizni qoldiring — mutaxassisimiz siz bilan{" "}
-                  <span className="font-semibold text-slate-700">tez orada bog'lanib</span>,
-                  tushuntiradi va klinikangizga o'rnatib beradi.
+                  {t.rich("leadModal.description", {
+                    b: (chunks) => (
+                      <span className="font-semibold text-slate-700">{chunks}</span>
+                    ),
+                  })}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {["Bepul konsultatsiya", "O'rnatish xizmati", "24/7 qo'llab-quvvatlash"].map((badge) => (
+                  {[
+                    t("leadModal.badgeFreeConsultation"),
+                    t("leadModal.badgeInstallService"),
+                    t("leadModal.badgeSupport247"),
+                  ].map((badge) => (
                     <span key={badge} className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
                       <CheckCircle2 size={11} />
                       {badge}
@@ -160,7 +175,7 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
                     type="text"
                     value={name}
                     onChange={(e) => { setName(e.target.value); setError(""); }}
-                    placeholder="Ismingiz"
+                    placeholder={t("leadModal.namePlaceholder")}
                     className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
                     disabled={formState === "loading"}
                   />
@@ -172,7 +187,7 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
                     type="tel"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setError(""); }}
-                    placeholder="+998 90 000 00 00"
+                    placeholder={t("leadModal.phonePlaceholder")}
                     className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
                     disabled={formState === "loading"}
                   />
@@ -186,14 +201,14 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 font-bold text-white shadow-lg shadow-violet-200 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {formState === "loading" ? (
-                    <><Loader2 size={18} className="animate-spin" />Yuborilmoqda...</>
+                    <><Loader2 size={18} className="animate-spin" />{t("leadModal.submitting")}</>
                   ) : (
-                    <>Biz bilan bog'laning <ArrowRight size={18} /></>
+                    <>{t("leadModal.submitButton")} <ArrowRight size={18} /></>
                   )}
                 </button>
 
                 <p className="text-center text-[11px] text-slate-400">
-                  Ma'lumotlaringiz faqat bog'lanish uchun ishlatiladi. Spam yo'q.
+                  {t("leadModal.privacyNote")}
                 </p>
               </form>
             </>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { ToothCondition } from "@/src/lib/enums/enums.types";
 import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
@@ -211,30 +212,32 @@ export function Dental3DChart({
   toothMap,
   onSelectTooth,
 }: Dental3DChartProps) {
+  const t = useTranslations("treatments");
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            3D tish xaritasi
+            {t("dental3DChart.title")}
           </h2>
 
           <p className="text-xs text-slate-500">
-            Tishni bosib tanlang, o‘ng paneldan diagnoz va holatni belgilang.
+            {t("dental3DChart.subtitle")}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-1.5 text-[10px]">
           <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 font-medium text-orange-700">
-            Diagnoz
+            {t("dental3DChart.diagnosisTag")}
           </span>
 
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">
-            Davolangan
+            {t("dental3DChart.treatedTag")}
           </span>
 
           <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 font-medium text-red-700">
-            Yo‘q
+            {t("dental3DChart.missingTag")}
           </span>
         </div>
       </div>
@@ -257,7 +260,7 @@ export function Dental3DChart({
 
           <div className="mx-auto flex h-9 w-[72%] items-center justify-center rounded-[50%] border border-slate-100 bg-white shadow-inner">
             <span className="text-[10px] font-semibold text-slate-400">
-              Og‘iz bo‘shlig‘i
+              {t("dental3DChart.oralCavity")}
             </span>
           </div>
 

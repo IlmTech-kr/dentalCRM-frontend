@@ -1,0 +1,83 @@
+{
+  "header": {
+    "title": "Mening ish jadvalim",
+    "subtitle": "O'zingizning ish kunlaringiz va qabul vaqtlaringizni boshqaring."
+  },
+  "actions": {
+    "refresh": "Yangilash",
+    "editSchedule": "Jadvalni tahrirlash"
+  },
+  "accessDenied": {
+    "title": "Bu sahifa faqat shifokorlar uchun",
+    "description": "Sizning rolingiz shifokor emas — bu sahifaga kirish huquqingiz yo'q."
+  },
+  "loading": "Jadval yuklanmoqda…",
+  "error": {
+    "title": "Jadvalni yuklab bo'lmadi",
+    "fallback": "Server xatosi. Backend API'ni tekshiring.",
+    "retry": "Qayta urinish"
+  },
+  "empty": {
+    "title": "Sizda hali jadval mavjud emas",
+    "description": "Ish kunlaringizni belgilash uchun jadval yarating.",
+    "cta": "Jadval yaratish"
+  },
+  "doctorCard": {
+    "subtitle": "Haftalik ish jadvali"
+  },
+  "stats": {
+    "workDays": "Ish kunlari",
+    "activeSlots": "Faol slotlar",
+    "hoursPerWeek": "Soat / hafta",
+    "hoursValue": "{hours} soat"
+  },
+  "legend": {
+    "workHours": "Ish vaqti",
+    "dayOff": "Dam kuni"
+  },
+  "table": {
+    "active": "Faol"
+  },
+  "days": {
+    "monday": { "label": "Dushanba", "short": "Dush" },
+    "tuesday": { "label": "Seshanba", "short": "Sesh" },
+    "wednesday": { "label": "Chorshanba", "short": "Chor" },
+    "thursday": { "label": "Payshanba", "short": "Pay" },
+    "friday": { "label": "Juma", "short": "Juma" },
+    "saturday": { "label": "Shanba", "short": "Shan" },
+    "sunday": { "label": "Yakshanba", "short": "Yak" }
+  },
+  "modal": {
+    "editTitle": "Haftalik jadvalimni tahrirlash",
+    "createTitle": "Jadval yaratish",
+    "editSubtitle": "Belgilangan (checked) kunlar faol bo'ladi, belgilanmagan kunlar dam kuni sifatida saqlanadi.",
+    "createSubtitle": "Ish vaqtingizni butun hafta (Haftalik) yoki aniq kunlar (Kunlik) bo'yicha belgilang.",
+    "modeWeekly": "Haftalik (butun hafta)",
+    "modeDaily": "Kunlik (aniq kunlar)",
+    "workDaysLabel": "Ish kunlari",
+    "slotDurationLabel": "Slot davomiyligi",
+    "durationUnit": "{minutes} daq",
+    "startTimeLabel": "Boshlanish vaqti",
+    "endTimeLabel": "Tugash vaqti",
+    "deleteSchedule": "Jadvalni o'chirish",
+    "saveSchedule": "Jadvalni saqlash",
+    "createScheduleButton": "Jadval yaratish"
+  },
+  "toast": {
+    "scheduleIdNotFound": "Jadval ID topilmadi.",
+    "confirmDelete": "Butun haftalik jadvalingiz o'chirilsinmi?",
+    "deleted": "Jadval o'chirildi.",
+    "deleteError": "Jadvalni o'chirishda xatolik yuz berdi.",
+    "userIdNotFound": "Foydalanuvchi ID topilmadi. Qaytadan tizimga kiring.",
+    "timeMissingForDay": "{day} uchun vaqt kiritilmagan.",
+    "endBeforeStartForDay": "{day}: tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak.",
+    "saved": "Jadval muvaffaqiyatli saqlandi.",
+    "saveError": "Jadvalni saqlashda xatolik yuz berdi.",
+    "timeMissing": "Boshlanish/tugash vaqtini kiriting.",
+    "endBeforeStart": "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak.",
+    "selectAtLeastOneDay": "Kamida bitta ish kunini tanlang.",
+    "created": "Jadval muvaffaqiyatli yaratildi.",
+    "createError": "Jadval yaratishda xatolik yuz berdi."
+  },
+  "meFallback": "Men"
+}

@@ -1,0 +1,100 @@
+{
+  "header": {
+    "badge": "Dental CRM qabullar",
+    "title": "Qabullar",
+    "subtitle": "Bemorlar qabulini, tashrif vaqtini, shifokor biriktirilishini va qabul holatini yagona ish maydonida boshqaring.",
+    "refresh": "Yangilash",
+    "addAppointment": "Qabul qo'shish"
+  },
+  "stats": {
+    "total": "Jami",
+    "scheduled": "Rejalashtirilgan",
+    "inProgress": "Jarayonda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi"
+  },
+  "filters": {
+    "byDate": "Sana bo'yicha",
+    "all": "Barcha qabullar",
+    "searchPlaceholder": "Bemor, shifokor, sana, vaqt bo'yicha qidirish..."
+  },
+  "list": {
+    "titleByDate": "{date} sanasidagi qabullar",
+    "titleAll": "Barcha qabullar",
+    "sortedByTime": "Vaqt bo'yicha saralangan: 09:00, 09:30, 10:00...",
+    "results": "{count, plural, other {# ta natija}}",
+    "loading": "Qabullar yuklanmoqda...",
+    "errorTitle": "Qabullarni yuklab bo'lmadi",
+    "errorFallback": "Server xatoligi.",
+    "tryAgain": "Qayta urinish",
+    "emptyTitle": "Qabullar topilmadi",
+    "emptyByDate": "Tanlangan sanaga qabullar yo'q.",
+    "emptyAll": "Bemor tashrifi uchun qabul yarating."
+  },
+  "table": {
+    "patient": "Bemor",
+    "doctor": "Shifokor",
+    "date": "Sana",
+    "time": "Vaqt",
+    "notes": "Izohlar",
+    "status": "Holat",
+    "actionsHeader": "Amallar",
+    "doctorNotAssigned": "Shifokor biriktirilmagan"
+  },
+  "pagination": {
+    "unit": "{total, plural, other {ta qabul}}"
+  },
+  "doctorDropdown": {
+    "placeholder": "Doctor tanlang",
+    "clearSelection": "Tanlovni olib tashlash",
+    "noDoctors": "Doctor topilmadi",
+    "unnamed": "Ismsiz shifokor"
+  },
+  "modal": {
+    "createTitle": "Qabul yaratish",
+    "editTitle": "Qabulni tahrirlash",
+    "subtitle": "Bemorni telefon raqami orqali toping, so'ng shifokor va vaqtni tanlang.",
+    "patientLabel": "Bemor",
+    "patientIdLabel": "ID: {id}",
+    "findPatientLabel": "Bemorni telefon orqali topish",
+    "phonePlaceholder": "+998934919100",
+    "search": "Qidirish",
+    "invalidPhone": "To'liq raqam kiriting. Masalan: +998934919100",
+    "patientNotFound": "Bemor topilmadi",
+    "patientNotFoundHint": "Avval bemorni yarating, keyin qabul yarating.",
+    "patientFound": "Bemor topildi",
+    "phoneLabel": "Telefon: {phone}",
+    "doctorLabel": "Shifokor",
+    "dateLabel": "Sana",
+    "startTimeLabel": "Boshlanish vaqti",
+    "slotDurationLabel": "Qabul davomiyligi",
+    "notesLabel": "Izohlar",
+    "notesPlaceholder": "Qabul haqida izoh...",
+    "cancel": "Bekor qilish",
+    "saveChanges": "O'zgarishlarni saqlash",
+    "createAppointment": "Qabul yaratish"
+  },
+  "status": {
+    "scheduled": "Rejalashtirilgan",
+    "inProgress": "Jarayonda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi"
+  },
+  "toast": {
+    "selectPatientByPhone": "Bemorni telefon raqami orqali toping",
+    "selectDoctor": "Shifokorni tanlang",
+    "enterDate": "Qabul sanasini kiriting",
+    "enterStartTime": "Boshlanish vaqtini kiriting",
+    "invalidDuration": "Qabul davomiyligi noto'g'ri",
+    "appointmentIdNotFound": "Qabul ID topilmadi",
+    "updated": "Qabul muvaffaqiyatli yangilandi",
+    "created": "Qabul muvaffaqiyatli yaratildi",
+    "saveError": "Qabulni saqlashda xatolik bo'ldi",
+    "statusChanged": "Holat \"{status}\" ga o'zgartirildi",
+    "incompleteData": "Ma'lumotlar to'liq emas",
+    "statusUpdateError": "Holatni yangilashda xatolik",
+    "deleteConfirm": "Qabul o'chirilsinmi?",
+    "deleted": "Qabul muvaffaqiyatli o'chirildi",
+    "deleteError": "Qabulni o'chirishda xatolik bo'ldi"
+  }
+}

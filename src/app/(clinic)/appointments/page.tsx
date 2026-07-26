@@ -6,6 +6,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Calendar,
   ChevronLeft,
@@ -147,12 +148,12 @@ function getStatusDotClass(status?: AppointmentStatus | string) {
     default: return "bg-sky-500";
   }
 }
-function getStatusLabel(status?: AppointmentStatus | string) {
+function getStatusLabel(status: AppointmentStatus | string | undefined, t: (key: string) => string) {
   switch (status) {
-    case AppointmentStatus.COMPLETED: return "Completed";
-    case AppointmentStatus.IN_PROGRESS: return "In progress";
-    case AppointmentStatus.CANCELLED: return "Cancelled";
-    default: return "Scheduled";
+    case AppointmentStatus.COMPLETED: return t("status.completed");
+    case AppointmentStatus.IN_PROGRESS: return t("status.inProgress");
+    case AppointmentStatus.CANCELLED: return t("status.cancelled");
+    default: return t("status.scheduled");
   }
 }
 
@@ -181,6 +182,7 @@ function Pagination({
   pageSize: number;
   onChange: (page: number) => void;
 }) {
+  const t = useTranslations("appointments");
   if (totalPages <= 1) return null;
 
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -196,7 +198,7 @@ function Pagination({
       <p className="mb-3 text-center text-sm text-slate-500">
         <span className="font-bold text-slate-900">{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)}</span>
         {" "}/{" "}
-        <span className="font-bold text-slate-900">{total}</span> ta qabul
+        <span className="font-bold text-slate-900">{total}</span> {t("pagination.unit", { total })}
       </p>
       <div className="flex items-center justify-center gap-1">
         <button
@@ -245,6 +247,7 @@ function Pagination({
 // ---------------------------------------------------------------------------
 
 function DoctorDropdown({ doctors, value, onChange }: { doctors: any[]; value: string; onChange: (id: string) => void; }) {
+  const t = useTranslations("appointments");
   const [open, setOpen] = React.useState(false);
   const selected = doctors.find((d) => getItemId(d) === value) || null;
 
@@ -272,7 +275,7 @@ function DoctorDropdown({ doctors, value, onChange }: { doctors: any[]; value: s
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             </div>
-            <span className="flex-1 text-sm font-bold text-slate-400">Doctor tanlang</span>
+            <span className="flex-1 text-sm font-bold text-slate-400">{t("doctorDropdown.placeholder")}</span>
           </>
         )}
         <svg className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -289,15 +292,15 @@ function DoctorDropdown({ doctors, value, onChange }: { doctors: any[]; value: s
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Tanlovni olib tashlash
+                {t("doctorDropdown.clearSelection")}
               </button>
             )}
             {doctors.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-500">Doctor topilmadi</p>
+              <p className="px-4 py-3 text-sm text-slate-500">{t("doctorDropdown.noDoctors")}</p>
             ) : (
               doctors.map((doctor: any, idx: number) => {
                 const id = getItemId(doctor);
-                const name = getPersonName(doctor) || "Unnamed doctor";
+                const name = getPersonName(doctor) || t("doctorDropdown.unnamed");
                 const isActive = id === value;
                 return (
                   <button key={id} type="button" onClick={() => { onChange(id); setOpen(false); }} className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${idx !== 0 ? "border-t border-slate-50" : ""} ${isActive ? "bg-blue-50" : "hover:bg-slate-50"}`}>
@@ -340,6 +343,8 @@ interface AppointmentModalProps {
 }
 
 function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitting, onClose, onChange, onSubmit }: AppointmentModalProps) {
+  const t = useTranslations("appointments");
+  const tCommon = useTranslations("common");
   const [phoneSearch, setPhoneSearch] = useState("+998");
   const [searchStarted, setSearchStarted] = useState(false);
   const [patientSearchError, setPatientSearchError] = useState("");
@@ -368,7 +373,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 
   function handleSearchPatient() {
     const digits = phoneSearch.replace(/\D/g, "");
-    if (digits.length !== 12) { setPatientSearchError("To'liq raqam kiriting. Masalan: +998934919100"); return; }
+    if (digits.length !== 12) { setPatientSearchError(t("modal.invalidPhone")); return; }
     setSearchStarted(true);
     setPatientSearchError("");
   }
@@ -396,8 +401,8 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
                 <Calendar className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-black">{selectedAppointment ? "Edit Appointment" : "Create Appointment"}</h2>
-              <p className="mt-2 text-sm font-medium text-blue-50">Find patient by phone number, then choose doctor and time.</p>
+              <h2 className="text-2xl font-black">{selectedAppointment ? t("modal.editTitle") : t("modal.createTitle")}</h2>
+              <p className="mt-2 text-sm font-medium text-blue-50">{t("modal.subtitle")}</p>
             </div>
             <button type="button" onClick={onClose} className="rounded-2xl bg-white/10 p-2 text-white transition hover:bg-white/20">
               <X className="h-6 w-6" />
@@ -408,33 +413,33 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
         <form onSubmit={onSubmit} className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-6 py-7">
           {selectedAppointment ? (
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-xs font-black uppercase text-blue-600">Patient</p>
+              <p className="text-xs font-black uppercase text-blue-600">{t("modal.patientLabel")}</p>
               <p className="mt-1 text-sm font-black text-slate-900">{selectedPatientName || form.patientId}</p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">ID: {form.patientId}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{t("modal.patientIdLabel", { id: form.patientId })}</p>
             </div>
           ) : (
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">Find Patient by Phone <span className="text-red-500">*</span></label>
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.findPatientLabel")} <span className="text-red-500">*</span></label>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <input type="tel" value={phoneSearch} onChange={(e) => handlePhoneChange(e.target.value)} placeholder="+998934919100" maxLength={13} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
+                  <input type="tel" value={phoneSearch} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={t("modal.phonePlaceholder")} maxLength={13} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
                   <button type="button" onClick={handleSearchPatient} disabled={isPatientSearching || phoneDigits.length !== 12} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                     {isPatientSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    Search
+                    {tCommon("actions.search")}
                   </button>
                 </div>
                 {patientSearchError && <p className="mt-3 text-sm font-bold text-red-600">{patientSearchError}</p>}
                 {searchStarted && !isPatientSearching && !foundPatient && (
                   <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
-                    <p className="text-sm font-black text-red-700">Patient topilmadi</p>
-                    <p className="mt-1 text-xs font-semibold text-red-600">Avval patient create qiling, keyin appointment yarating.</p>
+                    <p className="text-sm font-black text-red-700">{t("modal.patientNotFound")}</p>
+                    <p className="mt-1 text-xs font-semibold text-red-600">{t("modal.patientNotFoundHint")}</p>
                   </div>
                 )}
                 {foundPatient && (
                   <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                    <p className="text-xs font-black uppercase text-emerald-600">Patient found</p>
+                    <p className="text-xs font-black uppercase text-emerald-600">{t("modal.patientFound")}</p>
                     <p className="mt-1 text-sm font-black text-slate-900">{getPersonName(foundPatient)}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">Phone: {getPersonPhone(foundPatient)}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-600">{t("modal.phoneLabel", { phone: getPersonPhone(foundPatient) })}</p>
                   </div>
                 )}
               </div>
@@ -442,23 +447,23 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
           )}
 
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">Doctor <span className="text-red-500">*</span></label>
+            <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.doctorLabel")} <span className="text-red-500">*</span></label>
             <DoctorDropdown doctors={doctors} value={form.doctorId} onChange={(id) => onChange({ ...form, doctorId: id })} />
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">Date <span className="text-red-500">*</span></label>
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.dateLabel")} <span className="text-red-500">*</span></label>
               <input type="date" value={normalizeDateForInput(form.appointmentDate)} onChange={(e) => onChange({ ...form, appointmentDate: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">Start Time <span className="text-red-500">*</span></label>
+              <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.startTimeLabel")} <span className="text-red-500">*</span></label>
               <input type="time" value={normalizeTimeForInput(form.startTime)} onChange={(e) => onChange({ ...form, startTime: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
             </div>
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-extrabold text-slate-900">Slot Duration <span className="text-red-500">*</span></label>
+            <label className="mb-3 block text-sm font-extrabold text-slate-900">{t("modal.slotDurationLabel")} <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
               {DURATION_OPTIONS.map((duration) => (
                 <button key={duration} type="button" onClick={() => onChange({ ...form, slotDurationMinutes: duration })} className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${form.slotDurationMinutes === duration ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}>
@@ -469,15 +474,15 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">Notes</label>
-            <textarea value={form.notes || ""} onChange={(e) => onChange({ ...form, notes: e.target.value })} rows={4} placeholder="Appointment notes..." className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+            <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.notesLabel")}</label>
+            <textarea value={form.notes || ""} onChange={(e) => onChange({ ...form, notes: e.target.value })} rows={4} placeholder={t("modal.notesPlaceholder")} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
           </div>
 
           <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-            <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+            <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50">{tCommon("actions.cancel")}</button>
             <button type="submit" disabled={isSubmitting || (!selectedAppointment && !form.patientId)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {selectedAppointment ? "Save Changes" : "Create Appointment"}
+              {selectedAppointment ? t("modal.saveChanges") : t("modal.createAppointment")}
             </button>
           </div>
         </form>
@@ -491,6 +496,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 // ---------------------------------------------------------------------------
 
 export default function AppointmentsPage() {
+  const t = useTranslations("appointments");
   const toast = useToast();
   const searchParams = useSearchParams();
 
@@ -565,7 +571,7 @@ export default function AppointmentsPage() {
         patientId, doctorId,
         appointmentDate: normalizeDateForInput(appointment.appointmentDate),
         patientName: getPersonName(patient) || "-",
-        doctorName: getPersonName(doctor) || "Doctor not assigned",
+        doctorName: getPersonName(doctor) || t("table.doctorNotAssigned"),
         startTime: normalizeTimeForInput(appointment.startTime),
         endTime: normalizeTimeForInput((appointment as any).endTime),
         status: ((appointment as any).status as AppointmentStatus) || AppointmentStatus.SCHEDULED,
@@ -573,8 +579,8 @@ export default function AppointmentsPage() {
     }).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }
 
-  const enrichedAll = useMemo(() => enrichAppointments(appointments), [appointments, patientsMap, doctorsMap]);
-  const enrichedByDate = useMemo(() => enrichAppointments(appointmentsByDate), [appointmentsByDate, patientsMap, doctorsMap]);
+  const enrichedAll = useMemo(() => enrichAppointments(appointments), [appointments, patientsMap, doctorsMap, t]);
+  const enrichedByDate = useMemo(() => enrichAppointments(appointmentsByDate), [appointmentsByDate, patientsMap, doctorsMap, t]);
 
   const currentAppointments = viewMode === "BY_DATE" ? enrichedByDate : enrichedAll;
   const currentLoading = viewMode === "BY_DATE" ? isByDateLoading : isAllLoading;
@@ -646,50 +652,50 @@ export default function AppointmentsPage() {
     e.preventDefault();
     const startTime = normalizeTimeForInput(form.startTime);
     const appointmentDate = normalizeDateForInput(form.appointmentDate);
-    if (!form.patientId) { toast.warning("Patientni telefon raqam orqali toping"); return; }
-    if (!form.doctorId) { toast.warning("Doctor tanlang"); return; }
-    if (!appointmentDate) { toast.warning("Appointment date kiriting"); return; }
-    if (!startTime) { toast.warning("Start time kiriting"); return; }
-    if (!form.slotDurationMinutes || form.slotDurationMinutes <= 0) { toast.warning("Slot duration noto'g'ri"); return; }
+    if (!form.patientId) { toast.warning(t("toast.selectPatientByPhone")); return; }
+    if (!form.doctorId) { toast.warning(t("toast.selectDoctor")); return; }
+    if (!appointmentDate) { toast.warning(t("toast.enterDate")); return; }
+    if (!startTime) { toast.warning(t("toast.enterStartTime")); return; }
+    if (!form.slotDurationMinutes || form.slotDurationMinutes <= 0) { toast.warning(t("toast.invalidDuration")); return; }
     try {
       if (selectedAppointment) {
         const appointmentId = getAppointmentId(selectedAppointment);
-        if (!appointmentId) { toast.error("Appointment ID topilmadi"); return; }
+        if (!appointmentId) { toast.error(t("toast.appointmentIdNotFound")); return; }
         await updateAppointmentMutation.mutateAsync({
           appointmentId,
           payload: { patientId: form.patientId, doctorId: form.doctorId, appointmentDate, startTime, slotDurationMinutes: Number(form.slotDurationMinutes), notes: form.notes || "", status: selectedAppointment.status || AppointmentStatus.SCHEDULED },
         });
-        toast.success("Appointment updated successfully");
+        toast.success(t("toast.updated"));
       } else {
         await createAppointmentMutation.mutateAsync({
           patientId: form.patientId, doctorId: form.doctorId, appointmentDate, startTime,
           slotDurationMinutes: Number(form.slotDurationMinutes), notes: form.notes || "", status: AppointmentStatus.SCHEDULED,
         });
-        toast.success("Appointment created successfully");
+        toast.success(t("toast.created"));
       }
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Appointment saqlashda xatolik bo'ldi"));
+      toast.error(getApiErrorMessage(err, t("toast.saveError")));
     }
   }
 
   async function handleStatusChange(appointment: Appointment, status: AppointmentStatus) {
     const appointmentId = getAppointmentId(appointment);
-    if (!appointmentId) { toast.error("Appointment ID topilmadi"); return; }
+    if (!appointmentId) { toast.error(t("toast.appointmentIdNotFound")); return; }
     const patientId = getPatientId(appointment);
     const doctorId = getDoctorId(appointment);
     const appointmentDate = normalizeDateForInput(appointment.appointmentDate);
     const startTime = normalizeTimeForInput(appointment.startTime);
-    if (!patientId || !doctorId || !appointmentDate || !startTime) { toast.error("Ma'lumotlar to'liq emas"); return; }
+    if (!patientId || !doctorId || !appointmentDate || !startTime) { toast.error(t("toast.incompleteData")); return; }
     try {
       setChangingStatusId(appointmentId);
       await updateAppointmentMutation.mutateAsync({
         appointmentId,
         payload: { patientId, doctorId, appointmentDate, startTime, slotDurationMinutes: Number(appointment.slotDurationMinutes || 30), notes: appointment.notes || "", status },
       });
-      toast.success(`Status changed to ${getStatusLabel(status)}`);
+      toast.success(t("toast.statusChanged", { status: getStatusLabel(status, t) }));
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Status update qilishda xatolik"));
+      toast.error(getApiErrorMessage(err, t("toast.statusUpdateError")));
     } finally {
       setChangingStatusId(null);
     }
@@ -697,13 +703,13 @@ export default function AppointmentsPage() {
 
   async function handleDelete(appointment: Appointment) {
     const appointmentId = getAppointmentId(appointment);
-    if (!appointmentId) { toast.error("Appointment ID topilmadi"); return; }
-    if (!confirm("Appointment o'chirilsinmi?")) return;
+    if (!appointmentId) { toast.error(t("toast.appointmentIdNotFound")); return; }
+    if (!confirm(t("toast.deleteConfirm"))) return;
     try {
       await deleteAppointmentMutation.mutateAsync(appointmentId);
-      toast.success("Appointment deleted successfully");
+      toast.success(t("toast.deleted"));
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Appointment delete qilishda xatolik bo'ldi"));
+      toast.error(getApiErrorMessage(err, t("toast.deleteError")));
     }
   }
 
@@ -720,19 +726,19 @@ export default function AppointmentsPage() {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-extrabold text-blue-50 backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Dental CRM Appointments
+                {t("header.badge")}
               </div>
-              <h1 className="text-4xl font-black tracking-tight text-white">Appointments</h1>
+              <h1 className="text-4xl font-black tracking-tight text-white">{t("header.title")}</h1>
               <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-blue-100">
-                Manage patient appointments, visit time, doctor assignment and appointment status in one clean workspace.
+                {t("header.subtitle")}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={refreshCurrent} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20">
-                <RefreshCcw className="h-4 w-4" /> Refresh
+                <RefreshCcw className="h-4 w-4" /> {t("header.refresh")}
               </button>
               <button type="button" onClick={openCreateModal} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-blue-950 shadow-xl shadow-blue-950/20 transition hover:bg-blue-50">
-                <Plus className="h-4 w-4" /> Add Appointment
+                <Plus className="h-4 w-4" /> {t("header.addAppointment")}
               </button>
             </div>
           </div>
@@ -740,11 +746,11 @@ export default function AppointmentsPage() {
           {/* Stats */}
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { label: "Total", value: stats.total },
-              { label: "Scheduled", value: stats.scheduled },
-              { label: "In Progress", value: stats.inProgress },
-              { label: "Completed", value: stats.completed },
-              { label: "Cancelled", value: stats.cancelled },
+              { label: t("stats.total"), value: stats.total },
+              { label: t("stats.scheduled"), value: stats.scheduled },
+              { label: t("stats.inProgress"), value: stats.inProgress },
+              { label: t("stats.completed"), value: stats.completed },
+              { label: t("stats.cancelled"), value: stats.cancelled },
             ].map((stat) => (
               <div key={stat.label} className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-100">{stat.label}</p>
@@ -761,10 +767,10 @@ export default function AppointmentsPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={() => setViewMode("BY_DATE")} className={`rounded-2xl px-5 py-3 text-sm font-black transition ${viewMode === "BY_DATE" ? "bg-slate-950 text-white shadow-lg shadow-slate-300" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
-                By Date
+                {t("filters.byDate")}
               </button>
               <button type="button" onClick={() => setViewMode("ALL")} className={`rounded-2xl px-5 py-3 text-sm font-black transition ${viewMode === "ALL" ? "bg-slate-950 text-white shadow-lg shadow-slate-300" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
-                All Appointments
+                {t("filters.all")}
               </button>
               {viewMode === "BY_DATE" && (
                 <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
@@ -772,7 +778,7 @@ export default function AppointmentsPage() {
             </div>
             <div className="relative w-full lg:max-w-md">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search patient, doctor, date, time..." className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("filters.searchPlaceholder")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
             </div>
           </div>
         </section>
@@ -782,37 +788,37 @@ export default function AppointmentsPage() {
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-black text-slate-950">
-                {viewMode === "BY_DATE" ? `Appointments on ${selectedDate}` : "All Appointments"}
+                {viewMode === "BY_DATE" ? t("list.titleByDate", { date: selectedDate }) : t("list.titleAll")}
               </h2>
-              <p className="mt-1 text-sm font-semibold text-slate-500">Sorted by time: 09:00, 09:30, 10:00...</p>
+              <p className="mt-1 text-sm font-semibold text-slate-500">{t("list.sortedByTime")}</p>
             </div>
             <span className="w-fit rounded-full bg-white px-4 py-2 text-xs font-black text-slate-600 shadow-sm">
-              {filteredAppointments.length} result{filteredAppointments.length === 1 ? "" : "s"}
+              {t("list.results", { count: filteredAppointments.length })}
             </span>
           </div>
 
           {pageLoading ? (
             <div className="rounded-[2rem] border border-white bg-white shadow-sm">
-              <DentalLoader fullScreen={false} text="Loading appointments..." />
+              <DentalLoader fullScreen={false} text={t("list.loading")} />
             </div>
           ) : currentError ? (
             <div className="rounded-[2rem] border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-black text-red-600">!</div>
-              <p className="text-lg font-black text-slate-900">Failed to load appointments</p>
-              <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">{getApiErrorMessage(currentErrorObject, "Server error.")}</p>
-              <button type="button" onClick={refreshCurrent} className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700">Try Again</button>
+              <p className="text-lg font-black text-slate-900">{t("list.errorTitle")}</p>
+              <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">{getApiErrorMessage(currentErrorObject, t("list.errorFallback"))}</p>
+              <button type="button" onClick={refreshCurrent} className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700">{t("list.tryAgain")}</button>
             </div>
           ) : filteredAppointments.length === 0 ? (
             <div className="rounded-[2rem] border border-white bg-white px-6 py-20 text-center shadow-sm">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                 <Calendar className="h-8 w-8" />
               </div>
-              <p className="text-lg font-black text-slate-900">No appointments found</p>
+              <p className="text-lg font-black text-slate-900">{t("list.emptyTitle")}</p>
               <p className="mt-2 text-sm font-medium text-slate-500">
-                {viewMode === "BY_DATE" ? "No appointments for selected date." : "Create appointment for patient visit."}
+                {viewMode === "BY_DATE" ? t("list.emptyByDate") : t("list.emptyAll")}
               </p>
               <button type="button" onClick={openCreateModal} className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700">
-                <Plus className="h-4 w-4" /> Add Appointment
+                <Plus className="h-4 w-4" /> {t("header.addAppointment")}
               </button>
             </div>
           ) : (
@@ -822,13 +828,13 @@ export default function AppointmentsPage() {
                   <thead className="bg-slate-50">
                     <tr>
                       <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">#</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Patient</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Doctor</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Date</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Time</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Notes</th>
-                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">Status</th>
-                      <th className="px-5 py-3.5 text-right text-xs font-black uppercase tracking-wider text-slate-500">Actions</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.patient")}</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.doctor")}</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.date")}</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.time")}</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.notes")}</th>
+                      <th className="px-5 py-3.5 text-xs font-black uppercase tracking-wider text-slate-500">{t("table.status")}</th>
+                      <th className="px-5 py-3.5 text-right text-xs font-black uppercase tracking-wider text-slate-500">{t("table.actionsHeader")}</th>
                     </tr>
                   </thead>
 
@@ -894,7 +900,7 @@ export default function AppointmentsPage() {
                               className={`w-full min-w-[140px] rounded-xl border px-3 py-2 text-xs font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(currentStatus)}`}
                             >
                               {STATUS_OPTIONS.map((status) => (
-                                <option key={status} value={status}>{getStatusLabel(status)}</option>
+                                <option key={status} value={status}>{getStatusLabel(status, t)}</option>
                               ))}
                             </select>
                           </td>

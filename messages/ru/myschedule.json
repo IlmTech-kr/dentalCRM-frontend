@@ -1,0 +1,83 @@
+{
+  "header": {
+    "title": "Мой график",
+    "subtitle": "Управляйте своими рабочими днями и слотами приёма."
+  },
+  "actions": {
+    "refresh": "Обновить",
+    "editSchedule": "Редактировать график"
+  },
+  "accessDenied": {
+    "title": "Эта страница только для врачей",
+    "description": "Ваша роль не врач — у вас нет доступа к этой странице."
+  },
+  "loading": "Загрузка графика…",
+  "error": {
+    "title": "Не удалось загрузить график",
+    "fallback": "Ошибка сервера. Проверьте backend API.",
+    "retry": "Повторить"
+  },
+  "empty": {
+    "title": "У вас пока нет графика",
+    "description": "Создайте график, чтобы отметить свои рабочие дни.",
+    "cta": "Создать график"
+  },
+  "doctorCard": {
+    "subtitle": "Еженедельный график работы"
+  },
+  "stats": {
+    "workDays": "Рабочих дней",
+    "activeSlots": "Активных слотов",
+    "hoursPerWeek": "Часов / неделя",
+    "hoursValue": "{hours} ч"
+  },
+  "legend": {
+    "workHours": "Рабочее время",
+    "dayOff": "Выходной"
+  },
+  "table": {
+    "active": "Активно"
+  },
+  "days": {
+    "monday": { "label": "Понедельник", "short": "Пн" },
+    "tuesday": { "label": "Вторник", "short": "Вт" },
+    "wednesday": { "label": "Среда", "short": "Ср" },
+    "thursday": { "label": "Четверг", "short": "Чт" },
+    "friday": { "label": "Пятница", "short": "Пт" },
+    "saturday": { "label": "Суббота", "short": "Сб" },
+    "sunday": { "label": "Воскресенье", "short": "Вс" }
+  },
+  "modal": {
+    "editTitle": "Редактировать мой недельный график",
+    "createTitle": "Создать мой график",
+    "editSubtitle": "Отмеченные дни станут активными, неотмеченные будут сохранены как выходные.",
+    "createSubtitle": "Укажите рабочее время на всю неделю (Еженедельно) или на отдельные дни (По дням).",
+    "modeWeekly": "Еженедельно (вся неделя)",
+    "modeDaily": "По дням (конкретные дни)",
+    "workDaysLabel": "Рабочие дни",
+    "slotDurationLabel": "Длительность слота",
+    "durationUnit": "{minutes} мин",
+    "startTimeLabel": "Время начала",
+    "endTimeLabel": "Время окончания",
+    "deleteSchedule": "Удалить график",
+    "saveSchedule": "Сохранить график",
+    "createScheduleButton": "Создать график"
+  },
+  "toast": {
+    "scheduleIdNotFound": "ID графика не найден.",
+    "confirmDelete": "Удалить весь недельный график?",
+    "deleted": "График удалён.",
+    "deleteError": "Ошибка при удалении графика.",
+    "userIdNotFound": "ID пользователя не найден. Войдите заново.",
+    "timeMissingForDay": "Не указано время для {day}.",
+    "endBeforeStartForDay": "{day}: время окончания должно быть позже времени начала.",
+    "saved": "График успешно сохранён.",
+    "saveError": "Ошибка при сохранении графика.",
+    "timeMissing": "Укажите время начала и окончания.",
+    "endBeforeStart": "Время окончания должно быть позже времени начала.",
+    "selectAtLeastOneDay": "Выберите хотя бы один рабочий день.",
+    "created": "График успешно создан.",
+    "createError": "Ошибка при создании графика."
+  },
+  "meFallback": "Я"
+}

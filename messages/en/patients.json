@@ -1,0 +1,101 @@
+{
+  "list": {
+    "title": "Patients",
+    "subtitle": "Manage dental clinic patients",
+    "addButton": "Add Patient",
+    "sectionTitle": "Patient List",
+    "patientsCount": "{count, plural, one {# patient} other {# patients}}",
+    "searchPlaceholder": "Search by name or phone number...",
+    "loading": "Loading patients...",
+    "loadError": "Failed to load patients",
+    "emptyNoResults": "No patient found matching this name or number.",
+    "emptyNoPatients": "No patients found. Create your first patient.",
+    "paginationSummary": "<b>{from}–{to}</b> of <b>{total}</b> patients"
+  },
+  "table": {
+    "patient": "Patient",
+    "phone": "Phone",
+    "gender": "Gender",
+    "birthDate": "Birth Date",
+    "anamnesis": "Anamnesis",
+    "actionsHeader": "Actions"
+  },
+  "actions": {
+    "startTreatment": "Start Treatment",
+    "createAppointment": "Create Appointment",
+    "editPatient": "Edit Patient"
+  },
+  "info": {
+    "name": "Name",
+    "phone": "Phone",
+    "gender": "Gender",
+    "birthDate": "Birth Date",
+    "anamnesis": "Anamnesis"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "phoneSearchModal": {
+    "title": "Check Patient by Phone",
+    "foundTitle": "Patient Found!",
+    "foundSubtitle": "This patient already exists in the system",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "+998934919100",
+    "phonePreview": "Phone: <b>{value}</b>",
+    "phoneHelp": "Enter the number without spaces. Example: +998934919100",
+    "incompleteError": "Please enter a complete phone number",
+    "notFoundTitle": "No Patient Found",
+    "notFoundSubtitle": "This phone number is not in the system. You can create a new patient.",
+    "searching": "Searching...",
+    "searchButton": "Search Patient",
+    "createNewButton": "Create New Patient"
+  },
+  "appointmentModal": {
+    "title": "Create Appointment",
+    "subtitle": "Appointment for {name}",
+    "patientLabel": "Patient",
+    "doctorLabel": "Doctor",
+    "selectDoctorOption": "Select doctor",
+    "dateLabel": "Date",
+    "startTimeLabel": "Start Time",
+    "slotDurationLabel": "Slot Duration",
+    "durationMinutes": "{minutes} min",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "First checkup",
+    "creating": "Creating..."
+  },
+  "form": {
+    "createTitle": "Create Patient",
+    "editTitle": "Edit Patient",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name",
+    "anamnesisPlaceholder": "Anamnesis (medical history)",
+    "createButton": "Create Patient",
+    "saveChangesButton": "Save Changes"
+  },
+  "startConfirm": {
+    "title": "Patient added successfully!",
+    "message": "Start the treatment for <b>{name}</b> now?",
+    "no": "No, later",
+    "yes": "Yes, start"
+  },
+  "viewModal": {
+    "title": "Patient Details"
+  },
+  "deleteConfirm": {
+    "message": "Delete this patient?"
+  },
+  "toast": {
+    "patientIdNotFound": "Patient ID not found",
+    "selectDoctor": "Please select a doctor",
+    "selectDate": "Please select an appointment date",
+    "appointmentCreated": "Appointment created successfully",
+    "appointmentCreateFailed": "Failed to create appointment",
+    "patientUpdated": "Patient updated successfully",
+    "patientCreated": "Patient created successfully",
+    "saveFailed": "Failed to save patient",
+    "patientDeleted": "Patient deleted successfully",
+    "deleteFailed": "Failed to delete patient"
+  }
+}
