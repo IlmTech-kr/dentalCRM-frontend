@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   CalendarDays,
@@ -39,11 +40,11 @@ import { useActivatePlanPayment } from "@/src/features/payment/hooks/hooks";
 type TabType = "current" | "available";
 
 const DURATION_OPTIONS = [
-  { months: 1, label: "1 oy" },
-  { months: 3, label: "3 oy" },
-  { months: 6, label: "6 oy" },
-  { months: 12, label: "1 yil", badge: "−17%" },
-];
+  { months: 1, labelKey: "plans.duration.month1" },
+  { months: 3, labelKey: "plans.duration.month3" },
+  { months: 6, labelKey: "plans.duration.month6" },
+  { months: 12, labelKey: "plans.duration.month12", badgeKey: "plans.duration.month12Badge" },
+] as const;
 
 const INT_MAX = 2147483647;
 
@@ -112,10 +113,10 @@ function getCurrentMonthlyPrice(sub?: CurrentSubscription | null): number | null
 // ---------------------------------------------------------------------------
 // Plan tier config
 // ---------------------------------------------------------------------------
-const PLAN_CONFIG: Record<string, { color: string; bg: string; ring: string; badge?: string }> = {
-  START:      { color: "#6366f1", bg: "#eef2ff", ring: "#c7d2fe", badge: "Boshlang'ich" },
-  PRO:        { color: "#0ea5e9", bg: "#e0f2fe", ring: "#bae6fd", badge: "Mashhur" },
-  ENTERPRISE: { color: "#0A0F1E", bg: "#f1f5f9", ring: "#cbd5e1", badge: "Korporativ" },
+const PLAN_CONFIG: Record<string, { color: string; bg: string; ring: string; badgeKey?: string }> = {
+  START:      { color: "#6366f1", bg: "#eef2ff", ring: "#c7d2fe", badgeKey: "plans.tierBadges.start" },
+  PRO:        { color: "#0ea5e9", bg: "#e0f2fe", ring: "#bae6fd", badgeKey: "plans.tierBadges.pro" },
+  ENTERPRISE: { color: "#0A0F1E", bg: "#f1f5f9", ring: "#cbd5e1", badgeKey: "plans.tierBadges.enterprise" },
 };
 
 function getPlanConfig(planType?: string | null) {
@@ -125,14 +126,14 @@ function getPlanConfig(planType?: string | null) {
 // ---------------------------------------------------------------------------
 // Storage bar
 // ---------------------------------------------------------------------------
-function StorageBar({ used, total }: { used: number; total: number }) {
+function StorageBar({ used, total, t }: { used: number; total: number; t: ReturnType<typeof useTranslations> }) {
   const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
   const color = pct > 85 ? "#ef4444" : pct > 60 ? "#f59e0b" : "#10b981";
   return (
     <div>
       <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
-        <span>{used} GB ishlatilgan</span>
-        <span>{total} GB</span>
+        <span>{t("plans.currentCard.storageUsed", { value: used })}</span>
+        <span>{t("plans.currentCard.storageTotal", { value: total })}</span>
       </div>
       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
         <div
@@ -152,11 +153,13 @@ function CurrentPlanCard({
   onChangePlan,
   onCancel,
   isCanceling,
+  t,
 }: {
   currentPlan: CurrentSubscription;
   onChangePlan: () => void;
   onCancel: () => void;
   isCanceling: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
   const planType = String(currentPlan.currentPlan || currentPlan.planType || "");
   const config = getPlanConfig(planType);
@@ -192,7 +195,9 @@ function CurrentPlanCard({
                 </span>
               </div>
               <p className="mt-0.5 text-sm text-slate-500">
-                {currentPlan.planDurationMonths ? `${currentPlan.planDurationMonths} oylik tarif` : "Joriy tarif"}
+                {currentPlan.planDurationMonths
+                  ? t("plans.currentCard.durationSuffix", { months: currentPlan.planDurationMonths })
+                  : t("plans.currentCard.defaultPlanLabel")}
               </p>
             </div>
           </div>
@@ -202,7 +207,7 @@ function CurrentPlanCard({
             <p className="text-3xl font-black text-slate-900 leading-none">
               {formatMoney(monthlyPrice)}
             </p>
-            <p className="mt-1 text-xs font-bold text-slate-400">so'm / oy</p>
+            <p className="mt-1 text-xs font-bold text-slate-400">{t("plans.currentCard.priceSuffix")}</p>
           </div>
         </div>
 
@@ -212,10 +217,10 @@ function CurrentPlanCard({
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { icon: <UserRound size={15} />, label: "Shifokorlar", value: limitLabel(currentPlan.maxDoctors) },
-            { icon: <Users size={15} />, label: "Xodimlar", value: limitLabel(currentPlan.maxStaff) },
-            { icon: <MessageCircle size={15} />, label: "SMS balans", value: String(currentPlan.smsBalance ?? 0) },
-            { icon: <CalendarDays size={15} />, label: "Muddat tugaydi", value: formatDateTime(currentPlan.endDate || currentPlan.trialEndDate) },
+            { icon: <UserRound size={15} />, label: t("plans.currentCard.stats.doctors"), value: limitLabel(currentPlan.maxDoctors) },
+            { icon: <Users size={15} />, label: t("plans.currentCard.stats.staff"), value: limitLabel(currentPlan.maxStaff) },
+            { icon: <MessageCircle size={15} />, label: t("plans.currentCard.stats.smsBalance"), value: String(currentPlan.smsBalance ?? 0) },
+            { icon: <CalendarDays size={15} />, label: t("plans.currentCard.stats.expiresAt"), value: formatDateTime(currentPlan.endDate || currentPlan.trialEndDate) },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl bg-slate-50 p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-1.5">
@@ -232,9 +237,9 @@ function CurrentPlanCard({
           <div className="mt-4 rounded-2xl bg-slate-50 p-4">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3">
               <HardDrive size={15} />
-              Saqlash joyi
+              {t("plans.currentCard.storageLabel")}
             </div>
-            <StorageBar used={storageUsedGb} total={storageLimitGb} />
+            <StorageBar used={storageUsedGb} total={storageLimitGb} t={t} />
           </div>
         ) : null}
 
@@ -247,7 +252,7 @@ function CurrentPlanCard({
             style={{ backgroundColor: config.color }}
           >
             <Sparkles size={16} />
-            Tarifni o'zgartirish
+            {t("plans.currentCard.changePlanButton")}
             <ArrowRight size={15} />
           </button>
           <button
@@ -257,7 +262,7 @@ function CurrentPlanCard({
             className="flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isCanceling ? <Loader2 size={16} className="animate-spin" /> : <ZapOff size={16} />}
-            Bekor qilish
+            {t("plans.currentCard.cancelButton")}
           </button>
         </div>
       </div>
@@ -276,6 +281,7 @@ function PlanCard({
   onDurationChange,
   onActivate,
   isActivating,
+  t,
 }: {
   plan: SubscriptionPlan;
   planKey: string;
@@ -284,6 +290,7 @@ function PlanCard({
   onDurationChange: (months: number) => void;
   onActivate: () => void;
   isActivating: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
   const planType = getPlanType(plan);
   const config = getPlanConfig(planType);
@@ -293,10 +300,10 @@ function PlanCard({
   const totalPrice = monthlyPrice !== null ? monthlyPrice * durationMonths : null;
 
   const features = [
-    { icon: <UserRound size={14} />, text: `${limitLabel(plan.maxDoctors ?? plan.doctorLimit)} shifokor` },
-    { icon: <Users size={14} />, text: `${limitLabel(plan.maxStaff)} xodim` },
-    { icon: <HardDrive size={14} />, text: `${bytesToGb(plan.storageLimitBytes) || plan.maxStorageGb || "∞"} GB saqlash` },
-    { icon: <MessageCircle size={14} />, text: plan.includedSmsCount ? `${plan.includedSmsCount} ta SMS` : "SMS: alohida" },
+    { icon: <UserRound size={14} />, text: t("plans.planCard.features.doctors", { count: limitLabel(plan.maxDoctors ?? plan.doctorLimit) }) },
+    { icon: <Users size={14} />, text: t("plans.planCard.features.staff", { count: limitLabel(plan.maxStaff) }) },
+    { icon: <HardDrive size={14} />, text: t("plans.planCard.features.storage", { count: bytesToGb(plan.storageLimitBytes) || plan.maxStorageGb || "∞" }) },
+    { icon: <MessageCircle size={14} />, text: plan.includedSmsCount ? t("plans.planCard.features.sms", { count: plan.includedSmsCount }) : t("plans.planCard.features.smsSeparate") },
     ...(plan.features || []).map((f) => ({ icon: <Check size={14} />, text: f })),
   ];
 
@@ -319,7 +326,7 @@ function PlanCard({
           className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-black text-white shadow-sm"
           style={{ backgroundColor: config.color }}
         >
-          {config.badge || "Mashhur"}
+          {config.badgeKey ? t(config.badgeKey) : t("plans.tierBadges.pro")}
         </div>
       )}
 
@@ -334,7 +341,7 @@ function PlanCard({
               className="rounded-lg px-2.5 py-1 text-xs font-black"
               style={{ backgroundColor: config.bg, color: config.color }}
             >
-              {config.badge || planType}
+              {config.badgeKey ? t(config.badgeKey) : planType}
             </span>
             <h3 className="mt-2 text-2xl font-black text-slate-900">{planType}</h3>
           </div>
@@ -356,18 +363,18 @@ function PlanCard({
             <span className="text-4xl font-black leading-none" style={{ color: config.color }}>
               {formatMoney(monthlyPrice)}
             </span>
-            <span className="mb-1 text-sm font-bold text-slate-500">so'm/oy</span>
+            <span className="mb-1 text-sm font-bold text-slate-500">{t("plans.planCard.priceSuffix")}</span>
           </div>
           {totalPrice !== null && durationMonths > 1 && (
             <p className="mt-1 text-xs font-bold text-slate-500">
-              Jami: {formatMoney(totalPrice)} so'm / {durationMonths} oy
+              {t("plans.planCard.totalPrice", { amount: formatMoney(totalPrice), months: durationMonths })}
             </p>
           )}
         </div>
 
         {/* Duration picker */}
         <div className="mt-5">
-          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">Muddat</p>
+          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">{t("plans.planCard.durationLabel")}</p>
           <div className="grid grid-cols-4 gap-1.5">
             {DURATION_OPTIONS.map((opt) => (
               <button
@@ -382,10 +389,10 @@ function PlanCard({
                 )}
                 style={durationMonths === opt.months ? { backgroundColor: config.color } : {}}
               >
-                {opt.label}
-                {opt.badge && durationMonths !== opt.months && (
+                {t(opt.labelKey)}
+                {"badgeKey" in opt && opt.badgeKey && durationMonths !== opt.months && (
                   <span className="absolute -top-1.5 -right-1 rounded-full bg-emerald-500 px-1 text-[9px] font-black text-white">
-                    {opt.badge}
+                    {t(opt.badgeKey)}
                   </span>
                 )}
               </button>
@@ -416,7 +423,7 @@ function PlanCard({
               style={{ backgroundColor: config.bg, color: config.color }}
             >
               <Check size={16} />
-              Joriy tarif
+              {t("plans.planCard.currentPlanLabel")}
             </div>
           ) : (
             <button
@@ -431,7 +438,7 @@ function PlanCard({
               ) : (
                 <CreditCard size={16} />
               )}
-              Payme orqali to'lash
+              {t("plans.planCard.payButton")}
             </button>
           )}
         </div>
@@ -445,6 +452,7 @@ function PlanCard({
 // ---------------------------------------------------------------------------
 
 export default function PlansPage() {
+  const t = useTranslations("settings");
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<TabType>("current");
   const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({});
@@ -468,11 +476,11 @@ export default function PlansPage() {
 
   function handleActivatePlan(plan: SubscriptionPlan, planKey: string) {
     const planType = getPlanType(plan);
-    if (!planType) { toast.error("Plan type topilmadi"); return; }
+    if (!planType) { toast.error(t("plans.toast.planTypeNotFound")); return; }
 
     const durationMonths = getDuration(planKey);
     const amountSom = getPlanMonthlyPrice(plan);
-    if (!amountSom) { toast.error("Bu tarif uchun narx topilmadi."); return; }
+    if (!amountSom) { toast.error(t("plans.toast.priceNotFound")); return; }
 
     /**
      * Payme tiyin da ishlaydi: 1 so'm = 100 tiyin
@@ -483,15 +491,15 @@ export default function PlansPage() {
 
     paymentMutation.mutate(payload, {
       onSuccess: (url) => { window.location.href = url; },
-      onError: (err) => { toast.error(err.message || "To'lovda xatolik bo'ldi"); },
+      onError: (err) => { toast.error(err.message || t("plans.toast.paymentError")); },
     });
   }
 
   function handleCancelPlan() {
-    if (!window.confirm("Haqiqatan ham joriy tarifni bekor qilmoqchimisiz?")) return;
+    if (!window.confirm(t("plans.toast.cancelConfirm"))) return;
     cancelMutation.mutate(undefined, {
-      onSuccess: () => { toast.success("Tarif bekor qilindi"); refetchCurrent(); },
-      onError: (err: any) => { toast.error(err?.message || "Xatolik yuz berdi"); },
+      onSuccess: () => { toast.success(t("plans.toast.planCancelled")); refetchCurrent(); },
+      onError: (err: any) => { toast.error(err?.message || t("plans.toast.cancelError")); },
     });
   }
 
@@ -500,8 +508,8 @@ export default function PlansPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Tarif va to'lovlar</h1>
-          <p className="mt-1 text-sm text-slate-500">Klinikangiz tarifini boshqaring</p>
+          <h1 className="text-2xl font-black text-slate-900">{t("plans.header.title")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t("plans.header.subtitle")}</p>
         </div>
         <button
           type="button"
@@ -509,15 +517,15 @@ export default function PlansPage() {
           className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50"
         >
           <RefreshCcw size={15} className={isCurrentLoading || isPlansLoading ? "animate-spin" : ""} />
-          Yangilash
+          {t("plans.header.refreshButton")}
         </button>
       </div>
 
       {/* Tab bar */}
       <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 w-fit">
         {[
-          { key: "current" as TabType, label: "Joriy tarif", icon: <CreditCard size={15} /> },
-          { key: "available" as TabType, label: "Barcha tariflar", icon: <Sparkles size={15} /> },
+          { key: "current" as TabType, label: t("plans.tabs.current"), icon: <CreditCard size={15} /> },
+          { key: "available" as TabType, label: t("plans.tabs.available"), icon: <Sparkles size={15} /> },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -549,20 +557,21 @@ export default function PlansPage() {
               onChangePlan={() => setActiveTab("available")}
               onCancel={handleCancelPlan}
               isCanceling={cancelMutation.isPending}
+              t={t}
             />
           ) : (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100">
                 <CreditCard size={28} className="text-slate-400" />
               </div>
-              <h2 className="text-xl font-black text-slate-900">Aktiv tarif yo'q</h2>
-              <p className="mt-2 max-w-xs text-sm text-slate-500">Tariflardan birini tanlab klinikangizni to'liq imkoniyatlar bilan ishga tushiring.</p>
+              <h2 className="text-xl font-black text-slate-900">{t("plans.empty.title")}</h2>
+              <p className="mt-2 max-w-xs text-sm text-slate-500">{t("plans.empty.subtitle")}</p>
               <button
                 type="button"
                 onClick={() => setActiveTab("available")}
                 className="mt-6 flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-black text-white transition hover:bg-slate-800"
               >
-                Tariflarni ko'rish <ArrowRight size={16} />
+                {t("plans.empty.viewPlansButton")} <ArrowRight size={16} />
               </button>
             </div>
           )}
@@ -570,14 +579,14 @@ export default function PlansPage() {
           {/* Billing sidebar */}
           <div className="space-y-4">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">To'lov ma'lumoti</h3>
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">{t("plans.billingSidebar.title")}</h3>
               <div className="mt-4 space-y-3">
                 {[
-                  { label: "Status", value: getCurrentStatus(currentPlan) },
-                  { label: "Plan davomiyligi", value: currentPlan?.planDurationMonths ? `${currentPlan.planDurationMonths} oy` : "—" },
-                  { label: "Boshlanish sanasi", value: formatDateTime(currentPlan?.startDate) },
-                  { label: "Tugash sanasi", value: formatDateTime(currentPlan?.endDate || currentPlan?.trialEndDate) },
-                  { label: "SMS kiruvchi", value: String(currentPlan?.includedSmsCount ?? 0) },
+                  { label: t("plans.billingSidebar.status"), value: getCurrentStatus(currentPlan) },
+                  { label: t("plans.billingSidebar.duration"), value: currentPlan?.planDurationMonths ? t("plans.billingSidebar.durationValue", { months: currentPlan.planDurationMonths }) : "—" },
+                  { label: t("plans.billingSidebar.startDate"), value: formatDateTime(currentPlan?.startDate) },
+                  { label: t("plans.billingSidebar.endDate"), value: formatDateTime(currentPlan?.endDate || currentPlan?.trialEndDate) },
+                  { label: t("plans.billingSidebar.smsIncluded"), value: String(currentPlan?.includedSmsCount ?? 0) },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                     <span className="text-xs font-bold text-slate-400">{item.label}</span>
@@ -588,8 +597,8 @@ export default function PlansPage() {
             </div>
 
             <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
-              <p className="text-xs font-black text-blue-700 mb-1">💳 Payme orqali to'lov</p>
-              <p className="text-xs text-blue-600 leading-relaxed">Tarif aktivlashtirilganda Payme checkout sahifasiga yo'naltirilasiz. To'lov xavfsiz va tezkor.</p>
+              <p className="text-xs font-black text-blue-700 mb-1">💳 {t("plans.billingSidebar.paymentNoteTitle")}</p>
+              <p className="text-xs text-blue-600 leading-relaxed">{t("plans.billingSidebar.paymentNoteText")}</p>
             </div>
           </div>
         </div>
@@ -604,13 +613,13 @@ export default function PlansPage() {
             </div>
           ) : sortedPlans.length === 0 ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
-              <h2 className="text-xl font-black text-slate-900">Tariflar topilmadi</h2>
-              <p className="mt-2 text-sm text-slate-500">Backenddan tariflar ro'yxati kelmadi.</p>
+              <h2 className="text-xl font-black text-slate-900">{t("plans.emptyList.title")}</h2>
+              <p className="mt-2 text-sm text-slate-500">{t("plans.emptyList.subtitle")}</p>
             </div>
           ) : (
             <>
               <p className="text-sm text-slate-500">
-                Tarifni tanlang va muddat belgilang — jami summa avtomatik hisoblanadi.
+                {t("plans.selectHint")}
               </p>
               <div className="grid gap-6 lg:grid-cols-3 mt-2">
                 {sortedPlans.map((plan, index) => {
@@ -628,6 +637,7 @@ export default function PlansPage() {
                       onDurationChange={(months) => setSelectedDurations((prev) => ({ ...prev, [planKey]: months }))}
                       onActivate={() => handleActivatePlan(plan, planKey)}
                       isActivating={paymentMutation.isPending}
+                      t={t}
                     />
                   );
                 })}

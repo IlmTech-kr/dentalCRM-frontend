@@ -1,1 +1,149 @@
-{}
+{
+  "changePassword": {
+    "title": "Change Password",
+    "subtitle": "Keep your account secure with a strong password",
+    "currentLabel": "Current Password",
+    "currentPlaceholder": "Enter your current password",
+    "newLabel": "New Password",
+    "newPlaceholder": "Create a strong password",
+    "confirmLabel": "Confirm New Password",
+    "confirmPlaceholder": "Re-enter your new password",
+    "strengthLabel": "Password strength",
+    "passwordsMatch": "Passwords match",
+    "requirements": {
+      "length": "8+ characters",
+      "uppercase": "Uppercase letter",
+      "number": "Number",
+      "special": "Special character"
+    },
+    "strength": {
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong",
+      "veryStrong": "Very strong"
+    },
+    "errors": {
+      "currentRequired": "Current password is required",
+      "newRequired": "New password is required",
+      "tooShort": "At least 8 characters required",
+      "mustDiffer": "New password must differ from current",
+      "confirmRequired": "Please confirm your new password",
+      "mismatch": "Passwords do not match"
+    },
+    "updating": "Updating...",
+    "updateButton": "Update Password",
+    "tipLabel": "Tip:",
+    "tipText": "Use a unique password you don't use on other sites. A password manager can help.",
+    "toast": {
+      "updated": "Password updated successfully",
+      "incorrectCurrent": "Current password is incorrect"
+    }
+  },
+  "plans": {
+    "header": {
+      "title": "Plan & Billing",
+      "subtitle": "Manage your clinic's subscription plan",
+      "refreshButton": "Refresh"
+    },
+    "tabs": {
+      "current": "Current Plan",
+      "available": "All Plans"
+    },
+    "currentCard": {
+      "durationSuffix": "{months}-month plan",
+      "defaultPlanLabel": "Current plan",
+      "priceSuffix": "UZS / month",
+      "stats": {
+        "doctors": "Doctors",
+        "staff": "Staff",
+        "smsBalance": "SMS balance",
+        "expiresAt": "Expires on"
+      },
+      "storageLabel": "Storage",
+      "storageUsed": "{value} GB used",
+      "storageTotal": "{value} GB",
+      "changePlanButton": "Change Plan",
+      "cancelButton": "Cancel"
+    },
+    "empty": {
+      "title": "No active plan",
+      "subtitle": "Choose one of the plans below to unlock your clinic's full capabilities.",
+      "viewPlansButton": "View Plans"
+    },
+    "billingSidebar": {
+      "title": "Billing Details",
+      "status": "Status",
+      "duration": "Plan duration",
+      "durationValue": "{months} months",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "smsIncluded": "Included SMS",
+      "paymentNoteTitle": "Payment via Payme",
+      "paymentNoteText": "You'll be redirected to the Payme checkout page when activating a plan. Payment is secure and fast."
+    },
+    "duration": {
+      "month1": "1 mo",
+      "month3": "3 mo",
+      "month6": "6 mo",
+      "month12": "1 yr",
+      "month12Badge": "−17%"
+    },
+    "tierBadges": {
+      "start": "Starter",
+      "pro": "Popular",
+      "enterprise": "Enterprise"
+    },
+    "planCard": {
+      "priceSuffix": "UZS/mo",
+      "totalPrice": "Total: {amount} UZS / {months} mo",
+      "durationLabel": "Duration",
+      "features": {
+        "doctors": "{count} doctors",
+        "staff": "{count} staff",
+        "storage": "{count} GB storage",
+        "sms": "{count} SMS",
+        "smsSeparate": "SMS: separate"
+      },
+      "currentPlanLabel": "Current Plan",
+      "payButton": "Pay with Payme"
+    },
+    "emptyList": {
+      "title": "No plans found",
+      "subtitle": "The list of plans could not be loaded from the server."
+    },
+    "selectHint": "Choose a plan and set a duration — the total will be calculated automatically.",
+    "toast": {
+      "planTypeNotFound": "Plan type not found",
+      "priceNotFound": "No price found for this plan",
+      "paymentError": "An error occurred during payment",
+      "cancelConfirm": "Are you sure you want to cancel your current plan?",
+      "planCancelled": "Plan cancelled",
+      "cancelError": "An error occurred"
+    }
+  },
+  "profile": {
+    "changePhotoTitle": "Change photo",
+    "avatarAlt": "Profile avatar",
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "enterPrefix": "Enter {field}",
+    "saving": "Saving...",
+    "uploadingImage": "Uploading image...",
+    "saveChanges": "Save Changes",
+    "toast": {
+      "loadFailed": "Failed to load profile",
+      "selectImage": "Please select an image file",
+      "imageSizeLimit": "Image size must be less than 5MB",
+      "imageUploaded": "Image uploaded. Click Save Changes to apply.",
+      "imageUploadFailed": "Failed to upload image",
+      "uploadingWait": "Image is still uploading, please wait.",
+      "updated": "Profile updated",
+      "updateFailed": "Failed to update profile"
+    }
+  }
+}

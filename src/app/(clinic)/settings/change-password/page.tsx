@@ -5,6 +5,7 @@
  */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { useChangePassword } from "@/src/features/users/hooks/useUser";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -17,7 +18,10 @@ interface PasswordForm {
 
 type PasswordField = keyof PasswordForm;
 
-function getPasswordStrength(password: string): {
+function getPasswordStrength(
+  password: string,
+  t: ReturnType<typeof useTranslations>
+): {
   score: number;
   label: string;
   color: string;
@@ -33,11 +37,11 @@ function getPasswordStrength(password: string): {
   if (/\d/.test(password)) score++;
   if (/[!@#$%^&*]/.test(password)) score++;
 
-  if (score <= 1) return { score, label: "Weak", color: "text-red-500", barColor: "bg-red-400", width: "w-1/5" };
-  if (score <= 2) return { score, label: "Fair", color: "text-orange-500", barColor: "bg-orange-400", width: "w-2/5" };
-  if (score <= 3) return { score, label: "Good", color: "text-yellow-600", barColor: "bg-yellow-400", width: "w-3/5" };
-  if (score <= 4) return { score, label: "Strong", color: "text-blue-600", barColor: "bg-blue-500", width: "w-4/5" };
-  return { score, label: "Very strong", color: "text-emerald-600", barColor: "bg-emerald-500", width: "w-full" };
+  if (score <= 1) return { score, label: t("changePassword.strength.weak"), color: "text-red-500", barColor: "bg-red-400", width: "w-1/5" };
+  if (score <= 2) return { score, label: t("changePassword.strength.fair"), color: "text-orange-500", barColor: "bg-orange-400", width: "w-2/5" };
+  if (score <= 3) return { score, label: t("changePassword.strength.good"), color: "text-yellow-600", barColor: "bg-yellow-400", width: "w-3/5" };
+  if (score <= 4) return { score, label: t("changePassword.strength.strong"), color: "text-blue-600", barColor: "bg-blue-500", width: "w-4/5" };
+  return { score, label: t("changePassword.strength.veryStrong"), color: "text-emerald-600", barColor: "bg-emerald-500", width: "w-full" };
 }
 
 function Requirement({ met, text }: { met: boolean; text: string }) {
@@ -99,6 +103,7 @@ function PasswordField({
 }
 
 export default function ChangePasswordPage() {
+  const t = useTranslations("settings");
   const toast = useToast();
   const changePasswordMutation = useChangePassword();
 
@@ -106,7 +111,7 @@ export default function ChangePasswordPage() {
   const [form, setForm] = useState<PasswordForm>({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [errors, setErrors] = useState<Partial<Record<PasswordField, string>>>({});
 
-  const strength = getPasswordStrength(form.newPassword);
+  const strength = getPasswordStrength(form.newPassword, t);
 
   const passwordsMatch = form.newPassword && form.confirmPassword && form.newPassword === form.confirmPassword;
 
@@ -119,13 +124,13 @@ export default function ChangePasswordPage() {
   function validate(): boolean {
     const next: Partial<Record<PasswordField, string>> = {};
 
-    if (!form.currentPassword) next.currentPassword = "Current password is required";
-    if (!form.newPassword) next.newPassword = "New password is required";
-    else if (form.newPassword.length < 8) next.newPassword = "At least 8 characters required";
+    if (!form.currentPassword) next.currentPassword = t("changePassword.errors.currentRequired");
+    if (!form.newPassword) next.newPassword = t("changePassword.errors.newRequired");
+    else if (form.newPassword.length < 8) next.newPassword = t("changePassword.errors.tooShort");
     else if (form.currentPassword && form.currentPassword === form.newPassword)
-      next.newPassword = "New password must differ from current";
-    if (!form.confirmPassword) next.confirmPassword = "Please confirm your new password";
-    else if (form.newPassword !== form.confirmPassword) next.confirmPassword = "Passwords do not match";
+      next.newPassword = t("changePassword.errors.mustDiffer");
+    if (!form.confirmPassword) next.confirmPassword = t("changePassword.errors.confirmRequired");
+    else if (form.newPassword !== form.confirmPassword) next.confirmPassword = t("changePassword.errors.mismatch");
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -141,14 +146,14 @@ export default function ChangePasswordPage() {
         newPassword: form.newPassword,
       });
 
-      toast.success("Password updated successfully");
+      toast.success(t("changePassword.toast.updated"));
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setErrors({});
     } catch {
       toast.error(
         changePasswordMutation.error instanceof Error
           ? changePasswordMutation.error.message
-          : "Current password is incorrect"
+          : t("changePassword.toast.incorrectCurrent")
       );
     }
   }
@@ -166,8 +171,8 @@ export default function ChangePasswordPage() {
             <ShieldCheck size={28} />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Change Password</h1>
-            <p className="mt-0.5 text-sm text-slate-500">Keep your account secure with a strong password</p>
+            <h1 className="text-2xl font-black text-slate-900">{t("changePassword.title")}</h1>
+            <p className="mt-0.5 text-sm text-slate-500">{t("changePassword.subtitle")}</p>
           </div>
         </div>
       </div>
@@ -176,25 +181,25 @@ export default function ChangePasswordPage() {
       <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-5">
           <PasswordField
-            label="Current Password"
+            label={t("changePassword.currentLabel")}
             value={form.currentPassword}
             show={show.current}
             onToggle={() => setShow((s) => ({ ...s, current: !s.current }))}
             onChange={(v) => update("currentPassword", v)}
             error={errors.currentPassword}
-            placeholder="Enter your current password"
+            placeholder={t("changePassword.currentPlaceholder")}
             disabled={changePasswordMutation.isPending}
           />
 
           <div className="space-y-3">
             <PasswordField
-              label="New Password"
+              label={t("changePassword.newLabel")}
               value={form.newPassword}
               show={show.new}
               onToggle={() => setShow((s) => ({ ...s, new: !s.new }))}
               onChange={(v) => update("newPassword", v)}
               error={errors.newPassword}
-              placeholder="Create a strong password"
+              placeholder={t("changePassword.newPlaceholder")}
               disabled={changePasswordMutation.isPending}
             />
 
@@ -202,7 +207,7 @@ export default function ChangePasswordPage() {
             {form.newPassword && (
               <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500">Password strength</span>
+                  <span className="text-xs font-bold text-slate-500">{t("changePassword.strengthLabel")}</span>
                   <span className={`text-xs font-black ${strength.color}`}>{strength.label}</span>
                 </div>
 
@@ -211,10 +216,10 @@ export default function ChangePasswordPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <Requirement met={form.newPassword.length >= 8} text="8+ characters" />
-                  <Requirement met={/[A-Z]/.test(form.newPassword)} text="Uppercase letter" />
-                  <Requirement met={/\d/.test(form.newPassword)} text="Number" />
-                  <Requirement met={/[!@#$%^&*]/.test(form.newPassword)} text="Special character" />
+                  <Requirement met={form.newPassword.length >= 8} text={t("changePassword.requirements.length")} />
+                  <Requirement met={/[A-Z]/.test(form.newPassword)} text={t("changePassword.requirements.uppercase")} />
+                  <Requirement met={/\d/.test(form.newPassword)} text={t("changePassword.requirements.number")} />
+                  <Requirement met={/[!@#$%^&*]/.test(form.newPassword)} text={t("changePassword.requirements.special")} />
                 </div>
               </div>
             )}
@@ -222,17 +227,17 @@ export default function ChangePasswordPage() {
 
           <div className="space-y-1.5">
             <PasswordField
-              label="Confirm New Password"
+              label={t("changePassword.confirmLabel")}
               value={form.confirmPassword}
               show={show.confirm}
               onToggle={() => setShow((s) => ({ ...s, confirm: !s.confirm }))}
               onChange={(v) => update("confirmPassword", v)}
               error={errors.confirmPassword}
-              placeholder="Re-enter your new password"
+              placeholder={t("changePassword.confirmPlaceholder")}
               disabled={changePasswordMutation.isPending}
             />
             {passwordsMatch && !errors.confirmPassword && (
-              <p className="text-xs font-semibold text-emerald-600">✓ Passwords match</p>
+              <p className="text-xs font-semibold text-emerald-600">✓ {t("changePassword.passwordsMatch")}</p>
             )}
           </div>
 
@@ -248,10 +253,10 @@ export default function ChangePasswordPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Updating...
+                  {t("changePassword.updating")}
                 </>
               ) : (
-                "Update Password"
+                t("changePassword.updateButton")
               )}
             </button>
           </div>
@@ -261,7 +266,7 @@ export default function ChangePasswordPage() {
       {/* Security tip */}
       <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
         <p className="text-sm text-blue-700">
-          <span className="font-bold">Tip:</span> Use a unique password you don't use on other sites. A password manager can help.
+          <span className="font-bold">{t("changePassword.tipLabel")}</span> {t("changePassword.tipText")}
         </p>
       </div>
     </div>
