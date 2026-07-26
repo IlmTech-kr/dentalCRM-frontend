@@ -1,1 +1,186 @@
-{}
+{
+  "staff": {
+    "pageTitle": "Clinic Staff",
+    "pageSubtitle": "Manage doctors, receptionists, assistants and clinic team invites.",
+    "addButton": "+ Add Staff",
+    "listTitle": "Staff List",
+    "roleLabel": "Role",
+    "statusLabel": "Status",
+    "allRoles": "All roles",
+    "allStatuses": "All statuses",
+    "clearFilters": "Clear filters",
+    "searchPlaceholder": "Search staff...",
+    "loadError": "Failed to load staff list.",
+    "tryAgain": "Try Again",
+    "loading": "Loading staff...",
+    "emptyFiltered": "No staff found matching filters",
+    "emptyNone": "No staff found",
+    "avatarAlt": "Staff avatar",
+    "table": {
+      "staff": "Staff",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "role": {
+      "doctor": "Doctor",
+      "receptionist": "Receptionist",
+      "assistant": "Assistant"
+    },
+    "status": {
+      "active": "Active",
+      "blocked": "Blocked",
+      "pending": "Pending",
+      "deleted": "Deleted"
+    },
+    "inviteModal": {
+      "title": "Add Staff",
+      "subtitle": "Select role and send invite link to email.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "staff@gmail.com",
+      "roleLabel": "Role",
+      "compensationTypeLabel": "Compensation Type",
+      "percentage": "Percentage",
+      "salary": "Salary",
+      "commissionLabel": "Commission Percentage",
+      "salaryLabel": "Salary Amount",
+      "hint": "The user will click the link in the email, then set a name and password to sign up.",
+      "sendButton": "Send Invite",
+      "sending": "Sending..."
+    },
+    "editModal": {
+      "title": "Edit Staff",
+      "subtitle": "Update staff profile and role.",
+      "firstNameLabel": "First Name",
+      "lastNameLabel": "Last Name",
+      "phoneLabel": "Phone Number",
+      "phonePlaceholder": "+998901112233",
+      "avatarLabel": "Avatar URL / Storage Path",
+      "avatarPlaceholder": "users/avatar.png",
+      "roleLabel": "Role",
+      "statusLabel": "Status",
+      "saveButton": "Save Changes",
+      "saving": "Saving..."
+    },
+    "toast": {
+      "emailRequired": "Please enter an email",
+      "commissionRequired": "Please enter a commission percentage",
+      "salaryRequired": "Please enter a salary amount",
+      "inviteSent": "Invite sent for {role}",
+      "inviteFailed": "Failed to send invite",
+      "userIdNotFound": "User ID not found",
+      "firstNameRequired": "Please enter a first name",
+      "lastNameRequired": "Please enter a last name",
+      "staffUpdated": "Staff updated successfully",
+      "staffUpdateFailed": "Failed to update staff",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "staffDeleted": "Staff deleted successfully",
+      "staffDeleteFailed": "Failed to delete staff"
+    }
+  },
+  "schedule": {
+    "pageTitle": "Doctor Schedule",
+    "pageSubtitle": "Manage doctors working days and appointment slots.",
+    "refreshButton": "Refresh",
+    "addButton": "Add Schedule",
+    "tabDoctors": "Doctors",
+    "tabCalendar": "Calendar",
+    "loading": "Loading schedules…",
+    "loadError": "Failed to load schedules",
+    "genericServerError": "Server error. Please check the backend API.",
+    "tryAgain": "Try Again",
+    "stats": {
+      "totalActive": "Total active schedules",
+      "doctorsWithSchedule": "Doctors with schedule",
+      "doctors": "Doctors",
+      "selectedDay": "Selected day",
+      "all": "All"
+    },
+    "searchPlaceholder": "Search doctor, day or time…",
+    "dayFilterAll": "All",
+    "emptyNoSchedules": {
+      "title": "No schedules found",
+      "subtitle": "Create a doctor schedule to start accepting appointments."
+    },
+    "emptyFiltered": {
+      "title": "No schedule found matching filters",
+      "subtitle": "Choose a different day or clear the search.",
+      "clearButton": "Clear filters"
+    },
+    "card": {
+      "viewSchedule": "View schedule",
+      "editSchedule": "Edit weekly schedule",
+      "deleteSchedule": "Delete schedule",
+      "daysPerWeek": "{count} days/wk",
+      "activeCount": "{count} active"
+    },
+    "days": {
+      "full": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "short": {
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun"
+      }
+    },
+    "calendar": {
+      "allDoctors": "All doctors",
+      "weeklySchedule": "Weekly work schedule",
+      "editSchedule": "Edit schedule",
+      "deleteSchedule": "Delete schedule",
+      "workDays": "Work days",
+      "activeSlots": "Active slots",
+      "hoursPerWeek": "Hours / week",
+      "activeBadge": "Active",
+      "legendWorkHours": "Work hours",
+      "legendDayOff": "Day off"
+    },
+    "editorModal": {
+      "editTitle": "Edit Weekly Schedule",
+      "createTitle": "Create Schedule",
+      "editSubtitle": "Checked days become active; unchecked days are saved as a day off.",
+      "createSubtitle": "Set the doctor's working hours for the whole week (Weekly) or specific days (Daily).",
+      "doctorLabel": "Doctor",
+      "selectDoctorOption": "Select doctor",
+      "noDoctorsFound": "No user with the DOCTOR role was found.",
+      "weeklyTab": "Weekly (whole week)",
+      "dailyTab": "Daily (specific days)",
+      "workDaysLabel": "Work days",
+      "slotDurationLabel": "Slot Duration",
+      "startTimeLabel": "Start Time",
+      "endTimeLabel": "End Time",
+      "deleteButton": "Delete Schedule",
+      "saveButton": "Save Schedule",
+      "createButton": "Create Schedule"
+    },
+    "toast": {
+      "scheduleIdNotFound": "Schedule ID not found.",
+      "deleteConfirm": "Delete this doctor's entire weekly schedule?",
+      "scheduleDeleted": "Schedule deleted.",
+      "scheduleDeleteFailed": "Failed to delete schedule.",
+      "selectDoctor": "Please select a doctor.",
+      "timeMissing": "{day}: time not entered.",
+      "endBeforeStart": "{day}: end time must be after start time.",
+      "scheduleSaved": "Doctor schedule saved successfully.",
+      "saveFailed": "An error occurred while saving the schedule.",
+      "fillStartEndTime": "Please enter start/end time.",
+      "endBeforeStartGeneric": "End time must be after start time.",
+      "selectAtLeastOneDay": "Please select at least one working day.",
+      "scheduleCreated": "Doctor schedule created successfully.",
+      "createFailed": "An error occurred while creating the schedule."
+    }
+  }
+}

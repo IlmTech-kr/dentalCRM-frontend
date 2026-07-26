@@ -1,1 +1,186 @@
-{}
+{
+  "staff": {
+    "pageTitle": "Персонал клиники",
+    "pageSubtitle": "Управление врачами, администраторами, ассистентами и приглашениями в команду клиники.",
+    "addButton": "+ Добавить сотрудника",
+    "listTitle": "Список сотрудников",
+    "roleLabel": "Роль",
+    "statusLabel": "Статус",
+    "allRoles": "Все роли",
+    "allStatuses": "Все статусы",
+    "clearFilters": "Сбросить фильтры",
+    "searchPlaceholder": "Поиск сотрудника...",
+    "loadError": "Не удалось загрузить список сотрудников.",
+    "tryAgain": "Повторить",
+    "loading": "Загрузка сотрудников...",
+    "emptyFiltered": "Сотрудники по заданным фильтрам не найдены",
+    "emptyNone": "Сотрудники не найдены",
+    "avatarAlt": "Аватар сотрудника",
+    "table": {
+      "staff": "Сотрудник",
+      "email": "Email",
+      "phone": "Телефон",
+      "role": "Роль",
+      "status": "Статус",
+      "actions": "Действия"
+    },
+    "role": {
+      "doctor": "Врач",
+      "receptionist": "Администратор",
+      "assistant": "Ассистент"
+    },
+    "status": {
+      "active": "Активен",
+      "blocked": "Заблокирован",
+      "pending": "Ожидает",
+      "deleted": "Удалён"
+    },
+    "inviteModal": {
+      "title": "Добавить сотрудника",
+      "subtitle": "Выберите роль и отправьте ссылку-приглашение на email.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "staff@gmail.com",
+      "roleLabel": "Роль",
+      "compensationTypeLabel": "Тип оплаты",
+      "percentage": "Процент",
+      "salary": "Оклад",
+      "commissionLabel": "Процент комиссии",
+      "salaryLabel": "Сумма оклада",
+      "hint": "Пользователь перейдёт по ссылке в письме, затем укажет имя и пароль для регистрации.",
+      "sendButton": "Отправить приглашение",
+      "sending": "Отправка..."
+    },
+    "editModal": {
+      "title": "Редактировать сотрудника",
+      "subtitle": "Обновите профиль и роль сотрудника.",
+      "firstNameLabel": "Имя",
+      "lastNameLabel": "Фамилия",
+      "phoneLabel": "Номер телефона",
+      "phonePlaceholder": "+998901112233",
+      "avatarLabel": "URL аватара / путь в хранилище",
+      "avatarPlaceholder": "users/avatar.png",
+      "roleLabel": "Роль",
+      "statusLabel": "Статус",
+      "saveButton": "Сохранить изменения",
+      "saving": "Сохранение..."
+    },
+    "toast": {
+      "emailRequired": "Введите email",
+      "commissionRequired": "Введите процент комиссии",
+      "salaryRequired": "Введите сумму оклада",
+      "inviteSent": "Приглашение для роли «{role}» отправлено",
+      "inviteFailed": "Не удалось отправить приглашение",
+      "userIdNotFound": "ID пользователя не найден",
+      "firstNameRequired": "Введите имя",
+      "lastNameRequired": "Введите фамилию",
+      "staffUpdated": "Данные сотрудника успешно обновлены",
+      "staffUpdateFailed": "Не удалось обновить данные сотрудника",
+      "deleteConfirm": "Вы уверены, что хотите удалить {name}?",
+      "staffDeleted": "Сотрудник успешно удалён",
+      "staffDeleteFailed": "Не удалось удалить сотрудника"
+    }
+  },
+  "schedule": {
+    "pageTitle": "Расписание врачей",
+    "pageSubtitle": "Управление рабочими днями врачей и слотами приёма.",
+    "refreshButton": "Обновить",
+    "addButton": "Добавить расписание",
+    "tabDoctors": "Врачи",
+    "tabCalendar": "Календарь",
+    "loading": "Загрузка расписаний…",
+    "loadError": "Не удалось загрузить расписания",
+    "genericServerError": "Ошибка сервера. Проверьте backend API.",
+    "tryAgain": "Повторить",
+    "stats": {
+      "totalActive": "Всего активных расписаний",
+      "doctorsWithSchedule": "Врачей с расписанием",
+      "doctors": "Врачи",
+      "selectedDay": "Выбранный день",
+      "all": "Все"
+    },
+    "searchPlaceholder": "Поиск по врачу, дню или времени…",
+    "dayFilterAll": "Все",
+    "emptyNoSchedules": {
+      "title": "Расписания не найдены",
+      "subtitle": "Создайте расписание врача, чтобы начать принимать записи."
+    },
+    "emptyFiltered": {
+      "title": "Расписание по заданным фильтрам не найдено",
+      "subtitle": "Выберите другой день или очистите поиск.",
+      "clearButton": "Сбросить фильтры"
+    },
+    "card": {
+      "viewSchedule": "Смотреть расписание",
+      "editSchedule": "Редактировать недельное расписание",
+      "deleteSchedule": "Удалить расписание",
+      "daysPerWeek": "{count} дн./нед.",
+      "activeCount": "{count} активно"
+    },
+    "days": {
+      "full": {
+        "monday": "Понедельник",
+        "tuesday": "Вторник",
+        "wednesday": "Среда",
+        "thursday": "Четверг",
+        "friday": "Пятница",
+        "saturday": "Суббота",
+        "sunday": "Воскресенье"
+      },
+      "short": {
+        "monday": "Пн",
+        "tuesday": "Вт",
+        "wednesday": "Ср",
+        "thursday": "Чт",
+        "friday": "Пт",
+        "saturday": "Сб",
+        "sunday": "Вс"
+      }
+    },
+    "calendar": {
+      "allDoctors": "Все врачи",
+      "weeklySchedule": "Недельное рабочее расписание",
+      "editSchedule": "Редактировать расписание",
+      "deleteSchedule": "Удалить расписание",
+      "workDays": "Рабочих дней",
+      "activeSlots": "Активных слотов",
+      "hoursPerWeek": "Часов / неделя",
+      "activeBadge": "Активно",
+      "legendWorkHours": "Рабочие часы",
+      "legendDayOff": "Выходной"
+    },
+    "editorModal": {
+      "editTitle": "Редактировать недельное расписание",
+      "createTitle": "Создать расписание",
+      "editSubtitle": "Отмеченные дни станут рабочими, неотмеченные будут сохранены как выходные.",
+      "createSubtitle": "Укажите рабочее время врача на всю неделю (Weekly) или по конкретным дням (Daily).",
+      "doctorLabel": "Врач",
+      "selectDoctorOption": "Выберите врача",
+      "noDoctorsFound": "Пользователи с ролью DOCTOR не найдены.",
+      "weeklyTab": "Weekly (вся неделя)",
+      "dailyTab": "Daily (конкретные дни)",
+      "workDaysLabel": "Рабочие дни",
+      "slotDurationLabel": "Длительность слота",
+      "startTimeLabel": "Время начала",
+      "endTimeLabel": "Время окончания",
+      "deleteButton": "Удалить расписание",
+      "saveButton": "Сохранить расписание",
+      "createButton": "Создать расписание"
+    },
+    "toast": {
+      "scheduleIdNotFound": "ID расписания не найден.",
+      "deleteConfirm": "Удалить всё недельное расписание этого врача?",
+      "scheduleDeleted": "Расписание удалено.",
+      "scheduleDeleteFailed": "Не удалось удалить расписание.",
+      "selectDoctor": "Выберите врача.",
+      "timeMissing": "{day}: время не указано.",
+      "endBeforeStart": "{day}: время окончания должно быть позже времени начала.",
+      "scheduleSaved": "Расписание врача успешно сохранено.",
+      "saveFailed": "Произошла ошибка при сохранении расписания.",
+      "fillStartEndTime": "Укажите время начала/окончания.",
+      "endBeforeStartGeneric": "Время окончания должно быть позже времени начала.",
+      "selectAtLeastOneDay": "Выберите хотя бы один рабочий день.",
+      "scheduleCreated": "Расписание врача успешно создано.",
+      "createFailed": "Произошла ошибка при создании расписания."
+    }
+  }
+}

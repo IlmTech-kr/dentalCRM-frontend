@@ -11,6 +11,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 
 import {
@@ -95,6 +96,27 @@ function getRoleBadgeClass(role: string): string {
   return "bg-slate-100 text-slate-600";
 }
 
+function getRoleLabel(
+  role: string,
+  t: ReturnType<typeof useTranslations>
+): string {
+  if (role === Role.DOCTOR) return t("staff.role.doctor");
+  if (role === Role.RECEPTIONIST) return t("staff.role.receptionist");
+  if (role === Role.ASSISTANT) return t("staff.role.assistant");
+  return role;
+}
+
+function getStatusLabel(
+  status: string | undefined,
+  t: ReturnType<typeof useTranslations>
+): string {
+  if (status === UserStatus.ACTIVE) return t("staff.status.active");
+  if (status === UserStatus.BLOCKED) return t("staff.status.blocked");
+  if (status === UserStatus.PENDING) return t("staff.status.pending");
+  if (status === UserStatus.DELETED) return t("staff.status.deleted");
+  return status || "-";
+}
+
 function getStatusBadgeClass(status?: string): string {
   if (status === UserStatus.ACTIVE) {
     return "bg-green-100 text-green-700";
@@ -150,6 +172,7 @@ function DoctorAvatar({
   sizeClassName?: string;
   textClassName?: string;
 }) {
+  const t = useTranslations("doctors");
   const avatarPath = doctor.avatarUrl?.trim() || "";
 
   const avatarImage = useStorageImage(
@@ -183,7 +206,7 @@ function DoctorAvatar({
         src={avatarImage.url}
         alt={
           `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() ||
-          "Staff avatar"
+          t("staff.avatarAlt")
         }
         loading="lazy"
         onError={() => setImageFailed(true)}
@@ -342,6 +365,8 @@ function Dropdown({
 // -----------------------------------------------------------------------------
 
 export default function DoctorsPage() {
+  const t = useTranslations("doctors");
+  const tCommon = useTranslations("common");
   const toast = useToast();
 
   const isAdmin = useAuthStore((state) => state.isAdmin());
@@ -569,7 +594,7 @@ export default function DoctorsPage() {
     event.preventDefault();
 
     if (!inviteEmail.trim()) {
-      toast.warning("Email kiriting");
+      toast.warning(t("staff.toast.emailRequired"));
       return;
     }
 
@@ -579,7 +604,7 @@ export default function DoctorsPage() {
         !inviteCommissionPercentage.trim()
       ) {
         toast.warning(
-          "Commission percentage kiriting"
+          t("staff.toast.commissionRequired")
         );
         return;
       }
@@ -588,7 +613,7 @@ export default function DoctorsPage() {
         effectiveCompensationType === "SALARY" &&
         !inviteSalaryAmount.trim()
       ) {
-        toast.warning("Salary amount kiriting");
+        toast.warning(t("staff.toast.salaryRequired"));
         return;
       }
     }
@@ -620,13 +645,15 @@ export default function DoctorsPage() {
       handleCloseInviteModal();
 
       toast.success(
-        `${inviteRole} uchun invite yuborildi`
+        t("staff.toast.inviteSent", {
+          role: getRoleLabel(inviteRole, t),
+        })
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Invite yuborishda xatolik bo'ldi"
+          t("staff.toast.inviteFailed")
         )
       );
     }
@@ -638,17 +665,17 @@ export default function DoctorsPage() {
     event.preventDefault();
 
     if (!selectedDoctorId) {
-      toast.error("User ID topilmadi");
+      toast.error(t("staff.toast.userIdNotFound"));
       return;
     }
 
     if (!editForm.firstName.trim()) {
-      toast.warning("First name kiriting");
+      toast.warning(t("staff.toast.firstNameRequired"));
       return;
     }
 
     if (!editForm.lastName.trim()) {
-      toast.warning("Last name kiriting");
+      toast.warning(t("staff.toast.lastNameRequired"));
       return;
     }
 
@@ -665,13 +692,13 @@ export default function DoctorsPage() {
       handleCloseEditModal();
 
       toast.success(
-        "Staff updated successfully"
+        t("staff.toast.staffUpdated")
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Staff update qilishda xatolik bo'ldi"
+          t("staff.toast.staffUpdateFailed")
         )
       );
     }
@@ -683,14 +710,16 @@ export default function DoctorsPage() {
     const doctorId = getDoctorId(doctor);
 
     if (!doctorId) {
-      toast.error("User ID topilmadi");
+      toast.error(t("staff.toast.userIdNotFound"));
       return;
     }
 
     const confirmed = window.confirm(
-      `${doctor.firstName || ""} ${
-        doctor.lastName || ""
-      } ni o'chirmoqchimisiz?`
+      t("staff.toast.deleteConfirm", {
+        name: `${doctor.firstName || ""} ${
+          doctor.lastName || ""
+        }`.trim(),
+      })
     );
 
     if (!confirmed) {
@@ -703,13 +732,13 @@ export default function DoctorsPage() {
       );
 
       toast.success(
-        "Staff deleted successfully"
+        t("staff.toast.staffDeleted")
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Staff delete qilishda xatolik bo'ldi"
+          t("staff.toast.staffDeleteFailed")
         )
       );
     }
@@ -729,12 +758,11 @@ export default function DoctorsPage() {
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Clinic Staff
+            {t("staff.pageTitle")}
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage doctors, receptionists, assistants
-            and clinic team invites.
+            {t("staff.pageSubtitle")}
           </p>
         </div>
 
@@ -744,7 +772,7 @@ export default function DoctorsPage() {
             onClick={handleOpenInviteModal}
             className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
           >
-            + Add Staff
+            {t("staff.addButton")}
           </button>
         )}
       </div>
@@ -754,7 +782,7 @@ export default function DoctorsPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Staff List
+                {t("staff.listTitle")}
               </h2>
             </div>
           </div>
@@ -762,7 +790,7 @@ export default function DoctorsPage() {
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Role
+                {t("staff.roleLabel")}
               </label>
 
               <Dropdown
@@ -775,12 +803,12 @@ export default function DoctorsPage() {
                 options={[
                   {
                     value: "ALL",
-                    label: "Barcha rollar",
+                    label: t("staff.allRoles"),
                     count: doctors.length,
                   },
                   ...staffRoleOptions.map((role) => ({
                     value: role,
-                    label: role,
+                    label: getRoleLabel(role, t),
                     count:
                       roleCounts.get(role) ?? 0,
                   })),
@@ -790,7 +818,7 @@ export default function DoctorsPage() {
 
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Status
+                {t("staff.statusLabel")}
               </label>
 
               <Dropdown
@@ -803,12 +831,12 @@ export default function DoctorsPage() {
                 options={[
                   {
                     value: "ALL",
-                    label: "Barcha statuslar",
+                    label: t("staff.allStatuses"),
                     count: doctors.length,
                   },
                   ...statusOptions.map((status) => ({
                     value: status,
-                    label: status,
+                    label: getStatusLabel(status, t),
                     count:
                       statusCounts.get(status) ?? 0,
                   })),
@@ -822,7 +850,7 @@ export default function DoctorsPage() {
                 onClick={handleResetFilters}
                 className="rounded-xl px-3.5 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
               >
-                Filterlarni tozalash
+                {t("staff.clearFilters")}
               </button>
             )}
 
@@ -833,7 +861,7 @@ export default function DoctorsPage() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Search staff..."
+                placeholder={t("staff.searchPlaceholder")}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
@@ -843,7 +871,7 @@ export default function DoctorsPage() {
         {isError ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-red-600">
-              Staff listni olishda xatolik bo&apos;ldi.
+              {t("staff.loadError")}
             </p>
 
             <button
@@ -851,7 +879,7 @@ export default function DoctorsPage() {
               onClick={() => refetch()}
               className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              Try Again
+              {t("staff.tryAgain")}
             </button>
           </div>
         ) : (
@@ -860,28 +888,28 @@ export default function DoctorsPage() {
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Staff
+                    {t("staff.table.staff")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Email
+                    {t("staff.table.email")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Phone
+                    {t("staff.table.phone")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Role
+                    {t("staff.table.role")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Status
+                    {t("staff.table.status")}
                   </th>
 
                   {isStaffAdmin && (
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Actions
+                      {t("staff.table.actions")}
                     </th>
                   )}
                 </tr>
@@ -894,7 +922,7 @@ export default function DoctorsPage() {
                       colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      Loading staff...
+                      {t("staff.loading")}
                     </td>
                   </tr>
                 ) : filteredDoctors.length === 0 ? (
@@ -904,8 +932,8 @@ export default function DoctorsPage() {
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
                       {hasActiveFilters
-                        ? "Filterga mos staff topilmadi"
-                        : "No staff found"}
+                        ? t("staff.emptyFiltered")
+                        : t("staff.emptyNone")}
                     </td>
                   </tr>
                 ) : (
@@ -949,7 +977,7 @@ export default function DoctorsPage() {
                                   role
                                 )}`}
                               >
-                                {role}
+                                {getRoleLabel(role, t)}
                               </span>
                             ))
                           ) : (
@@ -966,7 +994,7 @@ export default function DoctorsPage() {
                             doctor.status
                           )}`}
                         >
-                          {doctor.status}
+                          {getStatusLabel(doctor.status, t)}
                         </span>
                       </td>
 
@@ -982,7 +1010,7 @@ export default function DoctorsPage() {
                               }
                               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                             >
-                              Edit
+                              {tCommon("actions.edit")}
                             </button>
 
                             <button
@@ -997,7 +1025,7 @@ export default function DoctorsPage() {
                               }
                               className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              Delete
+                              {tCommon("actions.delete")}
                             </button>
                           </div>
                         </td>
@@ -1018,12 +1046,11 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Add Staff
+                  {t("staff.inviteModal.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Select role and send invite link to
-                  email.
+                  {t("staff.inviteModal.subtitle")}
                 </p>
               </div>
 
@@ -1032,7 +1059,7 @@ export default function DoctorsPage() {
                 onClick={handleCloseInviteModal}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
               >
-                Close
+                {tCommon("actions.close")}
               </button>
             </div>
 
@@ -1042,7 +1069,7 @@ export default function DoctorsPage() {
             >
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Email
+                  {t("staff.inviteModal.emailLabel")}
                 </label>
 
                 <input
@@ -1053,14 +1080,16 @@ export default function DoctorsPage() {
                       event.target.value
                     )
                   }
-                  placeholder="staff@gmail.com"
+                  placeholder={t(
+                    "staff.inviteModal.emailPlaceholder"
+                  )}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Role
+                  {t("staff.inviteModal.roleLabel")}
                 </label>
 
                 <Dropdown
@@ -1074,7 +1103,7 @@ export default function DoctorsPage() {
                   options={staffRoleOptions.map(
                     (role) => ({
                       value: role,
-                      label: role,
+                      label: getRoleLabel(role, t),
                     })
                   )}
                 />
@@ -1085,7 +1114,9 @@ export default function DoctorsPage() {
                   {showsCompensationTypeChoice && (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Compensation Type
+                        {t(
+                          "staff.inviteModal.compensationTypeLabel"
+                        )}
                       </label>
 
                       <Dropdown
@@ -1104,8 +1135,12 @@ export default function DoctorsPage() {
                             label:
                               type ===
                               "PERCENTAGE"
-                                ? "Percentage"
-                                : "Salary",
+                                ? t(
+                                    "staff.inviteModal.percentage"
+                                  )
+                                : t(
+                                    "staff.inviteModal.salary"
+                                  ),
                           })
                         )}
                       />
@@ -1116,7 +1151,9 @@ export default function DoctorsPage() {
                   "PERCENTAGE" ? (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Commission Percentage
+                        {t(
+                          "staff.inviteModal.commissionLabel"
+                        )}
                       </label>
 
                       <input
@@ -1139,7 +1176,9 @@ export default function DoctorsPage() {
                   ) : (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Salary Amount
+                        {t(
+                          "staff.inviteModal.salaryLabel"
+                        )}
                       </label>
 
                       <input
@@ -1163,9 +1202,7 @@ export default function DoctorsPage() {
               )}
 
               <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
-                User emaildagi linkni bosadi, keyin
-                name va password kiritib signup
-                qiladi.
+                {t("staff.inviteModal.hint")}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
@@ -1174,7 +1211,7 @@ export default function DoctorsPage() {
                   onClick={handleCloseInviteModal}
                   className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Cancel
+                  {tCommon("actions.cancel")}
                 </button>
 
                 <button
@@ -1185,8 +1222,8 @@ export default function DoctorsPage() {
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {inviteDoctorMutation.isPending
-                    ? "Sending..."
-                    : "Send Invite"}
+                    ? t("staff.inviteModal.sending")
+                    : t("staff.inviteModal.sendButton")}
                 </button>
               </div>
             </form>
@@ -1201,11 +1238,11 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Edit Staff
+                  {t("staff.editModal.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Update staff profile and role.
+                  {t("staff.editModal.subtitle")}
                 </p>
               </div>
 
@@ -1214,7 +1251,7 @@ export default function DoctorsPage() {
                 onClick={handleCloseEditModal}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
               >
-                Close
+                {tCommon("actions.close")}
               </button>
             </div>
 
@@ -1238,7 +1275,7 @@ export default function DoctorsPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    First Name
+                    {t("staff.editModal.firstNameLabel")}
                   </label>
 
                   <input
@@ -1259,7 +1296,7 @@ export default function DoctorsPage() {
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Last Name
+                    {t("staff.editModal.lastNameLabel")}
                   </label>
 
                   <input
@@ -1281,7 +1318,7 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Phone Number
+                  {t("staff.editModal.phoneLabel")}
                 </label>
 
                 <input
@@ -1296,14 +1333,16 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  placeholder="+998901112233"
+                  placeholder={t(
+                    "staff.editModal.phonePlaceholder"
+                  )}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Avatar URL / Storage Path
+                  {t("staff.editModal.avatarLabel")}
                 </label>
 
                 <input
@@ -1318,14 +1357,16 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  placeholder="users/avatar.png"
+                  placeholder={t(
+                    "staff.editModal.avatarPlaceholder"
+                  )}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Role
+                  {t("staff.editModal.roleLabel")}
                 </label>
 
                 <Dropdown
@@ -1342,7 +1383,7 @@ export default function DoctorsPage() {
                   options={staffRoleOptions.map(
                     (role) => ({
                       value: role,
-                      label: role,
+                      label: getRoleLabel(role, t),
                     })
                   )}
                 />
@@ -1350,7 +1391,7 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Status
+                  {t("staff.editModal.statusLabel")}
                 </label>
 
                 <Dropdown
@@ -1368,7 +1409,7 @@ export default function DoctorsPage() {
                   options={statusOptions.map(
                     (status) => ({
                       value: status,
-                      label: status,
+                      label: getStatusLabel(status, t),
                     })
                   )}
                 />
@@ -1380,7 +1421,7 @@ export default function DoctorsPage() {
                   onClick={handleCloseEditModal}
                   className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Cancel
+                  {tCommon("actions.cancel")}
                 </button>
 
                 <button
@@ -1391,8 +1432,8 @@ export default function DoctorsPage() {
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {updateDoctorMutation.isPending
-                    ? "Saving..."
-                    : "Save Changes"}
+                    ? t("staff.editModal.saving")
+                    : t("staff.editModal.saveButton")}
                 </button>
               </div>
             </form>

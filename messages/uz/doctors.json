@@ -1,1 +1,186 @@
-{}
+{
+  "staff": {
+    "pageTitle": "Klinika xodimlari",
+    "pageSubtitle": "Shifokorlar, qabulxona xodimlari, yordamchilarni va klinika jamoasi taklifnomalarini boshqarish.",
+    "addButton": "+ Xodim qo'shish",
+    "listTitle": "Xodimlar ro'yxati",
+    "roleLabel": "Lavozim",
+    "statusLabel": "Holat",
+    "allRoles": "Barcha lavozimlar",
+    "allStatuses": "Barcha statuslar",
+    "clearFilters": "Filterlarni tozalash",
+    "searchPlaceholder": "Xodim qidirish...",
+    "loadError": "Xodimlar ro'yxatini yuklashda xatolik yuz berdi.",
+    "tryAgain": "Qayta urinish",
+    "loading": "Xodimlar yuklanmoqda...",
+    "emptyFiltered": "Filterga mos xodim topilmadi",
+    "emptyNone": "Xodimlar topilmadi",
+    "avatarAlt": "Xodim avatari",
+    "table": {
+      "staff": "Xodim",
+      "email": "Email",
+      "phone": "Telefon",
+      "role": "Lavozim",
+      "status": "Holat",
+      "actions": "Amallar"
+    },
+    "role": {
+      "doctor": "Shifokor",
+      "receptionist": "Qabulxona xodimi",
+      "assistant": "Yordamchi"
+    },
+    "status": {
+      "active": "Faol",
+      "blocked": "Bloklangan",
+      "pending": "Kutilmoqda",
+      "deleted": "O'chirilgan"
+    },
+    "inviteModal": {
+      "title": "Xodim qo'shish",
+      "subtitle": "Lavozimni tanlang va emailga taklifnoma havolasini yuboring.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "staff@gmail.com",
+      "roleLabel": "Lavozim",
+      "compensationTypeLabel": "To'lov turi",
+      "percentage": "Foiz",
+      "salary": "Oylik maosh",
+      "commissionLabel": "Komissiya foizi",
+      "salaryLabel": "Oylik maosh miqdori",
+      "hint": "Foydalanuvchi emaildagi havolani bosadi, so'ng ism va parol kiritib ro'yxatdan o'tadi.",
+      "sendButton": "Taklifnoma yuborish",
+      "sending": "Yuborilmoqda..."
+    },
+    "editModal": {
+      "title": "Xodimni tahrirlash",
+      "subtitle": "Xodim profili va lavozimini yangilang.",
+      "firstNameLabel": "Ism",
+      "lastNameLabel": "Familiya",
+      "phoneLabel": "Telefon raqami",
+      "phonePlaceholder": "+998901112233",
+      "avatarLabel": "Avatar URL / Storage yo'li",
+      "avatarPlaceholder": "users/avatar.png",
+      "roleLabel": "Lavozim",
+      "statusLabel": "Holat",
+      "saveButton": "O'zgarishlarni saqlash",
+      "saving": "Saqlanmoqda..."
+    },
+    "toast": {
+      "emailRequired": "Email kiriting",
+      "commissionRequired": "Komissiya foizini kiriting",
+      "salaryRequired": "Oylik maosh miqdorini kiriting",
+      "inviteSent": "{role} uchun taklifnoma yuborildi",
+      "inviteFailed": "Taklifnoma yuborishda xatolik bo'ldi",
+      "userIdNotFound": "Foydalanuvchi ID raqami topilmadi",
+      "firstNameRequired": "Ism kiriting",
+      "lastNameRequired": "Familiya kiriting",
+      "staffUpdated": "Xodim ma'lumotlari muvaffaqiyatli yangilandi",
+      "staffUpdateFailed": "Xodim ma'lumotlarini yangilashda xatolik bo'ldi",
+      "deleteConfirm": "{name}ni o'chirmoqchimisiz?",
+      "staffDeleted": "Xodim muvaffaqiyatli o'chirildi",
+      "staffDeleteFailed": "Xodimni o'chirib bo'lmadi"
+    }
+  },
+  "schedule": {
+    "pageTitle": "Shifokor jadvali",
+    "pageSubtitle": "Shifokorlarning ish kunlari va qabul vaqtlarini boshqarish.",
+    "refreshButton": "Yangilash",
+    "addButton": "Jadval qo'shish",
+    "tabDoctors": "Shifokorlar",
+    "tabCalendar": "Kalendar",
+    "loading": "Jadvallar yuklanmoqda…",
+    "loadError": "Jadvallarni yuklashda xatolik",
+    "genericServerError": "Server xatoligi. Backend API'ni tekshiring.",
+    "tryAgain": "Qayta urinish",
+    "stats": {
+      "totalActive": "Jami faol jadvallar",
+      "doctorsWithSchedule": "Jadvali bor shifokorlar",
+      "doctors": "Shifokorlar",
+      "selectedDay": "Tanlangan kun",
+      "all": "Barchasi"
+    },
+    "searchPlaceholder": "Shifokor, kun yoki vaqt bo'yicha qidirish…",
+    "dayFilterAll": "Barchasi",
+    "emptyNoSchedules": {
+      "title": "Jadvallar topilmadi",
+      "subtitle": "Qabullarni qabul qilishni boshlash uchun shifokor jadvalini yarating."
+    },
+    "emptyFiltered": {
+      "title": "Filterga mos jadval topilmadi",
+      "subtitle": "Boshqa kun tanlang yoki qidiruvni tozalang.",
+      "clearButton": "Filterlarni tozalash"
+    },
+    "card": {
+      "viewSchedule": "Jadvalni ko'rish",
+      "editSchedule": "Haftalik jadvalni tahrirlash",
+      "deleteSchedule": "Jadvalni o'chirish",
+      "daysPerWeek": "{count} kun/hafta",
+      "activeCount": "{count} faol"
+    },
+    "days": {
+      "full": {
+        "monday": "Dushanba",
+        "tuesday": "Seshanba",
+        "wednesday": "Chorshanba",
+        "thursday": "Payshanba",
+        "friday": "Juma",
+        "saturday": "Shanba",
+        "sunday": "Yakshanba"
+      },
+      "short": {
+        "monday": "Dush",
+        "tuesday": "Sesh",
+        "wednesday": "Chor",
+        "thursday": "Pay",
+        "friday": "Juma",
+        "saturday": "Shan",
+        "sunday": "Yak"
+      }
+    },
+    "calendar": {
+      "allDoctors": "Barcha shifokorlar",
+      "weeklySchedule": "Haftalik ish jadvali",
+      "editSchedule": "Jadvalni tahrirlash",
+      "deleteSchedule": "Jadvalni o'chirish",
+      "workDays": "Ish kunlari",
+      "activeSlots": "Faol slotlar",
+      "hoursPerWeek": "Soat / hafta",
+      "activeBadge": "Faol",
+      "legendWorkHours": "Ish vaqti",
+      "legendDayOff": "Dam olish kuni"
+    },
+    "editorModal": {
+      "editTitle": "Haftalik jadvalni tahrirlash",
+      "createTitle": "Jadval yaratish",
+      "editSubtitle": "Belgilangan (checked) kunlar faol bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi.",
+      "createSubtitle": "Shifokor uchun ish vaqtini butun hafta (Weekly) yoki aniq kunlar (Daily) bo'yicha belgilang.",
+      "doctorLabel": "Shifokor",
+      "selectDoctorOption": "Shifokorni tanlang",
+      "noDoctorsFound": "Role = DOCTOR bo'lgan hech qanday foydalanuvchi topilmadi.",
+      "weeklyTab": "Weekly (butun hafta)",
+      "dailyTab": "Daily (aniq kunlar)",
+      "workDaysLabel": "Ish kunlari",
+      "slotDurationLabel": "Slot davomiyligi",
+      "startTimeLabel": "Boshlanish vaqti",
+      "endTimeLabel": "Tugash vaqti",
+      "deleteButton": "Jadvalni o'chirish",
+      "saveButton": "Jadvalni saqlash",
+      "createButton": "Jadval yaratish"
+    },
+    "toast": {
+      "scheduleIdNotFound": "Jadval ID raqami topilmadi.",
+      "deleteConfirm": "Ushbu shifokorning butun haftalik jadvali o'chirilsinmi?",
+      "scheduleDeleted": "Jadval o'chirildi.",
+      "scheduleDeleteFailed": "Jadvalni o'chirishda xatolik yuz berdi.",
+      "selectDoctor": "Shifokorni tanlang.",
+      "timeMissing": "{day} uchun vaqt kiritilmagan.",
+      "endBeforeStart": "{day}: tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak.",
+      "scheduleSaved": "Shifokor jadvali muvaffaqiyatli saqlandi.",
+      "saveFailed": "Jadvalni saqlashda xatolik yuz berdi.",
+      "fillStartEndTime": "Boshlanish/tugash vaqtini kiriting.",
+      "endBeforeStartGeneric": "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak.",
+      "selectAtLeastOneDay": "Kamida bitta ish kunini tanlang.",
+      "scheduleCreated": "Shifokor jadvali muvaffaqiyatli yaratildi.",
+      "createFailed": "Jadvalni yaratishda xatolik yuz berdi."
+    }
+  }
+}

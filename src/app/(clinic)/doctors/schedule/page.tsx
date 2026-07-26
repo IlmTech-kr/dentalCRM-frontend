@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   CalendarDays,
@@ -36,14 +37,14 @@ import { useToast } from "@/src/lib/hooks/Usetoast";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
-  { value: DayOfWeek.MONDAY,    label: "Monday",    short: "Mon" },
-  { value: DayOfWeek.TUESDAY,   label: "Tuesday",   short: "Tue" },
-  { value: DayOfWeek.WEDNESDAY, label: "Wednesday", short: "Wed" },
-  { value: DayOfWeek.THURSDAY,  label: "Thursday",  short: "Thu" },
-  { value: DayOfWeek.FRIDAY,    label: "Friday",    short: "Fri" },
-  { value: DayOfWeek.SATURDAY,  label: "Saturday",  short: "Sat" },
-  { value: DayOfWeek.SUNDAY,    label: "Sunday",    short: "Sun" },
+const DAYS: { value: DayOfWeek; key: string }[] = [
+  { value: DayOfWeek.MONDAY,    key: "monday" },
+  { value: DayOfWeek.TUESDAY,   key: "tuesday" },
+  { value: DayOfWeek.WEDNESDAY, key: "wednesday" },
+  { value: DayOfWeek.THURSDAY,  key: "thursday" },
+  { value: DayOfWeek.FRIDAY,    key: "friday" },
+  { value: DayOfWeek.SATURDAY,  key: "saturday" },
+  { value: DayOfWeek.SUNDAY,    key: "sunday" },
 ];
 
 const CALENDAR_HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00–18:00
@@ -110,8 +111,20 @@ function getDoctorInitials(name: string): string {
     .slice(0, 2);
 }
 
-function getDayShort(day?: DayOfWeek | string): string {
-  return DAYS.find((d) => d.value === day)?.short ?? String(day ?? "-");
+function getDayShort(
+  day: DayOfWeek | string | undefined,
+  t: ReturnType<typeof useTranslations>
+): string {
+  const found = DAYS.find((d) => d.value === day);
+  return found ? t(`days.short.${found.key}`) : String(day ?? "-");
+}
+
+function getDayFull(
+  day: DayOfWeek | string | undefined,
+  t: ReturnType<typeof useTranslations>
+): string {
+  const found = DAYS.find((d) => d.value === day);
+  return found ? t(`days.full.${found.key}`) : String(day ?? "-");
 }
 
 function pad2(n: number): string {
@@ -177,6 +190,7 @@ function DoctorCard({
   onDeleteSchedule: () => void;
   isDeleting?: boolean;
 }) {
+  const t = useTranslations("doctors.schedule");
   const { bg, text } = AVATAR_PALETTE[group.paletteIdx % AVATAR_PALETTE.length];
   const activeDays = group.schedules.filter((s) => s.active);
   const uniqueActiveDays = [...new Set(activeDays.map((s) => s.dayOfWeek))];
@@ -204,12 +218,12 @@ function DoctorCard({
           return (
             <div
               key={d.value}
-              title={d.label}
+              title={getDayFull(d.value, t)}
               className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-extrabold transition ${
                 active ? `${bg} ${text}` : "bg-slate-100 text-slate-400"
               }`}
             >
-              {d.short[0]}
+              {getDayShort(d.value, t)[0]}
             </div>
           );
         })}
@@ -218,11 +232,11 @@ function DoctorCard({
       <div className="mb-4 flex gap-3 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <CalendarDays className="h-3.5 w-3.5" />
-          {uniqueActiveDays.length} days/wk
+          {t("card.daysPerWeek", { count: uniqueActiveDays.length })}
         </span>
         <span className="flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" />
-          {activeDays.length} active
+          {t("card.activeCount", { count: activeDays.length })}
         </span>
       </div>
 
@@ -233,12 +247,12 @@ function DoctorCard({
           className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
         >
           <CalendarDays className="h-3.5 w-3.5" />
-          View schedule
+          {t("card.viewSchedule")}
         </button>
         <button
           type="button"
           onClick={onEditSchedule}
-          title="Edit weekly schedule"
+          title={t("card.editSchedule")}
           className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
         >
           <Edit2 className="h-3.5 w-3.5" />
@@ -247,7 +261,7 @@ function DoctorCard({
           type="button"
           onClick={onDeleteSchedule}
           disabled={isDeleting}
-          title="Delete schedule"
+          title={t("card.deleteSchedule")}
           className="flex items-center justify-center rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -274,6 +288,7 @@ function WeeklyCalendar({
   isDeleting?: boolean;
   showBackButton?: boolean;
 }) {
+  const t = useTranslations("doctors.schedule");
   const { bg, text } = AVATAR_PALETTE[group.paletteIdx % AVATAR_PALETTE.length];
 
   const byDay = useMemo(() => {
@@ -297,7 +312,7 @@ function WeeklyCalendar({
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
             >
               <ArrowLeft className="h-4 w-4" />
-              All doctors
+              {t("calendar.allDoctors")}
             </button>
           )}
 
@@ -309,7 +324,7 @@ function WeeklyCalendar({
             </div>
             <div>
               <p className="text-sm font-extrabold text-slate-900">{group.doctorName}</p>
-              <p className="text-xs text-slate-500">Weekly work schedule</p>
+              <p className="text-xs text-slate-500">{t("calendar.weeklySchedule")}</p>
             </div>
           </div>
         </div>
@@ -321,7 +336,7 @@ function WeeklyCalendar({
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
           >
             <Edit2 className="h-4 w-4" />
-            Edit schedule
+            {t("calendar.editSchedule")}
           </button>
           <button
             type="button"
@@ -330,21 +345,21 @@ function WeeklyCalendar({
             className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
-            Delete schedule
+            {t("calendar.deleteSchedule")}
           </button>
         </div>
       </div>
 
       <div className="mb-6 grid grid-cols-3 gap-3">
         {[
-          { label: "Work days", value: byDay.size, color: "text-slate-900" },
+          { label: t("calendar.workDays"), value: byDay.size, color: "text-slate-900" },
           {
-            label: "Active slots",
+            label: t("calendar.activeSlots"),
             value: group.schedules.filter((s) => s.active).length,
             color: "text-emerald-600",
           },
           {
-            label: "Hours / week",
+            label: t("calendar.hoursPerWeek"),
             value: `${group.schedules.reduce((acc, s) => {
               if (!s.active) return acc;
               const sh = parseInt(normalizeScheduleTime(s.startTime));
@@ -374,7 +389,7 @@ function WeeklyCalendar({
                     hasSlots ? "text-blue-600" : "text-slate-400"
                   }`}
                 >
-                  {d.short}
+                  {getDayShort(d.value, t)}
                 </div>
               );
             })}
@@ -419,7 +434,7 @@ function WeeklyCalendar({
                                   {start} – {end}
                                 </p>
                                 <span className="w-fit rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700">
-                                  Active
+                                  {t("calendar.activeBadge")}
                                 </span>
                               </div>
                             </div>
@@ -437,11 +452,11 @@ function WeeklyCalendar({
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-blue-400 bg-blue-50" />
-          Work hours
+          {t("calendar.legendWorkHours")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm bg-slate-50" />
-          Day off
+          {t("calendar.legendDayOff")}
         </span>
       </div>
     </div>
@@ -506,6 +521,9 @@ function WeekEditorModal({
   onDeleteSchedule,
   isDeleting,
 }: WeekEditorModalProps) {
+  const t = useTranslations("doctors.schedule");
+  const tCommon = useTranslations("common");
+
   if (!open) return null;
 
   function updateRow(index: number, patch: Partial<DayRow>) {
@@ -523,12 +541,12 @@ function WeekEditorModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-extrabold text-slate-900">
-                {hasExistingSchedule ? "Edit Weekly Schedule" : "Create Schedule"}
+                {hasExistingSchedule ? t("editorModal.editTitle") : t("editorModal.createTitle")}
               </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
                 {hasExistingSchedule
-                  ? "Belgilangan (checked) kunlar active bo'ladi, belgilanmagan kunlar dam kuni (off) bo'lib saqlanadi."
-                  : "Doctor uchun ish vaqtini butun hafta (Weekly) yoki aniq kunlar (Daily) bo'yicha belgilang."}
+                  ? t("editorModal.editSubtitle")
+                  : t("editorModal.createSubtitle")}
               </p>
             </div>
             <button
@@ -544,7 +562,7 @@ function WeekEditorModal({
         <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
           <div>
             <label className="mb-3 block text-sm font-bold text-slate-900">
-              Doctor <span className="text-red-500">*</span>
+              {t("editorModal.doctorLabel")} <span className="text-red-500">*</span>
             </label>
             <select
               value={doctorId}
@@ -552,7 +570,7 @@ function WeekEditorModal({
               onChange={(e) => onDoctorChange(e.target.value)}
               className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
-              <option value="">Select doctor</option>
+              <option value="">{t("editorModal.selectDoctorOption")}</option>
               {doctors.map((doctor) => {
                 const id = getDoctorId(doctor);
                 const name = getDoctorName(doctor);
@@ -565,7 +583,7 @@ function WeekEditorModal({
             </select>
             {doctors.length === 0 && (
               <p className="mt-2 text-xs font-semibold text-amber-600">
-                Role = DOCTOR bo'lgan hech qanday foydalanuvchi topilmadi.
+                {t("editorModal.noDoctorsFound")}
               </p>
             )}
           </div>
@@ -589,7 +607,7 @@ function WeekEditorModal({
                         onChange={(e) => updateRow(index, { active: e.target.checked })}
                         className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
+                      <span className="text-sm font-extrabold text-slate-900">{getDayFull(day.value, t)}</span>
                     </label>
 
                     <input
@@ -622,7 +640,7 @@ function WeekEditorModal({
                     createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  Weekly (butun hafta)
+                  {t("editorModal.weeklyTab")}
                 </button>
                 <button
                   type="button"
@@ -631,14 +649,14 @@ function WeekEditorModal({
                     createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  Daily (aniq kunlar)
+                  {t("editorModal.dailyTab")}
                 </button>
               </div>
 
               {createMode === "DAILY" && (
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    Ish kunlari <span className="text-red-500">*</span>
+                    {t("editorModal.workDaysLabel")} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {DAYS.map((day) => {
@@ -654,7 +672,7 @@ function WeekEditorModal({
                               : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
                           }`}
                         >
-                          {day.short}
+                          {getDayShort(day.value, t)}
                         </button>
                       );
                     })}
@@ -664,7 +682,7 @@ function WeekEditorModal({
 
               {createMode === "DAILY" && (
                 <div>
-                  <label className="mb-3 block text-sm font-bold text-slate-900">Slot Duration</label>
+                  <label className="mb-3 block text-sm font-bold text-slate-900">{t("editorModal.slotDurationLabel")}</label>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
                     {DURATION_OPTIONS.map((duration) => (
                       <button
@@ -687,7 +705,7 @@ function WeekEditorModal({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    Start Time <span className="text-red-500">*</span>
+                    {t("editorModal.startTimeLabel")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
@@ -698,7 +716,7 @@ function WeekEditorModal({
                 </div>
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
-                    End Time <span className="text-red-500">*</span>
+                    {t("editorModal.endTimeLabel")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
@@ -720,7 +738,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Delete Schedule
+                {t("editorModal.deleteButton")}
               </button>
             ) : (
               <span />
@@ -732,7 +750,7 @@ function WeekEditorModal({
                 onClick={onClose}
                 className="rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {tCommon("actions.cancel")}
               </button>
               <button
                 type="submit"
@@ -740,7 +758,7 @@ function WeekEditorModal({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {hasExistingSchedule ? "Save Schedule" : "Create Schedule"}
+                {hasExistingSchedule ? t("editorModal.saveButton") : t("editorModal.createButton")}
               </button>
             </div>
           </div>
@@ -753,6 +771,7 @@ function WeekEditorModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DoctorSchedulePage() {
+  const t = useTranslations("doctors.schedule");
   const toast = useToast();
 
   const page = 0;
@@ -952,18 +971,18 @@ export default function DoctorSchedulePage() {
   async function handleDeleteSchedule(doctorId: string) {
     const scheduleId = getScheduleIdForDoctor(enrichedSchedules, doctorId);
     if (!scheduleId) {
-      toast.error("Schedule ID topilmadi.");
+      toast.error(t("toast.scheduleIdNotFound"));
       return;
     }
-    if (!window.confirm("Bu doctorning butun haftalik schedule'i o'chirilsinmi?")) return;
+    if (!window.confirm(t("toast.deleteConfirm"))) return;
 
     try {
       await deleteScheduleMutation.mutateAsync(scheduleId);
-      toast.success("Schedule o'chirildi.");
+      toast.success(t("toast.scheduleDeleted"));
       if (calendarDoctorId === doctorId) backToCards();
       if (modalDoctorId === doctorId) closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Schedule o'chirishda xatolik yuz berdi."));
+      toast.error(getApiErrorMessage(err, t("toast.scheduleDeleteFailed")));
     }
   }
 
@@ -971,7 +990,7 @@ export default function DoctorSchedulePage() {
     e.preventDefault();
 
     if (!modalDoctorId) {
-      toast.warning("Please select a doctor.");
+      toast.warning(t("toast.selectDoctor"));
       return;
     }
 
@@ -979,11 +998,11 @@ export default function DoctorSchedulePage() {
       // ── EDIT: PUT /doctor-schedules/by-day (har kuni alohida qatordan) ──
       for (const row of dayRows) {
         if (row.active && (!row.startTime || !row.endTime)) {
-          toast.warning(`${getDayShort(row.dayOfWeek)} uchun vaqt kiritilmagan.`);
+          toast.warning(t("toast.timeMissing", { day: getDayShort(row.dayOfWeek, t) }));
           return;
         }
         if (row.active && row.startTime >= row.endTime) {
-          toast.warning(`${getDayShort(row.dayOfWeek)}: End time start time'dan keyin bo'lishi kerak.`);
+          toast.warning(t("toast.endBeforeStart", { day: getDayShort(row.dayOfWeek, t) }));
           return;
         }
       }
@@ -994,21 +1013,21 @@ export default function DoctorSchedulePage() {
           doctorId: modalDoctorId,
           days: dayRows,
         });
-        toast.success("Doctor schedule saved successfully.");
+        toast.success(t("toast.scheduleSaved"));
         closeModal();
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "An error occurred while saving the schedule."));
+        toast.error(getApiErrorMessage(err, t("toast.saveFailed")));
       }
       return;
     }
 
     // ── CREATE: Weekly yoki Daily ──
     if (!createStartTime || !createEndTime) {
-      toast.warning("Start/End time kiriting.");
+      toast.warning(t("toast.fillStartEndTime"));
       return;
     }
     if (createStartTime >= createEndTime) {
-      toast.warning("End time start time'dan keyin bo'lishi kerak.");
+      toast.warning(t("toast.endBeforeStartGeneric"));
       return;
     }
 
@@ -1025,7 +1044,7 @@ export default function DoctorSchedulePage() {
         // POST /doctor-schedules — bitta kun uchun, shuning uchun har bir
         // tanlangan kun uchun ketma-ket alohida so'rov yuboriladi.
         if (createSelectedDays.length === 0) {
-          toast.warning("Kamida bitta ish kunini tanlang.");
+          toast.warning(t("toast.selectAtLeastOneDay"));
           return;
         }
         for (const day of createSelectedDays) {
@@ -1039,10 +1058,10 @@ export default function DoctorSchedulePage() {
           } as DoctorSchedulePayload);
         }
       }
-      toast.success("Doctor schedule created successfully.");
+      toast.success(t("toast.scheduleCreated"));
       closeModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "An error occurred while creating the schedule."));
+      toast.error(getApiErrorMessage(err, t("toast.createFailed")));
     }
   }
 
@@ -1058,9 +1077,9 @@ export default function DoctorSchedulePage() {
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">Doctor Schedule</h1>
+                <h1 className="text-2xl font-extrabold text-slate-900">{t("pageTitle")}</h1>
                 <p className="text-sm font-medium text-slate-500">
-                  Manage doctors working days and appointment slots.
+                  {t("pageSubtitle")}
                 </p>
               </div>
             </div>
@@ -1072,7 +1091,7 @@ export default function DoctorSchedulePage() {
                 className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 <RefreshCcw className="h-4 w-4" />
-                Refresh
+                {t("refreshButton")}
               </button>
               <button
                 type="button"
@@ -1080,7 +1099,7 @@ export default function DoctorSchedulePage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
               >
                 <Plus className="h-4 w-4" />
-                Add Schedule
+                {t("addButton")}
               </button>
             </div>
           </div>
@@ -1097,7 +1116,7 @@ export default function DoctorSchedulePage() {
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                {v === "cards" ? "Doctors" : activeCalendarGroup?.doctorName ?? "Calendar"}
+                {v === "cards" ? t("tabDoctors") : activeCalendarGroup?.doctorName ?? t("tabCalendar")}
               </button>
             ))}
           </div>
@@ -1108,21 +1127,21 @@ export default function DoctorSchedulePage() {
         {isDataLoading ? (
           <div className="flex items-center justify-center gap-3 py-24 text-sm font-bold text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-            Loading schedules…
+            {t("loading")}
           </div>
         ) : isError ? (
           <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">!</div>
-            <p className="text-lg font-extrabold text-slate-900">Failed to load schedules</p>
+            <p className="text-lg font-extrabold text-slate-900">{t("loadError")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              {getApiErrorMessage(error, "Server error. Please check the backend API.")}
+              {getApiErrorMessage(error, t("genericServerError"))}
             </p>
             <button
               type="button"
               onClick={() => refetch()}
               className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
             >
-              Try Again
+              {t("tryAgain")}
             </button>
           </div>
         ) : pageView === "calendar" && activeCalendarGroup ? (
@@ -1137,10 +1156,10 @@ export default function DoctorSchedulePage() {
           <>
             <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { label: "Total active schedules", value: enrichedSchedules.filter((s) => s.active).length, color: "text-slate-900" },
-                { label: "Doctors with schedule", value: doctorGroups.length, color: "text-emerald-600" },
-                { label: "Doctors", value: doctors.length, color: "text-blue-600" },
-                { label: "Selected day", value: selectedDay === "ALL" ? "All" : getDayShort(selectedDay), color: "text-indigo-600" },
+                { label: t("stats.totalActive"), value: enrichedSchedules.filter((s) => s.active).length, color: "text-slate-900" },
+                { label: t("stats.doctorsWithSchedule"), value: doctorGroups.length, color: "text-emerald-600" },
+                { label: t("stats.doctors"), value: doctors.length, color: "text-blue-600" },
+                { label: t("stats.selectedDay"), value: selectedDay === "ALL" ? t("stats.all") : getDayShort(selectedDay, t), color: "text-indigo-600" },
               ].map((stat) => (
                 <div key={stat.label} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
                   <p className="text-sm font-bold text-slate-500">{stat.label}</p>
@@ -1156,7 +1175,7 @@ export default function DoctorSchedulePage() {
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search doctor, day or time…"
+                    placeholder={t("searchPlaceholder")}
                     className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
@@ -1170,7 +1189,7 @@ export default function DoctorSchedulePage() {
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    All
+                    {t("dayFilterAll")}
                   </button>
                   {DAYS.map((day) => (
                     <button
@@ -1183,7 +1202,7 @@ export default function DoctorSchedulePage() {
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
-                      {day.short}
+                      {getDayShort(day.value, t)}
                     </button>
                   ))}
                 </div>
@@ -1195,9 +1214,9 @@ export default function DoctorSchedulePage() {
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                   <CalendarDays className="h-7 w-7" />
                 </div>
-                <p className="text-lg font-extrabold text-slate-900">No schedules found</p>
+                <p className="text-lg font-extrabold text-slate-900">{t("emptyNoSchedules.title")}</p>
                 <p className="mt-2 text-sm text-slate-500">
-                  Create a doctor schedule to start accepting appointments.
+                  {t("emptyNoSchedules.subtitle")}
                 </p>
                 <button
                   type="button"
@@ -1205,7 +1224,7 @@ export default function DoctorSchedulePage() {
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4" />
-                  Add Schedule
+                  {t("addButton")}
                 </button>
               </div>
             ) : filteredDoctorGroups.length === 0 ? (
@@ -1213,9 +1232,9 @@ export default function DoctorSchedulePage() {
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
                   <Search className="h-7 w-7" />
                 </div>
-                <p className="text-lg font-extrabold text-slate-900">Filterga mos schedule topilmadi</p>
+                <p className="text-lg font-extrabold text-slate-900">{t("emptyFiltered.title")}</p>
                 <p className="mt-2 text-sm text-slate-500">
-                  Boshqa kun tanlang yoki qidiruvni tozalang.
+                  {t("emptyFiltered.subtitle")}
                 </p>
                 <button
                   type="button"
@@ -1225,7 +1244,7 @@ export default function DoctorSchedulePage() {
                   }}
                   className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Filterlarni tozalash
+                  {t("emptyFiltered.clearButton")}
                 </button>
               </div>
             ) : (
