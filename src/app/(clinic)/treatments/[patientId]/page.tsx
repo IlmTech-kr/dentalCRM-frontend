@@ -9,7 +9,7 @@
  * JSX/className qayta qurildi.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
@@ -20,6 +20,9 @@ import {
   CheckCircle2,
   ClipboardList,
   Edit3,
+  ExternalLink,
+  ImageIcon,
+  Loader2,
   Lock,
   Plus,
   Save,
@@ -27,6 +30,7 @@ import {
   Sparkles,
   Stethoscope,
   Trash2,
+  Upload,
   UserRound,
   Wallet,
   X,
@@ -46,6 +50,14 @@ import { ToothCondition } from "@/src/lib/enums/enums.types";
 import type { DentalProcedure } from "@/src/types/dental-procedure.types";
 import type { TreatmentVisitItem } from "@/src/types/treatment-course.types";
 import { getPatientById } from "@/src/features/patients/patient.service";
+import {
+  useStorageImage,
+  useUploadFiles,
+} from "@/src/features/storage/hooks/useStorage";
+import {
+  STORAGE_BUCKET,
+  StorageTarget,
+} from "@/src/types/storage.types";
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -61,6 +73,15 @@ type PatientInfo = {
 
 type TreatmentTab = "CHART" | "COURSE";
 type CourseStatusFilter = "ACTIVE" | "COMPLETED";
+
+type SelectedXray = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
+const MAX_XRAY_FILES = 10;
+const MAX_XRAY_FILE_SIZE = 10 * 1024 * 1024;
 
 const DIAGNOSIS_OPTIONS: ToothCondition[] = [
   ToothCondition.CARIES, ToothCondition.PULPITIS,
@@ -168,6 +189,30 @@ function getFullName(person?: { firstName?: string; lastName?: string; fullName?
 function getInitials(name: string) {
   if (!name) return "?";
   return name.split(" ").filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
+function getVisitXrayUrls(visit: any): string[] {
+  const value =
+    visit?.xrayUrls ??
+    visit?.radiographUrls ??
+    visit?.xrays ??
+    [];
+
+  if (!Array.isArray(value)) return [];
+
+  return value.filter(
+    (item): item is string =>
+      typeof item === "string" && Boolean(item.trim())
+  );
+}
+
+function createClientId(file: File): string {
+  const randomPart =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  return `${file.name}-${file.size}-${file.lastModified}-${randomPart}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -295,6 +340,86 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ---------------------------------------------------------------------------
+// Visit X-ray preview/gallery
+// ---------------------------------------------------------------------------
+
+function VisitXrayImage({
+  storagePath,
+  index,
+}: {
+  storagePath: string;
+  index: number;
+}) {
+  const image = useStorageImage(storagePath, STORAGE_BUCKET);
+
+  if (image.isFetching && !image.url) {
+    return (
+      <div className="aspect-video animate-pulse rounded-xl bg-slate-200" />
+    );
+  }
+
+  if (!image.url || image.isError) {
+    return (
+      <div className="flex aspect-video items-center justify-center rounded-xl bg-red-50 px-3 text-center text-xs font-bold text-red-500">
+        Rentgen ochilmadi
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={image.url}
+      target="_blank"
+      rel="noreferrer"
+      className="group relative block overflow-hidden rounded-xl border border-border-color bg-slate-950"
+    >
+      <img
+        src={image.url}
+        alt={`Rentgen ${index + 1}`}
+        className="aspect-video h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
+      />
+
+      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/0 transition group-hover:bg-slate-950/30">
+        <ExternalLink
+          size={20}
+          className="text-white opacity-0 transition group-hover:opacity-100"
+        />
+      </div>
+    </a>
+  );
+}
+
+function VisitXrayGallery({ paths }: { paths: string[] }) {
+  if (!paths.length) return null;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
+      <div className="mb-3 flex items-center gap-2">
+        <ImageIcon size={15} className="text-[#35a8f5]" />
+
+        <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+          Rentgenlar
+        </p>
+
+        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
+          {paths.length} ta
+        </span>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {paths.map((path, index) => (
+          <VisitXrayImage
+            key={`${path}-${index}`}
+            storagePath={path}
+            index={index}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // VisitPanel — EXTRACTED outside page component (fixes textarea re-render)
 // ---------------------------------------------------------------------------
 
@@ -311,6 +436,10 @@ type VisitPanelProps = {
   onVisitDateChange: (v: string) => void;
   doctorNotes: string;
   onDoctorNotesChange: (v: string) => void;
+  selectedXrays: SelectedXray[];
+  onSelectXrays: (files: File[]) => void;
+  onRemoveXray: (id: string) => void;
+  isUploadingXrays: boolean;
   selectedTooth: string;
   onToothChange: (t: string) => void;
   treatmentTeeth: string[];
@@ -333,6 +462,7 @@ function VisitPanel({
   doctors, doctorId, onDoctorChange, isDoctorLocked, lockedDoctorName,
   visitDate, onVisitDateChange,
   doctorNotes, onDoctorNotesChange,
+  selectedXrays, onSelectXrays, onRemoveXray, isUploadingXrays,
   selectedTooth, onToothChange, treatmentTeeth,
   visitItems, onRemoveItem, onSave, isSaving, isCompleted, isNewAppointment,
   procedures, proceduresLoading, procedureSearch, onProcedureSearch, onAddProcedure,
@@ -400,6 +530,84 @@ function VisitPanel({
             rows={3}
             className="w-full resize-none rounded-2xl border border-border-color bg-white px-4 py-3 text-sm text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
           />
+        </div>
+
+        {/* Visit rentgenlari */}
+        <div>
+          <SectionLabel>Rentgen rasmlari</SectionLabel>
+
+          <label
+            htmlFor="visit-xray-input"
+            className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 py-6 text-center transition ${
+              isUploadingXrays
+                ? "cursor-not-allowed border-slate-200 bg-slate-50"
+                : "border-blue-200 bg-blue-50/50 hover:border-[#35a8f5] hover:bg-blue-50"
+            }`}
+          >
+            {isUploadingXrays ? (
+              <Loader2 size={24} className="animate-spin text-[#35a8f5]" />
+            ) : (
+              <Upload size={24} className="text-[#35a8f5]" />
+            )}
+
+            <p className="mt-2 text-sm font-black text-dark-navy">
+              Rentgen yuklash
+            </p>
+
+            <p className="mt-1 text-xs text-slate-500">
+              JPG, PNG yoki WEBP · maksimal 10 MB · 10 tagacha
+            </p>
+
+            <input
+              id="visit-xray-input"
+              hidden
+              multiple
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={isUploadingXrays}
+              onChange={(event) => {
+                const files = Array.from(event.target.files || []);
+                onSelectXrays(files);
+                event.target.value = "";
+              }}
+            />
+          </label>
+
+          {selectedXrays.length > 0 ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {selectedXrays.map((xray, index) => (
+                <div
+                  key={xray.id}
+                  className="group relative overflow-hidden rounded-2xl border border-border-color bg-slate-950"
+                >
+                  <img
+                    src={xray.previewUrl}
+                    alt={`Tanlangan rentgen ${index + 1}`}
+                    className="aspect-video h-full w-full object-contain"
+                  />
+
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-slate-950/70 px-3 py-2">
+                    <p className="min-w-0 truncate text-xs font-semibold text-white">
+                      {xray.file.name}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => onRemoveXray(xray.id)}
+                      disabled={isUploadingXrays}
+                      className="shrink-0 rounded-lg bg-red-500/90 p-1.5 text-white transition hover:bg-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs font-semibold text-slate-500">
+              Rentgen yuklash ixtiyoriy. Yuklansa, visit saqlangandan keyin visit tarixida ko‘rinadi.
+            </p>
+          )}
         </div>
 
         {/* Tooth selector */}
@@ -493,7 +701,10 @@ function VisitPanel({
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3.5 text-sm font-black text-white shadow-md shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
             {isSaving ? (
-              "Saqlanmoqda..."
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Saqlanmoqda...
+              </>
             ) : visitItems.length === 0 ? (
               "Avval muolaja tanlang"
             ) : (
@@ -632,6 +843,22 @@ export default function TreatmentPatientPage() {
   const [visitDate, setVisitDate] = useState(nowLocalIso);
   const [visitItems, setVisitItems] = useState<TreatmentVisitItem[]>([]);
 
+  const uploadXraysMutation = useUploadFiles();
+  const [selectedXrays, setSelectedXrays] = useState<SelectedXray[]>([]);
+  const selectedXraysRef = useRef<SelectedXray[]>([]);
+
+  useEffect(() => {
+    selectedXraysRef.current = selectedXrays;
+  }, [selectedXrays]);
+
+  useEffect(() => {
+    return () => {
+      selectedXraysRef.current.forEach((xray) => {
+        URL.revokeObjectURL(xray.previewUrl);
+      });
+    };
+  }, []);
+
   // DOCTOR rolida kirgan foydalanuvchi uchun doctorId har doim o'zinikiga tenglashadi.
   useEffect(() => {
     if (isDoctorUser && currentUserId) {
@@ -767,38 +994,161 @@ export default function TreatmentPatientPage() {
     }
   }
 
+  function handleSelectXrays(files: File[]) {
+    if (!files.length) return;
+
+    const validFiles: File[] = [];
+
+    files.forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast.warning(`${file.name} rasm fayli emas`);
+        return;
+      }
+
+      if (file.size > MAX_XRAY_FILE_SIZE) {
+        toast.warning(`${file.name} hajmi 10 MB dan katta`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    setSelectedXrays((previous) => {
+      const availableCount = MAX_XRAY_FILES - previous.length;
+
+      if (availableCount <= 0) {
+        toast.warning(`Maksimal ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`);
+        return previous;
+      }
+
+      const acceptedFiles = validFiles.slice(0, availableCount);
+
+      if (acceptedFiles.length < validFiles.length) {
+        toast.warning(`Faqat ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`);
+      }
+
+      const nextItems = acceptedFiles.map((file) => ({
+        id: createClientId(file),
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
+
+      return [...previous, ...nextItems];
+    });
+  }
+
+  function handleRemoveXray(xrayId: string) {
+    setSelectedXrays((previous) => {
+      const removed = previous.find((xray) => xray.id === xrayId);
+
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+
+      return previous.filter((xray) => xray.id !== xrayId);
+    });
+  }
+
+  function clearSelectedXrays() {
+    setSelectedXrays((previous) => {
+      previous.forEach((xray) => {
+        URL.revokeObjectURL(xray.previewUrl);
+      });
+
+      return [];
+    });
+  }
+
+  function closeAddVisitModal() {
+    if (uploadXraysMutation.isPending || isAddingVisit) return;
+
+    clearSelectedXrays();
+    setIsAddVisitModalOpen(false);
+  }
+
   async function handleAddVisit() {
-    if (!selectedCourseId) { toast.warning("Treatment course tanlang"); return; }
-    if (isSelectedCourseCompleted) { toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz"); return; }
-    if (!doctorId) { toast.warning("Doctor tanlang"); return; }
-    if (!doctorNotes.trim()) { toast.warning("Shifokor izohi kiriting"); return; }
-    if (!visitItems.length) { toast.warning("Kamida bitta muolaja tanlang"); return; }
+    if (!selectedCourseId) {
+      toast.warning("Treatment course tanlang");
+      return;
+    }
+
+    if (isSelectedCourseCompleted) {
+      toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
+      return;
+    }
+
+    if (!doctorId) {
+      toast.warning("Doctor tanlang");
+      return;
+    }
+
+    if (!doctorNotes.trim()) {
+      toast.warning("Shifokor izohi kiriting");
+      return;
+    }
+
+    if (!visitItems.length) {
+      toast.warning("Kamida bitta muolaja tanlang");
+      return;
+    }
+
     try {
+      let xrayUrls: string[] = [];
+
+      // Rentgen tanlangan bo‘lsagina storage'ga yuklanadi.
+      if (selectedXrays.length > 0) {
+        const uploadedXrays = await uploadXraysMutation.mutateAsync({
+          files: selectedXrays.map((xray) => xray.file),
+          target: StorageTarget.DOCUMENTS,
+          bucket: STORAGE_BUCKET,
+        });
+
+        xrayUrls = uploadedXrays.map((file) => file.storagePath);
+      }
+
       await addVisit({
         courseId: selectedCourseId,
         payload: {
-          // appointmentId bo'lsa — mavjud appointmentga biriktiriladi.
-          // Bo'lmasa — backend doctorId + joriy vaqt bilan avtomatik yaratadi.
           ...(appointmentId ? { appointmentId } : {}),
           visitDate,
           doctorId,
           doctorNotes: doctorNotes.trim(),
           items: visitItems,
+          ...(xrayUrls.length > 0 ? { xrayUrls } : {}),
         },
       });
+
       if (Object.keys(toothMap).length) {
         const payload = { patientId, toothMap };
-        if (chart && getId(chart)) await updateChart({ chartId: getId(chart), payload });
-        else await createChart(payload);
+
+        if (chart && getId(chart)) {
+          await updateChart({
+            chartId: getId(chart),
+            payload,
+          });
+        } else {
+          await createChart(payload);
+        }
+
         setLocalToothMap({});
       }
+
       setDoctorNotes("");
       setVisitItems([]);
+      clearSelectedXrays();
       setIsAddVisitModalOpen(false);
       setActiveTab("COURSE");
-      toast.success(appointmentId ? "Visit saqlandi" : "Molaja boshlandi, appointment avtomatik yaratildi");
-    } catch {
-      toast.error("Visit saqlashda xatolik");
+
+      toast.success(
+        xrayUrls.length > 0
+          ? "Visit va rentgenlar saqlandi"
+          : appointmentId
+            ? "Visit saqlandi"
+            : "Muolaja boshlandi, appointment avtomatik yaratildi"
+      );
+    } catch (error) {
+      console.error("Visit save failed:", error);
+      toast.error("Visitni saqlashda xatolik yuz berdi");
     }
   }
 
@@ -819,6 +1169,7 @@ export default function TreatmentPatientPage() {
       toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
       return;
     }
+    clearSelectedXrays();
     setSelectedCourseId(courseId);
     setVisitItems([]);
     setDoctorNotes("");
@@ -841,13 +1192,21 @@ export default function TreatmentPatientPage() {
     onVisitDateChange: setVisitDate,
     doctorNotes,
     onDoctorNotesChange: setDoctorNotes,
+    selectedXrays,
+    onSelectXrays: handleSelectXrays,
+    onRemoveXray: handleRemoveXray,
+    isUploadingXrays: uploadXraysMutation.isPending,
     selectedTooth,
     onToothChange: setSelectedTooth,
     treatmentTeeth,
     visitItems,
     onRemoveItem: (idx) => setVisitItems((prev) => prev.filter((_, i) => i !== idx)),
     onSave: handleAddVisit,
-    isSaving: isAddingVisit || isCreating || isUpdating,
+    isSaving:
+      isAddingVisit ||
+      isCreating ||
+      isUpdating ||
+      uploadXraysMutation.isPending,
     isCompleted: isSelectedCourseCompleted,
     isNewAppointment: !appointmentId,
     procedures,
@@ -1221,6 +1580,8 @@ export default function TreatmentPatientPage() {
                           ))}
                         </div>
                       )}
+
+                      <VisitXrayGallery paths={getVisitXrayUrls(visit)} />
                     </div>
                   </div>
                 ))}
@@ -1341,7 +1702,7 @@ export default function TreatmentPatientPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsAddVisitModalOpen(false)}
+                  onClick={closeAddVisitModal}
                   className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                 >
                   <X size={20} />
