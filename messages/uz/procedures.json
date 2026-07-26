@@ -1,1 +1,71 @@
-{}
+{
+  "header": {
+    "badge": "Dental service narxlar listi",
+    "title": "Procedures",
+    "subtitle": "Bu sahifada klinika xizmatlari va narxlari boshqariladi. Treatment visit ichida doctor shu listdan procedure tanlaydi.",
+    "addButton": "Yangi procedure"
+  },
+  "stats": {
+    "totalProcedures": "Jami procedures",
+    "totalDefaultPrice": "Umumiy default narx",
+    "status": "Status"
+  },
+  "list": {
+    "sectionTitle": "Procedure list",
+    "sectionSubtitle": "Bu ro'yxat treatment visitda tanlash uchun ishlatiladi.",
+    "searchPlaceholder": "Procedure qidirish...",
+    "loading": "Loading procedures...",
+    "emptyTitle": "Procedure topilmadi",
+    "emptySubtitle": "Yangi procedure yarating yoki searchni tozalang."
+  },
+  "table": {
+    "code": "Code",
+    "name": "Nomi",
+    "price": "Narxi",
+    "result": "Natija",
+    "actionsHeader": "Amallar"
+  },
+  "conditions": {
+    "filling": "Plomba",
+    "crown": "Koronka",
+    "implant": "Implant",
+    "rootCanal": "Kanal davolash",
+    "extracted": "Sug'urilgan",
+    "missing": "Yo'q"
+  },
+  "modal": {
+    "editBadge": "Edit mode",
+    "createBadge": "Create mode",
+    "editTitle": "Procedure update qilish",
+    "createTitle": "Yangi procedure yaratish",
+    "subtitle": "Procedure narxi va natija conditionini kiriting. Bu service keyinchalik treatment visit ichida tanlanadi.",
+    "closeAria": "Modalni yopish",
+    "codeLabel": "Procedure code",
+    "codePlaceholder": "PROC_002",
+    "priceLabel": "Default price",
+    "pricePlaceholder": "550000",
+    "nameLabel": "Procedure nomi",
+    "namePlaceholder": "Doimiy yorug'likli kompozit plomba",
+    "conditionLabel": "Resulting condition",
+    "previewLabel": "Preview",
+    "previewNamePlaceholder": "Procedure nomi",
+    "previewCodePlaceholder": "PROC_CODE",
+    "cancelButton": "Bekor qilish",
+    "updateButton": "Update qilish",
+    "createButton": "Create qilish"
+  },
+  "deleteConfirm": {
+    "message": "\"{name}\" procedureni o'chirasizmi?"
+  },
+  "toast": {
+    "codeRequired": "Procedure code kiriting",
+    "nameRequired": "Procedure nomini kiriting",
+    "priceRequired": "Procedure narxini kiriting",
+    "idNotFound": "Procedure ID topilmadi",
+    "updateSuccess": "Procedure muvaffaqiyatli yangilandi",
+    "createSuccess": "Procedure muvaffaqiyatli yaratildi",
+    "saveError": "Procedure saqlashda xatolik. Create/update faqat CLINIC_ADMIN role bilan ishlaydi.",
+    "deleteSuccess": "Procedure o'chirildi",
+    "deleteError": "Procedure o'chirishda xatolik. Delete faqat CLINIC_ADMIN role bilan ishlaydi."
+  }
+}

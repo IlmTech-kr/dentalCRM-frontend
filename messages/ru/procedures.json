@@ -1,1 +1,71 @@
-{}
+{
+  "header": {
+    "badge": "Прайс-лист стоматологических услуг",
+    "title": "Процедуры",
+    "subtitle": "Здесь управляются услуги клиники и их цены. Врач выбирает процедуру из этого списка внутри визита лечения.",
+    "addButton": "Новая процедура"
+  },
+  "stats": {
+    "totalProcedures": "Всего процедур",
+    "totalDefaultPrice": "Общая стоимость по умолчанию",
+    "status": "Статус"
+  },
+  "list": {
+    "sectionTitle": "Список процедур",
+    "sectionSubtitle": "Этот список используется для выбора внутри визита лечения.",
+    "searchPlaceholder": "Поиск процедуры...",
+    "loading": "Загрузка процедур...",
+    "emptyTitle": "Процедуры не найдены",
+    "emptySubtitle": "Создайте новую процедуру или очистите поиск."
+  },
+  "table": {
+    "code": "Код",
+    "name": "Название",
+    "price": "Цена",
+    "result": "Результат",
+    "actionsHeader": "Действия"
+  },
+  "conditions": {
+    "filling": "Пломба",
+    "crown": "Коронка",
+    "implant": "Имплант",
+    "rootCanal": "Лечение канала",
+    "extracted": "Удалён",
+    "missing": "Отсутствует"
+  },
+  "modal": {
+    "editBadge": "Режим редактирования",
+    "createBadge": "Режим создания",
+    "editTitle": "Обновление процедуры",
+    "createTitle": "Создание новой процедуры",
+    "subtitle": "Укажите цену процедуры и итоговое состояние. Эта услуга затем будет доступна для выбора внутри визита лечения.",
+    "closeAria": "Закрыть окно",
+    "codeLabel": "Код процедуры",
+    "codePlaceholder": "PROC_002",
+    "priceLabel": "Цена по умолчанию",
+    "pricePlaceholder": "550000",
+    "nameLabel": "Название процедуры",
+    "namePlaceholder": "Постоянная светоотверждаемая композитная пломба",
+    "conditionLabel": "Итоговое состояние",
+    "previewLabel": "Предпросмотр",
+    "previewNamePlaceholder": "Название процедуры",
+    "previewCodePlaceholder": "PROC_CODE",
+    "cancelButton": "Отмена",
+    "updateButton": "Обновить",
+    "createButton": "Создать"
+  },
+  "deleteConfirm": {
+    "message": "Удалить процедуру «{name}»?"
+  },
+  "toast": {
+    "codeRequired": "Введите код процедуры",
+    "nameRequired": "Введите название процедуры",
+    "priceRequired": "Введите цену процедуры",
+    "idNotFound": "ID процедуры не найден",
+    "updateSuccess": "Процедура успешно обновлена",
+    "createSuccess": "Процедура успешно создана",
+    "saveError": "Не удалось сохранить процедуру. Создание/обновление доступно только роли CLINIC_ADMIN.",
+    "deleteSuccess": "Процедура удалена",
+    "deleteError": "Не удалось удалить процедуру. Удаление доступно только роли CLINIC_ADMIN."
+  }
+}
