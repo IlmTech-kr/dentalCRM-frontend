@@ -1,1 +1,180 @@
-{}
+{
+  "dashboard": {
+    "booleanYes": "Да",
+    "booleanNo": "Нет",
+    "fieldLabels": {
+      "name": "Название клиники",
+      "subDomain": "Поддомен",
+      "contactNumber": "Номер телефона",
+      "ownerId": "ID владельца",
+      "status": "Статус",
+      "subscriptionStatus": "Статус подписки",
+      "currentPlan": "Текущий тариф",
+      "startDate": "Дата начала",
+      "endDate": "Дата окончания",
+      "smsBalance": "Баланс SMS",
+      "currentStorageBytes": "Использовано памяти",
+      "lastPaymentTransactionId": "ID последнего платежа",
+      "lastActivatedAt": "Последняя активация",
+      "maxDoctors": "Макс. врачей",
+      "maxStaff": "Макс. сотрудников",
+      "maxAssistants": "Макс. ассистентов",
+      "maxReceptionists": "Макс. администраторов",
+      "maxPatients": "Макс. пациентов",
+      "maxAppointments": "Макс. приёмов",
+      "storageLimitBytes": "Лимит хранилища",
+      "maxStorageBytes": "Макс. хранилище",
+      "includedSmsCount": "SMS в тарифе",
+      "smsLimit": "Лимит SMS",
+      "createdAt": "Дата создания",
+      "updatedAt": "Дата обновления"
+    },
+    "header": {
+      "totalLabel": "Всего:",
+      "totalSuffix": "тенантов",
+      "clinicNamesLoadError": "Не удалось загрузить названия клиник."
+    },
+    "table": {
+      "loadError": "Не удалось загрузить тенантов.",
+      "empty": "Тенанты не найдены.",
+      "clinicNotFound": "Клиника не найдена",
+      "noSubdomain": "Нет поддомена",
+      "detailsButton": "Подробнее",
+      "limitsButton": "Лимиты",
+      "suspendButton": "Приостановить",
+      "suspendConfirm": "Приостановить тенант «{clinicName}»?",
+      "headers": {
+        "clinic": "Клиника",
+        "status": "Статус",
+        "plan": "Тариф",
+        "validity": "Действует до",
+        "sms": "SMS",
+        "storage": "Хранилище",
+        "actions": "Действия"
+      }
+    },
+    "toast": {
+      "suspended": "Тенант приостановлен",
+      "suspendFailed": "Не удалось приостановить тенант"
+    },
+    "pagination": {
+      "previous": "Назад",
+      "next": "Вперёд"
+    },
+    "detailModal": {
+      "clinicInfoTitle": "Информация о клинике",
+      "clinicNotFoundMessage": "Клиника для этого тенанта не найдена в списке клиник.",
+      "subscriptionInfoTitle": "Информация о подписке",
+      "subscriptionNotFoundMessage": "Информация о подписке не найдена.",
+      "limitsTitle": "Лимиты тенанта",
+      "limitsLoadError": "Не удалось загрузить лимиты тенанта.",
+      "limitsNotFoundMessage": "Лимиты тенанта не найдены.",
+      "noData": "Данные не найдены.",
+      "closeButton": "Закрыть"
+    },
+    "limitsModal": {
+      "loadError": "Не удалось загрузить лимиты.",
+      "emptyFields": "Редактируемые поля лимитов не найдены.",
+      "toastUpdated": "Лимиты обновлены",
+      "toastUpdateFailed": "Не удалось сохранить лимиты",
+      "cancelButton": "Отмена",
+      "saving": "Сохранение...",
+      "saveButton": "Сохранить"
+    },
+    "loading": "Загрузка..."
+  },
+  "plans": {
+    "errors": {
+      "selectTenantAndPlan": "Выберите тенанта и тариф"
+    },
+    "toast": {
+      "activated": "Подписка активирована",
+      "activateFailed": "Не удалось активировать подписку"
+    },
+    "activate": {
+      "title": "Активация подписки",
+      "tenantLabel": "Тенант",
+      "selectPlaceholder": "Выберите...",
+      "planLabel": "Тариф",
+      "submitting": "Активация...",
+      "submitButton": "Активировать"
+    },
+    "list": {
+      "title": "Все тарифы",
+      "loadError": "Не удалось загрузить тарифы.",
+      "empty": "Тарифы не найдены.",
+      "inactiveBadge": "НЕАКТИВЕН",
+      "editPriceButton": "Изменить цену",
+      "unlimited": "без ограничений",
+      "doctorsLabel": "Врачи:",
+      "staffLabel": "Сотрудники:",
+      "storageLabel": "Хранилище:",
+      "smsLabel": "SMS:",
+      "monthUnit": "мес."
+    },
+    "currency": "сум",
+    "editModal": {
+      "title": "Изменение цены тарифа",
+      "currentPriceLabel": "Текущая цена",
+      "newPriceLabel": "Новая ежемесячная цена",
+      "cancelButton": "Отмена",
+      "saving": "Сохранение...",
+      "saveButton": "Сохранить",
+      "errors": {
+        "invalidPrice": "Введена некорректная цена",
+        "unchanged": "Цена не изменилась",
+        "updateFailed": "Не удалось обновить цену тарифа"
+      },
+      "toast": {
+        "updated": "Цена тарифа {planType} обновлена"
+      }
+    }
+  },
+  "statistics": {
+    "fromDateLabel": "Дата начала",
+    "toDateLabel": "Дата окончания",
+    "sortLabel": "Сортировка",
+    "sortOptions": {
+      "revenue": "Доход",
+      "clinic": "Клиника",
+      "period": "Период"
+    },
+    "directionDesc": "По убыванию",
+    "directionAsc": "По возрастанию",
+    "cards": {
+      "totalRevenue": "Общий доход",
+      "totalTransactions": "Транзакции",
+      "activeClinics": "Активные клиники"
+    },
+    "currency": "сум",
+    "table": {
+      "title": "Доход по клиникам",
+      "loadError": "Не удалось загрузить статистику.",
+      "empty": "Нет данных за выбранный период.",
+      "headers": {
+        "clinic": "Клиника",
+        "subscriptionStatus": "Статус подписки",
+        "transactions": "Транзакции",
+        "revenue": "Доход"
+      }
+    }
+  },
+  "login": {
+    "checkingSession": "Проверка сессии...",
+    "title": "Супер Админ",
+    "subtitle": "Панель управления DentalCRM",
+    "emailLabel": "Email",
+    "emailPlaceholder": "superadmin@dentalcrm.uz",
+    "passwordLabel": "Пароль",
+    "passwordPlaceholder": "Введите пароль",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль",
+    "submitting": "Вход...",
+    "submitButton": "Войти",
+    "welcomeBack": "С возвращением!",
+    "errors": {
+      "credentialsRequired": "Email и пароль обязательны",
+      "loginFailed": "Ошибка входа"
+    }
+  }
+}

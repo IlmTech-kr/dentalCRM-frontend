@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Lock, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 import { useSuperAdminLogin } from "@/src/features/superadmin/auth/hook/UseSuperAdminAuth";
@@ -18,16 +19,20 @@ import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
-function getErrorMessage(error: unknown): string {
-  if (!error) return "Login failed";
-  if (error instanceof Error) return error.message || "Login failed";
+function getErrorMessage(
+  error: unknown,
+  fallback: string
+): string {
+  if (!error) return fallback;
+  if (error instanceof Error) return error.message || fallback;
   if (typeof error === "object" && error !== null && "message" in error) {
-    return String((error as { message?: string }).message || "Login failed");
+    return String((error as { message?: string }).message || fallback);
   }
-  return "Login failed";
+  return fallback;
 }
 
 export default function SuperAdminLoginPage() {
+  const t = useTranslations("superadmin");
   const router = useRouter();
   const toast = useToast();
   const loginMutation = useSuperAdminLogin();
@@ -62,7 +67,7 @@ export default function SuperAdminLoginPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (checkingSession) {
-    return <DentalLoader text="Checking session..." />;
+    return <DentalLoader text={t("login.checkingSession")} />;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -72,7 +77,7 @@ export default function SuperAdminLoginPage() {
     const password = form.password;
 
     if (!email || !password) {
-      toast.error("Email and password are required");
+      toast.error(t("login.errors.credentialsRequired"));
       return;
     }
 
@@ -80,10 +85,10 @@ export default function SuperAdminLoginPage() {
       const res = await loginMutation.mutateAsync({ email, password });
       const user = res?.user || res?.data?.user || res;
       saveUser(user);
-      toast.success("Welcome back!");
+      toast.success(t("login.welcomeBack"));
       router.replace("/dashboard");
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(getErrorMessage(error, t("login.errors.loginFailed")));
     }
   }
 
@@ -98,28 +103,28 @@ export default function SuperAdminLoginPage() {
             <ShieldCheck size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-extrabold text-dark-navy">Super Admin</h2>
-            <p className="text-sm text-text-light">DentalCRM boshqaruv paneli</p>
+            <h2 className="text-2xl font-extrabold text-dark-navy">{t("login.title")}</h2>
+            <p className="text-sm text-text-light">{t("login.subtitle")}</p>
           </div>
         </div>
 
         {loginMutation.error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm font-semibold text-red-700">
-              {getErrorMessage(loginMutation.error)}
+              {getErrorMessage(loginMutation.error, t("login.errors.loginFailed"))}
             </p>
           </div>
         )}
 
         <div className="mt-6 space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-600">Email</label>
+            <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.emailLabel")}</label>
             <div className="flex h-14 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4">
               <Mail size={19} className="text-slate-400" />
               <input
                 type="email"
                 className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
-                placeholder="superadmin@dentalcrm.uz"
+                placeholder={t("login.emailPlaceholder")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 disabled={loginMutation.isPending}
@@ -128,13 +133,13 @@ export default function SuperAdminLoginPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-600">Parol</label>
+            <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.passwordLabel")}</label>
             <div className="flex h-14 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4">
               <Lock size={19} className="text-slate-400" />
               <input
                 type={showPassword ? "text" : "password"}
                 className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
-                placeholder="Parolni kiriting"
+                placeholder={t("login.passwordPlaceholder")}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 disabled={loginMutation.isPending}
@@ -144,7 +149,7 @@ export default function SuperAdminLoginPage() {
                 onClick={() => setShowPassword((p) => !p)}
                 className="text-slate-400 transition hover:text-primary-blue"
                 disabled={loginMutation.isPending}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
               >
                 {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
               </button>
@@ -156,7 +161,7 @@ export default function SuperAdminLoginPage() {
             disabled={loginMutation.isPending || !form.email.trim() || !form.password}
             className="h-14 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loginMutation.isPending ? "Kirilmoqda..." : "Kirish"}
+            {loginMutation.isPending ? t("login.submitting") : t("login.submitButton")}
           </button>
         </div>
       </form>

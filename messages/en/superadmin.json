@@ -1,1 +1,180 @@
-{}
+{
+  "dashboard": {
+    "booleanYes": "Yes",
+    "booleanNo": "No",
+    "fieldLabels": {
+      "name": "Clinic name",
+      "subDomain": "Subdomain",
+      "contactNumber": "Phone number",
+      "ownerId": "Owner ID",
+      "status": "Status",
+      "subscriptionStatus": "Subscription status",
+      "currentPlan": "Current plan",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "smsBalance": "SMS balance",
+      "currentStorageBytes": "Storage used",
+      "lastPaymentTransactionId": "Last payment ID",
+      "lastActivatedAt": "Last activated at",
+      "maxDoctors": "Max doctors",
+      "maxStaff": "Max staff",
+      "maxAssistants": "Max assistants",
+      "maxReceptionists": "Max receptionists",
+      "maxPatients": "Max patients",
+      "maxAppointments": "Max appointments",
+      "storageLimitBytes": "Storage limit",
+      "maxStorageBytes": "Max storage",
+      "includedSmsCount": "SMS included in plan",
+      "smsLimit": "SMS limit",
+      "createdAt": "Created at",
+      "updatedAt": "Updated at"
+    },
+    "header": {
+      "totalLabel": "Total:",
+      "totalSuffix": "tenants",
+      "clinicNamesLoadError": "Failed to load clinic names."
+    },
+    "table": {
+      "loadError": "Failed to load tenants.",
+      "empty": "No tenants found.",
+      "clinicNotFound": "Clinic not found",
+      "noSubdomain": "No subdomain",
+      "detailsButton": "Details",
+      "limitsButton": "Limits",
+      "suspendButton": "Suspend",
+      "suspendConfirm": "Suspend tenant \"{clinicName}\"?",
+      "headers": {
+        "clinic": "Clinic",
+        "status": "Status",
+        "plan": "Plan",
+        "validity": "Valid until",
+        "sms": "SMS",
+        "storage": "Storage",
+        "actions": "Actions"
+      }
+    },
+    "toast": {
+      "suspended": "Tenant suspended",
+      "suspendFailed": "Failed to suspend tenant"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "detailModal": {
+      "clinicInfoTitle": "Clinic information",
+      "clinicNotFoundMessage": "No clinic found in the clinics list for this tenant.",
+      "subscriptionInfoTitle": "Subscription information",
+      "subscriptionNotFoundMessage": "No subscription information found.",
+      "limitsTitle": "Tenant limits",
+      "limitsLoadError": "Failed to load tenant limits.",
+      "limitsNotFoundMessage": "No tenant limits found.",
+      "noData": "No data found.",
+      "closeButton": "Close"
+    },
+    "limitsModal": {
+      "loadError": "Failed to load limits.",
+      "emptyFields": "No editable limit fields found.",
+      "toastUpdated": "Limits updated",
+      "toastUpdateFailed": "Failed to save limits",
+      "cancelButton": "Cancel",
+      "saving": "Saving...",
+      "saveButton": "Save"
+    },
+    "loading": "Loading..."
+  },
+  "plans": {
+    "errors": {
+      "selectTenantAndPlan": "Select a tenant and a plan"
+    },
+    "toast": {
+      "activated": "Subscription activated",
+      "activateFailed": "Failed to activate subscription"
+    },
+    "activate": {
+      "title": "Activate subscription",
+      "tenantLabel": "Tenant",
+      "selectPlaceholder": "Select...",
+      "planLabel": "Plan",
+      "submitting": "Activating...",
+      "submitButton": "Activate"
+    },
+    "list": {
+      "title": "All plans",
+      "loadError": "Failed to load plans.",
+      "empty": "No plans found.",
+      "inactiveBadge": "INACTIVE",
+      "editPriceButton": "Edit price",
+      "unlimited": "unlimited",
+      "doctorsLabel": "Doctors:",
+      "staffLabel": "Staff:",
+      "storageLabel": "Storage:",
+      "smsLabel": "SMS:",
+      "monthUnit": "mo"
+    },
+    "currency": "UZS",
+    "editModal": {
+      "title": "Edit plan price",
+      "currentPriceLabel": "Current price",
+      "newPriceLabel": "New monthly price",
+      "cancelButton": "Cancel",
+      "saving": "Saving...",
+      "saveButton": "Save",
+      "errors": {
+        "invalidPrice": "Invalid price entered",
+        "unchanged": "Price hasn't changed",
+        "updateFailed": "Failed to update plan price"
+      },
+      "toast": {
+        "updated": "{planType} plan price updated"
+      }
+    }
+  },
+  "statistics": {
+    "fromDateLabel": "Start date",
+    "toDateLabel": "End date",
+    "sortLabel": "Sort by",
+    "sortOptions": {
+      "revenue": "Revenue",
+      "clinic": "Clinic",
+      "period": "Period"
+    },
+    "directionDesc": "Descending",
+    "directionAsc": "Ascending",
+    "cards": {
+      "totalRevenue": "Total revenue",
+      "totalTransactions": "Transactions",
+      "activeClinics": "Active clinics"
+    },
+    "currency": "UZS",
+    "table": {
+      "title": "Revenue by clinic",
+      "loadError": "Failed to load statistics.",
+      "empty": "No data found for the selected period.",
+      "headers": {
+        "clinic": "Clinic",
+        "subscriptionStatus": "Subscription status",
+        "transactions": "Transactions",
+        "revenue": "Revenue"
+      }
+    }
+  },
+  "login": {
+    "checkingSession": "Checking session...",
+    "title": "Super Admin",
+    "subtitle": "DentalCRM management panel",
+    "emailLabel": "Email",
+    "emailPlaceholder": "superadmin@dentalcrm.uz",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submitting": "Signing in...",
+    "submitButton": "Sign in",
+    "welcomeBack": "Welcome back!",
+    "errors": {
+      "credentialsRequired": "Email and password are required",
+      "loginFailed": "Login failed"
+    }
+  }
+}

@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowDownUp,
   Building2,
@@ -52,6 +53,7 @@ function initials(name: string): string {
 }
 
 export default function StatisticsPage() {
+  const t = useTranslations("superadmin");
   const [fromDate, setFromDate] = useState(firstDayOfMonthISO());
   const [toDate, setToDate] = useState(todayISO());
   const [sort, setSort] = useState<"PERIOD" | "REVENUE" | "CLINIC">("REVENUE");
@@ -82,7 +84,7 @@ export default function StatisticsPage() {
         <div className="relative flex flex-wrap items-end gap-3">
           <div>
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
-              Boshlanish sanasi
+              {t("statistics.fromDateLabel")}
             </label>
             <input
               type="date"
@@ -93,7 +95,7 @@ export default function StatisticsPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
-              Tugash sanasi
+              {t("statistics.toDateLabel")}
             </label>
             <input
               type="date"
@@ -104,16 +106,16 @@ export default function StatisticsPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
-              Saralash
+              {t("statistics.sortLabel")}
             </label>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
               className="h-11 rounded-xl border border-border-color bg-slate-50 px-3 text-sm outline-none focus:border-violet-400"
             >
-              <option value="REVENUE">Daromad</option>
-              <option value="CLINIC">Klinika</option>
-              <option value="PERIOD">Davr</option>
+              <option value="REVENUE">{t("statistics.sortOptions.revenue")}</option>
+              <option value="CLINIC">{t("statistics.sortOptions.clinic")}</option>
+              <option value="PERIOD">{t("statistics.sortOptions.period")}</option>
             </select>
           </div>
           <button
@@ -121,7 +123,7 @@ export default function StatisticsPage() {
             className="flex h-11 items-center gap-2 rounded-xl border border-border-color px-4 text-sm font-bold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600"
           >
             <ArrowDownUp size={15} />
-            {direction === "DESC" ? "Kamayish" : "O'sish"}
+            {direction === "DESC" ? t("statistics.directionDesc") : t("statistics.directionAsc")}
           </button>
         </div>
       </div>
@@ -130,17 +132,17 @@ export default function StatisticsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           icon={TrendingUp}
-          label="Jami daromad"
-          value={`${formatMoney(totalRevenue)} so'm`}
+          label={t("statistics.cards.totalRevenue")}
+          value={`${formatMoney(totalRevenue)} ${t("statistics.currency")}`}
         />
-        <StatCard icon={Receipt} label="Tranzaksiyalar" value={String(totalTransactions)} />
-        <StatCard icon={Building2} label="Faol klinikalar" value={String(activeClinics)} />
+        <StatCard icon={Receipt} label={t("statistics.cards.totalTransactions")} value={String(totalTransactions)} />
+        <StatCard icon={Building2} label={t("statistics.cards.activeClinics")} value={String(activeClinics)} />
       </div>
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-3xl border border-border-color bg-white shadow-sm">
         <div className="border-b border-border-color px-6 py-4">
-          <h2 className="text-base font-bold text-dark-navy">Klinikalar bo'yicha daromad</h2>
+          <h2 className="text-base font-bold text-dark-navy">{t("statistics.table.title")}</h2>
         </div>
 
         {isLoading ? (
@@ -149,21 +151,21 @@ export default function StatisticsPage() {
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">
-            Statistikani yuklab bo'lmadi.
+            {t("statistics.table.loadError")}
           </p>
         ) : rows.length === 0 ? (
           <p className="px-6 py-10 text-center text-sm text-slate-400">
-            Tanlangan davr uchun ma'lumot topilmadi.
+            {t("statistics.table.empty")}
           </p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border-color text-xs uppercase text-slate-400">
                 <th className="px-6 py-3 font-semibold">#</th>
-                <th className="px-6 py-3 font-semibold">Klinika</th>
-                <th className="px-6 py-3 font-semibold">Obuna holati</th>
-                <th className="px-6 py-3 font-semibold text-right">Tranzaksiyalar</th>
-                <th className="px-6 py-3 font-semibold">Daromad</th>
+                <th className="px-6 py-3 font-semibold">{t("statistics.table.headers.clinic")}</th>
+                <th className="px-6 py-3 font-semibold">{t("statistics.table.headers.subscriptionStatus")}</th>
+                <th className="px-6 py-3 font-semibold text-right">{t("statistics.table.headers.transactions")}</th>
+                <th className="px-6 py-3 font-semibold">{t("statistics.table.headers.revenue")}</th>
               </tr>
             </thead>
             <tbody>

@@ -1,1 +1,180 @@
-{}
+{
+  "dashboard": {
+    "booleanYes": "Ha",
+    "booleanNo": "Yo'q",
+    "fieldLabels": {
+      "name": "Klinika nomi",
+      "subDomain": "Subdomain",
+      "contactNumber": "Telefon raqami",
+      "ownerId": "Owner ID",
+      "status": "Status",
+      "subscriptionStatus": "Subscription status",
+      "currentPlan": "Joriy tarif",
+      "startDate": "Boshlangan sana",
+      "endDate": "Tugash sanasi",
+      "smsBalance": "SMS balansi",
+      "currentStorageBytes": "Ishlatilgan xotira",
+      "lastPaymentTransactionId": "Oxirgi to'lov ID",
+      "lastActivatedAt": "Oxirgi aktivlashtirilgan vaqt",
+      "maxDoctors": "Maksimal shifokorlar",
+      "maxStaff": "Maksimal xodimlar",
+      "maxAssistants": "Maksimal assistentlar",
+      "maxReceptionists": "Maksimal receptionistlar",
+      "maxPatients": "Maksimal bemorlar",
+      "maxAppointments": "Maksimal qabullar",
+      "storageLimitBytes": "Xotira limiti",
+      "maxStorageBytes": "Maksimal xotira",
+      "includedSmsCount": "Tarifdagi SMS soni",
+      "smsLimit": "SMS limiti",
+      "createdAt": "Yaratilgan vaqt",
+      "updatedAt": "Yangilangan vaqt"
+    },
+    "header": {
+      "totalLabel": "Jami:",
+      "totalSuffix": "ta tenant",
+      "clinicNamesLoadError": "Klinika nomlarini yuklab bo'lmadi."
+    },
+    "table": {
+      "loadError": "Tenantlarni yuklab bo'lmadi.",
+      "empty": "Tenantlar topilmadi.",
+      "clinicNotFound": "Klinika topilmadi",
+      "noSubdomain": "Subdomain mavjud emas",
+      "detailsButton": "Batafsil",
+      "limitsButton": "Limitlar",
+      "suspendButton": "To'xtatish",
+      "suspendConfirm": "\"{clinicName}\" tenantini to'xtatib qo'yasizmi?",
+      "headers": {
+        "clinic": "Klinika",
+        "status": "Status",
+        "plan": "Tarif",
+        "validity": "Amal qiladi",
+        "sms": "SMS",
+        "storage": "Xotira",
+        "actions": "Amallar"
+      }
+    },
+    "toast": {
+      "suspended": "Tenant to'xtatildi",
+      "suspendFailed": "Tenantni to'xtatib bo'lmadi"
+    },
+    "pagination": {
+      "previous": "Oldingi",
+      "next": "Keyingi"
+    },
+    "detailModal": {
+      "clinicInfoTitle": "Klinika ma'lumotlari",
+      "clinicNotFoundMessage": "Bu tenant uchun clinics ro'yxatidan klinika topilmadi.",
+      "subscriptionInfoTitle": "Subscription ma'lumotlari",
+      "subscriptionNotFoundMessage": "Subscription ma'lumotlari topilmadi.",
+      "limitsTitle": "Tenant limitlari",
+      "limitsLoadError": "Tenant limitlarini yuklab bo'lmadi.",
+      "limitsNotFoundMessage": "Tenant limitlari topilmadi.",
+      "noData": "Ma'lumot topilmadi.",
+      "closeButton": "Yopish"
+    },
+    "limitsModal": {
+      "loadError": "Limitlarni yuklab bo'lmadi.",
+      "emptyFields": "O'zgartiriladigan limit maydonlari topilmadi.",
+      "toastUpdated": "Limitlar yangilandi",
+      "toastUpdateFailed": "Limitlarni saqlab bo'lmadi",
+      "cancelButton": "Bekor qilish",
+      "saving": "Saqlanmoqda...",
+      "saveButton": "Saqlash"
+    },
+    "loading": "Yuklanmoqda..."
+  },
+  "plans": {
+    "errors": {
+      "selectTenantAndPlan": "Tenant va tarifni tanlang"
+    },
+    "toast": {
+      "activated": "Obuna faollashtirildi",
+      "activateFailed": "Obunani faollashtirib bo'lmadi"
+    },
+    "activate": {
+      "title": "Obunani faollashtirish",
+      "tenantLabel": "Tenant",
+      "selectPlaceholder": "Tanlang...",
+      "planLabel": "Tarif",
+      "submitting": "Faollashtirilmoqda...",
+      "submitButton": "Faollashtirish"
+    },
+    "list": {
+      "title": "Barcha tariflar",
+      "loadError": "Tariflarni yuklab bo'lmadi.",
+      "empty": "Tariflar topilmadi.",
+      "inactiveBadge": "NOFAOL",
+      "editPriceButton": "Narxni o'zgartirish",
+      "unlimited": "cheksiz",
+      "doctorsLabel": "Shifokorlar:",
+      "staffLabel": "Xodimlar:",
+      "storageLabel": "Xotira:",
+      "smsLabel": "SMS:",
+      "monthUnit": "oy"
+    },
+    "currency": "so'm",
+    "editModal": {
+      "title": "Tarif narxini o'zgartirish",
+      "currentPriceLabel": "Hozirgi narx",
+      "newPriceLabel": "Yangi oylik narx",
+      "cancelButton": "Bekor qilish",
+      "saving": "Saqlanmoqda...",
+      "saveButton": "Saqlash",
+      "errors": {
+        "invalidPrice": "Narx noto'g'ri kiritildi",
+        "unchanged": "Narx o'zgartirilmagan",
+        "updateFailed": "Tarif narxini yangilab bo'lmadi"
+      },
+      "toast": {
+        "updated": "{planType} tarifi narxi yangilandi"
+      }
+    }
+  },
+  "statistics": {
+    "fromDateLabel": "Boshlanish sanasi",
+    "toDateLabel": "Tugash sanasi",
+    "sortLabel": "Saralash",
+    "sortOptions": {
+      "revenue": "Daromad",
+      "clinic": "Klinika",
+      "period": "Davr"
+    },
+    "directionDesc": "Kamayish",
+    "directionAsc": "O'sish",
+    "cards": {
+      "totalRevenue": "Jami daromad",
+      "totalTransactions": "Tranzaksiyalar",
+      "activeClinics": "Faol klinikalar"
+    },
+    "currency": "so'm",
+    "table": {
+      "title": "Klinikalar bo'yicha daromad",
+      "loadError": "Statistikani yuklab bo'lmadi.",
+      "empty": "Tanlangan davr uchun ma'lumot topilmadi.",
+      "headers": {
+        "clinic": "Klinika",
+        "subscriptionStatus": "Obuna holati",
+        "transactions": "Tranzaksiyalar",
+        "revenue": "Daromad"
+      }
+    }
+  },
+  "login": {
+    "checkingSession": "Sessiya tekshirilmoqda...",
+    "title": "Super Admin",
+    "subtitle": "DentalCRM boshqaruv paneli",
+    "emailLabel": "Email",
+    "emailPlaceholder": "superadmin@dentalcrm.uz",
+    "passwordLabel": "Parol",
+    "passwordPlaceholder": "Parolni kiriting",
+    "showPassword": "Parolni ko'rsatish",
+    "hidePassword": "Parolni yashirish",
+    "submitting": "Kirilmoqda...",
+    "submitButton": "Kirish",
+    "welcomeBack": "Xush kelibsiz!",
+    "errors": {
+      "credentialsRequired": "Email va parol talab qilinadi",
+      "loginFailed": "Kirishda xatolik"
+    }
+  }
+}

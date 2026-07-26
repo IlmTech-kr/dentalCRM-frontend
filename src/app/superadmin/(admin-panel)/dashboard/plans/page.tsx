@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   CheckCircle2,
@@ -71,6 +72,7 @@ function formatPrice(
  * ===================================================== */
 
 export default function PlansPage() {
+  const t = useTranslations("superadmin");
   const toast = useToast();
 
   const {
@@ -116,7 +118,7 @@ export default function PlansPage() {
       !selectedPlan
     ) {
       toast.error(
-        "Tenant va tarifni tanlang"
+        t("plans.errors.selectTenantAndPlan")
       );
 
       return;
@@ -129,14 +131,14 @@ export default function PlansPage() {
       });
 
       toast.success(
-        "Obuna faollashtirildi"
+        t("plans.toast.activated")
       );
 
       setSelectedTenant("");
       setSelectedPlan("");
     } catch {
       toast.error(
-        "Obunani faollashtirib bo‘lmadi"
+        t("plans.toast.activateFailed")
       );
     }
   }
@@ -155,14 +157,14 @@ export default function PlansPage() {
           />
 
           <h2 className="text-base font-bold text-dark-navy">
-            Obunani faollashtirish
+            {t("plans.activate.title")}
           </h2>
         </div>
 
         <div className="relative flex flex-wrap items-end gap-3">
           <div className="min-w-[220px] flex-1">
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
-              Tenant
+              {t("plans.activate.tenantLabel")}
             </label>
 
             <select
@@ -175,7 +177,7 @@ export default function PlansPage() {
               className="h-11 w-full rounded-xl border border-border-color bg-slate-50 px-3 font-mono text-xs outline-none"
             >
               <option value="">
-                Tanlang...
+                {t("plans.activate.selectPlaceholder")}
               </option>
 
               {tenants.map(
@@ -202,7 +204,7 @@ export default function PlansPage() {
 
           <div className="min-w-[180px]">
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
-              Tarif
+              {t("plans.activate.planLabel")}
             </label>
 
             <select
@@ -215,7 +217,7 @@ export default function PlansPage() {
               className="h-11 w-full rounded-xl border border-border-color bg-slate-50 px-3 text-sm outline-none"
             >
               <option value="">
-                Tanlang...
+                {t("plans.activate.selectPlaceholder")}
               </option>
 
               {plans
@@ -260,8 +262,8 @@ export default function PlansPage() {
             )}
 
             {activateMutation.isPending
-              ? "Faollashtirilmoqda..."
-              : "Faollashtirish"}
+              ? t("plans.activate.submitting")
+              : t("plans.activate.submitButton")}
           </button>
         </div>
       </div>
@@ -271,7 +273,7 @@ export default function PlansPage() {
       <div className="rounded-3xl border border-border-color bg-white shadow-sm">
         <div className="border-b border-border-color px-6 py-4">
           <h2 className="text-base font-bold text-dark-navy">
-            Barcha tariflar
+            {t("plans.list.title")}
           </h2>
         </div>
 
@@ -284,12 +286,11 @@ export default function PlansPage() {
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">
-            Tariflarni yuklab
-            bo‘lmadi.
+            {t("plans.list.loadError")}
           </p>
         ) : plans.length === 0 ? (
           <p className="px-6 py-10 text-center text-sm text-slate-400">
-            Tariflar topilmadi.
+            {t("plans.list.empty")}
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -309,7 +310,7 @@ export default function PlansPage() {
 
                       {!plan.active && (
                         <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-400">
-                          NOFAOL
+                          {t("plans.list.inactiveBadge")}
                         </span>
                       )}
                     </div>
@@ -327,7 +328,7 @@ export default function PlansPage() {
                         size={13}
                       />
 
-                      Narxni o‘zgartirish
+                      {t("plans.list.editPriceButton")}
                     </button>
                   </div>
 
@@ -335,7 +336,7 @@ export default function PlansPage() {
                     {formatPrice(
                       plan.monthlyPrice
                     )}{" "}
-                    so‘m
+                    {t("plans.currency")}
 
                     <span className="text-sm font-semibold text-slate-400">
                       {" "}
@@ -343,7 +344,7 @@ export default function PlansPage() {
                       {
                         plan.durationMonths
                       }{" "}
-                      oy
+                      {t("plans.list.monthUnit")}
                     </span>
                   </p>
 
@@ -354,12 +355,12 @@ export default function PlansPage() {
                         className="text-slate-400"
                       />
 
-                      Shifokorlar:
+                      {t("plans.list.doctorsLabel")}
 
                       <span className="font-bold text-dark-navy">
                         {plan.maxDoctors >
                         100000
-                          ? "cheksiz"
+                          ? t("plans.list.unlimited")
                           : plan.maxDoctors}
                       </span>
                     </div>
@@ -370,12 +371,12 @@ export default function PlansPage() {
                         className="text-slate-400"
                       />
 
-                      Xodimlar:
+                      {t("plans.list.staffLabel")}
 
                       <span className="font-bold text-dark-navy">
                         {plan.maxStaff >
                         100000
-                          ? "cheksiz"
+                          ? t("plans.list.unlimited")
                           : plan.maxStaff}
                       </span>
                     </div>
@@ -386,7 +387,7 @@ export default function PlansPage() {
                         className="text-slate-400"
                       />
 
-                      Xotira:
+                      {t("plans.list.storageLabel")}
 
                       <span className="font-bold text-dark-navy">
                         {formatStorage(
@@ -401,7 +402,7 @@ export default function PlansPage() {
                         className="text-slate-400"
                       />
 
-                      SMS:
+                      {t("plans.list.smsLabel")}
 
                       <span className="font-bold text-dark-navy">
                         {
@@ -440,6 +441,7 @@ function EditPlanPriceModal({
   plan: SubscriptionPlan;
   onClose: () => void;
 }) {
+  const t = useTranslations("superadmin");
   const toast = useToast();
 
   const updateMutation =
@@ -505,7 +507,7 @@ function EditPlanPriceModal({
       price < 0
     ) {
       toast.error(
-        "Narx noto‘g‘ri kiritildi"
+        t("plans.editModal.errors.invalidPrice")
       );
 
       return;
@@ -516,7 +518,7 @@ function EditPlanPriceModal({
       plan.monthlyPrice
     ) {
       toast.error(
-        "Narx o‘zgartirilmagan"
+        t("plans.editModal.errors.unchanged")
       );
 
       return;
@@ -533,13 +535,13 @@ function EditPlanPriceModal({
       });
 
       toast.success(
-        `${plan.planType} tarifi narxi yangilandi`
+        t("plans.editModal.toast.updated", { planType: plan.planType })
       );
 
       onClose();
     } catch {
       toast.error(
-        "Tarif narxini yangilab bo‘lmadi"
+        t("plans.editModal.errors.updateFailed")
       );
     }
   }
@@ -562,8 +564,7 @@ function EditPlanPriceModal({
         <div className="flex items-center justify-between border-b border-border-color px-6 py-5">
           <div>
             <h2 className="text-lg font-bold text-dark-navy">
-              Tarif narxini
-              o‘zgartirish
+              {t("plans.editModal.title")}
             </h2>
 
             <p className="mt-1 text-sm font-bold text-violet-500">
@@ -585,19 +586,19 @@ function EditPlanPriceModal({
         <div className="p-6">
           <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-xs font-bold uppercase text-slate-400">
-              Hozirgi narx
+              {t("plans.editModal.currentPriceLabel")}
             </p>
 
             <p className="mt-1 text-lg font-bold text-dark-navy">
               {formatPrice(
                 plan.monthlyPrice
               )}{" "}
-              so‘m
+              {t("plans.currency")}
             </p>
           </div>
 
           <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
-            Yangi oylik narx
+            {t("plans.editModal.newPriceLabel")}
           </label>
 
           <div className="relative">
@@ -624,7 +625,7 @@ function EditPlanPriceModal({
             />
 
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-              so‘m
+              {t("plans.currency")}
             </span>
           </div>
         </div>
@@ -637,7 +638,7 @@ function EditPlanPriceModal({
             onClick={onClose}
             className="rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
           >
-            Bekor qilish
+            {t("plans.editModal.cancelButton")}
           </button>
 
           <button
@@ -660,8 +661,8 @@ function EditPlanPriceModal({
             )}
 
             {updateMutation.isPending
-              ? "Saqlanmoqda..."
-              : "Saqlash"}
+              ? t("plans.editModal.saving")
+              : t("plans.editModal.saveButton")}
           </button>
         </div>
       </div>

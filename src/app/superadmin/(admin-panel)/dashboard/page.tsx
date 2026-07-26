@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   Ban,
@@ -208,73 +209,13 @@ function getStatusStyle(
 }
 
 function formatFieldLabel(
-  key: string
+  key: string,
+  t: ReturnType<typeof useTranslations>
 ): string {
-  const labels: Record<
-    string,
-    string
-  > = {
-    name: "Klinika nomi",
-    subDomain: "Subdomain",
-    contactNumber:
-      "Telefon raqami",
-    ownerId: "Owner ID",
-    status: "Status",
-    subscriptionStatus:
-      "Subscription status",
+  const labelKey = `dashboard.fieldLabels.${key}`;
 
-    currentPlan: "Joriy tarif",
-    startDate:
-      "Boshlangan sana",
-    endDate: "Tugash sanasi",
-    smsBalance: "SMS balansi",
-    currentStorageBytes:
-      "Ishlatilgan xotira",
-
-    lastPaymentTransactionId:
-      "Oxirgi to‘lov ID",
-
-    lastActivatedAt:
-      "Oxirgi aktivlashtirilgan vaqt",
-
-    maxDoctors:
-      "Maksimal shifokorlar",
-
-    maxStaff:
-      "Maksimal xodimlar",
-
-    maxAssistants:
-      "Maksimal assistentlar",
-
-    maxReceptionists:
-      "Maksimal receptionistlar",
-
-    maxPatients:
-      "Maksimal bemorlar",
-
-    maxAppointments:
-      "Maksimal qabullar",
-
-    storageLimitBytes:
-      "Xotira limiti",
-
-    maxStorageBytes:
-      "Maksimal xotira",
-
-    includedSmsCount:
-      "Tarifdagi SMS soni",
-
-    smsLimit: "SMS limiti",
-
-    createdAt:
-      "Yaratilgan vaqt",
-
-    updatedAt:
-      "Yangilangan vaqt",
-  };
-
-  if (labels[key]) {
-    return labels[key];
+  if (t.has(labelKey)) {
+    return t(labelKey);
   }
 
   return key
@@ -292,7 +233,8 @@ function formatFieldLabel(
 
 function formatFieldValue(
   key: string,
-  value: unknown
+  value: unknown,
+  t: ReturnType<typeof useTranslations>
 ): string {
   if (
     value === null ||
@@ -322,8 +264,8 @@ function formatFieldValue(
     typeof value === "boolean"
   ) {
     return value
-      ? "Ha"
-      : "Yo‘q";
+      ? t("dashboard.booleanYes")
+      : t("dashboard.booleanNo");
   }
 
   if (
@@ -381,6 +323,7 @@ function normalizeClinics(
  * ===================================================== */
 
 export default function DashboardPage() {
+  const t = useTranslations("superadmin");
   const toast = useToast();
 
   const [status, setStatus] =
@@ -553,7 +496,7 @@ export default function DashboardPage() {
   ) {
     const confirmed =
       window.confirm(
-        `"${clinicName}" tenantini to‘xtatib qo‘yasizmi?`
+        t("dashboard.table.suspendConfirm", { clinicName })
       );
 
     if (!confirmed) {
@@ -566,11 +509,11 @@ export default function DashboardPage() {
       );
 
       toast.success(
-        "Tenant to‘xtatildi"
+        t("dashboard.toast.suspended")
       );
     } catch {
       toast.error(
-        "Tenantni to‘xtatib bo‘lmadi"
+        t("dashboard.toast.suspendFailed")
       );
     }
   }
@@ -582,17 +525,16 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-color px-6 py-5">
         <div>
           <p className="text-sm text-text-light">
-            Jami:{" "}
+            {t("dashboard.header.totalLabel")}{" "}
             <span className="font-bold text-dark-navy">
               {totalElements}
             </span>{" "}
-            ta tenant
+            {t("dashboard.header.totalSuffix")}
           </p>
 
           {isClinicsError && (
             <p className="mt-1 text-xs text-red-500">
-              Klinika nomlarini
-              yuklab bo‘lmadi.
+              {t("dashboard.header.clinicNamesLoadError")}
             </p>
           )}
         </div>
@@ -635,12 +577,11 @@ export default function DashboardPage() {
         </div>
       ) : isTenantsError ? (
         <p className="px-6 py-12 text-center text-sm text-red-500">
-          Tenantlarni yuklab
-          bo‘lmadi.
+          {t("dashboard.table.loadError")}
         </p>
       ) : tenants.length === 0 ? (
         <p className="px-6 py-12 text-center text-sm text-slate-400">
-          Tenantlar topilmadi.
+          {t("dashboard.table.empty")}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -648,31 +589,31 @@ export default function DashboardPage() {
             <thead>
               <tr className="border-b border-border-color text-xs uppercase text-slate-400">
                 <th className="px-6 py-4 font-semibold">
-                  Klinika
+                  {t("dashboard.table.headers.clinic")}
                 </th>
 
                 <th className="px-6 py-4 font-semibold">
-                  Status
+                  {t("dashboard.table.headers.status")}
                 </th>
 
                 <th className="px-6 py-4 font-semibold">
-                  Tarif
+                  {t("dashboard.table.headers.plan")}
                 </th>
 
                 <th className="px-6 py-4 font-semibold">
-                  Amal qiladi
+                  {t("dashboard.table.headers.validity")}
                 </th>
 
                 <th className="px-6 py-4 font-semibold">
-                  SMS
+                  {t("dashboard.table.headers.sms")}
                 </th>
 
                 <th className="px-6 py-4 font-semibold">
-                  Xotira
+                  {t("dashboard.table.headers.storage")}
                 </th>
 
                 <th className="px-6 py-4 text-right font-semibold">
-                  Amallar
+                  {t("dashboard.table.headers.actions")}
                 </th>
               </tr>
             </thead>
@@ -690,7 +631,7 @@ export default function DashboardPage() {
 
                   const clinicName =
                     clinic?.name ||
-                    "Klinika topilmadi";
+                    t("dashboard.table.clinicNotFound");
 
                   return (
                     <tr
@@ -712,7 +653,7 @@ export default function DashboardPage() {
                         <p className="mt-1 text-xs text-slate-400">
                           {clinic?.subDomain
                             ? `${clinic.subDomain}.dental.ilmtech.uz`
-                            : "Subdomain mavjud emas"}
+                            : t("dashboard.table.noSubdomain")}
                         </p>
                       </td>
 
@@ -781,7 +722,7 @@ export default function DashboardPage() {
                               size={14}
                             />
 
-                            Batafsil
+                            {t("dashboard.table.detailsButton")}
                           </button>
 
                           <button
@@ -797,7 +738,7 @@ export default function DashboardPage() {
                             }}
                             className="rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
                           >
-                            Limitlar
+                            {t("dashboard.table.limitsButton")}
                           </button>
 
                           <button
@@ -823,7 +764,7 @@ export default function DashboardPage() {
                               size={14}
                             />
 
-                            To‘xtatish
+                            {t("dashboard.table.suspendButton")}
                           </button>
                         </div>
                       </td>
@@ -854,7 +795,7 @@ export default function DashboardPage() {
             }
             className="rounded-lg border border-border-color px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Oldingi
+            {t("dashboard.pagination.previous")}
           </button>
 
           <span className="text-xs text-slate-400">
@@ -876,7 +817,7 @@ export default function DashboardPage() {
             }
             className="rounded-lg border border-border-color px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Keyingi
+            {t("dashboard.pagination.next")}
           </button>
         </div>
       )}
@@ -955,6 +896,7 @@ function ClinicDetailModal({
   subscription: TenantSubscription | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("superadmin");
   /*
    * Faqat limits API chaqiriladi.
    *
@@ -986,13 +928,13 @@ function ClinicDetailModal({
         <div>
           <h2 className="text-xl font-bold text-dark-navy">
             {clinic?.name ||
-              "Klinika ma’lumotlari"}
+              t("dashboard.detailModal.clinicInfoTitle")}
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
             {clinic?.subDomain
               ? `${clinic.subDomain}.dental.ilmtech.uz`
-              : "Subdomain mavjud emas"}
+              : t("dashboard.table.noSubdomain")}
           </p>
         </div>
 
@@ -1010,7 +952,7 @@ function ClinicDetailModal({
       <div className="space-y-5 p-6">
         {clinic ? (
           <DetailSection
-            title="Klinika ma’lumotlari"
+            title={t("dashboard.detailModal.clinicInfoTitle")}
             data={
               clinic as DetailData
             }
@@ -1020,15 +962,15 @@ function ClinicDetailModal({
           />
         ) : (
           <EmptyDetailSection
-            title="Klinika ma’lumotlari"
-            message="Bu tenant uchun clinics ro‘yxatidan klinika topilmadi."
+            title={t("dashboard.detailModal.clinicInfoTitle")}
+            message={t("dashboard.detailModal.clinicNotFoundMessage")}
             error
           />
         )}
 
         {subscription ? (
           <DetailSection
-            title="Subscription ma’lumotlari"
+            title={t("dashboard.detailModal.subscriptionInfoTitle")}
             data={
               subscription as any
             }
@@ -1038,24 +980,24 @@ function ClinicDetailModal({
           />
         ) : (
           <EmptyDetailSection
-            title="Subscription ma’lumotlari"
-            message="Subscription ma’lumotlari topilmadi."
+            title={t("dashboard.detailModal.subscriptionInfoTitle")}
+            message={t("dashboard.detailModal.subscriptionNotFoundMessage")}
           />
         )}
 
         {isLimitsLoading ? (
           <SectionLoading
-            title="Tenant limitlari"
+            title={t("dashboard.detailModal.limitsTitle")}
           />
         ) : isLimitsError ? (
           <EmptyDetailSection
-            title="Tenant limitlari"
-            message="Tenant limitlarini yuklab bo‘lmadi."
+            title={t("dashboard.detailModal.limitsTitle")}
+            message={t("dashboard.detailModal.limitsLoadError")}
             error
           />
         ) : tenantLimits ? (
           <DetailSection
-            title="Tenant limitlari"
+            title={t("dashboard.detailModal.limitsTitle")}
             data={
               tenantLimits as DetailData
             }
@@ -1066,8 +1008,8 @@ function ClinicDetailModal({
           />
         ) : (
           <EmptyDetailSection
-            title="Tenant limitlari"
-            message="Tenant limitlari topilmadi."
+            title={t("dashboard.detailModal.limitsTitle")}
+            message={t("dashboard.detailModal.limitsNotFoundMessage")}
           />
         )}
       </div>
@@ -1080,7 +1022,7 @@ function ClinicDetailModal({
           onClick={onClose}
           className="rounded-xl border border-border-color px-5 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
         >
-          Yopish
+          {t("dashboard.detailModal.closeButton")}
         </button>
       </div>
     </ModalContainer>
@@ -1098,6 +1040,7 @@ function TenantLimitsEditModal({
   tenantId: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("superadmin");
   const toast = useToast();
 
   const {
@@ -1181,13 +1124,13 @@ function TenantLimitsEditModal({
       });
 
       toast.success(
-        "Limitlar yangilandi"
+        t("dashboard.limitsModal.toastUpdated")
       );
 
       onClose();
     } catch {
       toast.error(
-        "Limitlarni saqlab bo‘lmadi"
+        t("dashboard.limitsModal.toastUpdateFailed")
       );
     }
   }
@@ -1201,7 +1144,7 @@ function TenantLimitsEditModal({
 
       <div className="flex items-center justify-between border-b border-border-color px-6 py-5">
         <h2 className="text-lg font-bold text-dark-navy">
-          Tenant limitlari
+          {t("dashboard.detailModal.limitsTitle")}
         </h2>
 
         <button
@@ -1225,14 +1168,12 @@ function TenantLimitsEditModal({
           </div>
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-500">
-            Limitlarni yuklab
-            bo‘lmadi.
+            {t("dashboard.limitsModal.loadError")}
           </p>
         ) : Object.keys(form)
             .length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">
-            O‘zgartiriladigan limit
-            maydonlari topilmadi.
+            {t("dashboard.limitsModal.emptyFields")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -1246,7 +1187,8 @@ function TenantLimitsEditModal({
                 <div key={key}>
                   <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
                     {formatFieldLabel(
-                      key
+                      key,
+                      t
                     )}
                   </label>
 
@@ -1285,7 +1227,7 @@ function TenantLimitsEditModal({
           onClick={onClose}
           className="rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
         >
-          Bekor qilish
+          {t("dashboard.limitsModal.cancelButton")}
         </button>
 
         <button
@@ -1303,8 +1245,8 @@ function TenantLimitsEditModal({
           className="rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {updateMutation.isPending
-            ? "Saqlanmoqda..."
-            : "Saqlash"}
+            ? t("dashboard.limitsModal.saving")
+            : t("dashboard.limitsModal.saveButton")}
         </button>
       </div>
     </ModalContainer>
@@ -1360,6 +1302,7 @@ function DetailSection({
   data: DetailData;
   hiddenKeys?: string[];
 }) {
+  const t = useTranslations("superadmin");
   const hiddenKeysSet =
     new Set(hiddenKeys);
 
@@ -1379,7 +1322,7 @@ function DetailSection({
 
       {fields.length === 0 ? (
         <p className="px-5 py-7 text-center text-sm text-slate-400">
-          Ma’lumot topilmadi.
+          {t("dashboard.detailModal.noData")}
         </p>
       ) : (
         <div className="divide-y divide-border-color/70">
@@ -1391,14 +1334,16 @@ function DetailSection({
               >
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
                   {formatFieldLabel(
-                    key
+                    key,
+                    t
                   )}
                 </span>
 
                 <span className="whitespace-pre-wrap break-all text-sm font-semibold text-dark-navy">
                   {formatFieldValue(
                     key,
-                    value
+                    value,
+                    t
                   )}
                 </span>
               </div>
@@ -1471,6 +1416,8 @@ function SectionLoading({
 }: {
   title: string;
 }) {
+  const t = useTranslations("superadmin");
+
   return (
     <section className="overflow-hidden rounded-2xl border border-border-color">
       <div className="border-b border-border-color bg-slate-50 px-5 py-3">
@@ -1485,7 +1432,7 @@ function SectionLoading({
           size={19}
         />
 
-        Yuklanmoqda...
+        {t("dashboard.loading")}
       </div>
     </section>
   );
