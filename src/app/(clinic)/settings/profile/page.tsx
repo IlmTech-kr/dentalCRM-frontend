@@ -1,61 +1,121 @@
 "use client";
 
 /**
- * File: src/app/(clinic)/settings/profile/page.tsx
+ * File:
+ * src/app/(clinic)/settings/profile/page.tsx
  */
 
-import { Camera, Mail, Phone, Save, User, UserCircle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  Camera,
+  Loader2,
+  Mail,
+  Phone,
+  Save,
+  User,
+} from "lucide-react";
 
-import type { UserProfile } from "@/src/types/user.types";
-import { useGetProfile, useUpdateProfile } from "@/src/features/users/hooks/useUser";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+
+import {
+  useGetProfile,
+  useUpdateProfile,
+} from "@/src/features/users/hooks/useUser";
+
+import {
+  useStorageImage,
+  useUploadFile,
+} from "@/src/features/storage/hooks/useStorage";
+
+import {
+  STORAGE_BUCKET,
+  StorageTarget,
+} from "@/src/types/storage.types";
+
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
-function formatRole(role: string): string {
+function formatRole(
+  role: string
+): string {
   return role
     .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
     .join(" ");
 }
 
-function getInitials(firstName?: string, lastName?: string, email?: string): string {
-  if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
-  if (firstName) return firstName[0].toUpperCase();
-  if (email) return email[0].toUpperCase();
+function getInitials(
+  firstName?: string,
+  lastName?: string,
+  email?: string
+): string {
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  }
+
+  if (firstName) {
+    return firstName[0].toUpperCase();
+  }
+
+  if (email) {
+    return email[0].toUpperCase();
+  }
+
   return "U";
 }
-
-// ---------------------------------------------------------------------------
-// Loading skeleton
-// ---------------------------------------------------------------------------
 
 function ProfileSkeleton() {
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
         <div className="h-2 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+
         <div className="flex items-center gap-6 px-8 py-7">
           <div className="h-14 w-14 animate-pulse rounded-2xl bg-slate-200" />
+
           <div className="space-y-2">
             <div className="h-6 w-40 animate-pulse rounded-lg bg-slate-200" />
+
             <div className="h-4 w-28 animate-pulse rounded-lg bg-slate-200" />
           </div>
         </div>
       </div>
+
       <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
         <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-          ))}
+          {[1, 2, 3, 4].map(
+            (item) => (
+              <div
+                key={item}
+                className="h-12 animate-pulse rounded-2xl bg-slate-100"
+              />
+            )
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// ProfileInput
-// ---------------------------------------------------------------------------
+interface ProfileInputProps {
+  label: string;
+  icon: ReactNode;
+  value: string;
+  onChange?: (
+    value: string
+  ) => void;
+  disabled?: boolean;
+  type?: string;
+}
 
 function ProfileInput({
   label,
@@ -64,28 +124,37 @@ function ProfileInput({
   onChange,
   disabled = false,
   type = "text",
-}: {
-  label: string;
-  icon: React.ReactNode;
-  value: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-  type?: string;
-}) {
+}: ProfileInputProps) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-bold text-slate-700">{label}</label>
-      <div className={`flex h-12 items-center gap-3 rounded-2xl border-2 px-4 transition-all ${
-        disabled
-          ? "border-slate-100 bg-slate-50"
-          : "border-slate-200 bg-white focus-within:border-blue-400 hover:border-slate-300"
-      }`}>
-        <span className="shrink-0 text-slate-400">{icon}</span>
+      <label className="block text-sm font-bold text-slate-700">
+        {label}
+      </label>
+
+      <div
+        className={`flex h-12 items-center gap-3 rounded-2xl border-2 px-4 transition-all ${
+          disabled
+            ? "border-slate-100 bg-slate-50"
+            : "border-slate-200 bg-white hover:border-slate-300 focus-within:border-blue-400"
+        }`}
+      >
+        <span className="shrink-0 text-slate-400">
+          {icon}
+        </span>
+
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={disabled ? "—" : `Enter ${label.toLowerCase()}`}
+          onChange={(event) =>
+            onChange?.(
+              event.target.value
+            )
+          }
+          placeholder={
+            disabled
+              ? "—"
+              : `Enter ${label.toLowerCase()}`
+          }
           disabled={disabled}
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500"
         />
@@ -94,187 +163,562 @@ function ProfileInput({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export default function ProfilePage() {
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const localPreviewRef =
+    useRef<string>("");
+
   const toast = useToast();
 
-  const { data: profileData, isLoading, error: loadError } = useGetProfile();
-  const updateMutation = useUpdateProfile();
+  const {
+    data: profileData,
+    isLoading,
+    error: loadError,
+  } = useGetProfile();
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    avatarUrl: "",
-  });
+  const updateMutation =
+    useUpdateProfile();
+
+  const uploadMutation =
+    useUploadFile();
+
+  const [form, setForm] =
+    useState({
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+
+      /**
+       * Bu yerda to‘liq URL emas,
+       * storage path saqlanadi:
+       *
+       * users/avatar.png
+       */
+      avatarUrl: "",
+    });
+
+  const [
+    localPreviewUrl,
+    setLocalPreviewUrl,
+  ] = useState("");
 
   /**
-   * profileData kelganda form ni bir marta to'ldirish.
-   * toast dependency loop xavfidan qochish uchun
-   * loadError ni ref bilan emas, to'g'ridan tekshiramiz.
+   * avatarUrl storage path bo‘lsa,
+   * backenddan blob sifatida olinadi.
    */
+  const avatarImage =
+    useStorageImage(
+      form.avatarUrl,
+      STORAGE_BUCKET
+    );
+
   useEffect(() => {
-    if (profileData) {
-      setForm({
-        firstName: profileData.firstName || "",
-        lastName: profileData.lastName || "",
-        phoneNumber: profileData.phoneNumber || "",
-        avatarUrl: profileData.avatarUrl || "",
-      });
+    if (!profileData) {
+      return;
     }
+
+    setForm({
+      firstName:
+        profileData.firstName || "",
+
+      lastName:
+        profileData.lastName || "",
+
+      phoneNumber:
+        profileData.phoneNumber || "",
+
+      avatarUrl:
+        profileData.avatarUrl || "",
+    });
   }, [profileData]);
 
   useEffect(() => {
-    if (loadError) {
-      toast.error(
-        loadError instanceof Error ? loadError.message : "Failed to load profile"
-      );
+    if (!loadError) {
+      return;
     }
-    // toast useMemo bilan stable — loop xavfi yo'q
+
+    toast.error(
+      loadError instanceof Error
+        ? loadError.message
+        : "Failed to load profile"
+    );
   }, [loadError]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.warning("Please select an image file");
+  /**
+   * Server rasmi yuklangach,
+   * vaqtinchalik local preview o‘chiriladi.
+   */
+  useEffect(() => {
+    if (
+      !avatarImage.url ||
+      !localPreviewRef.current
+    ) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.warning("Image size must be less than 5MB");
-      return;
+    URL.revokeObjectURL(
+      localPreviewRef.current
+    );
+
+    localPreviewRef.current = "";
+
+    setLocalPreviewUrl("");
+  }, [avatarImage.url]);
+
+  /**
+   * Component yopilganda local blob URLni tozalash.
+   */
+  useEffect(() => {
+    return () => {
+      if (
+        localPreviewRef.current
+      ) {
+        URL.revokeObjectURL(
+          localPreviewRef.current
+        );
+      }
+    };
+  }, []);
+
+  function createLocalPreview(
+    file: File
+  ) {
+    if (
+      localPreviewRef.current
+    ) {
+      URL.revokeObjectURL(
+        localPreviewRef.current
+      );
     }
 
-    const url = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, avatarUrl: url }));
-    toast.info("Image selected — click Save to apply");
+    const nextPreviewUrl =
+      URL.createObjectURL(file);
+
+    localPreviewRef.current =
+      nextPreviewUrl;
+
+    setLocalPreviewUrl(
+      nextPreviewUrl
+    );
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function clearLocalPreview() {
+    if (
+      localPreviewRef.current
+    ) {
+      URL.revokeObjectURL(
+        localPreviewRef.current
+      );
+    }
+
+    localPreviewRef.current = "";
+
+    setLocalPreviewUrl("");
+  }
+
+  async function handleImageChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      toast.warning(
+        "Please select an image file"
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      toast.warning(
+        "Image size must be less than 5MB"
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    /**
+     * Upload boshlanishidan oldin
+     * lokal preview ko‘rsatiladi.
+     */
+    createLocalPreview(file);
 
     try {
-      await updateMutation.mutateAsync({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        phoneNumber: form.phoneNumber,
-        avatarUrl: form.avatarUrl,
-      });
+      const uploadedFile =
+        await uploadMutation.mutateAsync(
+          {
+            file,
 
-      toast.success("Profile updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update profile");
+            /**
+             * Backendga aynan:
+             * target=users
+             *
+             * yuboriladi.
+             */
+            target:
+              StorageTarget.USERS,
+
+            bucket:
+              STORAGE_BUCKET,
+          }
+        );
+
+      /**
+       * Misol:
+       *
+       * users/avatar.png
+       */
+      setForm((previous) => ({
+        ...previous,
+        avatarUrl:
+          uploadedFile.storagePath,
+      }));
+
+      toast.success(
+        "Rasm yuklandi. Save Changes tugmasini bosing."
+      );
+    } catch (error) {
+      clearLocalPreview();
+
+      /**
+       * Upload ishlamasa eski rasm qaytariladi.
+       */
+      setForm((previous) => ({
+        ...previous,
+        avatarUrl:
+          profileData?.avatarUrl ||
+          "",
+      }));
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Rasmni yuklashda xatolik yuz berdi"
+      );
+    } finally {
+      if (
+        fileInputRef.current
+      ) {
+        fileInputRef.current.value =
+          "";
+      }
     }
   }
 
-  if (isLoading) return <ProfileSkeleton />;
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  const initials = getInitials(form.firstName, form.lastName, profileData?.email);
-  const displayName = [form.firstName, form.lastName].filter(Boolean).join(" ") || "—";
+    if (
+      uploadMutation.isPending
+    ) {
+      toast.warning(
+        "Rasm hali yuklanmoqda, biroz kuting."
+      );
+
+      return;
+    }
+
+    try {
+      await updateMutation.mutateAsync(
+        {
+          firstName:
+            form.firstName.trim(),
+
+          lastName:
+            form.lastName.trim(),
+
+          phoneNumber:
+            form.phoneNumber.trim(),
+
+          /**
+           * Backendga:
+           *
+           * users/avatar.png
+           *
+           * yuboriladi.
+           */
+          avatarUrl:
+            form.avatarUrl,
+        }
+      );
+
+      toast.success(
+        "Profile updated"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile"
+      );
+    }
+  }
+
+  if (isLoading) {
+    return <ProfileSkeleton />;
+  }
+
+  const initials =
+    getInitials(
+      form.firstName,
+      form.lastName,
+      profileData?.email
+    );
+
+  const displayName =
+    [
+      form.firstName,
+      form.lastName,
+    ]
+      .filter(Boolean)
+      .join(" ") || "—";
+
+  /**
+   * Upload vaqtida local preview,
+   * uploaddan keyin backend rasmi.
+   */
+  const avatarSrc =
+    localPreviewUrl ||
+    avatarImage.url;
+
+  const isAvatarLoading =
+    uploadMutation.isPending ||
+    Boolean(
+      form.avatarUrl &&
+        !avatarSrc &&
+        avatarImage.isFetching
+    );
+
+  const isSaveDisabled =
+    updateMutation.isPending ||
+    uploadMutation.isPending;
 
   return (
     <div className="space-y-6">
-      {/* Header card */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
 
         <div className="flex items-center gap-6 px-8 py-7">
-          {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-600 ring-4 ring-white shadow-md">
-              {form.avatarUrl ? (
-                <img src={form.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-600 shadow-md ring-4 ring-white">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt="Profile avatar"
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <span className="text-2xl font-black">{initials}</span>
+                <span className="text-2xl font-black">
+                  {initials}
+                </span>
+              )}
+
+              {isAvatarLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40">
+                  <Loader2
+                    size={22}
+                    className="animate-spin text-white"
+                  />
+                </div>
               )}
             </div>
+
             <button
               type="button"
-              onClick={() => fileRef.current?.click()}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700"
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
+              disabled={
+                uploadMutation.isPending
+              }
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               title="Change photo"
             >
               <Camera size={13} />
             </button>
-            <input ref={fileRef} hidden type="file" accept="image/*" onChange={handleImageChange} />
+
+            <input
+              ref={fileInputRef}
+              hidden
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              onChange={
+                handleImageChange
+              }
+              disabled={
+                uploadMutation.isPending
+              }
+            />
           </div>
 
-          {/* Info */}
           <div className="min-w-0">
-            <h1 className="text-3xl font-black text-slate-900">{displayName}</h1>
-            <p className="mt-0.5 truncate text-sm text-slate-500">{profileData?.email}</p>
-            {profileData?.roles?.length ? (
+            <h1 className="text-3xl font-black text-slate-900">
+              {displayName}
+            </h1>
+
+            <p className="mt-0.5 truncate text-sm text-slate-500">
+              {profileData?.email}
+            </p>
+
+            {profileData?.roles
+              ?.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {profileData.roles.map((role) => (
-                  <span key={role} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-                    {formatRole(role)}
-                  </span>
-                ))}
+                {profileData.roles.map(
+                  (role) => (
+                    <span
+                      key={role}
+                      className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700"
+                    >
+                      {formatRole(
+                        role
+                      )}
+                    </span>
+                  )
+                )}
               </div>
             ) : null}
           </div>
         </div>
       </div>
 
-      {/* Form card */}
       <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <ProfileInput
               label="First Name"
-              icon={<User size={16} />}
-              value={form.firstName}
-              onChange={(v) => setForm((prev) => ({ ...prev, firstName: v }))}
-              disabled={updateMutation.isPending}
+              icon={
+                <User size={16} />
+              }
+              value={
+                form.firstName
+              }
+              onChange={(value) =>
+                setForm(
+                  (previous) => ({
+                    ...previous,
+                    firstName:
+                      value,
+                  })
+                )
+              }
+              disabled={
+                updateMutation.isPending
+              }
             />
+
             <ProfileInput
               label="Last Name"
-              icon={<User size={16} />}
-              value={form.lastName}
-              onChange={(v) => setForm((prev) => ({ ...prev, lastName: v }))}
-              disabled={updateMutation.isPending}
+              icon={
+                <User size={16} />
+              }
+              value={
+                form.lastName
+              }
+              onChange={(value) =>
+                setForm(
+                  (previous) => ({
+                    ...previous,
+                    lastName:
+                      value,
+                  })
+                )
+              }
+              disabled={
+                updateMutation.isPending
+              }
             />
           </div>
 
           <ProfileInput
             label="Phone"
-            icon={<Phone size={16} />}
-            value={form.phoneNumber}
-            onChange={(v) => setForm((prev) => ({ ...prev, phoneNumber: v }))}
+            icon={
+              <Phone size={16} />
+            }
+            value={
+              form.phoneNumber
+            }
+            onChange={(value) =>
+              setForm(
+                (previous) => ({
+                  ...previous,
+                  phoneNumber:
+                    value,
+                })
+              )
+            }
             type="tel"
-            disabled={updateMutation.isPending}
+            disabled={
+              updateMutation.isPending
+            }
           />
 
-          {/* Email — read only */}
           <ProfileInput
             label="Email"
-            icon={<Mail size={16} />}
-            value={profileData?.email || ""}
+            icon={
+              <Mail size={16} />
+            }
+            value={
+              profileData?.email ||
+              ""
+            }
             disabled
           />
 
           <div className="pt-2">
             <button
               type="submit"
-              disabled={updateMutation.isPending}
+              disabled={
+                isSaveDisabled
+              }
               className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {updateMutation.isPending ? (
                 <>
-                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <Loader2
+                    size={16}
+                    className="animate-spin"
+                  />
+
                   Saving...
                 </>
+              ) : uploadMutation.isPending ? (
+                <>
+                  <Loader2
+                    size={16}
+                    className="animate-spin"
+                  />
+
+                  Rasm yuklanmoqda...
+                </>
               ) : (
-                <><Save size={16} />Save Changes</>
+                <>
+                  <Save size={16} />
+
+                  Save Changes
+                </>
               )}
             </button>
           </div>

@@ -223,4 +223,28 @@ export const ENDPOINTS = {
       return `/api/dental/statistics/payroll?${q.toString()}`;
     },
   },
+
+  storage: {
+    upload: "/api/storage/upload",
+    uploadBatch: "/api/storage/upload/batch",
+
+    file: (bucket: string, storagePath: string) =>
+      `/api/storage/${encodeURIComponent(bucket)}/${encodeStoragePath(
+        storagePath
+      )}`,
+
+    files: (bucket: string) =>
+      `/api/storage/${encodeURIComponent(bucket)}/files`,
+
+    info: (storagePath: string) =>
+      `/api/storage/info/${encodeStoragePath(storagePath)}`,
+  },
 };
+
+function encodeStoragePath(path: string): string {
+  return path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+}
