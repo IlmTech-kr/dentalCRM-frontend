@@ -50,7 +50,7 @@ export interface AuthUser {
 
   roles: Role[];
 
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   phoneNumber?: string;
   status?: UserStatus;
 

@@ -1,18 +1,49 @@
 "use client";
 
-import { LogOut, Search, Bell, ChevronDown } from "lucide-react";
-import { useState } from "react";
+/**
+ * File:
+ * src/components/layout/Header.tsx
+ */
+
+import {
+  Bell,
+  ChevronDown,
+  Loader2,
+  LogOut,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { useLogout } from "@/src/features/auth/hooks/useAuth";
+import { useStorageImage } from "@/src/features/storage/hooks/useStorage";
+import { STORAGE_BUCKET } from "@/src/types/storage.types";
 import { useAuthStore } from "@/src/store/auth.store";
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const logoutMutation = useLogout();
 
-  const { user, logout } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const avatarPath = user?.avatarUrl?.trim() || "";
+
+  /**
+   * avatarUrl quyidagicha bo‘lishi mumkin:
+   *
+   * users/avatar.png
+   * https://example.com/avatar.png
+   * blob:http://localhost/...
+   *
+   * Storage path bo‘lsa backenddan Blob qilib olinadi.
+   */
+  const avatarImage = useStorageImage(
+    avatarPath,
+    STORAGE_BUCKET
+  );
 
   async function handleLogout() {
     try {
@@ -31,45 +62,93 @@ export default function Header() {
   const displayName =
     user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
-      : user?.email || "User";
+      : user?.firstName ||
+        user?.lastName ||
+        user?.email ||
+        "User";
 
-  const firstLetter = displayName?.[0]?.toUpperCase() || "U";
+  const firstLetter =
+    displayName[0]?.toUpperCase() || "U";
 
-  const roleDisplay = user?.roles?.[0] ? formatRole(user.roles[0]) : "User";
+  const roleDisplay = user?.roles?.[0]
+    ? formatRole(user.roles[0])
+    : "User";
+
+  const avatarSrc =
+    avatarImage.url && !avatarFailed
+      ? avatarImage.url
+      : "";
+
+  const isAvatarLoading =
+    Boolean(avatarPath) &&
+    avatarImage.isFetching &&
+    !avatarSrc;
 
   return (
     <>
       <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border-color bg-white/80 px-8 backdrop-blur">
         <div>
-          <h2 className="text-2xl font-extrabold text-dark-navy">Dashboard</h2>
-          <p className="text-sm text-text-light">Welcome back to your clinic</p>
+          <h2 className="text-2xl font-extrabold text-dark-navy">
+            Dashboard
+          </h2>
+
+          <p className="text-sm text-text-light">
+            Welcome back to your clinic
+          </p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="hidden h-11 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4 md:flex">
-            <Search size={18} className="text-slate-400" />
+            <Search
+              size={18}
+              className="text-slate-400"
+            />
+
             <input
               className="bg-transparent text-sm outline-none"
               placeholder="Search..."
             />
           </div>
 
-          <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border-color bg-white transition hover:bg-slate-50">
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border-color bg-white transition hover:bg-slate-50"
+          >
             <Bell size={19} />
           </button>
 
           <div className="relative z-30">
             <button
               type="button"
-              onClick={() => setDropdownOpen((prev) => !prev)}
+              onClick={() =>
+                setDropdownOpen((previous) => !previous)
+              }
               className="flex h-11 items-center gap-2 rounded-2xl bg-white px-3 transition hover:bg-slate-50"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
-                {firstLetter}
+              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                    onError={() => setAvatarFailed(true)}
+                  />
+                ) : (
+                  <span>{firstLetter}</span>
+                )}
+
+                {isAvatarLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
+                    <Loader2
+                      size={14}
+                      className="animate-spin text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="hidden text-left sm:block">
-                <p className="text-xs font-bold text-slate-900">
+                <p className="max-w-40 truncate text-xs font-bold text-slate-900">
                   {displayName}
                 </p>
 
@@ -87,14 +166,50 @@ export default function Header() {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 top-14 z-50 w-56 rounded-2xl border border-border-color bg-white shadow-lg">
+              <div className="absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-2xl border border-border-color bg-white shadow-lg">
                 <div className="border-b border-border-color p-4">
-                  <p className="text-xs text-slate-500">Logged in as</p>
-                  <p className="font-bold text-slate-900">{displayName}</p>
-                  <p className="text-xs text-slate-500">{user?.email}</p>
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-600">
+                      {avatarSrc ? (
+                        <img
+                          src={avatarSrc}
+                          alt={displayName}
+                          className="h-full w-full object-cover"
+                          onError={() =>
+                            setAvatarFailed(true)
+                          }
+                        />
+                      ) : (
+                        <span>{firstLetter}</span>
+                      )}
 
-                  {user?.roles && user.roles.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
+                      {isAvatarLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
+                          <Loader2
+                            size={16}
+                            className="animate-spin text-white"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-500">
+                        Logged in as
+                      </p>
+
+                      <p className="truncate font-bold text-slate-900">
+                        {displayName}
+                      </p>
+
+                      <p className="truncate text-xs text-slate-500">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  {user?.roles?.length ? (
+                    <div className="flex flex-wrap gap-2">
                       {user.roles.map((role) => (
                         <span
                           key={role}
@@ -104,7 +219,7 @@ export default function Header() {
                         </span>
                       ))}
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="space-y-1 p-2">
@@ -130,10 +245,20 @@ export default function Header() {
                     type="button"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <LogOut size={16} />
-                    {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                    {logoutMutation.isPending ? (
+                      <Loader2
+                        size={16}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <LogOut size={16} />
+                    )}
+
+                    {logoutMutation.isPending
+                      ? "Logging out..."
+                      : "Logout"}
                   </button>
                 </div>
               </div>
@@ -155,6 +280,10 @@ export default function Header() {
 function formatRole(role: string): string {
   return role
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
     .join(" ");
 }

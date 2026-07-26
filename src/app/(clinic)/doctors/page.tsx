@@ -4,7 +4,13 @@
  * File: src/app/(dashboard)/doctors/page.tsx
  */
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Check, ChevronDown } from "lucide-react";
 
 import {
@@ -13,10 +19,15 @@ import {
   useInviteDoctor,
   useUpdateDoctor,
 } from "@/src/features/doctors/hooks/useDoctors";
+
+import { useStorageImage } from "@/src/features/storage/hooks/useStorage";
+import { STORAGE_BUCKET } from "@/src/types/storage.types";
+
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role, UserStatus } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { useAuthStore } from "@/src/store/auth.store";
+
 import type {
   CompensationType,
   Doctor,
@@ -37,11 +48,15 @@ const statusOptions: DoctorStatus[] = [
   UserStatus.DELETED,
 ];
 
-const compensationTypeOptions: CompensationType[] = ["PERCENTAGE", "SALARY"];
+const compensationTypeOptions: CompensationType[] = [
+  "PERCENTAGE",
+  "SALARY",
+];
 
-// DOCTOR va ASSISTANT uchun compensation turi tanlanadi (PERCENTAGE yoki SALARY)
-// RECEPTIONIST uchun faqat SALARY (tanlov ko'rsatilmaydi, avtomatik SALARY)
-const rolesWithCompensationChoice: StaffRole[] = [Role.DOCTOR, Role.ASSISTANT];
+const rolesWithCompensationChoice: StaffRole[] = [
+  Role.DOCTOR,
+  Role.ASSISTANT,
+];
 
 const initialEditForm = {
   firstName: "",
@@ -52,7 +67,7 @@ const initialEditForm = {
   status: UserStatus.ACTIVE as DoctorStatus,
 };
 
-function getDoctorId(doctor: Doctor) {
+function getDoctorId(doctor: Doctor): string {
   return doctor.id || doctor._id || "";
 }
 
@@ -64,21 +79,131 @@ function getMainRole(doctor: Doctor): StaffRole {
   return (role as StaffRole) || Role.DOCTOR;
 }
 
-function getRoleBadgeClass(role: string) {
-  if (role === Role.DOCTOR) return "bg-blue-100 text-blue-700";
-  if (role === Role.RECEPTIONIST) return "bg-purple-100 text-purple-700";
-  if (role === Role.ASSISTANT) return "bg-emerald-100 text-emerald-700";
+function getRoleBadgeClass(role: string): string {
+  if (role === Role.DOCTOR) {
+    return "bg-blue-100 text-blue-700";
+  }
+
+  if (role === Role.RECEPTIONIST) {
+    return "bg-purple-100 text-purple-700";
+  }
+
+  if (role === Role.ASSISTANT) {
+    return "bg-emerald-100 text-emerald-700";
+  }
 
   return "bg-slate-100 text-slate-600";
 }
 
-function getStatusBadgeClass(status?: string) {
-  if (status === UserStatus.ACTIVE) return "bg-green-100 text-green-700";
-  if (status === UserStatus.PENDING) return "bg-yellow-100 text-yellow-700";
+function getStatusBadgeClass(status?: string): string {
+  if (status === UserStatus.ACTIVE) {
+    return "bg-green-100 text-green-700";
+  }
+
+  if (status === UserStatus.PENDING) {
+    return "bg-yellow-100 text-yellow-700";
+  }
+
   return "bg-red-100 text-red-700";
 }
 
-// ─── Beautiful Dropdown ───────────────────────────────────────────────────────
+function getDoctorInitials(doctor: Doctor): string {
+  const firstName = doctor.firstName?.trim();
+  const lastName = doctor.lastName?.trim();
+
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  }
+
+  if (firstName) {
+    return firstName[0].toUpperCase();
+  }
+
+  if (lastName) {
+    return lastName[0].toUpperCase();
+  }
+
+  if (doctor.email) {
+    return doctor.email[0].toUpperCase();
+  }
+
+  return "U";
+}
+
+/**
+ * Doctor avatar.
+ *
+ * doctor.avatarUrl quyidagi formatlarda bo‘lishi mumkin:
+ *
+ * users/avatar.png
+ * https://example.com/avatar.png
+ * blob:http://localhost/...
+ *
+ * Storage path bo‘lsa useStorageImage backenddan blob qilib oladi.
+ */
+function DoctorAvatar({
+  doctor,
+  sizeClassName = "h-11 w-11",
+  textClassName = "text-sm",
+}: {
+  doctor: Doctor;
+  sizeClassName?: string;
+  textClassName?: string;
+}) {
+  const avatarPath = doctor.avatarUrl?.trim() || "";
+
+  const avatarImage = useStorageImage(
+    avatarPath,
+    STORAGE_BUCKET
+  );
+
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [avatarPath, avatarImage.url]);
+
+  const initials = getDoctorInitials(doctor);
+
+  if (
+    avatarPath &&
+    avatarImage.isFetching &&
+    !avatarImage.url
+  ) {
+    return (
+      <div
+        className={`shrink-0 animate-pulse rounded-full bg-slate-200 ${sizeClassName}`}
+      />
+    );
+  }
+
+  if (avatarImage.url && !imageFailed) {
+    return (
+      <img
+        src={avatarImage.url}
+        alt={
+          `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() ||
+          "Staff avatar"
+        }
+        loading="lazy"
+        onError={() => setImageFailed(true)}
+        className={`shrink-0 rounded-full bg-slate-100 object-cover ${sizeClassName}`}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold uppercase text-blue-700 ${sizeClassName} ${textClassName}`}
+    >
+      {initials}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Dropdown
+// -----------------------------------------------------------------------------
 
 interface DropdownOption {
   value: string;
@@ -110,34 +235,47 @@ function Dropdown({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     }
+
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
-  const selected = options.find((option) => option.value === value);
+  const selected = options.find(
+    (option) => option.value === value
+  );
 
   return (
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen((previous) => !previous)}
         className={
           buttonClassName ??
           "flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40 focus:outline-none focus:ring-4 focus:ring-blue-100"
         }
       >
-        <span className="truncate">{selected?.label ?? placeholder}</span>
+        <span className="truncate">
+          {selected?.label ?? placeholder}
+        </span>
+
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
             open ? "rotate-180 text-blue-500" : ""
@@ -156,6 +294,7 @@ function Dropdown({
         >
           {options.map((option) => {
             const isSelected = option.value === value;
+
             return (
               <button
                 key={option.value}
@@ -172,6 +311,7 @@ function Dropdown({
               >
                 <span className="flex items-center gap-2">
                   {option.label}
+
                   {typeof option.count === "number" && (
                     <span
                       className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
@@ -184,7 +324,10 @@ function Dropdown({
                     </span>
                   )}
                 </span>
-                {isSelected && <Check className="h-4 w-4 shrink-0 text-blue-600" />}
+
+                {isSelected && (
+                  <Check className="h-4 w-4 shrink-0 text-blue-600" />
+                )}
               </button>
             );
           })}
@@ -194,115 +337,172 @@ function Dropdown({
   );
 }
 
+// -----------------------------------------------------------------------------
+// Page
+// -----------------------------------------------------------------------------
+
 export default function DoctorsPage() {
   const toast = useToast();
 
-  // Faqat SUPER_ADMIN / CLINIC_ADMIN — invite/edit/delete huquqiga ega.
-  // Boshqa rollar (Receptionist, Assistant) ro'yxatni ko'radi, lekin
-  // hech qanday boshqaruv tugmasini ko'rmaydi.
-  const isAdmin = useAuthStore((s) => s.isAdmin());
-  const isClinicAdmin = useAuthStore((s) => s.isClinicAdmin());
-  const isStaffAdmin = isAdmin || isClinicAdmin;
+  const isAdmin = useAuthStore((state) => state.isAdmin());
+  const isClinicAdmin = useAuthStore(
+    (state) => state.isClinicAdmin()
+  );
 
+  const isStaffAdmin = isAdmin || isClinicAdmin;
   const tableColSpan = isStaffAdmin ? 6 : 5;
 
-  /**
-   * getDoctors() service da allaqachon isStaffUser filter qilingan.
-   * Bu yerda qayta filter qilish shart emas — doctors to'g'ridan ishlatiladi.
-   */
-  const { data: doctors = [], isLoading, isError, refetch } = useGetDoctors();
+  const {
+    data: doctors = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetDoctors();
 
   const inviteDoctorMutation = useInviteDoctor();
   const deleteDoctorMutation = useDeleteDoctor();
 
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL");
-  const [statusFilter, setStatusFilter] = useState<DoctorStatus | "ALL">("ALL");
 
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<
+    StaffRole | "ALL"
+  >("ALL");
+
+  const [statusFilter, setStatusFilter] = useState<
+    DoctorStatus | "ALL"
+  >("ALL");
+
+  const [isInviteModalOpen, setIsInviteModalOpen] =
+    useState(false);
+
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<StaffRole>(Role.DOCTOR);
-  const [inviteCompensationType, setInviteCompensationType] =
-    useState<CompensationType>("PERCENTAGE");
-  const [inviteCommissionPercentage, setInviteCommissionPercentage] =
+
+  const [inviteRole, setInviteRole] = useState<StaffRole>(
+    Role.DOCTOR
+  );
+
+  const [
+    inviteCompensationType,
+    setInviteCompensationType,
+  ] = useState<CompensationType>("PERCENTAGE");
+
+  const [
+    inviteCommissionPercentage,
+    setInviteCommissionPercentage,
+  ] = useState("");
+
+  const [inviteSalaryAmount, setInviteSalaryAmount] =
     useState("");
-  const [inviteSalaryAmount, setInviteSalaryAmount] = useState("");
 
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [editForm, setEditForm] = useState(initialEditForm);
+  const [selectedDoctor, setSelectedDoctor] =
+    useState<Doctor | null>(null);
 
-  const selectedDoctorId = selectedDoctor ? getDoctorId(selectedDoctor) : "";
-  const updateDoctorMutation = useUpdateDoctor(selectedDoctorId);
+  const [editForm, setEditForm] =
+    useState(initialEditForm);
 
-  // DOCTOR/ASSISTANT -> compensation type tanlash ko'rsatiladi
-  // RECEPTIONIST -> compensation type tanlanmaydi, doim SALARY
+  const selectedDoctorId = selectedDoctor
+    ? getDoctorId(selectedDoctor)
+    : "";
+
+  const updateDoctorMutation =
+    useUpdateDoctor(selectedDoctorId);
+
   const showsCompensationTypeChoice =
     rolesWithCompensationChoice.includes(inviteRole);
-  const isReceptionistRole = inviteRole === Role.RECEPTIONIST;
+
+  const isReceptionistRole =
+    inviteRole === Role.RECEPTIONIST;
+
   const showsCompensationFields =
     showsCompensationTypeChoice || isReceptionistRole;
 
-  const effectiveCompensationType: CompensationType = isReceptionistRole
-    ? "SALARY"
-    : inviteCompensationType;
+  const effectiveCompensationType: CompensationType =
+    isReceptionistRole
+      ? "SALARY"
+      : inviteCompensationType;
 
-  /**
-   * Har bir role/status uchun nechta staff borligini hisoblaymiz —
-   * filter chiplarida son ko'rsatish uchun.
-   */
   const roleCounts = useMemo(() => {
     const counts = new Map<string, number>();
+
     doctors.forEach((doctor) => {
       doctor.roles?.forEach((role) => {
         counts.set(role, (counts.get(role) ?? 0) + 1);
       });
     });
+
     return counts;
   }, [doctors]);
 
   const statusCounts = useMemo(() => {
     const counts = new Map<string, number>();
+
     doctors.forEach((doctor) => {
-      const status = doctor.status || UserStatus.ACTIVE;
-      counts.set(status, (counts.get(status) ?? 0) + 1);
+      const status =
+        doctor.status || UserStatus.ACTIVE;
+
+      counts.set(
+        status,
+        (counts.get(status) ?? 0) + 1
+      );
     });
+
     return counts;
   }, [doctors]);
 
-  /**
-   * Client-side search + role + status filter — service da allaqachon
-   * staff filter bo'lgani uchun bu yerda faqat qo'shimcha filterlar.
-   */
   const filteredDoctors = useMemo(() => {
-    const value = search.toLowerCase().trim();
+    const searchValue = search.toLowerCase().trim();
 
     return doctors.filter((doctor) => {
-      if (roleFilter !== "ALL" && !doctor.roles?.includes(roleFilter)) {
+      if (
+        roleFilter !== "ALL" &&
+        !doctor.roles?.includes(roleFilter)
+      ) {
         return false;
       }
 
-      if (statusFilter !== "ALL" && doctor.status !== statusFilter) {
+      if (
+        statusFilter !== "ALL" &&
+        doctor.status !== statusFilter
+      ) {
         return false;
       }
 
-      if (!value) return true;
+      if (!searchValue) {
+        return true;
+      }
 
       const fullName =
         `${doctor.firstName || ""} ${doctor.lastName || ""}`.toLowerCase();
-      const email = doctor.email?.toLowerCase() || "";
-      const phone = (doctor.phoneNumber || doctor.phone || "").toLowerCase();
-      const status = doctor.status?.toLowerCase() || "";
-      const roles = doctor.roles?.join(" ").toLowerCase() || "";
+
+      const email =
+        doctor.email?.toLowerCase() || "";
+
+      const phone = (
+        doctor.phoneNumber ||
+        doctor.phone ||
+        ""
+      ).toLowerCase();
+
+      const status =
+        doctor.status?.toLowerCase() || "";
+
+      const roles =
+        doctor.roles?.join(" ").toLowerCase() || "";
 
       return (
-        fullName.includes(value) ||
-        email.includes(value) ||
-        phone.includes(value) ||
-        status.includes(value) ||
-        roles.includes(value)
+        fullName.includes(searchValue) ||
+        email.includes(searchValue) ||
+        phone.includes(searchValue) ||
+        status.includes(searchValue) ||
+        roles.includes(searchValue)
       );
     });
-  }, [doctors, search, roleFilter, statusFilter]);
+  }, [
+    doctors,
+    search,
+    roleFilter,
+    statusFilter,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Modal handlers
@@ -328,7 +528,6 @@ export default function DoctorsPage() {
 
   function handleInviteRoleChange(nextRole: StaffRole) {
     setInviteRole(nextRole);
-    // Role almashganda eski compensation qiymatlari qolib ketmasin
     setInviteCompensationType("PERCENTAGE");
     setInviteCommissionPercentage("");
     setInviteSalaryAmount("");
@@ -340,10 +539,12 @@ export default function DoctorsPage() {
     setEditForm({
       firstName: doctor.firstName || "",
       lastName: doctor.lastName || "",
-      phoneNumber: doctor.phoneNumber || doctor.phone || "",
+      phoneNumber:
+        doctor.phoneNumber || doctor.phone || "",
       avatarUrl: doctor.avatarUrl || "",
       role: getMainRole(doctor),
-      status: doctor.status || UserStatus.ACTIVE,
+      status:
+        doctor.status || UserStatus.ACTIVE,
     });
   }
 
@@ -362,8 +563,10 @@ export default function DoctorsPage() {
   // Actions
   // ---------------------------------------------------------------------------
 
-  async function handleInviteDoctor(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleInviteDoctor(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
     if (!inviteEmail.trim()) {
       toast.warning("Email kiriting");
@@ -375,7 +578,9 @@ export default function DoctorsPage() {
         effectiveCompensationType === "PERCENTAGE" &&
         !inviteCommissionPercentage.trim()
       ) {
-        toast.warning("Commission percentage kiriting");
+        toast.warning(
+          "Commission percentage kiriting"
+        );
         return;
       }
 
@@ -392,28 +597,45 @@ export default function DoctorsPage() {
       await inviteDoctorMutation.mutateAsync({
         email: inviteEmail.trim(),
         role: inviteRole,
+
         ...(showsCompensationFields && {
-          compensationType: effectiveCompensationType,
-          ...(effectiveCompensationType === "PERCENTAGE"
-            ? { commissionPercentage: Number(inviteCommissionPercentage) }
-            : { salaryAmount: Number(inviteSalaryAmount) }),
+          compensationType:
+            effectiveCompensationType,
+
+          ...(effectiveCompensationType ===
+          "PERCENTAGE"
+            ? {
+                commissionPercentage: Number(
+                  inviteCommissionPercentage
+                ),
+              }
+            : {
+                salaryAmount: Number(
+                  inviteSalaryAmount
+                ),
+              }),
         }),
       });
 
       handleCloseInviteModal();
 
-      /**
-       * refetch() kerak emas — useInviteDoctor onSuccess da
-       * invalidateQueries chaqiradi, query avtomatik yangilanadi.
-       */
-      toast.success(`${inviteRole} uchun invite yuborildi`);
+      toast.success(
+        `${inviteRole} uchun invite yuborildi`
+      );
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Invite yuborishda xatolik bo'ldi"));
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Invite yuborishda xatolik bo'ldi"
+        )
+      );
     }
   }
 
-  async function handleUpdateDoctor(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleUpdateDoctor(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
     if (!selectedDoctorId) {
       toast.error("User ID topilmadi");
@@ -442,14 +664,22 @@ export default function DoctorsPage() {
 
       handleCloseEditModal();
 
-      // refetch() kerak emas — useUpdateDoctor onSuccess da invalidateQueries bor
-      toast.success("Staff updated successfully");
+      toast.success(
+        "Staff updated successfully"
+      );
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Staff update qilishda xatolik bo'ldi"));
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Staff update qilishda xatolik bo'ldi"
+        )
+      );
     }
   }
 
-  async function handleDeleteDoctor(doctor: Doctor) {
+  async function handleDeleteDoctor(
+    doctor: Doctor
+  ) {
     const doctorId = getDoctorId(doctor);
 
     if (!doctorId) {
@@ -457,19 +687,31 @@ export default function DoctorsPage() {
       return;
     }
 
-    const confirmed = confirm(
-      `${doctor.firstName} ${doctor.lastName} ni o'chirmoqchimisiz?`
+    const confirmed = window.confirm(
+      `${doctor.firstName || ""} ${
+        doctor.lastName || ""
+      } ni o'chirmoqchimisiz?`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
-      await deleteDoctorMutation.mutateAsync(doctorId);
+      await deleteDoctorMutation.mutateAsync(
+        doctorId
+      );
 
-      // refetch() kerak emas — useDeleteDoctor onSuccess da invalidateQueries bor
-      toast.success("Staff deleted successfully");
+      toast.success(
+        "Staff deleted successfully"
+      );
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Staff delete qilishda xatolik bo'ldi"));
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Staff delete qilishda xatolik bo'ldi"
+        )
+      );
     }
   }
 
@@ -478,15 +720,21 @@ export default function DoctorsPage() {
   // ---------------------------------------------------------------------------
 
   const hasActiveFilters =
-    Boolean(search.trim()) || roleFilter !== "ALL" || statusFilter !== "ALL";
+    Boolean(search.trim()) ||
+    roleFilter !== "ALL" ||
+    statusFilter !== "ALL";
 
   return (
     <div className="min-h-screen p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Clinic Staff</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Clinic Staff
+          </h1>
+
           <p className="mt-1 text-sm text-slate-500">
-            Manage doctors, receptionists, assistants and clinic team invites.
+            Manage doctors, receptionists, assistants
+            and clinic team invites.
           </p>
         </div>
 
@@ -505,25 +753,36 @@ export default function DoctorsPage() {
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Staff List</h2>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Staff List
+              </h2>
             </div>
           </div>
 
-          {/* Role va Status filterlar */}
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Role
               </label>
+
               <Dropdown
                 value={roleFilter}
-                onChange={(v) => setRoleFilter(v as StaffRole | "ALL")}
+                onChange={(value) =>
+                  setRoleFilter(
+                    value as StaffRole | "ALL"
+                  )
+                }
                 options={[
-                  { value: "ALL", label: "Barcha rollar", count: doctors.length },
+                  {
+                    value: "ALL",
+                    label: "Barcha rollar",
+                    count: doctors.length,
+                  },
                   ...staffRoleOptions.map((role) => ({
                     value: role,
                     label: role,
-                    count: roleCounts.get(role) ?? 0,
+                    count:
+                      roleCounts.get(role) ?? 0,
                   })),
                 ]}
               />
@@ -533,15 +792,25 @@ export default function DoctorsPage() {
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Status
               </label>
+
               <Dropdown
                 value={statusFilter}
-                onChange={(v) => setStatusFilter(v as DoctorStatus | "ALL")}
+                onChange={(value) =>
+                  setStatusFilter(
+                    value as DoctorStatus | "ALL"
+                  )
+                }
                 options={[
-                  { value: "ALL", label: "Barcha statuslar", count: doctors.length },
+                  {
+                    value: "ALL",
+                    label: "Barcha statuslar",
+                    count: doctors.length,
+                  },
                   ...statusOptions.map((status) => ({
                     value: status,
                     label: status,
-                    count: statusCounts.get(status) ?? 0,
+                    count:
+                      statusCounts.get(status) ?? 0,
                   })),
                 ]}
               />
@@ -556,11 +825,14 @@ export default function DoctorsPage() {
                 Filterlarni tozalash
               </button>
             )}
+
             <div className="w-full md:ml-auto md:w-80">
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
                 placeholder="Search staff..."
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
@@ -571,7 +843,7 @@ export default function DoctorsPage() {
         {isError ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-red-600">
-              Staff listni olishda xatolik bo'ldi.
+              Staff listni olishda xatolik bo&apos;ldi.
             </p>
 
             <button
@@ -590,18 +862,23 @@ export default function DoctorsPage() {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Staff
                   </th>
+
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Email
                   </th>
+
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Phone
                   </th>
+
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Role
                   </th>
+
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Status
                   </th>
+
                   {isStaffAdmin && (
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Actions
@@ -639,22 +916,14 @@ export default function DoctorsPage() {
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          {doctor.avatarUrl ? (
-                            <img
-                              src={doctor.avatarUrl}
-                              alt={`${doctor.firstName} ${doctor.lastName}`}
-                              className="h-11 w-11 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-sm font-bold uppercase text-blue-700">
-                              {doctor.firstName?.[0]}
-                              {doctor.lastName?.[0]}
-                            </div>
-                          )}
+                          <DoctorAvatar
+                            doctor={doctor}
+                          />
 
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {doctor.firstName} {doctor.lastName}
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-900">
+                              {doctor.firstName || "-"}{" "}
+                              {doctor.lastName || ""}
                             </p>
                           </div>
                         </div>
@@ -665,7 +934,9 @@ export default function DoctorsPage() {
                       </td>
 
                       <td className="px-5 py-4 text-sm text-slate-600">
-                        {doctor.phoneNumber || doctor.phone || "-"}
+                        {doctor.phoneNumber ||
+                          doctor.phone ||
+                          "-"}
                       </td>
 
                       <td className="px-5 py-4">
@@ -674,20 +945,26 @@ export default function DoctorsPage() {
                             doctor.roles.map((role) => (
                               <span
                                 key={role}
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(role)}`}
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
+                                  role
+                                )}`}
                               >
                                 {role}
                               </span>
                             ))
                           ) : (
-                            <span className="text-sm text-slate-400">-</span>
+                            <span className="text-sm text-slate-400">
+                              -
+                            </span>
                           )}
                         </div>
                       </td>
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(doctor.status)}`}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                            doctor.status
+                          )}`}
                         >
                           {doctor.status}
                         </span>
@@ -698,7 +975,11 @@ export default function DoctorsPage() {
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => handleOpenEditModal(doctor)}
+                              onClick={() =>
+                                handleOpenEditModal(
+                                  doctor
+                                )
+                              }
                               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                             >
                               Edit
@@ -706,8 +987,14 @@ export default function DoctorsPage() {
 
                             <button
                               type="button"
-                              onClick={() => handleDeleteDoctor(doctor)}
-                              disabled={deleteDoctorMutation.isPending}
+                              onClick={() =>
+                                handleDeleteDoctor(
+                                  doctor
+                                )
+                              }
+                              disabled={
+                                deleteDoctorMutation.isPending
+                              }
                               className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               Delete
@@ -724,15 +1011,19 @@ export default function DoctorsPage() {
         )}
       </div>
 
-      {/* Invite Modal — faqat isStaffAdmin bo'lsa ochilishi mumkin (tugma yashirin) */}
+      {/* Invite Modal */}
       {isInviteModalOpen && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Add Staff</h2>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Add Staff
+                </h2>
+
                 <p className="mt-1 text-sm text-slate-500">
-                  Select role and send invite link to email.
+                  Select role and send invite link to
+                  email.
                 </p>
               </div>
 
@@ -745,7 +1036,10 @@ export default function DoctorsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleInviteDoctor} className="space-y-4">
+            <form
+              onSubmit={handleInviteDoctor}
+              className="space-y-4"
+            >
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Email
@@ -754,7 +1048,11 @@ export default function DoctorsPage() {
                 <input
                   type="email"
                   value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onChange={(event) =>
+                    setInviteEmail(
+                      event.target.value
+                    )
+                  }
                   placeholder="staff@gmail.com"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
@@ -767,12 +1065,18 @@ export default function DoctorsPage() {
 
                 <Dropdown
                   value={inviteRole}
-                  onChange={(v) => handleInviteRoleChange(v as StaffRole)}
+                  onChange={(value) =>
+                    handleInviteRoleChange(
+                      value as StaffRole
+                    )
+                  }
                   buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  options={staffRoleOptions.map((role) => ({
-                    value: role,
-                    label: role,
-                  }))}
+                  options={staffRoleOptions.map(
+                    (role) => ({
+                      value: role,
+                      label: role,
+                    })
+                  )}
                 />
               </div>
 
@@ -785,20 +1089,31 @@ export default function DoctorsPage() {
                       </label>
 
                       <Dropdown
-                        value={inviteCompensationType}
-                        onChange={(v) =>
-                          setInviteCompensationType(v as CompensationType)
+                        value={
+                          inviteCompensationType
+                        }
+                        onChange={(value) =>
+                          setInviteCompensationType(
+                            value as CompensationType
+                          )
                         }
                         buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        options={compensationTypeOptions.map((type) => ({
-                          value: type,
-                          label: type === "PERCENTAGE" ? "Percentage" : "Salary",
-                        }))}
+                        options={compensationTypeOptions.map(
+                          (type) => ({
+                            value: type,
+                            label:
+                              type ===
+                              "PERCENTAGE"
+                                ? "Percentage"
+                                : "Salary",
+                          })
+                        )}
                       />
                     </div>
                   )}
 
-                  {effectiveCompensationType === "PERCENTAGE" ? (
+                  {effectiveCompensationType ===
+                  "PERCENTAGE" ? (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
                         Commission Percentage
@@ -809,9 +1124,13 @@ export default function DoctorsPage() {
                         min={0}
                         max={100}
                         step="0.1"
-                        value={inviteCommissionPercentage}
-                        onChange={(e) =>
-                          setInviteCommissionPercentage(e.target.value)
+                        value={
+                          inviteCommissionPercentage
+                        }
+                        onChange={(event) =>
+                          setInviteCommissionPercentage(
+                            event.target.value
+                          )
                         }
                         placeholder="40"
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -827,8 +1146,14 @@ export default function DoctorsPage() {
                         type="number"
                         min={0}
                         step="0.01"
-                        value={inviteSalaryAmount}
-                        onChange={(e) => setInviteSalaryAmount(e.target.value)}
+                        value={
+                          inviteSalaryAmount
+                        }
+                        onChange={(event) =>
+                          setInviteSalaryAmount(
+                            event.target.value
+                          )
+                        }
                         placeholder="5000000"
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                       />
@@ -838,8 +1163,9 @@ export default function DoctorsPage() {
               )}
 
               <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
-                User emaildagi linkni bosadi, keyin name va password kiritib
-                signup qiladi.
+                User emaildagi linkni bosadi, keyin
+                name va password kiritib signup
+                qiladi.
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
@@ -853,10 +1179,14 @@ export default function DoctorsPage() {
 
                 <button
                   type="submit"
-                  disabled={inviteDoctorMutation.isPending}
+                  disabled={
+                    inviteDoctorMutation.isPending
+                  }
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {inviteDoctorMutation.isPending ? "Sending..." : "Send Invite"}
+                  {inviteDoctorMutation.isPending
+                    ? "Sending..."
+                    : "Send Invite"}
                 </button>
               </div>
             </form>
@@ -864,13 +1194,16 @@ export default function DoctorsPage() {
         </div>
       )}
 
-      {/* Edit Modal — faqat isStaffAdmin bo'lsa ochilishi mumkin (Edit tugmasi yashirin) */}
+      {/* Edit Modal */}
       {selectedDoctor && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Edit Staff</h2>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Edit Staff
+                </h2>
+
                 <p className="mt-1 text-sm text-slate-500">
                   Update staff profile and role.
                 </p>
@@ -885,7 +1218,23 @@ export default function DoctorsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateDoctor} className="space-y-4">
+            <div className="mb-6 flex justify-center">
+              <DoctorAvatar
+                doctor={{
+                  ...selectedDoctor,
+                  firstName: editForm.firstName,
+                  lastName: editForm.lastName,
+                  avatarUrl: editForm.avatarUrl,
+                }}
+                sizeClassName="h-24 w-24"
+                textClassName="text-2xl"
+              />
+            </div>
+
+            <form
+              onSubmit={handleUpdateDoctor}
+              className="space-y-4"
+            >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -895,8 +1244,14 @@ export default function DoctorsPage() {
                   <input
                     type="text"
                     value={editForm.firstName}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, firstName: e.target.value })
+                    onChange={(event) =>
+                      setEditForm(
+                        (previous) => ({
+                          ...previous,
+                          firstName:
+                            event.target.value,
+                        })
+                      )
                     }
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
@@ -910,8 +1265,14 @@ export default function DoctorsPage() {
                   <input
                     type="text"
                     value={editForm.lastName}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, lastName: e.target.value })
+                    onChange={(event) =>
+                      setEditForm(
+                        (previous) => ({
+                          ...previous,
+                          lastName:
+                            event.target.value,
+                        })
+                      )
                     }
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
@@ -926,8 +1287,14 @@ export default function DoctorsPage() {
                 <input
                   type="text"
                   value={editForm.phoneNumber}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, phoneNumber: e.target.value })
+                  onChange={(event) =>
+                    setEditForm(
+                      (previous) => ({
+                        ...previous,
+                        phoneNumber:
+                          event.target.value,
+                      })
+                    )
                   }
                   placeholder="+998901112233"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
@@ -936,16 +1303,22 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Avatar URL
+                  Avatar URL / Storage Path
                 </label>
 
                 <input
                   type="text"
                   value={editForm.avatarUrl}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, avatarUrl: e.target.value })
+                  onChange={(event) =>
+                    setEditForm(
+                      (previous) => ({
+                        ...previous,
+                        avatarUrl:
+                          event.target.value,
+                      })
+                    )
                   }
-                  placeholder="https://cdn.example.com/avatar.png"
+                  placeholder="users/avatar.png"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
@@ -957,14 +1330,21 @@ export default function DoctorsPage() {
 
                 <Dropdown
                   value={editForm.role}
-                  onChange={(v) =>
-                    setEditForm({ ...editForm, role: v as StaffRole })
+                  onChange={(value) =>
+                    setEditForm(
+                      (previous) => ({
+                        ...previous,
+                        role: value as StaffRole,
+                      })
+                    )
                   }
                   buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  options={staffRoleOptions.map((role) => ({
-                    value: role,
-                    label: role,
-                  }))}
+                  options={staffRoleOptions.map(
+                    (role) => ({
+                      value: role,
+                      label: role,
+                    })
+                  )}
                 />
               </div>
 
@@ -975,14 +1355,22 @@ export default function DoctorsPage() {
 
                 <Dropdown
                   value={editForm.status}
-                  onChange={(v) =>
-                    setEditForm({ ...editForm, status: v as DoctorStatus })
+                  onChange={(value) =>
+                    setEditForm(
+                      (previous) => ({
+                        ...previous,
+                        status:
+                          value as DoctorStatus,
+                      })
+                    )
                   }
                   buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  options={statusOptions.map((status) => ({
-                    value: status,
-                    label: status,
-                  }))}
+                  options={statusOptions.map(
+                    (status) => ({
+                      value: status,
+                      label: status,
+                    })
+                  )}
                 />
               </div>
 
@@ -997,10 +1385,14 @@ export default function DoctorsPage() {
 
                 <button
                   type="submit"
-                  disabled={updateDoctorMutation.isPending}
+                  disabled={
+                    updateDoctorMutation.isPending
+                  }
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {updateDoctorMutation.isPending ? "Saving..." : "Save Changes"}
+                  {updateDoctorMutation.isPending
+                    ? "Saving..."
+                    : "Save Changes"}
                 </button>
               </div>
             </form>
