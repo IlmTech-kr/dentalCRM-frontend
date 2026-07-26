@@ -1,25 +1,25 @@
 {
   "header": {
-    "badge": "Dental service narxlar listi",
-    "title": "Procedures",
-    "subtitle": "Bu sahifada klinika xizmatlari va narxlari boshqariladi. Treatment visit ichida doctor shu listdan procedure tanlaydi.",
-    "addButton": "Yangi procedure"
+    "badge": "Stomatologiya xizmatlari narxlar ro'yxati",
+    "title": "Muolajalar",
+    "subtitle": "Bu yerda klinika xizmatlari va narxlari boshqariladi. Shifokorlar davolash tashrifi ichida ushbu ro'yxatdan muolaja tanlaydi.",
+    "addButton": "Yangi muolaja"
   },
   "stats": {
-    "totalProcedures": "Jami procedures",
-    "totalDefaultPrice": "Umumiy default narx",
-    "status": "Status"
+    "totalProcedures": "Jami muolajalar",
+    "totalDefaultPrice": "Umumiy standart narx",
+    "status": "Holati"
   },
   "list": {
-    "sectionTitle": "Procedure list",
-    "sectionSubtitle": "Bu ro'yxat treatment visitda tanlash uchun ishlatiladi.",
-    "searchPlaceholder": "Procedure qidirish...",
-    "loading": "Loading procedures...",
-    "emptyTitle": "Procedure topilmadi",
-    "emptySubtitle": "Yangi procedure yarating yoki searchni tozalang."
+    "sectionTitle": "Muolajalar ro'yxati",
+    "sectionSubtitle": "Ushbu ro'yxat davolash tashrifida tanlash uchun ishlatiladi.",
+    "searchPlaceholder": "Muolaja qidirish...",
+    "loading": "Muolajalar yuklanmoqda...",
+    "emptyTitle": "Muolaja topilmadi",
+    "emptySubtitle": "Yangi muolaja yarating yoki qidiruvni tozalang."
   },
   "table": {
-    "code": "Code",
+    "code": "Kodi",
     "name": "Nomi",
     "price": "Narxi",
     "result": "Natija",
@@ -34,38 +34,38 @@
     "missing": "Yo'q"
   },
   "modal": {
-    "editBadge": "Edit mode",
-    "createBadge": "Create mode",
-    "editTitle": "Procedure update qilish",
-    "createTitle": "Yangi procedure yaratish",
-    "subtitle": "Procedure narxi va natija conditionini kiriting. Bu service keyinchalik treatment visit ichida tanlanadi.",
+    "editBadge": "Tahrirlash rejimi",
+    "createBadge": "Yaratish rejimi",
+    "editTitle": "Muolajani yangilash",
+    "createTitle": "Yangi muolaja yaratish",
+    "subtitle": "Muolaja narxi va natijaviy holatini kiriting. Bu xizmat keyinchalik davolash tashrifida tanlanadi.",
     "closeAria": "Modalni yopish",
-    "codeLabel": "Procedure code",
+    "codeLabel": "Muolaja kodi",
     "codePlaceholder": "PROC_002",
-    "priceLabel": "Default price",
+    "priceLabel": "Standart narx",
     "pricePlaceholder": "550000",
-    "nameLabel": "Procedure nomi",
+    "nameLabel": "Muolaja nomi",
     "namePlaceholder": "Doimiy yorug'likli kompozit plomba",
-    "conditionLabel": "Resulting condition",
-    "previewLabel": "Preview",
-    "previewNamePlaceholder": "Procedure nomi",
+    "conditionLabel": "Natijaviy holat",
+    "previewLabel": "Ko'rinish",
+    "previewNamePlaceholder": "Muolaja nomi",
     "previewCodePlaceholder": "PROC_CODE",
     "cancelButton": "Bekor qilish",
-    "updateButton": "Update qilish",
-    "createButton": "Create qilish"
+    "updateButton": "Yangilash",
+    "createButton": "Yaratish"
   },
   "deleteConfirm": {
-    "message": "\"{name}\" procedureni o'chirasizmi?"
+    "message": "\"{name}\" muolajasini o'chirasizmi?"
   },
   "toast": {
-    "codeRequired": "Procedure code kiriting",
-    "nameRequired": "Procedure nomini kiriting",
-    "priceRequired": "Procedure narxini kiriting",
-    "idNotFound": "Procedure ID topilmadi",
-    "updateSuccess": "Procedure muvaffaqiyatli yangilandi",
-    "createSuccess": "Procedure muvaffaqiyatli yaratildi",
-    "saveError": "Procedure saqlashda xatolik. Create/update faqat CLINIC_ADMIN role bilan ishlaydi.",
-    "deleteSuccess": "Procedure o'chirildi",
-    "deleteError": "Procedure o'chirishda xatolik. Delete faqat CLINIC_ADMIN role bilan ishlaydi."
+    "codeRequired": "Muolaja kodini kiriting",
+    "nameRequired": "Muolaja nomini kiriting",
+    "priceRequired": "Muolaja narxini kiriting",
+    "idNotFound": "Muolaja ID topilmadi",
+    "updateSuccess": "Muolaja muvaffaqiyatli yangilandi",
+    "createSuccess": "Muolaja muvaffaqiyatli yaratildi",
+    "saveError": "Muolajani saqlashda xatolik. Yaratish/yangilash faqat CLINIC_ADMIN roli uchun ishlaydi.",
+    "deleteSuccess": "Muolaja o'chirildi",
+    "deleteError": "Muolajani o'chirishda xatolik. O'chirish faqat CLINIC_ADMIN roli uchun ishlaydi."
   }
 }
