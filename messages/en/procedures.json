@@ -1,1 +1,73 @@
-{}
+{
+  "header": {
+    "badge": "Dental Service price list",
+    "title": "Procedures",
+    "subtitle": "Manage clinic services and prices here. Doctors select a procedure from this list during a treatment visit.",
+    "addButton": "New procedure"
+  },
+  "stats": {
+    "total": "Total procedures",
+    "totalPrice": "Total default price",
+    "status": "Status",
+    "active": "Active"
+  },
+  "list": {
+    "title": "Procedure list",
+    "subtitle": "This list is used for selection during a treatment visit.",
+    "searchPlaceholder": "Search procedure...",
+    "loading": "Loading procedures...",
+    "empty": "No procedure found",
+    "emptyHint": "Create a new procedure or clear the search."
+  },
+  "table": {
+    "code": "Code",
+    "name": "Name",
+    "price": "Price",
+    "result": "Result",
+    "actions": "Actions"
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "condition": {
+    "filling": "Filling",
+    "crown": "Crown",
+    "implant": "Implant",
+    "rootCanal": "Root canal treatment",
+    "extracted": "Extracted",
+    "missing": "Missing"
+  },
+  "modal": {
+    "editModeBadge": "Edit mode",
+    "createModeBadge": "Create mode",
+    "editTitle": "Update procedure",
+    "createTitle": "Create new procedure",
+    "subtitle": "Enter the procedure price and resulting condition. This service can later be selected during a treatment visit.",
+    "codeLabel": "Procedure code",
+    "codePlaceholder": "PROC_002",
+    "priceLabel": "Default price",
+    "pricePlaceholder": "550000",
+    "nameLabel": "Procedure name",
+    "namePlaceholder": "Permanent light-cure composite filling",
+    "resultingConditionLabel": "Resulting condition",
+    "previewLabel": "Preview",
+    "previewNameFallback": "Procedure name",
+    "previewCodeFallback": "PROC_CODE",
+    "cancel": "Cancel",
+    "update": "Update",
+    "create": "Create"
+  },
+  "toast": {
+    "enterCode": "Please enter the procedure code",
+    "enterName": "Please enter the procedure name",
+    "enterPrice": "Please enter the procedure price",
+    "procedureIdNotFound": "Procedure ID not found",
+    "updated": "Procedure updated successfully",
+    "created": "Procedure created successfully",
+    "saveFailed": "Failed to save the procedure. Create/update only works with the CLINIC_ADMIN role.",
+    "deleteConfirm": "Delete the procedure \"{name}\"?",
+    "deleted": "Procedure deleted",
+    "deleteFailed": "Failed to delete the procedure. Delete only works with the CLINIC_ADMIN role."
+  }
+}

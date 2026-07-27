@@ -1,1 +1,150 @@
-{}
+{
+  "changePassword": {
+    "header": {
+      "title": "Parolni o'zgartirish",
+      "subtitle": "Hisobingizni kuchli parol bilan xavfsiz saqlang"
+    },
+    "fields": {
+      "currentPassword": "Joriy parol",
+      "currentPasswordPlaceholder": "Joriy parolingizni kiriting",
+      "newPassword": "Yangi parol",
+      "newPasswordPlaceholder": "Kuchli parol yarating",
+      "confirmPassword": "Yangi parolni tasdiqlang",
+      "confirmPasswordPlaceholder": "Yangi parolni qayta kiriting"
+    },
+    "strength": {
+      "label": "Parol kuchi",
+      "weak": "Kuchsiz",
+      "fair": "O'rtacha",
+      "good": "Yaxshi",
+      "strong": "Kuchli",
+      "veryStrong": "Juda kuchli",
+      "req8chars": "8+ belgi",
+      "reqUppercase": "Bosh harf",
+      "reqNumber": "Raqam",
+      "reqSpecial": "Maxsus belgi"
+    },
+    "passwordsMatch": "✓ Parollar mos keladi",
+    "submit": {
+      "updating": "Yangilanmoqda...",
+      "update": "Parolni yangilash"
+    },
+    "tip": {
+      "label": "Maslahat:",
+      "text": "Boshqa saytlarda ishlatmagan noyob paroldan foydalaning. Parol menejeri yordam berishi mumkin."
+    },
+    "validation": {
+      "currentRequired": "Joriy parolni kiriting",
+      "newRequired": "Yangi parolni kiriting",
+      "minLength": "Kamida 8 ta belgi talab qilinadi",
+      "mustDiffer": "Yangi parol joriy paroldan farq qilishi kerak",
+      "confirmRequired": "Yangi parolingizni tasdiqlang",
+      "mismatch": "Parollar mos kelmadi"
+    },
+    "toast": {
+      "updated": "Parol muvaffaqiyatli yangilandi",
+      "currentIncorrect": "Joriy parol noto'g'ri"
+    }
+  },
+  "profile": {
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "phone": "Telefon",
+    "email": "Email",
+    "placeholderDash": "—",
+    "enterFieldPlaceholder": "{field} kiriting",
+    "changePhoto": "Rasmni o'zgartirish",
+    "avatarAlt": "Profil avatari",
+    "submit": {
+      "saving": "Saqlanmoqda...",
+      "uploadingImage": "Rasm yuklanmoqda...",
+      "saveChanges": "O'zgarishlarni saqlash"
+    },
+    "toast": {
+      "loadFailed": "Profilni yuklashda xatolik yuz berdi",
+      "selectImageFile": "Iltimos, rasm faylini tanlang",
+      "imageTooLarge": "Rasm hajmi 5MB dan oshmasligi kerak",
+      "imageUploaded": "Rasm yuklandi. Saqlash tugmasini bosing.",
+      "imageUploadFailed": "Rasmni yuklashda xatolik yuz berdi",
+      "imageStillUploading": "Rasm hali yuklanmoqda, biroz kuting.",
+      "profileUpdated": "Profil yangilandi",
+      "profileUpdateFailed": "Profilni yangilashda xatolik yuz berdi"
+    }
+  },
+  "plans": {
+    "page": {
+      "title": "Tarif va to'lovlar",
+      "subtitle": "Klinikangiz tarifini boshqaring",
+      "refresh": "Yangilash"
+    },
+    "tabs": {
+      "current": "Joriy tarif",
+      "available": "Barcha tariflar"
+    },
+    "durations": {
+      "months1": "1 oy",
+      "months3": "3 oy",
+      "months6": "6 oy",
+      "months12": "1 yil",
+      "discountBadge": "−17%"
+    },
+    "badges": {
+      "start": "Boshlang'ich",
+      "pro": "Mashhur",
+      "enterprise": "Korporativ"
+    },
+    "current": {
+      "monthlyPlanLabel": "{months} oylik tarif",
+      "currentPlanFallback": "Joriy tarif",
+      "perMonth": "so'm / oy",
+      "statDoctors": "Shifokorlar",
+      "statStaff": "Xodimlar",
+      "statSmsBalance": "SMS balans",
+      "statExpiresAt": "Muddat tugaydi",
+      "storageLabel": "Saqlash joyi",
+      "storageUsed": "{used} GB ishlatilgan",
+      "changePlanButton": "Tarifni o'zgartirish",
+      "cancelButton": "Bekor qilish"
+    },
+    "card": {
+      "popularBadge": "Mashhur",
+      "perMonth": "so'm/oy",
+      "totalPrice": "Jami: {total} so'm / {months} oy",
+      "durationLabel": "Muddat",
+      "doctorsFeature": "{count} shifokor",
+      "staffFeature": "{count} xodim",
+      "storageFeature": "{count} GB saqlash",
+      "smsFeature": "{count} ta SMS",
+      "smsSeparate": "SMS: alohida",
+      "currentPlanBadge": "Joriy tarif",
+      "payButton": "Payme orqali to'lash"
+    },
+    "empty": {
+      "noActivePlanTitle": "Aktiv tarif yo'q",
+      "noActivePlanSubtitle": "Tariflardan birini tanlab klinikangizni to'liq imkoniyatlar bilan ishga tushiring.",
+      "viewPlans": "Tariflarni ko'rish",
+      "noPlansTitle": "Tariflar topilmadi",
+      "noPlansSubtitle": "Backenddan tariflar ro'yxati kelmadi."
+    },
+    "sidebar": {
+      "billingInfoTitle": "To'lov ma'lumoti",
+      "status": "Status",
+      "planDuration": "Plan davomiyligi",
+      "startDate": "Boshlanish sanasi",
+      "endDate": "Tugash sanasi",
+      "includedSms": "SMS kiruvchi",
+      "monthsValue": "{months} oy",
+      "paymeInfoTitle": "💳 Payme orqali to'lov",
+      "paymeInfoText": "Tarif aktivlashtirilganda Payme checkout sahifasiga yo'naltirilasiz. To'lov xavfsiz va tezkor."
+    },
+    "helperText": "Tarifni tanlang va muddat belgilang — jami summa avtomatik hisoblanadi.",
+    "toast": {
+      "planTypeNotFound": "Plan type topilmadi",
+      "priceNotFound": "Bu tarif uchun narx topilmadi.",
+      "paymentFailed": "To'lovda xatolik bo'ldi",
+      "cancelConfirm": "Haqiqatan ham joriy tarifni bekor qilmoqchimisiz?",
+      "planCancelled": "Tarif bekor qilindi",
+      "genericError": "Xatolik yuz berdi"
+    }
+  }
+}

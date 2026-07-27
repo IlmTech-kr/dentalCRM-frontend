@@ -5,15 +5,15 @@
  */
 
 import { useState } from "react";
-import { Check, ChevronDown, Globe } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import { useLocaleStore } from "@/src/store/locale.store";
 import { SUPPORTED_LOCALES, type Locale } from "@/src/lib/i18n/storage";
 
-const LOCALE_LABELS: Record<Locale, { short: string; full: string }> = {
-  uz: { short: "UZ", full: "O'zbekcha" },
-  ru: { short: "RU", full: "Русский" },
-  en: { short: "EN", full: "English" },
+const LOCALE_LABELS: Record<Locale, { short: string; full: string; flag: string }> = {
+  uz: { short: "UZ", full: "O'zbekcha", flag: "🇺🇿" },
+  ru: { short: "RU", full: "Русский", flag: "🇷🇺" },
+  en: { short: "EN", full: "English", flag: "🇬🇧" },
 };
 
 interface LanguageSwitcherProps {
@@ -40,7 +40,7 @@ export function LanguageSwitcher({
           onClick={() => setOpen((previous) => !previous)}
           className="flex h-11 items-center gap-2 rounded-2xl border border-border-color bg-white px-3 transition hover:bg-slate-50"
         >
-          <Globe size={17} className="text-slate-500" />
+          <span className="text-base leading-none">{LOCALE_LABELS[locale].flag}</span>
 
           {variant === "default" && (
             <span className="text-sm font-semibold text-slate-700">
@@ -66,7 +66,10 @@ export function LanguageSwitcher({
                   onClick={() => handleSelect(code)}
                   className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
-                  <span>{LOCALE_LABELS[code].full}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-base leading-none">{LOCALE_LABELS[code].flag}</span>
+                    {LOCALE_LABELS[code].full}
+                  </span>
 
                   {code === locale && (
                     <Check size={16} className="text-blue-600" />

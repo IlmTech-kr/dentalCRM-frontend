@@ -14,6 +14,8 @@ import {
   User,
 } from "lucide-react";
 
+import { useTranslations } from "next-intl";
+
 import {
   useEffect,
   useRef,
@@ -115,6 +117,8 @@ interface ProfileInputProps {
   ) => void;
   disabled?: boolean;
   type?: string;
+  placeholderDash: string;
+  enterFieldPlaceholder: string;
 }
 
 function ProfileInput({
@@ -124,6 +128,8 @@ function ProfileInput({
   onChange,
   disabled = false,
   type = "text",
+  placeholderDash,
+  enterFieldPlaceholder,
 }: ProfileInputProps) {
   return (
     <div className="space-y-1.5">
@@ -152,8 +158,8 @@ function ProfileInput({
           }
           placeholder={
             disabled
-              ? "—"
-              : `Enter ${label.toLowerCase()}`
+              ? placeholderDash
+              : enterFieldPlaceholder
           }
           disabled={disabled}
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500"
@@ -170,6 +176,7 @@ export default function ProfilePage() {
   const localPreviewRef =
     useRef<string>("");
 
+  const t = useTranslations("settings.profile");
   const toast = useToast();
 
   const {
@@ -242,7 +249,7 @@ export default function ProfilePage() {
     toast.error(
       loadError instanceof Error
         ? loadError.message
-        : "Failed to load profile"
+        : t("toast.loadFailed")
     );
   }, [loadError]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -334,7 +341,7 @@ export default function ProfilePage() {
       )
     ) {
       toast.warning(
-        "Please select an image file"
+        t("toast.selectImageFile")
       );
 
       event.target.value = "";
@@ -347,7 +354,7 @@ export default function ProfilePage() {
       5 * 1024 * 1024
     ) {
       toast.warning(
-        "Image size must be less than 5MB"
+        t("toast.imageTooLarge")
       );
 
       event.target.value = "";
@@ -393,7 +400,7 @@ export default function ProfilePage() {
       }));
 
       toast.success(
-        "Rasm yuklandi. Save Changes tugmasini bosing."
+        t("toast.imageUploaded")
       );
     } catch (error) {
       clearLocalPreview();
@@ -411,7 +418,7 @@ export default function ProfilePage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Rasmni yuklashda xatolik yuz berdi"
+          : t("toast.imageUploadFailed")
       );
     } finally {
       if (
@@ -432,7 +439,7 @@ export default function ProfilePage() {
       uploadMutation.isPending
     ) {
       toast.warning(
-        "Rasm hali yuklanmoqda, biroz kuting."
+        t("toast.imageStillUploading")
       );
 
       return;
@@ -463,13 +470,13 @@ export default function ProfilePage() {
       );
 
       toast.success(
-        "Profile updated"
+        t("toast.profileUpdated")
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update profile"
+          : t("toast.profileUpdateFailed")
       );
     }
   }
@@ -524,7 +531,7 @@ export default function ProfilePage() {
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
-                  alt="Profile avatar"
+                  alt={t("avatarAlt")}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -552,7 +559,7 @@ export default function ProfilePage() {
                 uploadMutation.isPending
               }
               className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              title="Change photo"
+              title={t("changePhoto")}
             >
               <Camera size={13} />
             </button>
@@ -608,7 +615,7 @@ export default function ProfilePage() {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <ProfileInput
-              label="First Name"
+              label={t("firstName")}
               icon={
                 <User size={16} />
               }
@@ -627,10 +634,12 @@ export default function ProfilePage() {
               disabled={
                 updateMutation.isPending
               }
+              placeholderDash={t("placeholderDash")}
+              enterFieldPlaceholder={t("enterFieldPlaceholder", { field: t("firstName").toLowerCase() })}
             />
 
             <ProfileInput
-              label="Last Name"
+              label={t("lastName")}
               icon={
                 <User size={16} />
               }
@@ -649,11 +658,13 @@ export default function ProfilePage() {
               disabled={
                 updateMutation.isPending
               }
+              placeholderDash={t("placeholderDash")}
+              enterFieldPlaceholder={t("enterFieldPlaceholder", { field: t("lastName").toLowerCase() })}
             />
           </div>
 
           <ProfileInput
-            label="Phone"
+            label={t("phone")}
             icon={
               <Phone size={16} />
             }
@@ -673,10 +684,12 @@ export default function ProfilePage() {
             disabled={
               updateMutation.isPending
             }
+            placeholderDash={t("placeholderDash")}
+            enterFieldPlaceholder={t("enterFieldPlaceholder", { field: t("phone").toLowerCase() })}
           />
 
           <ProfileInput
-            label="Email"
+            label={t("email")}
             icon={
               <Mail size={16} />
             }
@@ -685,6 +698,8 @@ export default function ProfilePage() {
               ""
             }
             disabled
+            placeholderDash={t("placeholderDash")}
+            enterFieldPlaceholder={t("enterFieldPlaceholder", { field: t("email").toLowerCase() })}
           />
 
           <div className="pt-2">
@@ -702,7 +717,7 @@ export default function ProfilePage() {
                     className="animate-spin"
                   />
 
-                  Saving...
+                  {t("submit.saving")}
                 </>
               ) : uploadMutation.isPending ? (
                 <>
@@ -711,13 +726,13 @@ export default function ProfilePage() {
                     className="animate-spin"
                   />
 
-                  Rasm yuklanmoqda...
+                  {t("submit.uploadingImage")}
                 </>
               ) : (
                 <>
                   <Save size={16} />
 
-                  Save Changes
+                  {t("submit.saveChanges")}
                 </>
               )}
             </button>

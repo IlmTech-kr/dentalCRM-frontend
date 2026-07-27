@@ -1,1 +1,150 @@
-{}
+{
+  "changePassword": {
+    "header": {
+      "title": "Change Password",
+      "subtitle": "Keep your account secure with a strong password"
+    },
+    "fields": {
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Create a strong password",
+      "confirmPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Re-enter your new password"
+    },
+    "strength": {
+      "label": "Password strength",
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong",
+      "veryStrong": "Very strong",
+      "req8chars": "8+ characters",
+      "reqUppercase": "Uppercase letter",
+      "reqNumber": "Number",
+      "reqSpecial": "Special character"
+    },
+    "passwordsMatch": "✓ Passwords match",
+    "submit": {
+      "updating": "Updating...",
+      "update": "Update Password"
+    },
+    "tip": {
+      "label": "Tip:",
+      "text": "Use a unique password you don't use on other sites. A password manager can help."
+    },
+    "validation": {
+      "currentRequired": "Current password is required",
+      "newRequired": "New password is required",
+      "minLength": "At least 8 characters required",
+      "mustDiffer": "New password must differ from current",
+      "confirmRequired": "Please confirm your new password",
+      "mismatch": "Passwords do not match"
+    },
+    "toast": {
+      "updated": "Password updated successfully",
+      "currentIncorrect": "Current password is incorrect"
+    }
+  },
+  "profile": {
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "email": "Email",
+    "placeholderDash": "—",
+    "enterFieldPlaceholder": "Enter {field}",
+    "changePhoto": "Change photo",
+    "avatarAlt": "Profile avatar",
+    "submit": {
+      "saving": "Saving...",
+      "uploadingImage": "Uploading image...",
+      "saveChanges": "Save Changes"
+    },
+    "toast": {
+      "loadFailed": "Failed to load profile",
+      "selectImageFile": "Please select an image file",
+      "imageTooLarge": "Image size must be less than 5MB",
+      "imageUploaded": "Image uploaded. Click Save Changes.",
+      "imageUploadFailed": "Failed to upload image",
+      "imageStillUploading": "Image is still uploading, please wait.",
+      "profileUpdated": "Profile updated",
+      "profileUpdateFailed": "Failed to update profile"
+    }
+  },
+  "plans": {
+    "page": {
+      "title": "Plan & Billing",
+      "subtitle": "Manage your clinic's subscription plan",
+      "refresh": "Refresh"
+    },
+    "tabs": {
+      "current": "Current Plan",
+      "available": "All Plans"
+    },
+    "durations": {
+      "months1": "1 month",
+      "months3": "3 months",
+      "months6": "6 months",
+      "months12": "1 year",
+      "discountBadge": "−17%"
+    },
+    "badges": {
+      "start": "Starter",
+      "pro": "Popular",
+      "enterprise": "Enterprise"
+    },
+    "current": {
+      "monthlyPlanLabel": "{months}-month plan",
+      "currentPlanFallback": "Current plan",
+      "perMonth": "so'm / month",
+      "statDoctors": "Doctors",
+      "statStaff": "Staff",
+      "statSmsBalance": "SMS balance",
+      "statExpiresAt": "Expires at",
+      "storageLabel": "Storage",
+      "storageUsed": "{used} GB used",
+      "changePlanButton": "Change plan",
+      "cancelButton": "Cancel plan"
+    },
+    "card": {
+      "popularBadge": "Popular",
+      "perMonth": "so'm/month",
+      "totalPrice": "Total: {total} so'm / {months} months",
+      "durationLabel": "Duration",
+      "doctorsFeature": "{count} doctors",
+      "staffFeature": "{count} staff",
+      "storageFeature": "{count} GB storage",
+      "smsFeature": "{count} SMS included",
+      "smsSeparate": "SMS: separate",
+      "currentPlanBadge": "Current plan",
+      "payButton": "Pay with Payme"
+    },
+    "empty": {
+      "noActivePlanTitle": "No active plan",
+      "noActivePlanSubtitle": "Choose one of the plans to unlock all features for your clinic.",
+      "viewPlans": "View plans",
+      "noPlansTitle": "No plans found",
+      "noPlansSubtitle": "The plan list did not load from the backend."
+    },
+    "sidebar": {
+      "billingInfoTitle": "Billing information",
+      "status": "Status",
+      "planDuration": "Plan duration",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "includedSms": "Included SMS",
+      "monthsValue": "{months} months",
+      "paymeInfoTitle": "💳 Payment via Payme",
+      "paymeInfoText": "You'll be redirected to the Payme checkout page when you activate a plan. Payment is safe and fast."
+    },
+    "helperText": "Choose a plan and set the duration — the total amount is calculated automatically.",
+    "toast": {
+      "planTypeNotFound": "Plan type not found",
+      "priceNotFound": "Price not found for this plan.",
+      "paymentFailed": "Payment failed",
+      "cancelConfirm": "Are you sure you want to cancel the current plan?",
+      "planCancelled": "Plan cancelled",
+      "genericError": "An error occurred"
+    }
+  }
+}

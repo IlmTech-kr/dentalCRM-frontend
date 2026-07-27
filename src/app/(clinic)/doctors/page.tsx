@@ -11,6 +11,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 
 import {
@@ -342,6 +343,7 @@ function Dropdown({
 // -----------------------------------------------------------------------------
 
 export default function DoctorsPage() {
+  const t = useTranslations("doctors");
   const toast = useToast();
 
   const isAdmin = useAuthStore((state) => state.isAdmin());
@@ -569,7 +571,7 @@ export default function DoctorsPage() {
     event.preventDefault();
 
     if (!inviteEmail.trim()) {
-      toast.warning("Email kiriting");
+      toast.warning(t("toast.enterEmail"));
       return;
     }
 
@@ -579,7 +581,7 @@ export default function DoctorsPage() {
         !inviteCommissionPercentage.trim()
       ) {
         toast.warning(
-          "Commission percentage kiriting"
+          t("toast.enterCommission")
         );
         return;
       }
@@ -588,7 +590,7 @@ export default function DoctorsPage() {
         effectiveCompensationType === "SALARY" &&
         !inviteSalaryAmount.trim()
       ) {
-        toast.warning("Salary amount kiriting");
+        toast.warning(t("toast.enterSalary"));
         return;
       }
     }
@@ -620,13 +622,13 @@ export default function DoctorsPage() {
       handleCloseInviteModal();
 
       toast.success(
-        `${inviteRole} uchun invite yuborildi`
+        t("toast.inviteSent", { role: inviteRole })
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Invite yuborishda xatolik bo'ldi"
+          t("toast.inviteFailed")
         )
       );
     }
@@ -638,17 +640,17 @@ export default function DoctorsPage() {
     event.preventDefault();
 
     if (!selectedDoctorId) {
-      toast.error("User ID topilmadi");
+      toast.error(t("toast.userIdNotFound"));
       return;
     }
 
     if (!editForm.firstName.trim()) {
-      toast.warning("First name kiriting");
+      toast.warning(t("toast.enterFirstName"));
       return;
     }
 
     if (!editForm.lastName.trim()) {
-      toast.warning("Last name kiriting");
+      toast.warning(t("toast.enterLastName"));
       return;
     }
 
@@ -665,13 +667,13 @@ export default function DoctorsPage() {
       handleCloseEditModal();
 
       toast.success(
-        "Staff updated successfully"
+        t("toast.staffUpdated")
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Staff update qilishda xatolik bo'ldi"
+          t("toast.staffUpdateFailed")
         )
       );
     }
@@ -683,14 +685,14 @@ export default function DoctorsPage() {
     const doctorId = getDoctorId(doctor);
 
     if (!doctorId) {
-      toast.error("User ID topilmadi");
+      toast.error(t("toast.userIdNotFound"));
       return;
     }
 
     const confirmed = window.confirm(
-      `${doctor.firstName || ""} ${
-        doctor.lastName || ""
-      } ni o'chirmoqchimisiz?`
+      t("toast.deleteConfirm", {
+        name: `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim(),
+      })
     );
 
     if (!confirmed) {
@@ -703,13 +705,13 @@ export default function DoctorsPage() {
       );
 
       toast.success(
-        "Staff deleted successfully"
+        t("toast.staffDeleted")
       );
     } catch (error) {
       toast.error(
         getApiErrorMessage(
           error,
-          "Staff delete qilishda xatolik bo'ldi"
+          t("toast.staffDeleteFailed")
         )
       );
     }
@@ -729,12 +731,11 @@ export default function DoctorsPage() {
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Clinic Staff
+            {t("page.title")}
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage doctors, receptionists, assistants
-            and clinic team invites.
+            {t("page.subtitle")}
           </p>
         </div>
 
@@ -744,7 +745,7 @@ export default function DoctorsPage() {
             onClick={handleOpenInviteModal}
             className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
           >
-            + Add Staff
+            {t("page.addStaff")}
           </button>
         )}
       </div>
@@ -754,7 +755,7 @@ export default function DoctorsPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Staff List
+                {t("list.sectionTitle")}
               </h2>
             </div>
           </div>
@@ -762,7 +763,7 @@ export default function DoctorsPage() {
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Role
+                {t("list.roleLabel")}
               </label>
 
               <Dropdown
@@ -775,7 +776,7 @@ export default function DoctorsPage() {
                 options={[
                   {
                     value: "ALL",
-                    label: "Barcha rollar",
+                    label: t("list.allRoles"),
                     count: doctors.length,
                   },
                   ...staffRoleOptions.map((role) => ({
@@ -790,7 +791,7 @@ export default function DoctorsPage() {
 
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Status
+                {t("list.statusLabel")}
               </label>
 
               <Dropdown
@@ -803,7 +804,7 @@ export default function DoctorsPage() {
                 options={[
                   {
                     value: "ALL",
-                    label: "Barcha statuslar",
+                    label: t("list.allStatuses"),
                     count: doctors.length,
                   },
                   ...statusOptions.map((status) => ({
@@ -822,7 +823,7 @@ export default function DoctorsPage() {
                 onClick={handleResetFilters}
                 className="rounded-xl px-3.5 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
               >
-                Filterlarni tozalash
+                {t("list.clearFilters")}
               </button>
             )}
 
@@ -833,7 +834,7 @@ export default function DoctorsPage() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Search staff..."
+                placeholder={t("list.searchPlaceholder")}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
@@ -843,7 +844,7 @@ export default function DoctorsPage() {
         {isError ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-red-600">
-              Staff listni olishda xatolik bo&apos;ldi.
+              {t("list.loadError")}
             </p>
 
             <button
@@ -851,7 +852,7 @@ export default function DoctorsPage() {
               onClick={() => refetch()}
               className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              Try Again
+              {t("list.tryAgain")}
             </button>
           </div>
         ) : (
@@ -860,28 +861,28 @@ export default function DoctorsPage() {
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Staff
+                    {t("table.staff")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Email
+                    {t("table.email")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Phone
+                    {t("table.phone")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Role
+                    {t("table.role")}
                   </th>
 
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Status
+                    {t("table.status")}
                   </th>
 
                   {isStaffAdmin && (
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Actions
+                      {t("table.actions")}
                     </th>
                   )}
                 </tr>
@@ -894,7 +895,7 @@ export default function DoctorsPage() {
                       colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      Loading staff...
+                      {t("list.loading")}
                     </td>
                   </tr>
                 ) : filteredDoctors.length === 0 ? (
@@ -904,8 +905,8 @@ export default function DoctorsPage() {
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
                       {hasActiveFilters
-                        ? "Filterga mos staff topilmadi"
-                        : "No staff found"}
+                        ? t("list.emptyFiltered")
+                        : t("list.emptyNoStaff")}
                     </td>
                   </tr>
                 ) : (
@@ -982,7 +983,7 @@ export default function DoctorsPage() {
                               }
                               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                             >
-                              Edit
+                              {t("actions.edit")}
                             </button>
 
                             <button
@@ -997,7 +998,7 @@ export default function DoctorsPage() {
                               }
                               className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              Delete
+                              {t("actions.delete")}
                             </button>
                           </div>
                         </td>
@@ -1018,12 +1019,11 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Add Staff
+                  {t("inviteModal.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Select role and send invite link to
-                  email.
+                  {t("inviteModal.subtitle")}
                 </p>
               </div>
 
@@ -1032,7 +1032,7 @@ export default function DoctorsPage() {
                 onClick={handleCloseInviteModal}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
               >
-                Close
+                {t("inviteModal.close")}
               </button>
             </div>
 
@@ -1042,7 +1042,7 @@ export default function DoctorsPage() {
             >
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Email
+                  {t("inviteModal.emailLabel")}
                 </label>
 
                 <input
@@ -1053,14 +1053,14 @@ export default function DoctorsPage() {
                       event.target.value
                     )
                   }
-                  placeholder="staff@gmail.com"
+                  placeholder={t("inviteModal.emailPlaceholder")}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Role
+                  {t("inviteModal.roleLabel")}
                 </label>
 
                 <Dropdown
@@ -1085,7 +1085,7 @@ export default function DoctorsPage() {
                   {showsCompensationTypeChoice && (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Compensation Type
+                        {t("inviteModal.compensationTypeLabel")}
                       </label>
 
                       <Dropdown
@@ -1104,8 +1104,8 @@ export default function DoctorsPage() {
                             label:
                               type ===
                               "PERCENTAGE"
-                                ? "Percentage"
-                                : "Salary",
+                                ? t("inviteModal.percentage")
+                                : t("inviteModal.salary"),
                           })
                         )}
                       />
@@ -1116,7 +1116,7 @@ export default function DoctorsPage() {
                   "PERCENTAGE" ? (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Commission Percentage
+                        {t("inviteModal.commissionLabel")}
                       </label>
 
                       <input
@@ -1132,14 +1132,14 @@ export default function DoctorsPage() {
                             event.target.value
                           )
                         }
-                        placeholder="40"
+                        placeholder={t("inviteModal.commissionPlaceholder")}
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
                   ) : (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Salary Amount
+                        {t("inviteModal.salaryLabel")}
                       </label>
 
                       <input
@@ -1154,7 +1154,7 @@ export default function DoctorsPage() {
                             event.target.value
                           )
                         }
-                        placeholder="5000000"
+                        placeholder={t("inviteModal.salaryPlaceholder")}
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
@@ -1163,9 +1163,7 @@ export default function DoctorsPage() {
               )}
 
               <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
-                User emaildagi linkni bosadi, keyin
-                name va password kiritib signup
-                qiladi.
+                {t("inviteModal.hint")}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
@@ -1174,7 +1172,7 @@ export default function DoctorsPage() {
                   onClick={handleCloseInviteModal}
                   className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Cancel
+                  {t("inviteModal.cancel")}
                 </button>
 
                 <button
@@ -1185,8 +1183,8 @@ export default function DoctorsPage() {
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {inviteDoctorMutation.isPending
-                    ? "Sending..."
-                    : "Send Invite"}
+                    ? t("inviteModal.sending")
+                    : t("inviteModal.sendInvite")}
                 </button>
               </div>
             </form>
@@ -1201,11 +1199,11 @@ export default function DoctorsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Edit Staff
+                  {t("editModal.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Update staff profile and role.
+                  {t("editModal.subtitle")}
                 </p>
               </div>
 
@@ -1214,7 +1212,7 @@ export default function DoctorsPage() {
                 onClick={handleCloseEditModal}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
               >
-                Close
+                {t("editModal.close")}
               </button>
             </div>
 
@@ -1238,7 +1236,7 @@ export default function DoctorsPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    First Name
+                    {t("editModal.firstNameLabel")}
                   </label>
 
                   <input
@@ -1259,7 +1257,7 @@ export default function DoctorsPage() {
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Last Name
+                    {t("editModal.lastNameLabel")}
                   </label>
 
                   <input
@@ -1281,7 +1279,7 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Phone Number
+                  {t("editModal.phoneLabel")}
                 </label>
 
                 <input
@@ -1296,14 +1294,14 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  placeholder="+998901112233"
+                  placeholder={t("editModal.phonePlaceholder")}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Avatar URL / Storage Path
+                  {t("editModal.avatarLabel")}
                 </label>
 
                 <input
@@ -1318,14 +1316,14 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  placeholder="users/avatar.png"
+                  placeholder={t("editModal.avatarPlaceholder")}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Role
+                  {t("editModal.roleLabel")}
                 </label>
 
                 <Dropdown
@@ -1350,7 +1348,7 @@ export default function DoctorsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Status
+                  {t("editModal.statusLabel")}
                 </label>
 
                 <Dropdown
@@ -1380,7 +1378,7 @@ export default function DoctorsPage() {
                   onClick={handleCloseEditModal}
                   className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Cancel
+                  {t("editModal.cancel")}
                 </button>
 
                 <button
@@ -1391,8 +1389,8 @@ export default function DoctorsPage() {
                   className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {updateDoctorMutation.isPending
-                    ? "Saving..."
-                    : "Save Changes"}
+                    ? t("editModal.saving")
+                    : t("editModal.saveChanges")}
                 </button>
               </div>
             </form>

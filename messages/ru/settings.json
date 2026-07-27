@@ -1,1 +1,150 @@
-{}
+{
+  "changePassword": {
+    "header": {
+      "title": "Смена пароля",
+      "subtitle": "Обеспечьте безопасность аккаунта надёжным паролем"
+    },
+    "fields": {
+      "currentPassword": "Текущий пароль",
+      "currentPasswordPlaceholder": "Введите текущий пароль",
+      "newPassword": "Новый пароль",
+      "newPasswordPlaceholder": "Придумайте надёжный пароль",
+      "confirmPassword": "Подтвердите новый пароль",
+      "confirmPasswordPlaceholder": "Введите новый пароль ещё раз"
+    },
+    "strength": {
+      "label": "Надёжность пароля",
+      "weak": "Слабый",
+      "fair": "Средний",
+      "good": "Хороший",
+      "strong": "Надёжный",
+      "veryStrong": "Очень надёжный",
+      "req8chars": "8+ символов",
+      "reqUppercase": "Заглавная буква",
+      "reqNumber": "Цифра",
+      "reqSpecial": "Спецсимвол"
+    },
+    "passwordsMatch": "✓ Пароли совпадают",
+    "submit": {
+      "updating": "Обновление...",
+      "update": "Обновить пароль"
+    },
+    "tip": {
+      "label": "Совет:",
+      "text": "Используйте уникальный пароль, который вы не используете на других сайтах. Менеджер паролей может помочь."
+    },
+    "validation": {
+      "currentRequired": "Введите текущий пароль",
+      "newRequired": "Введите новый пароль",
+      "minLength": "Требуется не менее 8 символов",
+      "mustDiffer": "Новый пароль должен отличаться от текущего",
+      "confirmRequired": "Подтвердите новый пароль",
+      "mismatch": "Пароли не совпадают"
+    },
+    "toast": {
+      "updated": "Пароль успешно обновлён",
+      "currentIncorrect": "Текущий пароль неверен"
+    }
+  },
+  "profile": {
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "phone": "Телефон",
+    "email": "Email",
+    "placeholderDash": "—",
+    "enterFieldPlaceholder": "Введите {field}",
+    "changePhoto": "Изменить фото",
+    "avatarAlt": "Аватар профиля",
+    "submit": {
+      "saving": "Сохранение...",
+      "uploadingImage": "Загрузка изображения...",
+      "saveChanges": "Сохранить изменения"
+    },
+    "toast": {
+      "loadFailed": "Не удалось загрузить профиль",
+      "selectImageFile": "Пожалуйста, выберите файл изображения",
+      "imageTooLarge": "Размер изображения не должен превышать 5МБ",
+      "imageUploaded": "Изображение загружено. Нажмите «Сохранить изменения».",
+      "imageUploadFailed": "Не удалось загрузить изображение",
+      "imageStillUploading": "Изображение всё ещё загружается, подождите.",
+      "profileUpdated": "Профиль обновлён",
+      "profileUpdateFailed": "Не удалось обновить профиль"
+    }
+  },
+  "plans": {
+    "page": {
+      "title": "Тариф и оплата",
+      "subtitle": "Управляйте тарифом подписки вашей клиники",
+      "refresh": "Обновить"
+    },
+    "tabs": {
+      "current": "Текущий тариф",
+      "available": "Все тарифы"
+    },
+    "durations": {
+      "months1": "1 месяц",
+      "months3": "3 месяца",
+      "months6": "6 месяцев",
+      "months12": "1 год",
+      "discountBadge": "−17%"
+    },
+    "badges": {
+      "start": "Стартовый",
+      "pro": "Популярный",
+      "enterprise": "Корпоративный"
+    },
+    "current": {
+      "monthlyPlanLabel": "Тариф на {months} мес.",
+      "currentPlanFallback": "Текущий тариф",
+      "perMonth": "сум / месяц",
+      "statDoctors": "Врачи",
+      "statStaff": "Сотрудники",
+      "statSmsBalance": "Баланс SMS",
+      "statExpiresAt": "Истекает",
+      "storageLabel": "Хранилище",
+      "storageUsed": "Использовано {used} ГБ",
+      "changePlanButton": "Изменить тариф",
+      "cancelButton": "Отменить тариф"
+    },
+    "card": {
+      "popularBadge": "Популярный",
+      "perMonth": "сум/мес",
+      "totalPrice": "Итого: {total} сум / {months} мес.",
+      "durationLabel": "Срок",
+      "doctorsFeature": "{count} врачей",
+      "staffFeature": "{count} сотрудников",
+      "storageFeature": "{count} ГБ хранилища",
+      "smsFeature": "{count} SMS включено",
+      "smsSeparate": "SMS: отдельно",
+      "currentPlanBadge": "Текущий тариф",
+      "payButton": "Оплатить через Payme"
+    },
+    "empty": {
+      "noActivePlanTitle": "Нет активного тарифа",
+      "noActivePlanSubtitle": "Выберите один из тарифов, чтобы открыть все возможности для вашей клиники.",
+      "viewPlans": "Смотреть тарифы",
+      "noPlansTitle": "Тарифы не найдены",
+      "noPlansSubtitle": "Список тарифов не загрузился с сервера."
+    },
+    "sidebar": {
+      "billingInfoTitle": "Информация об оплате",
+      "status": "Статус",
+      "planDuration": "Длительность тарифа",
+      "startDate": "Дата начала",
+      "endDate": "Дата окончания",
+      "includedSms": "Включённые SMS",
+      "monthsValue": "{months} мес.",
+      "paymeInfoTitle": "💳 Оплата через Payme",
+      "paymeInfoText": "При активации тарифа вы будете перенаправлены на страницу оплаты Payme. Оплата безопасна и быстра."
+    },
+    "helperText": "Выберите тариф и укажите срок — итоговая сумма рассчитается автоматически.",
+    "toast": {
+      "planTypeNotFound": "Тип тарифа не найден",
+      "priceNotFound": "Цена для этого тарифа не найдена.",
+      "paymentFailed": "Ошибка при оплате",
+      "cancelConfirm": "Вы действительно хотите отменить текущий тариф?",
+      "planCancelled": "Тариф отменён",
+      "genericError": "Произошла ошибка"
+    }
+  }
+}
