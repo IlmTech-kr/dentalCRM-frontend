@@ -3,18 +3,19 @@
 /**
  * File: src/app/(clinic)/treatments/[patientId]/page.tsx
  *
- * UI qayta dizayn qilindi (professional, zamonaviy, doctor-friendly) —
- * BARCHA mantiq/hooklar/handlerlar, narx (priceSnapshot) va doctor nomi
- * (doctorsMap) fixlari, DOCTOR role qulflash o'zgarishsiz qoldi. Faqat
- * JSX/className qayta qurildi.
+ * Flow:
+ * 1. Rentgen fayllari storage'ga yuklanadi.
+ * 2. Visit yaratiladi.
+ * 3. appointmentId aniqlanadi.
+ * 4. Har bir rasm POST /api/dental/images orqali yaratiladi.
+ * 5. Treatment course va visit query'lari yangilanadi.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
 import {
   Activity,
   Calendar,
@@ -37,39 +38,45 @@ import {
   X,
 } from "lucide-react";
 
+import DentalLoader from "@/src/components/ui/DentalLoader";
 import { Dental3DChart } from "@/src/features/treatments/components/Dental3DChart";
 import { useDentalChart } from "@/src/features/treatments/hooks/useDentalChart";
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useTreatmentCourses } from "@/src/features/treatments/hooks/useTreatmentCourses";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
-import { useToast } from "@/src/lib/hooks/Usetoast";
-import DentalLoader from "@/src/components/ui/DentalLoader";
-import { Role } from "@/src/lib/enums/enums.types";
-import { useAuthStore } from "@/src/store/auth.store";
-import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
-import { ToothCondition } from "@/src/lib/enums/enums.types";
-import type { DentalProcedure } from "@/src/types/dental-procedure.types";
-import type { TreatmentVisitItem } from "@/src/types/treatment-course.types";
 import { getPatientById } from "@/src/features/patients/patient.service";
 import {
   useStorageImage,
   useUploadFiles,
 } from "@/src/features/storage/hooks/useStorage";
+import { tenantHttp } from "@/src/lib/api/http";
+import { Role, ToothCondition } from "@/src/lib/enums/enums.types";
+import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useAuthStore } from "@/src/store/auth.store";
+import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
+import type { DentalProcedure } from "@/src/types/dental-procedure.types";
+import type { TreatmentVisitItem } from "@/src/types/treatment-course.types";
 import {
   STORAGE_BUCKET,
   StorageTarget,
 } from "@/src/types/storage.types";
 
-// ---------------------------------------------------------------------------
-// Types & constants
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
 
 type PatientInfo = {
-  id?: string; _id?: string;
-  firstName?: string; lastName?: string; fullName?: string;
-  phone?: string; phoneNumber?: string;
-  birthDate?: string; dateOfBirth?: string;
-  status?: string; active?: boolean;
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  phone?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  dateOfBirth?: string;
+  status?: string;
+  active?: boolean;
 };
 
 type TreatmentTab = "CHART" | "COURSE";
@@ -81,22 +88,9 @@ type SelectedXray = {
   previewUrl: string;
 };
 
-/**
- * Backend visit ichida rentgenlarni `images` array ko‘rinishida qaytaradi.
- *
- * Misol:
- * {
- *   id: "...",
- *   toothNumber: "26",
- *   imageType: "XRAY",
- *   s3Url: "https://s3.../tooth_26_xray.png",
- *   fileName: "tooth_26_xray.jpg",
- *   notes: "...",
- *   uploadedAt: "2026-07-26T20:24:46.654"
- * }
- */
 type VisitImage = {
   id?: string;
+  _id?: string;
   patientId?: string;
   appointmentId?: string;
   toothNumber?: string;
@@ -106,128 +100,345 @@ type VisitImage = {
   notes?: string | null;
   uploadedByDoctorId?: string;
   uploadedAt?: string;
+  createdAt?: string;
 };
+
+type CreateDentalImagePayload = {
+  patientId: string;
+  appointmentId: string;
+  toothNumber?: string;
+  imageType: "XRAY" | "PHOTO" | "BEFORE" | "AFTER" | "OTHER";
+  s3Url: string;
+  fileName: string;
+  notes?: string;
+};
+
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
 
 const MAX_XRAY_FILES = 10;
 const MAX_XRAY_FILE_SIZE = 10 * 1024 * 1024;
+const DENTAL_IMAGES_ENDPOINT = "/api/dental/images";
 
 const DIAGNOSIS_OPTIONS: ToothCondition[] = [
-  ToothCondition.CARIES, ToothCondition.PULPITIS,
-  ToothCondition.GINGIVITIS, ToothCondition.CRACK,
+  ToothCondition.CARIES,
+  ToothCondition.PULPITIS,
+  ToothCondition.GINGIVITIS,
+  ToothCondition.CRACK,
 ];
 
 const STATE_OPTIONS: ToothCondition[] = [
-  ToothCondition.HEALTHY, ToothCondition.MISSING, ToothCondition.EXTRACTED,
-  ToothCondition.FILLING, ToothCondition.CROWN, ToothCondition.IMPLANT,
-  ToothCondition.BRIDGE, ToothCondition.ROOT_CANAL,
+  ToothCondition.HEALTHY,
+  ToothCondition.MISSING,
+  ToothCondition.EXTRACTED,
+  ToothCondition.FILLING,
+  ToothCondition.CROWN,
+  ToothCondition.IMPLANT,
+  ToothCondition.BRIDGE,
+  ToothCondition.ROOT_CANAL,
 ];
 
-const CONDITION_KEYS: Record<ToothCondition, string> = {
-  [ToothCondition.HEALTHY]: "healthy",
-  [ToothCondition.CARIES]: "caries",
-  [ToothCondition.EXTRACTED]: "extracted",
-  [ToothCondition.PULPITIS]: "pulpitis",
-  [ToothCondition.FILLING]: "filling",
-  [ToothCondition.CROWN]: "crown",
-  [ToothCondition.IMPLANT]: "implant",
-  [ToothCondition.MISSING]: "missing",
-  [ToothCondition.CRACK]: "crack",
-  [ToothCondition.BRIDGE]: "bridge",
-  [ToothCondition.ROOT_CANAL]: "rootCanal",
-  [ToothCondition.GINGIVITIS]: "gingivitis",
+const CONDITION_LABELS: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "Sog'lom",
+  [ToothCondition.CARIES]: "Karies",
+  [ToothCondition.EXTRACTED]: "Sug'urilgan",
+  [ToothCondition.PULPITIS]: "Pulpit",
+  [ToothCondition.FILLING]: "Plomba",
+  [ToothCondition.CROWN]: "Koronka",
+  [ToothCondition.IMPLANT]: "Implant",
+  [ToothCondition.MISSING]: "Yo'q",
+  [ToothCondition.CRACK]: "Yoriq",
+  [ToothCondition.BRIDGE]: "Ko'prik",
+  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
+  [ToothCondition.GINGIVITIS]: "Gingivit",
 };
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-function emptyTooth(): ToothItem { return { diagnoses: [], states: [], note: "" }; }
-function getId(item?: { id?: string; _id?: string } | null) { return item?.id || item?._id || ""; }
-function formatMoney(v?: number) {
-  return v ? new Intl.NumberFormat("uz-UZ").format(v) + " so'm" : "0 so'm";
+function emptyTooth(): ToothItem {
+  return {
+    diagnoses: [],
+    states: [],
+    note: "",
+  };
 }
-function calculateAge(birthDate?: string) {
+
+function getId(item?: { id?: string; _id?: string } | null): string {
+  return item?.id || item?._id || "";
+}
+
+function getFullName(
+  person?: {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+  } | null
+): string {
+  if (!person) return "";
+
+  return (
+    person.fullName ||
+    `${person.firstName || ""} ${person.lastName || ""}`.trim()
+  );
+}
+
+function getInitials(name: string): string {
+  if (!name) return "?";
+
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function formatMoney(value?: number): string {
+  return `${new Intl.NumberFormat("uz-UZ").format(Number(value || 0))} so'm`;
+}
+
+function parseDateOnly(value?: string | null) {
+  if (!value) return null;
+
+  const match = String(value)
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function formatBirthDate(value?: string | null): string {
+  const date = parseDateOnly(value);
+
+  if (!date) return "—";
+
+  return `${String(date.day).padStart(2, "0")}.${String(date.month).padStart(
+    2,
+    "0"
+  )}.${date.year}`;
+}
+
+function formatPatientAge(value?: string | null): string {
+  const birthDate = parseDateOnly(value);
+
   if (!birthDate) return "—";
-  const birth = new Date(birthDate);
-  if (Number.isNaN(birth.getTime())) return "—";
+
   const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  if (today.getMonth() < birth.getMonth() ||
-      (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-  return String(age);
-}
-function formatVisitDateTime(value?: string) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
-  return `${d}.${m}.${date.getFullYear()}, ${h}:${min}`;
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  const birthTime = Date.UTC(
+    birthDate.year,
+    birthDate.month - 1,
+    birthDate.day
+  );
+  const currentTime = Date.UTC(currentYear, currentMonth - 1, currentDay);
+
+  if (birthTime > currentTime) return "—";
+
+  let years = currentYear - birthDate.year;
+
+  const birthdayNotPassed =
+    currentMonth < birthDate.month ||
+    (currentMonth === birthDate.month && currentDay < birthDate.day);
+
+  if (birthdayNotPassed) years -= 1;
+
+  if (years >= 1) return `${years} yosh`;
+
+  let months =
+    (currentYear - birthDate.year) * 12 +
+    (currentMonth - birthDate.month);
+
+  if (currentDay < birthDate.day) months -= 1;
+
+  if (months >= 1) return `${months} oy`;
+
+  const days = Math.floor((currentTime - birthTime) / 86_400_000);
+
+  return `${Math.max(days, 0)} kun`;
 }
 
-/**
- * Bitta visit item narxini o'qiydi. Backend hozircha narxni
- * `priceSnapshot` deb qaytaradi (eski `price` fieldi ham bo'lishi mumkin —
- * shuning uchun ikkalasi ham tekshiriladi).
- */
+function formatVisitDateTime(value?: string): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}.${month}.${date.getFullYear()}, ${hour}:${minute}`;
+}
+
+function nowLocalIso(): string {
+  const now = new Date();
+
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 function getItemPrice(item: any): number {
   return Number(item?.priceSnapshot ?? item?.price ?? 0);
 }
 
-/**
- * Bitta visitning umumiy narxi. Avval tayyor `totalPrice`/`totalAmount`
- * fieldlarini tekshiradi, bo'lmasa itemlar narxini (priceSnapshot) yig'adi.
- */
-function getVisitTotal(visit: any) {
+function getVisitTotal(visit: any): number {
   if (typeof visit?.totalPrice === "number") return visit.totalPrice;
   if (typeof visit?.totalAmount === "number") return visit.totalAmount;
-  return (visit?.items || []).reduce((s: number, i: any) => s + getItemPrice(i), 0);
+
+  return (visit?.items || []).reduce(
+    (sum: number, item: any) => sum + getItemPrice(item),
+    0
+  );
 }
 
-/**
- * Visit ichida tayyor doctor obyekti kelmaydi — faqat `doctorId` bor.
- * Shuning uchun `doctorsMap` orqali ismi qidirib topiladi; topilmasa
- * (masalan doctor keyinchalik o'chirilgan bo'lsa) ID ko'rsatiladi.
- */
-function getVisitDoctorName(visit: any, doctorsMap?: Map<string, any>) {
+function getVisitDoctorName(
+  visit: any,
+  doctorsMap: Map<string, any>
+): string {
   const embeddedDoctor = visit?.doctor || visit?.doctorInfo;
+
   if (embeddedDoctor) {
-    const full = [embeddedDoctor.firstName, embeddedDoctor.lastName].filter(Boolean).join(" ").trim();
-    if (visit?.doctorName || embeddedDoctor.fullName || full) {
-      return visit.doctorName || embeddedDoctor.fullName || full;
+    const fullName = getFullName(embeddedDoctor);
+
+    if (visit?.doctorName || embeddedDoctor.fullName || fullName) {
+      return visit.doctorName || embeddedDoctor.fullName || fullName;
     }
   }
-  const fromMap = doctorsMap?.get(visit?.doctorId);
-  if (fromMap) {
-    const full = [fromMap.firstName, fromMap.lastName].filter(Boolean).join(" ").trim();
-    return fromMap.fullName || full || visit?.doctorId || "-";
+
+  const doctor = doctorsMap.get(visit?.doctorId);
+
+  if (doctor) {
+    return getFullName(doctor) || visit?.doctorId || "—";
   }
-  return visit?.doctorId || "-";
-}
-function nowLocalIso() {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-function getFullName(person?: { firstName?: string; lastName?: string; fullName?: string } | null) {
-  if (!person) return "";
-  return person.fullName || `${person.firstName || ""} ${person.lastName || ""}`.trim();
-}
-function getInitials(name: string) {
-  if (!name) return "?";
-  return name.split(" ").filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+
+  return visit?.doctorId || "—";
 }
 
-/**
- * Backend yangi formatda rentgenlarni `visit.images` ichida object sifatida
- * qaytaradi. Eski `xrayUrls`, `radiographUrls` va `xrays` formatlari ham
- * backward compatibility uchun qo‘llab-quvvatlanadi.
- */
+function isDirectImageUrl(value: string): boolean {
+  return (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
+  );
+}
+
+function isBackblazeImageUrl(value: string): boolean {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+
+    return (
+      url.hostname === "backblazeb2.com" ||
+      url.hostname.endsWith(".backblazeb2.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function normalizeImageSource(value: string): string {
+  const source = value.trim();
+
+  if (!source) return "";
+
+  try {
+    const url = new URL(source);
+
+    const isBackblazeS3 =
+      url.hostname.startsWith("s3.") &&
+      url.hostname.endsWith(".backblazeb2.com");
+
+    if (isBackblazeS3 && url.pathname.startsWith("/file/")) {
+      url.pathname = url.pathname.replace(/^\/file\//, "/");
+    }
+
+    return url.toString();
+  } catch {
+    return source;
+  }
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function getStoragePathFromImageSource(value: string): string {
+  const source = value.trim();
+
+  if (!source) return "";
+
+  if (!isDirectImageUrl(source)) {
+    return source
+      .replace(/^\/+/, "")
+      .replace(new RegExp(`^${STORAGE_BUCKET}/`), "");
+  }
+
+  try {
+    const url = new URL(source);
+    const decodedPath = safeDecodeURIComponent(url.pathname)
+      .replace(/^\/+/, "");
+
+    const nativePrefix = `file/${STORAGE_BUCKET}/`;
+    const s3Prefix = `${STORAGE_BUCKET}/`;
+
+    if (decodedPath.startsWith(nativePrefix)) {
+      return decodedPath.slice(nativePrefix.length);
+    }
+
+    if (decodedPath.startsWith(s3Prefix)) {
+      return decodedPath.slice(s3Prefix.length);
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+function createClientId(file: File): string {
+  const randomPart =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  return `${file.name}-${file.size}-${file.lastModified}-${randomPart}`;
+}
+
 function getVisitImages(visit: any): VisitImage[] {
-  const rawImages = Array.isArray(visit?.images) ? visit.images : [];
+  const newImages = Array.isArray(visit?.images) ? visit.images : [];
 
-  const imagesFromObjects = rawImages
+  const normalizedNewImages = newImages
     .map((item: any, index: number): VisitImage | null => {
       if (typeof item === "string") {
         const source = item.trim();
@@ -241,9 +452,7 @@ function getVisitImages(visit: any): VisitImage[] {
           : null;
       }
 
-      if (!item || typeof item !== "object") {
-        return null;
-      }
+      if (!item || typeof item !== "object") return null;
 
       const source = String(
         item.s3Url ??
@@ -254,12 +463,11 @@ function getVisitImages(visit: any): VisitImage[] {
           ""
       ).trim();
 
-      if (!source) {
-        return null;
-      }
+      if (!source) return null;
 
       return {
         id: String(item.id ?? item._id ?? `${source}-${index}`),
+        _id: item._id,
         patientId: item.patientId,
         appointmentId: item.appointmentId,
         toothNumber: item.toothNumber,
@@ -269,148 +477,239 @@ function getVisitImages(visit: any): VisitImage[] {
         notes: item.notes,
         uploadedByDoctorId: item.uploadedByDoctorId,
         uploadedAt: item.uploadedAt,
+        createdAt: item.createdAt,
       };
     })
     .filter((item: VisitImage | null): item is VisitImage => Boolean(item));
 
-  if (imagesFromObjects.length > 0) {
-    return imagesFromObjects;
-  }
+  if (normalizedNewImages.length > 0) return normalizedNewImages;
 
-  const oldValues =
-    visit?.xrayUrls ??
-    visit?.radiographUrls ??
-    visit?.xrays ??
-    [];
+  const oldImages =
+    visit?.xrayUrls ?? visit?.radiographUrls ?? visit?.xrays ?? [];
 
-  if (!Array.isArray(oldValues)) {
-    return [];
-  }
+  if (!Array.isArray(oldImages)) return [];
 
-  return oldValues
+  return oldImages
     .map((item: any, index: number): VisitImage | null => {
-      if (typeof item === "string" && item.trim()) {
-        return {
-          id: `${item}-${index}`,
-          s3Url: item.trim(),
-          imageType: "XRAY",
-        };
+      if (typeof item === "string") {
+        const source = item.trim();
+
+        return source
+          ? {
+              id: `${source}-${index}`,
+              s3Url: source,
+              imageType: "XRAY",
+            }
+          : null;
       }
 
-      if (item && typeof item === "object") {
-        const source = String(
-          item.s3Url ??
-            item.url ??
-            item.fileUrl ??
-            item.storagePath ??
-            item.path ??
-            ""
-        ).trim();
+      if (!item || typeof item !== "object") return null;
 
-        if (!source) {
-          return null;
-        }
+      const source = String(
+        item.s3Url ??
+          item.url ??
+          item.fileUrl ??
+          item.storagePath ??
+          item.path ??
+          ""
+      ).trim();
 
-        return {
-          id: String(item.id ?? item._id ?? `${source}-${index}`),
-          toothNumber: item.toothNumber,
-          imageType: item.imageType || "XRAY",
-          s3Url: source,
-          fileName: item.fileName,
-          notes: item.notes,
-          uploadedAt: item.uploadedAt,
-        };
-      }
+      if (!source) return null;
 
-      return null;
+      return {
+        id: String(item.id ?? item._id ?? `${source}-${index}`),
+        toothNumber: item.toothNumber,
+        imageType: item.imageType || "XRAY",
+        s3Url: source,
+        fileName: item.fileName,
+        notes: item.notes,
+        uploadedAt: item.uploadedAt,
+      };
     })
     .filter((item: VisitImage | null): item is VisitImage => Boolean(item));
 }
 
-function isDirectImageUrl(value: string): boolean {
-  return (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:") ||
-    value.startsWith("data:")
-  );
+function readStringField(
+  value: unknown,
+  fieldNames: readonly string[]
+): string {
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+
+  for (const fieldName of fieldNames) {
+    const fieldValue = record[fieldName];
+
+    if (
+      typeof fieldValue === "string" &&
+      fieldValue.trim().length > 0
+    ) {
+      return fieldValue.trim();
+    }
+  }
+
+  return "";
 }
 
-function createClientId(file: File): string {
-  const randomPart =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
+function getUploadedFileUrl(file: unknown): string {
+  /**
+   * Private bucket uchun storagePath/path/key eng ishonchli qiymat.
+   * `s3Url` field nomi backend contract sabab saqlanadi, lekin uning
+   * qiymati storage path bo'lishi mumkin.
+   */
+  const value = readStringField(file, [
+    "storagePath",
+    "path",
+    "key",
+    "s3Url",
+    "publicUrl",
+    "url",
+    "fileUrl",
+  ]);
 
-  return `${file.name}-${file.size}-${file.lastModified}-${randomPart}`;
-}
-
-// ---------------------------------------------------------------------------
-// PatientInfoCard
-// ---------------------------------------------------------------------------
-
-function PatientInfoCard({ patient, isLoading }: { patient?: PatientInfo; isLoading: boolean }) {
-  const t = useTranslations("treatments");
-  const tCommon = useTranslations("common");
-  const name = patient?.fullName || `${patient?.firstName || ""} ${patient?.lastName || ""}`.trim();
-  const phone = patient?.phoneNumber || patient?.phone || "—";
-  const age = calculateAge(patient?.birthDate || (patient as any)?.dateOfBirth);
-  const isActive = patient?.active !== false && patient?.status !== "INACTIVE";
-
-  if (isLoading) {
-    return (
-      <div className="rounded-3xl border border-border-color bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-100" />
-          <div className="flex-1 space-y-2.5">
-            <div className="h-6 w-52 animate-pulse rounded-lg bg-slate-100" />
-            <div className="h-4 w-36 animate-pulse rounded-lg bg-slate-100" />
-          </div>
-        </div>
-      </div>
+  if (!value) {
+    throw new Error(
+      "Storage upload response ichidan storagePath yoki rasm URL'i topilmadi"
     );
   }
 
-  return (
-    <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-6 shadow-sm">
-      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#35a8f5]/[0.06]" />
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#35a8f5] to-[#1d8ee8] text-lg font-black text-white shadow-md shadow-blue-200">
-            {getInitials(name) || <UserRound size={26} />}
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold leading-tight text-dark-navy">{name || t("patientDetail.header.fallbackName")}</h1>
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
-              {phone}
-            </p>
-          </div>
-        </div>
+  return value;
+}
 
-        <div className="flex flex-wrap gap-2.5">
-          <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">{t("patientDetail.header.ageLabel")}</p>
-            <p className="mt-0.5 text-sm font-extrabold text-dark-navy">{age}</p>
-          </div>
-          <div className="rounded-2xl border border-border-color bg-slate-50 px-4 py-2.5 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">{t("patientDetail.header.statusLabel")}</p>
-            <p className={`mt-0.5 inline-flex items-center gap-1 text-sm font-extrabold ${isActive ? "text-emerald-600" : "text-slate-400"}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-              {isActive ? tCommon("status.active") : tCommon("status.inactive")}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+function getUploadedFileName(
+  uploadedFile: unknown,
+  originalFile?: File
+): string {
+  return (
+    readStringField(uploadedFile, [
+      "fileName",
+      "originalFileName",
+      "name",
+    ]) ||
+    originalFile?.name ||
+    "xray-image"
   );
 }
 
-// ---------------------------------------------------------------------------
-// TabBtn
-// ---------------------------------------------------------------------------
+function mergeVisitImages(
+  first: VisitImage[],
+  second: VisitImage[]
+): VisitImage[] {
+  const merged = new Map<string, VisitImage>();
 
-function TabBtn({ active, icon, label, badge, onClick }: {
-  active: boolean; icon: React.ReactNode; label: string; badge?: number; onClick: () => void;
+  [...first, ...second].forEach((image, index) => {
+    const key =
+      image.id ||
+      image._id ||
+      `${image.appointmentId || "appointment"}-${image.s3Url}-${index}`;
+
+    merged.set(key, image);
+  });
+
+  return Array.from(merged.values());
+}
+
+function getAppointmentIdFromVisitResponse(response: unknown): string {
+  const data = response as any;
+
+  const directCandidates = [
+    data?.appointmentId,
+    data?.visit?.appointmentId,
+    data?.data?.appointmentId,
+    data?.data?.visit?.appointmentId,
+    data?.result?.appointmentId,
+    data?.result?.visit?.appointmentId,
+  ];
+
+  const directValue = directCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === "string" && candidate.trim().length > 0
+  );
+
+  if (directValue) return directValue.trim();
+
+  const visitArrays = [
+    data?.visits,
+    data?.course?.visits,
+    data?.data?.visits,
+    data?.data?.course?.visits,
+    data?.result?.visits,
+    data?.result?.course?.visits,
+  ];
+
+  for (const visits of visitArrays) {
+    if (!Array.isArray(visits) || visits.length === 0) continue;
+
+    const lastVisit = visits[visits.length - 1];
+    const value = lastVisit?.appointmentId;
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+async function createDentalImage(
+  payload: CreateDentalImagePayload
+): Promise<VisitImage> {
+  const http = tenantHttp();
+
+  const response = await http.post(
+    DENTAL_IMAGES_ENDPOINT,
+    payload
+  );
+
+  const raw = response.data as any;
+  const image = raw?.data ?? raw?.item ?? raw;
+
+  return {
+    ...payload,
+    ...(image && typeof image === "object" ? image : {}),
+    patientId: image?.patientId || payload.patientId,
+    appointmentId: image?.appointmentId || payload.appointmentId,
+    toothNumber: image?.toothNumber || payload.toothNumber,
+    imageType: image?.imageType || payload.imageType,
+    s3Url: image?.s3Url || payload.s3Url,
+    fileName: image?.fileName || payload.fileName,
+    notes: image?.notes ?? payload.notes,
+  };
+}
+
+function getApiErrorMessage(error: any, fallback: string): string {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback
+  );
+}
+
+// -----------------------------------------------------------------------------
+// UI helpers
+// -----------------------------------------------------------------------------
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-400">
+      {children}
+    </label>
+  );
+}
+
+function TabButton({
+  active,
+  icon,
+  label,
+  badge,
+  onClick,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -422,11 +721,17 @@ function TabBtn({ active, icon, label, badge, onClick }: {
           : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       }`}
     >
-      {icon} {label}
+      {icon}
+      {label}
+
       {badge !== undefined && (
-        <span className={`rounded-full px-1.5 py-0.5 text-xs font-extrabold ${
-          active ? "bg-white/25 text-white" : "bg-slate-200 text-slate-600"
-        }`}>
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-xs font-extrabold ${
+            active
+              ? "bg-white/25 text-white"
+              : "bg-slate-200 text-slate-600"
+          }`}
+        >
           {badge}
         </span>
       )}
@@ -434,78 +739,156 @@ function TabBtn({ active, icon, label, badge, onClick }: {
   );
 }
 
-// ---------------------------------------------------------------------------
-// DoctorSelect
-// ---------------------------------------------------------------------------
-
-function DoctorSelect({ value, onChange, doctors }: {
-  value: string; onChange: (id: string) => void; doctors: any[];
+function PatientInfoCard({
+  patient,
+  isLoading,
+}: {
+  patient?: PatientInfo;
+  isLoading: boolean;
 }) {
-  const t = useTranslations("treatments");
-  const getName = (d: any) =>
-    d?.fullName || `${d?.firstName || ""} ${d?.lastName || ""}`.trim() || t("patientDetail.addVisitModal.doctorFallback");
+  if (isLoading) {
+    return (
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="flex-1 space-y-2.5">
+            <div className="h-6 w-52 animate-pulse rounded-lg bg-slate-100" />
+            <div className="h-4 w-36 animate-pulse rounded-lg bg-slate-100" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const name =
+    patient?.fullName ||
+    `${patient?.firstName || ""} ${patient?.lastName || ""}`.trim();
+  const phone = patient?.phoneNumber || patient?.phone || "—";
+  const birthDate = patient?.birthDate || patient?.dateOfBirth;
+  const isActive = patient?.active !== false && patient?.status !== "INACTIVE";
 
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
-    >
-      <option value="">{t("patientDetail.addVisitModal.selectDoctor")}</option>
-      {doctors.map((d) => {
-        const id = d.id || d._id;
-        return <option key={id} value={id}>{getName(d)}</option>;
-      })}
-    </select>
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#35a8f5]/[0.06]" />
+
+      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#35a8f5] to-[#1d8ee8] text-lg font-black text-white shadow-md shadow-blue-200">
+            {name ? getInitials(name) : <UserRound size={26} />}
+          </div>
+
+          <div>
+            <h1 className="text-xl font-extrabold leading-tight text-slate-950">
+              {name || "Noma'lum bemor"}
+            </h1>
+
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              {phone}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Tug'ilgan sana
+            </p>
+            <p className="mt-0.5 text-sm font-extrabold text-slate-950">
+              {formatBirthDate(birthDate)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Yoshi
+            </p>
+            <p className="mt-0.5 text-sm font-extrabold text-slate-950">
+              {formatPatientAge(birthDate)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              Holat
+            </p>
+            <p
+              className={`mt-0.5 inline-flex items-center gap-1 text-sm font-extrabold ${
+                isActive ? "text-emerald-600" : "text-slate-400"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  isActive ? "bg-emerald-500" : "bg-slate-300"
+                }`}
+              />
+              {isActive ? "Active" : "Inactive"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// SectionLabel — kichik heading, formadagi bo'limlarni ajratish uchun
-// ---------------------------------------------------------------------------
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-400">
-      {children}
-    </label>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Visit X-ray preview/gallery
-// ---------------------------------------------------------------------------
 
 function VisitXrayImage({
-  visitImage,
+  image,
   index,
 }: {
-  visitImage: VisitImage;
+  image: VisitImage;
   index: number;
 }) {
-  const source = visitImage.s3Url.trim();
-  const isDirectUrl = isDirectImageUrl(source);
+  const rawSource = String(image.s3Url || "").trim();
+  const source = normalizeImageSource(rawSource);
+  const direct = isDirectImageUrl(source);
 
   /**
-   * `s3Url` to‘liq HTTPS URL bo‘lsa to‘g‘ridan-to‘g‘ri ishlatiladi.
-   * Eski storage path bo‘lsa useStorageImage orqali Blob URL olinadi.
+   * Eski recordlarda to'liq Backblaze URL saqlangan bo'lishi mumkin.
+   * Undan storage key ajratib olinadi va direct URL ishlamasa
+   * authenticated storage endpoint orqali Blob URL olinadi.
    */
-  const storageImage = useStorageImage(
-    isDirectUrl ? "" : source,
-    STORAGE_BUCKET
-  );
+  const storagePath = getStoragePathFromImageSource(source);
+  const storageImage = useStorageImage(storagePath, STORAGE_BUCKET);
 
-  const imageUrl = isDirectUrl ? source : storageImage.url;
-  const isLoading = !isDirectUrl && storageImage.isFetching && !imageUrl;
-  const hasError = !isDirectUrl && storageImage.isError;
+  const [directImageFailed, setDirectImageFailed] = useState(false);
+
+  useEffect(() => {
+    setDirectImageFailed(false);
+  }, [source]);
+
+  /**
+   * Backblaze bucket private bo‘lishi mumkin. Shuning uchun Backblaze URL
+   * bo‘lsa public URL'ni sinamasdan storage endpoint orqali ochamiz.
+   */
+  const shouldUseStorageFirst =
+    !direct || isBackblazeImageUrl(source);
+
+  const useStorageFallback =
+    shouldUseStorageFirst || directImageFailed;
+
+  const imageUrl = useStorageFallback
+    ? storageImage.url
+    : source;
+
+  const isLoading =
+    useStorageFallback &&
+    Boolean(storagePath) &&
+    storageImage.isFetching &&
+    !imageUrl;
+
+  const hasError =
+    useStorageFallback &&
+    (!storagePath || storageImage.isError) &&
+    !imageUrl;
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-border-color bg-white">
-        <div className="aspect-video animate-pulse bg-slate-200" />
-        <div className="space-y-2 p-3">
-          <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
-          <div className="h-3 w-40 animate-pulse rounded bg-slate-100" />
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex aspect-video items-center justify-center bg-slate-100">
+          <Loader2 size={24} className="animate-spin text-[#35a8f5]" />
+        </div>
+
+        <div className="p-3">
+          <div className="h-3 w-28 animate-pulse rounded bg-slate-100" />
         </div>
       </div>
     );
@@ -514,21 +897,45 @@ function VisitXrayImage({
   if (!imageUrl || hasError) {
     return (
       <div className="overflow-hidden rounded-2xl border border-red-100 bg-white">
-        <div className="flex aspect-video items-center justify-center bg-red-50 px-3 text-center text-xs font-bold text-red-500">
-          Rentgen ochilmadi
+        <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-red-50 px-4 text-center">
+          <ImageIcon size={25} className="text-red-400" />
+
+          <p className="text-xs font-bold text-red-600">
+            Rentgen rasmini ochib bo'lmadi
+          </p>
+
+          {source ? (
+            <a
+              href={source}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-bold text-blue-600 underline"
+            >
+              Original URL'ni tekshirish
+            </a>
+          ) : null}
         </div>
 
-        <div className="p-3">
+        <div className="space-y-1 p-3">
           <p className="truncate text-xs font-bold text-slate-700">
-            {visitImage.fileName || `Rentgen ${index + 1}`}
+            {image.fileName || `Rentgen ${index + 1}`}
           </p>
+
+          {storagePath ? (
+            <p
+              title={storagePath}
+              className="truncate text-[10px] text-slate-400"
+            >
+              {storagePath}
+            </p>
+          ) : null}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <a
         href={imageUrl}
         target="_blank"
@@ -537,8 +944,21 @@ function VisitXrayImage({
       >
         <img
           src={imageUrl}
-          alt={visitImage.fileName || `Rentgen ${index + 1}`}
+          alt={image.fileName || `Rentgen ${index + 1}`}
           loading="lazy"
+          onError={() => {
+            /**
+             * Faqat oddiy direct URL ishlamasa storage fallback'ga o‘tamiz.
+             * Backblaze URL allaqachon storage orqali ochiladi.
+             */
+            if (
+              direct &&
+              !shouldUseStorageFirst &&
+              !directImageFailed
+            ) {
+              setDirectImageFailed(true);
+            }
+          }}
           className="aspect-video h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
         />
 
@@ -552,55 +972,49 @@ function VisitXrayImage({
 
       <div className="space-y-1.5 p-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="min-w-0 truncate text-xs font-black text-dark-navy">
-            {visitImage.fileName || `Rentgen ${index + 1}`}
+          <p className="min-w-0 truncate text-xs font-black text-slate-950">
+            {image.fileName || `Rentgen ${index + 1}`}
           </p>
 
-          {visitImage.imageType && (
-            <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
-              {visitImage.imageType}
-            </span>
-          )}
+          <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
+            {image.imageType || "XRAY"}
+          </span>
         </div>
 
-        {visitImage.toothNumber && (
+        {image.toothNumber ? (
           <p className="text-xs font-semibold text-[#35a8f5]">
-            {visitImage.toothNumber}-tish
+            {image.toothNumber}-tish
           </p>
-        )}
+        ) : null}
 
-        {visitImage.notes && (
+        {image.notes ? (
           <p className="text-xs leading-relaxed text-slate-500">
-            {visitImage.notes}
+            {image.notes}
           </p>
-        )}
+        ) : null}
 
-        {visitImage.uploadedAt && (
+        {image.uploadedAt || image.createdAt ? (
           <p className="text-[11px] text-slate-400">
-            {formatVisitDateTime(visitImage.uploadedAt)}
+            {formatVisitDateTime(
+              image.uploadedAt || image.createdAt
+            )}
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
 
-function VisitXrayGallery({
-  images,
-}: {
-  images: VisitImage[];
-}) {
+function VisitXrayGallery({ images }: { images: VisitImage[] }) {
   if (!images.length) return null;
 
   return (
     <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
       <div className="mb-3 flex items-center gap-2">
         <ImageIcon size={15} className="text-[#35a8f5]" />
-
         <p className="text-xs font-black uppercase tracking-wide text-blue-700">
           Rentgenlar
         </p>
-
         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
           {images.length} ta
         </span>
@@ -609,8 +1023,8 @@ function VisitXrayGallery({
       <div className="grid gap-3 sm:grid-cols-2">
         {images.map((image, index) => (
           <VisitXrayImage
-            key={image.id || `${image.s3Url}-${index}`}
-            visitImage={image}
+            key={image.id || image._id || `${image.s3Url}-${index}`}
+            image={image}
             index={index}
           />
         ))}
@@ -619,94 +1033,131 @@ function VisitXrayGallery({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VisitPanel — EXTRACTED outside page component (fixes textarea re-render)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Visit modal content
+// -----------------------------------------------------------------------------
 
-type VisitPanelProps = {
+type VisitFormProps = {
   activeCourses: any[];
   selectedCourseId: string;
-  onCourseChange: (id: string) => void;
+  onCourseChange: (value: string) => void;
   doctors: any[];
   doctorId: string;
-  onDoctorChange: (id: string) => void;
-  isDoctorLocked: boolean;
+  onDoctorChange: (value: string) => void;
+  doctorLocked: boolean;
   lockedDoctorName: string;
   visitDate: string;
-  onVisitDateChange: (v: string) => void;
+  onVisitDateChange: (value: string) => void;
   doctorNotes: string;
-  onDoctorNotesChange: (v: string) => void;
+  onDoctorNotesChange: (value: string) => void;
   selectedXrays: SelectedXray[];
   onSelectXrays: (files: File[]) => void;
   onRemoveXray: (id: string) => void;
-  isUploadingXrays: boolean;
   selectedTooth: string;
-  onToothChange: (t: string) => void;
+  onToothChange: (value: string) => void;
   treatmentTeeth: string[];
   visitItems: TreatmentVisitItem[];
-  onRemoveItem: (idx: number) => void;
+  onRemoveVisitItem: (index: number) => void;
+  procedures: DentalProcedure[];
+  proceduresLoading: boolean;
+  procedureSearch: string;
+  onProcedureSearchChange: (value: string) => void;
+  onAddProcedure: (procedure: DentalProcedure) => void;
+  onGoToChart: () => void;
   onSave: () => void;
   isSaving: boolean;
   isCompleted: boolean;
   isNewAppointment: boolean;
-  procedures: DentalProcedure[];
-  proceduresLoading: boolean;
-  procedureSearch: string;
-  onProcedureSearch: (v: string) => void;
-  onAddProcedure: (p: DentalProcedure) => void;
-  onGoToChart: () => void;
 };
 
-function VisitPanel({
-  activeCourses, selectedCourseId, onCourseChange,
-  doctors, doctorId, onDoctorChange, isDoctorLocked, lockedDoctorName,
-  visitDate, onVisitDateChange,
-  doctorNotes, onDoctorNotesChange,
-  selectedXrays, onSelectXrays, onRemoveXray, isUploadingXrays,
-  selectedTooth, onToothChange, treatmentTeeth,
-  visitItems, onRemoveItem, onSave, isSaving, isCompleted, isNewAppointment,
-  procedures, proceduresLoading, procedureSearch, onProcedureSearch, onAddProcedure,
+function VisitForm({
+  activeCourses,
+  selectedCourseId,
+  onCourseChange,
+  doctors,
+  doctorId,
+  onDoctorChange,
+  doctorLocked,
+  lockedDoctorName,
+  visitDate,
+  onVisitDateChange,
+  doctorNotes,
+  onDoctorNotesChange,
+  selectedXrays,
+  onSelectXrays,
+  onRemoveXray,
+  selectedTooth,
+  onToothChange,
+  treatmentTeeth,
+  visitItems,
+  onRemoveVisitItem,
+  procedures,
+  proceduresLoading,
+  procedureSearch,
+  onProcedureSearchChange,
+  onAddProcedure,
   onGoToChart,
-}: VisitPanelProps) {
-  const totalPrice = visitItems.reduce((s, i) => s + i.price, 0);
+  onSave,
+  isSaving,
+  isCompleted,
+  isNewAppointment,
+}: VisitFormProps) {
+  const totalPrice = visitItems.reduce(
+    (sum, item) => sum + Number(item.price || 0),
+    0
+  );
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
-      {/* Left: form */}
       <div className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <SectionLabel>Course</SectionLabel>
+            <SectionLabel>Davolash kursi</SectionLabel>
             <select
               value={selectedCourseId}
-              onChange={(e) => onCourseChange(e.target.value)}
-              className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+              onChange={(event) => onCourseChange(event.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
             >
-              <option value="">Course tanlang</option>
-              {activeCourses.map((c) => (
-                <option key={getId(c)} value={getId(c)}>{c.mainDiagnosis}</option>
+              <option value="">Kurs tanlang</option>
+              {activeCourses.map((course) => (
+                <option key={getId(course)} value={getId(course)}>
+                  {course.mainDiagnosis}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Doctor — DOCTOR rolida kirgan foydalanuvchi uchun o'zi avtomatik
-              tanlanadi va tahrirlanmaydi; boshqa rollar uchun select ko'rinadi. */}
           <div>
             <SectionLabel>Shifokor</SectionLabel>
-            {isDoctorLocked ? (
-              <div className="flex h-[46px] items-center gap-2.5 rounded-2xl border border-border-color bg-slate-50 px-4">
+
+            {doctorLocked ? (
+              <div className="flex h-[46px] items-center gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#35a8f5]/10 text-[#35a8f5]">
                   <Stethoscope size={14} />
                 </div>
-                <span className="truncate text-sm font-bold text-dark-navy">
+                <span className="truncate text-sm font-bold text-slate-950">
                   {lockedDoctorName || "Siz"}
                 </span>
-                <span className="ml-auto shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
                   SIZ
                 </span>
               </div>
             ) : (
-              <DoctorSelect value={doctorId} onChange={onDoctorChange} doctors={doctors} />
+              <select
+                value={doctorId}
+                onChange={(event) => onDoctorChange(event.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+              >
+                <option value="">Shifokor tanlang</option>
+                {doctors.map((doctor) => {
+                  const id = getId(doctor);
+                  return (
+                    <option key={id} value={id}>
+                      {getFullName(doctor) || "Doctor"}
+                    </option>
+                  );
+                })}
+              </select>
             )}
           </div>
         </div>
@@ -716,8 +1167,8 @@ function VisitPanel({
           <input
             type="datetime-local"
             value={visitDate}
-            onChange={(e) => onVisitDateChange(e.target.value)}
-            className="w-full rounded-2xl border border-border-color bg-white px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+            onChange={(event) => onVisitDateChange(event.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
           />
         </div>
 
@@ -725,35 +1176,33 @@ function VisitPanel({
           <SectionLabel>Shifokor izohi</SectionLabel>
           <textarea
             value={doctorNotes}
-            onChange={(e) => onDoctorNotesChange(e.target.value)}
+            onChange={(event) => onDoctorNotesChange(event.target.value)}
             placeholder="Kanal doimiy material bilan to'ldirildi..."
             rows={3}
-            className="w-full resize-none rounded-2xl border border-border-color bg-white px-4 py-3 text-sm text-dark-navy outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
           />
         </div>
 
-        {/* Visit rentgenlari */}
         <div>
           <SectionLabel>Rentgen rasmlari</SectionLabel>
 
           <label
             htmlFor="visit-xray-input"
-            className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 py-6 text-center transition ${
-              isUploadingXrays
+            className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 py-6 text-center transition ${
+              isSaving
                 ? "cursor-not-allowed border-slate-200 bg-slate-50"
-                : "border-blue-200 bg-blue-50/50 hover:border-[#35a8f5] hover:bg-blue-50"
+                : "cursor-pointer border-blue-200 bg-blue-50/50 hover:border-[#35a8f5] hover:bg-blue-50"
             }`}
           >
-            {isUploadingXrays ? (
+            {isSaving ? (
               <Loader2 size={24} className="animate-spin text-[#35a8f5]" />
             ) : (
               <Upload size={24} className="text-[#35a8f5]" />
             )}
 
-            <p className="mt-2 text-sm font-black text-dark-navy">
+            <p className="mt-2 text-sm font-black text-slate-950">
               Rentgen yuklash
             </p>
-
             <p className="mt-1 text-xs text-slate-500">
               JPG, PNG yoki WEBP · maksimal 10 MB · 10 tagacha
             </p>
@@ -764,7 +1213,7 @@ function VisitPanel({
               multiple
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              disabled={isUploadingXrays}
+              disabled={isSaving}
               onChange={(event) => {
                 const files = Array.from(event.target.files || []);
                 onSelectXrays(files);
@@ -778,7 +1227,7 @@ function VisitPanel({
               {selectedXrays.map((xray, index) => (
                 <div
                   key={xray.id}
-                  className="group relative overflow-hidden rounded-2xl border border-border-color bg-slate-950"
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950"
                 >
                   <img
                     src={xray.previewUrl}
@@ -790,11 +1239,10 @@ function VisitPanel({
                     <p className="min-w-0 truncate text-xs font-semibold text-white">
                       {xray.file.name}
                     </p>
-
                     <button
                       type="button"
                       onClick={() => onRemoveXray(xray.id)}
-                      disabled={isUploadingXrays}
+                      disabled={isSaving}
                       className="shrink-0 rounded-lg bg-red-500/90 p-1.5 text-white transition hover:bg-red-600 disabled:opacity-50"
                     >
                       <Trash2 size={14} />
@@ -805,68 +1253,82 @@ function VisitPanel({
             </div>
           ) : (
             <p className="mt-2 text-xs font-semibold text-slate-500">
-              Rentgen yuklash ixtiyoriy. Yuklansa, visit saqlangandan keyin visit tarixida ko‘rinadi.
+              Rentgen ixtiyoriy. Yuklangan rasm visit yaratilgandan keyin
+              alohida image record sifatida saqlanadi.
             </p>
           )}
         </div>
 
-        {/* Tooth selector */}
-        <div className="rounded-2xl border border-border-color bg-slate-50/70 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-black uppercase tracking-wide text-slate-400">Davolanadigan tish</p>
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+              Davolanadigan tish
+            </p>
             <span className="rounded-full bg-[#35a8f5] px-2.5 py-1 text-xs font-black text-white">
               #{selectedTooth}
             </span>
           </div>
+
           <div className="flex flex-wrap gap-2">
             {treatmentTeeth.length === 0 ? (
               <button
                 type="button"
                 onClick={onGoToChart}
-                className="rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#35a8f5] ring-1 ring-inset ring-border-color transition hover:bg-blue-50"
+                className="rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#35a8f5] ring-1 ring-inset ring-slate-200 transition hover:bg-blue-50"
               >
                 Chartdan tish tanlash →
               </button>
             ) : (
-              treatmentTeeth.map((t) => (
+              treatmentTeeth.map((toothNumber) => (
                 <button
-                  key={t}
+                  key={toothNumber}
                   type="button"
-                  onClick={() => onToothChange(t)}
+                  onClick={() => onToothChange(toothNumber)}
                   className={`h-9 min-w-[38px] rounded-xl px-2.5 text-sm font-black transition ${
-                    selectedTooth === t
+                    selectedTooth === toothNumber
                       ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
-                      : "bg-white text-slate-700 ring-1 ring-inset ring-border-color hover:bg-blue-50"
+                      : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-blue-50"
                   }`}
                 >
-                  {t}
+                  {toothNumber}
                 </button>
               ))
             )}
           </div>
         </div>
 
-        {/* Visit items */}
-        <div className="rounded-2xl border border-border-color bg-slate-50/70 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-black uppercase tracking-wide text-slate-400">Tanlangan muolajalar</p>
-            <p className="text-sm font-black text-[#35a8f5]">{formatMoney(totalPrice)}</p>
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+              Tanlangan muolajalar
+            </p>
+            <p className="text-sm font-black text-[#35a8f5]">
+              {formatMoney(totalPrice)}
+            </p>
           </div>
+
           {visitItems.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-400">
               Hali muolaja tanlanmadi
             </p>
           ) : (
             <div className="space-y-2">
-              {visitItems.map((item, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border-color bg-white p-3">
+              {visitItems.map((item, index) => (
+                <div
+                  key={`${item.toothNumber}-${item.procedureId}-${index}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
+                >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-dark-navy">{item.toothNumber}-tish · {item.note}</p>
-                    <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(item.price)}</p>
+                    <p className="truncate text-sm font-bold text-slate-950">
+                      {item.toothNumber}-tish · {item.note || "Muolaja"}
+                    </p>
+                    <p className="text-xs font-bold text-[#35a8f5]">
+                      {formatMoney(item.price)}
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => onRemoveItem(i)}
+                    onClick={() => onRemoveVisitItem(index)}
                     className="shrink-0 rounded-lg p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 size={15} />
@@ -877,59 +1339,62 @@ function VisitPanel({
           )}
         </div>
 
-        {/* Info: yangi appointment avtomatik yaratiladi */}
         {!isCompleted && isNewAppointment && (
           <div className="flex items-start gap-2.5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
-            <Sparkles size={16} className="mt-0.5 shrink-0 text-blue-500" />
+            <Sparkles
+              size={16}
+              className="mt-0.5 shrink-0 text-blue-500"
+            />
             <p className="text-sm font-semibold text-blue-700">
-              Bu visit uchun appointment hali mavjud emas — saqlanganda joriy vaqt bilan avtomatik yaratiladi.
+              Appointment URL'da yo'q. Visit saqlanganda backend yangi
+              appointment yaratishi va response ichida appointmentId qaytarishi
+              kerak.
             </p>
           </div>
         )}
 
-        {/* Save button */}
         {isCompleted ? (
           <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
-            <Lock size={18} className="shrink-0 text-amber-600" />
-            <p className="text-sm font-bold text-amber-800">Bu kurs yakunlangan — visit qo'sha olmaysiz</p>
+            <Lock size={18} className="text-amber-600" />
+            <p className="text-sm font-bold text-amber-800">
+              Yakunlangan kursga visit qo'shib bo'lmaydi.
+            </p>
           </div>
         ) : (
           <button
             type="button"
             onClick={onSave}
-            disabled={isSaving || visitItems.length === 0}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3.5 text-sm font-black text-white shadow-md shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            disabled={isSaving}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-black text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Saqlanmoqda...
-              </>
-            ) : visitItems.length === 0 ? (
-              "Avval muolaja tanlang"
+              <Loader2 size={18} className="animate-spin" />
             ) : (
-              <>
-                <CheckCircle2 size={18} />
-                Visitni saqlash
-              </>
+              <Save size={18} />
             )}
+            {isSaving ? "Saqlanmoqda..." : "Visitni saqlash"}
           </button>
         )}
       </div>
 
-      {/* Right: procedures */}
       <div className="flex flex-col">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
             Muolajalar · <span className="text-[#35a8f5]">{selectedTooth}-tish</span>
           </p>
+
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               value={procedureSearch}
-              onChange={(e) => onProcedureSearch(e.target.value)}
+              onChange={(event) =>
+                onProcedureSearchChange(event.target.value)
+              }
               placeholder="Qidirish..."
-              className="rounded-xl border border-border-color bg-white py-2 pl-8 pr-3 text-sm outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-sm outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10 sm:w-56"
             />
           </div>
         </div>
@@ -939,24 +1404,36 @@ function VisitPanel({
         ) : procedures.length === 0 ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <p className="font-bold text-amber-800">Muolaja topilmadi</p>
-            <p className="mt-1 text-sm text-amber-700">Avval muolaja qo'shing.</p>
-            <Link href="/procedures" className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700">
-              <Plus size={14} /> Muolajalar sahifasi
+            <p className="mt-1 text-sm text-amber-700">
+              Avval muolaja qo'shing.
+            </p>
+            <Link
+              href="/procedures"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
+            >
+              <Plus size={14} />
+              Muolajalar sahifasi
             </Link>
           </div>
         ) : (
-          <div className="grid max-h-[540px] auto-rows-min gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          <div className="grid max-h-[680px] auto-rows-min gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {procedures.map((procedure) => (
               <button
                 key={getId(procedure)}
                 type="button"
                 onClick={() => onAddProcedure(procedure)}
-                className="group rounded-2xl border border-border-color bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#35a8f5]/40 hover:shadow-md hover:shadow-blue-100"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#35a8f5]/40 hover:shadow-md hover:shadow-blue-100"
               >
-                <p className="font-bold leading-snug text-dark-navy">{procedure.name}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{procedure.code}</p>
+                <p className="font-bold leading-snug text-slate-950">
+                  {procedure.name}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {procedure.code}
+                </p>
                 <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-black text-[#35a8f5]">{formatMoney(procedure.defaultPrice)}</p>
+                  <p className="text-sm font-black text-[#35a8f5]">
+                    {formatMoney(procedure.defaultPrice)}
+                  </p>
                   <span className="text-xs font-bold text-emerald-600 opacity-0 transition group-hover:opacity-100">
                     + Qo'shish
                   </span>
@@ -970,79 +1447,85 @@ function VisitPanel({
   );
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Page
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 export default function TreatmentPatientPage() {
-  const t = useTranslations("treatments");
   const params = useParams<{ patientId: string }>();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const toast = useToast();
 
-  function conditionLabel(condition?: ToothCondition | "" | null) {
-    if (!condition) return "";
-    return t(`toothConditions.${CONDITION_KEYS[condition]}` as any);
-  }
-
   const patientId = params.patientId;
-  // appointmentId endi IXTIYORIY — bo'lmasa ("Molajani boshlash" orqali
-  // Patients sahifasidan kirilgan bo'lsa), backend avtomatik yaratadi.
   const appointmentId = searchParams.get("appointmentId") || "";
 
-  // Joriy foydalanuvchi — DOCTOR bo'lsa, "Shifokor" maydoni o'zi bilan qulflanadi.
-  const currentUser = useAuthStore((s) => s.user);
-  const isDoctorUser = useAuthStore((s) => s.isDoctor());
-  const currentUserId = (currentUser as any)?.id || (currentUser as any)?._id || "";
+  const currentUser = useAuthStore((state) => state.user);
+  const isDoctorUser = useAuthStore((state) => state.isDoctor());
+  const currentUserId =
+    (currentUser as any)?.id || (currentUser as any)?._id || "";
   const currentUserName = getFullName(currentUser as any);
 
   const { data: patient, isLoading: patientLoading } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: () => getPatientById(patientId),
     enabled: Boolean(patientId),
-    staleTime: 1000 * 60,
+    staleTime: 60_000,
   });
 
   const { data: allStaff = [] } = useGetDoctors();
-  const doctors = allStaff.filter((s: any) => s.roles?.includes(Role.DOCTOR));
+  const doctors = allStaff.filter((staff: any) =>
+    staff.roles?.includes(Role.DOCTOR)
+  );
 
-  /**
-   * Visit tarixida faqat `doctorId` keladi (tayyor doctor obyekti yo'q),
-   * shuning uchun ismni shu map orqali qidiramiz.
-   */
   const doctorsMap = useMemo(() => {
     const map = new Map<string, any>();
-    allStaff.forEach((d: any) => {
-      const id = getId(d);
-      if (id) map.set(id, d);
+
+    allStaff.forEach((staff: any) => {
+      const id = getId(staff);
+      if (id) map.set(id, staff);
     });
+
     return map;
   }, [allStaff]);
 
   const [activeTab, setActiveTab] = useState<TreatmentTab>("CHART");
-  const [courseStatusFilter, setCourseStatusFilter] = useState<CourseStatusFilter>("ACTIVE");
-  const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
+  const [courseStatusFilter, setCourseStatusFilter] =
+    useState<CourseStatusFilter>("ACTIVE");
+  const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] =
+    useState(false);
   const [isAddVisitModalOpen, setIsAddVisitModalOpen] = useState(false);
 
-  const { chart, isLoading: chartLoading, createChart, updateChart, isCreating, isUpdating } = useDentalChart(patientId);
   const {
-    courses, isLoading: coursesLoading,
-    createCourse, addVisit, completeCourse,
-    isCreating: isCreatingCourse, isAddingVisit, isCompleting,
+    chart,
+    isLoading: chartLoading,
+    createChart,
+    updateChart,
+    isCreating,
+    isUpdating,
+  } = useDentalChart(patientId);
+
+  const {
+    courses,
+    isLoading: coursesLoading,
+    createCourse,
+    addVisit,
+    completeCourse,
+    isCreating: isCreatingCourse,
+    isAddingVisit,
+    isCompleting,
   } = useTreatmentCourses(patientId);
 
   const [procedureSearch, setProcedureSearch] = useState("");
-  const { procedures, isLoading: proceduresLoading } = useDentalProcedures(procedureSearch);
+  const { procedures, isLoading: proceduresLoading } =
+    useDentalProcedures(procedureSearch);
 
-  // Chart state
   const [selectedTooth, setSelectedTooth] = useState("16");
   const [localToothMap, setLocalToothMap] = useState<ToothMap>({});
 
-  // Course state
   const [mainDiagnosis, setMainDiagnosis] = useState("");
   const [selectedCourseTeeth, setSelectedCourseTeeth] = useState<string[]>([]);
 
-  // Visit state
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [doctorNotes, setDoctorNotes] = useState("");
@@ -1051,6 +1534,16 @@ export default function TreatmentPatientPage() {
 
   const uploadXraysMutation = useUploadFiles();
   const [selectedXrays, setSelectedXrays] = useState<SelectedXray[]>([]);
+
+  /**
+   * POST /api/dental/images natijalarini appointmentId bo'yicha saqlaydi.
+   *
+   * Treatment course endpoint yangi image record'ni visit.images ichida
+   * darhol qaytarmasa ham rasm shu sahifada darhol ko'rinadi.
+   */
+  const [createdImagesByAppointmentId, setCreatedImagesByAppointmentId] =
+    useState<Record<string, VisitImage[]>>({});
+
   const selectedXraysRef = useRef<SelectedXray[]>([]);
 
   useEffect(() => {
@@ -1065,7 +1558,6 @@ export default function TreatmentPatientPage() {
     };
   }, []);
 
-  // DOCTOR rolida kirgan foydalanuvchi uchun doctorId har doim o'zinikiga tenglashadi.
   useEffect(() => {
     if (isDoctorUser && currentUserId) {
       setDoctorId(currentUserId);
@@ -1073,32 +1565,55 @@ export default function TreatmentPatientPage() {
   }, [isDoctorUser, currentUserId]);
 
   const toothMap: ToothMap = useMemo(
-    () => Object.keys(localToothMap).length > 0 ? localToothMap : chart?.toothMap || {},
+    () =>
+      Object.keys(localToothMap).length > 0
+        ? localToothMap
+        : chart?.toothMap || {},
     [localToothMap, chart]
   );
 
   const selectedToothData = toothMap[selectedTooth] || emptyTooth();
-  const activeCourses = courses.filter((c) => c.status !== "COMPLETED");
-  const completedCourses = courses.filter((c) => c.status === "COMPLETED");
-  const visibleCourses = courseStatusFilter === "ACTIVE" ? activeCourses : completedCourses;
-  const selectedCourse = courses.find((c) => getId(c) === selectedCourseId);
-  const isSelectedCourseCompleted = selectedCourse?.status === "COMPLETED";
+  const activeCourses = courses.filter(
+    (course) => course.status !== "COMPLETED"
+  );
+  const completedCourses = courses.filter(
+    (course) => course.status === "COMPLETED"
+  );
+  const visibleCourses =
+    courseStatusFilter === "ACTIVE" ? activeCourses : completedCourses;
+  const selectedCourse = courses.find(
+    (course) => getId(course) === selectedCourseId
+  );
+  const isSelectedCourseCompleted =
+    selectedCourse?.status === "COMPLETED";
 
   const selectedHistoryCourse =
-    visibleCourses.find((c) => getId(c) === selectedCourseId) || visibleCourses[0] || null;
+    visibleCourses.find(
+      (course) => getId(course) === selectedCourseId
+    ) ||
+    visibleCourses[0] ||
+    null;
   const selectedHistoryVisits = selectedHistoryCourse?.visits || [];
 
   const chartProblemTeeth = useMemo(
     () =>
       Object.entries(toothMap)
-        .filter(([, item]) => item.diagnoses?.length || item.states?.length || item.note?.trim())
+        .filter(
+          ([, item]) =>
+            item.diagnoses?.length ||
+            item.states?.length ||
+            item.note?.trim()
+        )
         .map(([toothNumber, item]) => ({
           toothNumber,
           diagnosis: item.diagnoses?.[0] || "",
           state: item.states?.[0] || "",
           note: item.note || "",
         }))
-        .sort((a, b) => Number(a.toothNumber) - Number(b.toothNumber)),
+        .sort(
+          (first, second) =>
+            Number(first.toothNumber) - Number(second.toothNumber)
+        ),
     [toothMap]
   );
 
@@ -1106,76 +1621,160 @@ export default function TreatmentPatientPage() {
     () =>
       selectedCourseTeeth.length > 0
         ? selectedCourseTeeth
-        : chartProblemTeeth.map((i) => i.toothNumber),
+        : chartProblemTeeth.map((item) => item.toothNumber),
     [selectedCourseTeeth, chartProblemTeeth]
   );
 
-  function buildDiagnosis(teeth: string[]) {
+  function buildDiagnosis(teeth: string[]): string {
     if (!teeth.length) return "";
-    const teethText = teeth.map((t) => `${t}-tish`).join(", ");
+
+    const teethText = teeth
+      .map((toothNumber) => `${toothNumber}-tish`)
+      .join(", ");
     const diagnoses = [
-      ...new Set(teeth.map((t) => toothMap[t]?.diagnoses?.[0]).filter(Boolean)),
+      ...new Set(
+        teeth
+          .map((toothNumber) => toothMap[toothNumber]?.diagnoses?.[0])
+          .filter(Boolean)
+      ),
     ];
-    const diagText = diagnoses.map((d) => conditionLabel(d as ToothCondition) || d).join(", ");
-    return `${teethText} ${diagText || "davolanishi"}`;
+    const diagnosisText = diagnoses
+      .map(
+        (diagnosis) =>
+          CONDITION_LABELS[diagnosis as ToothCondition] || diagnosis
+      )
+      .join(", ");
+
+    return `${teethText} ${diagnosisText || "davolanishi"}`;
   }
 
-  function handleToggleTooth(toothNumber: string) {
-    setSelectedCourseTeeth((prev) => {
-      const next = prev.includes(toothNumber)
-        ? prev.filter((t) => t !== toothNumber)
-        : [...prev, toothNumber].sort((a, b) => Number(a) - Number(b));
-      setMainDiagnosis((cur) => (!cur.trim() ? buildDiagnosis(next) : cur));
+  function handleToggleCourseTooth(toothNumber: string) {
+    setSelectedCourseTeeth((previous) => {
+      const next = previous.includes(toothNumber)
+        ? previous.filter((item) => item !== toothNumber)
+        : [...previous, toothNumber].sort(
+            (first, second) => Number(first) - Number(second)
+          );
+
+      setMainDiagnosis((current) =>
+        current.trim() ? current : buildDiagnosis(next)
+      );
+
       if (next.length > 0) setSelectedTooth(next[0]);
+
       return next;
     });
   }
 
   function updateSelectedTooth(next: Partial<ToothItem>) {
-    setLocalToothMap((prev) => {
-      const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-      return { ...base, [selectedTooth]: { ...(base[selectedTooth] || emptyTooth()), ...next } };
+    setLocalToothMap((previous) => {
+      const base =
+        Object.keys(previous).length > 0
+          ? previous
+          : chart?.toothMap || {};
+
+      return {
+        ...base,
+        [selectedTooth]: {
+          ...(base[selectedTooth] || emptyTooth()),
+          ...next,
+        },
+      };
     });
   }
 
   function handleClearTooth() {
-    setLocalToothMap((prev) => {
-      const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
+    setLocalToothMap((previous) => {
+      const base =
+        Object.keys(previous).length > 0
+          ? previous
+          : chart?.toothMap || {};
       const next = { ...base };
+
       delete next[selectedTooth];
+
       return next;
     });
   }
 
   async function handleSaveChart() {
-    if (!Object.keys(toothMap).length) { toast.warning("Kamida bitta tish tanlang"); return; }
-    const payload = { patientId, toothMap };
-    if (chart && getId(chart)) await updateChart({ chartId: getId(chart), payload });
-    else await createChart(payload);
-    setLocalToothMap({});
-    toast.success("Chart saqlandi");
+    if (!Object.keys(toothMap).length) {
+      toast.warning("Kamida bitta tish tanlang");
+      return;
+    }
+
+    try {
+      const payload = { patientId, toothMap };
+
+      if (chart && getId(chart)) {
+        await updateChart({
+          chartId: getId(chart),
+          payload,
+        });
+      } else {
+        await createChart(payload);
+      }
+
+      setLocalToothMap({});
+      toast.success("Dental chart saqlandi");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Chartni saqlab bo'lmadi"));
+    }
   }
 
   async function handleCreateCourse() {
-    if (!selectedCourseTeeth.length) { toast.warning("Davolanadigan tishlarni tanlang"); return; }
-    const diagnosis = mainDiagnosis.trim() || buildDiagnosis(selectedCourseTeeth);
-    if (!diagnosis) { toast.warning("Diagnosis kiriting"); return; }
-    const created = await createCourse({ patientId, mainDiagnosis: diagnosis });
-    setMainDiagnosis("");
-    setSelectedCourseId(getId(created));
-    setIsCreateCourseModalOpen(false);
-    setActiveTab("COURSE");
-    toast.success("Kurs yaratildi");
+    if (!selectedCourseTeeth.length) {
+      toast.warning("Davolanadigan tishlarni tanlang");
+      return;
+    }
+
+    const diagnosis =
+      mainDiagnosis.trim() || buildDiagnosis(selectedCourseTeeth);
+
+    if (!diagnosis) {
+      toast.warning("Diagnosis kiriting");
+      return;
+    }
+
+    try {
+      const created = await createCourse({
+        patientId,
+        mainDiagnosis: diagnosis,
+      });
+
+      setMainDiagnosis("");
+      setSelectedCourseId(getId(created));
+      setIsCreateCourseModalOpen(false);
+      setActiveTab("COURSE");
+      toast.success("Davolash kursi yaratildi");
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Davolash kursini yaratib bo'lmadi")
+      );
+    }
   }
 
   function handleAddProcedure(procedure: DentalProcedure) {
     const procedureId = getId(procedure);
-    if (!procedureId) { toast.error("Procedure ID topilmadi"); return; }
-    if (visitItems.some((i) => i.procedureId === procedureId && i.toothNumber === selectedTooth)) {
-      toast.warning("Bu procedure allaqachon qo'shilgan"); return;
+
+    if (!procedureId) {
+      toast.error("Procedure ID topilmadi");
+      return;
     }
-    setVisitItems((prev) => [
-      ...prev,
+
+    const alreadyAdded = visitItems.some(
+      (item) =>
+        item.procedureId === procedureId &&
+        item.toothNumber === selectedTooth
+    );
+
+    if (alreadyAdded) {
+      toast.warning("Bu muolaja allaqachon qo'shilgan");
+      return;
+    }
+
+    setVisitItems((previous) => [
+      ...previous,
       {
         toothNumber: selectedTooth,
         procedureId,
@@ -1184,16 +1783,21 @@ export default function TreatmentPatientPage() {
         note: procedure.name,
       },
     ]);
+
     if (procedure.resultingCondition) {
-      setLocalToothMap((prev) => {
-        const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-        const cur = base[selectedTooth] || emptyTooth();
+      setLocalToothMap((previous) => {
+        const base =
+          Object.keys(previous).length > 0
+            ? previous
+            : chart?.toothMap || {};
+        const current = base[selectedTooth] || emptyTooth();
+
         return {
           ...base,
           [selectedTooth]: {
-            ...cur,
+            ...current,
             states: [procedure.resultingCondition as ToothCondition],
-            note: cur.note || procedure.name,
+            note: current.note || procedure.name,
           },
         };
       });
@@ -1223,23 +1827,28 @@ export default function TreatmentPatientPage() {
       const availableCount = MAX_XRAY_FILES - previous.length;
 
       if (availableCount <= 0) {
-        toast.warning(`Maksimal ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`);
+        toast.warning(
+          `Maksimal ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`
+        );
         return previous;
       }
 
       const acceptedFiles = validFiles.slice(0, availableCount);
 
       if (acceptedFiles.length < validFiles.length) {
-        toast.warning(`Faqat ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`);
+        toast.warning(
+          `Faqat ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`
+        );
       }
 
-      const nextItems = acceptedFiles.map((file) => ({
-        id: createClientId(file),
-        file,
-        previewUrl: URL.createObjectURL(file),
-      }));
-
-      return [...previous, ...nextItems];
+      return [
+        ...previous,
+        ...acceptedFiles.map((file) => ({
+          id: createClientId(file),
+          file,
+          previewUrl: URL.createObjectURL(file),
+        })),
+      ];
     });
   }
 
@@ -1247,9 +1856,7 @@ export default function TreatmentPatientPage() {
     setSelectedXrays((previous) => {
       const removed = previous.find((xray) => xray.id === xrayId);
 
-      if (removed) {
-        URL.revokeObjectURL(removed.previewUrl);
-      }
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
 
       return previous.filter((xray) => xray.id !== xrayId);
     });
@@ -1270,6 +1877,51 @@ export default function TreatmentPatientPage() {
 
     clearSelectedXrays();
     setIsAddVisitModalOpen(false);
+  }
+
+  async function refreshTreatmentQueries() {
+    await queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey;
+        const hasPatientId = key.some(
+          (part) => String(part) === patientId
+        );
+        const hasTreatmentKey = key.some((part) => {
+          const value = String(part).toLowerCase();
+
+          return (
+            value.includes("treatment") ||
+            value.includes("course") ||
+            value.includes("visit") ||
+            value.includes("image")
+          );
+        });
+
+        return hasPatientId && hasTreatmentKey;
+      },
+    });
+
+    await queryClient.refetchQueries({
+      predicate: (query) => {
+        const key = query.queryKey;
+        const hasPatientId = key.some(
+          (part) => String(part) === patientId
+        );
+        const hasTreatmentKey = key.some((part) => {
+          const value = String(part).toLowerCase();
+
+          return (
+            value.includes("treatment") ||
+            value.includes("course") ||
+            value.includes("visit") ||
+            value.includes("image")
+          );
+        });
+
+        return hasPatientId && hasTreatmentKey;
+      },
+      type: "active",
+    });
   }
 
   async function handleAddVisit() {
@@ -1298,21 +1950,26 @@ export default function TreatmentPatientPage() {
       return;
     }
 
-    try {
-      let xrayUrls: string[] = [];
+    let visitCreated = false;
 
-      // Rentgen tanlangan bo‘lsagina storage'ga yuklanadi.
+    try {
+      let uploadedXrays: unknown[] = [];
+
+      // 1. Rentgenlarni storage'ga yuklash.
       if (selectedXrays.length > 0) {
-        const uploadedXrays = await uploadXraysMutation.mutateAsync({
+        const uploadResult = await uploadXraysMutation.mutateAsync({
           files: selectedXrays.map((xray) => xray.file),
           target: StorageTarget.DOCUMENTS,
           bucket: STORAGE_BUCKET,
         });
 
-        xrayUrls = uploadedXrays.map((file) => file.storagePath);
+        uploadedXrays = Array.isArray(uploadResult)
+          ? uploadResult
+          : [];
       }
 
-      await addVisit({
+      // 2. Visit yaratish. Endi xrayUrls visit payload'iga yuborilmaydi.
+      const visitResponse = await addVisit({
         courseId: selectedCourseId,
         payload: {
           ...(appointmentId ? { appointmentId } : {}),
@@ -1320,11 +1977,58 @@ export default function TreatmentPatientPage() {
           doctorId,
           doctorNotes: doctorNotes.trim(),
           items: visitItems,
-          ...(xrayUrls.length > 0 ? { xrayUrls } : {}),
         },
       });
 
-      if (Object.keys(toothMap).length) {
+      visitCreated = true;
+
+      // 3. URL'dagi yoki yangi visit response'idagi appointmentId.
+      const resolvedAppointmentId =
+        appointmentId || getAppointmentIdFromVisitResponse(visitResponse);
+
+      // 4. Har bir rasm uchun POST /api/dental/images.
+      if (uploadedXrays.length > 0) {
+        if (!resolvedAppointmentId) {
+          throw new Error(
+            "Visit yaratildi, lekin appointmentId topilmadi. Backend addVisit response ichida appointmentId qaytarishi kerak."
+          );
+        }
+
+        const createdImages = await Promise.all(
+          uploadedXrays.map(async (uploadedFile, index) => {
+            const s3Url = getUploadedFileUrl(uploadedFile);
+            const fileName = getUploadedFileName(
+              uploadedFile,
+              selectedXrays[index]?.file
+            );
+
+            return createDentalImage({
+              patientId,
+              appointmentId: resolvedAppointmentId,
+              toothNumber: selectedTooth || undefined,
+              imageType: "XRAY",
+              s3Url,
+              fileName,
+              notes: doctorNotes.trim() || undefined,
+            });
+          })
+        );
+
+        /**
+         * Course response ichida visit.images hozircha kelmasa ham,
+         * POST response'dagi rasmlar visit galereyasida darhol chiqadi.
+         */
+        setCreatedImagesByAppointmentId((previous) => ({
+          ...previous,
+          [resolvedAppointmentId]: mergeVisitImages(
+            previous[resolvedAppointmentId] || [],
+            createdImages
+          ),
+        }));
+      }
+
+      // 5. Dental chartdagi o'zgarishlarni saqlash.
+      if (Object.keys(toothMap).length > 0) {
         const payload = { patientId, toothMap };
 
         if (chart && getId(chart)) {
@@ -1339,6 +2043,9 @@ export default function TreatmentPatientPage() {
         setLocalToothMap({});
       }
 
+      // 6. visit.images yangilanishi uchun query'larni refetch qilish.
+      await refreshTreatmentQueries();
+
       setDoctorNotes("");
       setVisitItems([]);
       clearSelectedXrays();
@@ -1346,118 +2053,122 @@ export default function TreatmentPatientPage() {
       setActiveTab("COURSE");
 
       toast.success(
-        xrayUrls.length > 0
-          ? "Visit va rentgenlar saqlandi"
+        uploadedXrays.length > 0
+          ? "Visit va rentgen rasmlari saqlandi"
           : appointmentId
             ? "Visit saqlandi"
             : "Muolaja boshlandi, appointment avtomatik yaratildi"
       );
     } catch (error) {
-      console.error("Visit save failed:", error);
-      toast.error("Visitni saqlashda xatolik yuz berdi");
+      console.error("Visit/Image save failed:", error);
+
+      const message = getApiErrorMessage(
+        error,
+        "Visit yoki rentgenni saqlashda xatolik yuz berdi"
+      );
+
+      if (visitCreated) {
+        toast.error(
+          `Visit yaratildi, lekin keyingi bosqich bajarilmadi: ${message}`
+        );
+      } else {
+        toast.error(message);
+      }
     }
   }
 
   async function handleCompleteCourse(courseId: string) {
     if (!window.confirm("Davolanish kursini yakunlaysizmi?")) return;
-    await completeCourse(courseId);
-    if (selectedCourseId === courseId) {
-      setSelectedCourseId("");
-      setVisitItems([]);
+
+    try {
+      await completeCourse(courseId);
+
+      if (selectedCourseId === courseId) {
+        setSelectedCourseId("");
+        setVisitItems([]);
+      }
+
+      setCourseStatusFilter("COMPLETED");
+      toast.success("Kurs yakunlandi");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Kursni yakunlab bo'lmadi"));
     }
-    setCourseStatusFilter("COMPLETED");
-    toast.success("Kurs yakunlandi");
   }
 
   function openAddVisitModal(courseId: string) {
-    const course = courses.find((c) => getId(c) === courseId);
+    const course = courses.find((item) => getId(item) === courseId);
+
     if (course?.status === "COMPLETED") {
       toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
       return;
     }
+
     clearSelectedXrays();
     setSelectedCourseId(courseId);
     setVisitItems([]);
     setDoctorNotes("");
     setVisitDate(nowLocalIso());
-    // DOCTOR rolida bo'lsa — doctorId darhol o'ziniki bilan to'ldiriladi.
-    setDoctorId(isDoctorUser && currentUserId ? currentUserId : "");
+    setDoctorId(
+      isDoctorUser && currentUserId ? currentUserId : ""
+    );
     setIsAddVisitModalOpen(true);
   }
 
-  const visitPanelProps: VisitPanelProps = {
-    activeCourses,
-    selectedCourseId,
-    onCourseChange: setSelectedCourseId,
-    doctors,
-    doctorId,
-    onDoctorChange: setDoctorId,
-    isDoctorLocked: isDoctorUser,
-    lockedDoctorName: currentUserName,
-    visitDate,
-    onVisitDateChange: setVisitDate,
-    doctorNotes,
-    onDoctorNotesChange: setDoctorNotes,
-    selectedXrays,
-    onSelectXrays: handleSelectXrays,
-    onRemoveXray: handleRemoveXray,
-    isUploadingXrays: uploadXraysMutation.isPending,
-    selectedTooth,
-    onToothChange: setSelectedTooth,
-    treatmentTeeth,
-    visitItems,
-    onRemoveItem: (idx) => setVisitItems((prev) => prev.filter((_, i) => i !== idx)),
-    onSave: handleAddVisit,
-    isSaving:
-      isAddingVisit ||
-      isCreating ||
-      isUpdating ||
-      uploadXraysMutation.isPending,
-    isCompleted: isSelectedCourseCompleted,
-    isNewAppointment: !appointmentId,
-    procedures,
-    proceduresLoading,
-    procedureSearch,
-    onProcedureSearch: setProcedureSearch,
-    onAddProcedure: handleAddProcedure,
-    onGoToChart: () => setActiveTab("CHART"),
-  };
+  const isVisitSaving =
+    isAddingVisit ||
+    isCreating ||
+    isUpdating ||
+    uploadXraysMutation.isPending;
 
   return (
-    <div className="space-y-6 bg-[#F7FAFC] pb-4">
-      <PatientInfoCard patient={patient} isLoading={patientLoading} />
+    <div className="space-y-6 bg-[#F7FAFC] pb-6">
+      <PatientInfoCard
+        patient={patient as PatientInfo | undefined}
+        isLoading={patientLoading}
+      />
 
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 rounded-3xl border border-border-color bg-white p-2.5 shadow-sm">
-        <TabBtn
+      <div className="flex flex-wrap items-center gap-2 rounded-3xl border border-slate-200 bg-white p-2.5 shadow-sm">
+        <TabButton
           active={activeTab === "CHART"}
           icon={<Activity size={16} />}
           label="Dental Chart"
-          onClick={() => setActiveTab("CHART")}
           badge={chartProblemTeeth.length || undefined}
+          onClick={() => setActiveTab("CHART")}
         />
-        <TabBtn
+        <TabButton
           active={activeTab === "COURSE"}
           icon={<ClipboardList size={16} />}
           label="Davolash kursi"
-          onClick={() => setActiveTab("COURSE")}
           badge={activeCourses.length || undefined}
+          onClick={() => setActiveTab("COURSE")}
         />
 
         {activeTab === "CHART" && chartProblemTeeth.length > 0 && (
           <button
             type="button"
             onClick={() => {
-              const from = chartProblemTeeth.map((i) => i.toothNumber);
+              const teeth = chartProblemTeeth.map(
+                (item) => item.toothNumber
+              );
+
               if (!selectedCourseTeeth.length) {
-                setSelectedCourseTeeth(from);
-                if (from.length) setSelectedTooth(from[0]);
+                setSelectedCourseTeeth(teeth);
+                if (teeth.length) setSelectedTooth(teeth[0]);
               }
-              if (!mainDiagnosis.trim())
-                setMainDiagnosis(buildDiagnosis(selectedCourseTeeth.length ? selectedCourseTeeth : from));
+
+              if (!mainDiagnosis.trim()) {
+                setMainDiagnosis(
+                  buildDiagnosis(
+                    selectedCourseTeeth.length
+                      ? selectedCourseTeeth
+                      : teeth
+                  )
+                );
+              }
+
               setIsCreateCourseModalOpen(true);
             }}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-2xl bg-dark-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
           >
             <Plus size={16} />
             Kurs ochish
@@ -1465,13 +2176,15 @@ export default function TreatmentPatientPage() {
         )}
       </div>
 
-      {/* ====== CHART tab ====== */}
       {activeTab === "CHART" && (
         <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
           <div className="space-y-4">
             {chartLoading ? (
-              <div className="rounded-3xl border border-border-color bg-white">
-                <DentalLoader fullScreen={false} text="Chart yuklanmoqda..." />
+              <div className="rounded-3xl border border-slate-200 bg-white">
+                <DentalLoader
+                  fullScreen={false}
+                  text="Chart yuklanmoqda..."
+                />
               </div>
             ) : (
               <>
@@ -1483,7 +2196,9 @@ export default function TreatmentPatientPage() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => setLocalToothMap(chart.toothMap!)}
+                      onClick={() =>
+                        setLocalToothMap(chart.toothMap || {})
+                      }
                       className="rounded-xl bg-[#35a8f5] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
                     >
                       Yuklash
@@ -1491,28 +2206,59 @@ export default function TreatmentPatientPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
-                    { label: "Chart holati", value: chart ? "Mavjud" : "Yangi", color: chart ? "text-emerald-600" : "text-[#35a8f5]" },
-                    { label: "Belgilangan tishlar", value: chartProblemTeeth.length, color: "text-dark-navy" },
-                    { label: "Tanlangan", value: `#${selectedTooth}`, color: "text-[#35a8f5]" },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase tracking-wide text-text-light">{s.label}</p>
-                      <p className={`mt-1.5 text-xl font-black ${s.color}`}>{s.value}</p>
+                    {
+                      label: "Chart holati",
+                      value: chart ? "Mavjud" : "Yangi",
+                      className: chart
+                        ? "text-emerald-600"
+                        : "text-[#35a8f5]",
+                    },
+                    {
+                      label: "Belgilangan tishlar",
+                      value: chartProblemTeeth.length,
+                      className: "text-slate-950",
+                    },
+                    {
+                      label: "Tanlangan",
+                      value: `#${selectedTooth}`,
+                      className: "text-[#35a8f5]",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                        {item.label}
+                      </p>
+                      <p
+                        className={`mt-1.5 text-xl font-black ${item.className}`}
+                      >
+                        {item.value}
+                      </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="overflow-hidden rounded-3xl border border-border-color bg-white shadow-sm">
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                   <Dental3DChart
                     selectedTooth={selectedTooth}
                     toothMap={toothMap}
-                    onSelectTooth={(t) => {
-                      setSelectedTooth(t);
-                      setLocalToothMap((prev) => {
-                        const base = Object.keys(prev).length > 0 ? prev : chart?.toothMap || {};
-                        return { ...base, [t]: base[t] || emptyTooth() };
+                    onSelectTooth={(toothNumber) => {
+                      setSelectedTooth(toothNumber);
+                      setLocalToothMap((previous) => {
+                        const base =
+                          Object.keys(previous).length > 0
+                            ? previous
+                            : chart?.toothMap || {};
+
+                        return {
+                          ...base,
+                          [toothNumber]:
+                            base[toothNumber] || emptyTooth(),
+                        };
                       });
                     }}
                   />
@@ -1521,85 +2267,101 @@ export default function TreatmentPatientPage() {
             )}
           </div>
 
-          {/* Tooth editor */}
-          <div className="h-fit rounded-3xl border border-border-color bg-white p-5 shadow-sm">
+          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Tanlangan tish</p>
-                <h2 className="text-lg font-extrabold text-dark-navy">Tish #{selectedTooth}</h2>
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+                  Tanlangan tish
+                </p>
+                <h2 className="text-lg font-extrabold text-slate-950">
+                  Tish #{selectedTooth}
+                </h2>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#35a8f5]/10 text-[#35a8f5]">
                 <Edit3 size={18} />
               </div>
             </div>
+
             <div className="space-y-4">
               <div>
                 <SectionLabel>Diagnoz</SectionLabel>
                 <select
-                  value={selectedToothData.diagnoses[0] || ""}
-                  onChange={(e) =>
-                    updateSelectedTooth({ diagnoses: e.target.value ? [e.target.value as ToothCondition] : [] })
+                  value={selectedToothData.diagnoses?.[0] || ""}
+                  onChange={(event) =>
+                    updateSelectedTooth({
+                      diagnoses: event.target.value
+                        ? [event.target.value as ToothCondition]
+                        : [],
+                    })
                   }
-                  className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
                 >
-                  <option value="">Tanlang</option>
-                  {DIAGNOSIS_OPTIONS.map((d) => <option key={d} value={d}>{conditionLabel(d)}</option>)}
+                  <option value="">Diagnoz tanlang</option>
+                  {DIAGNOSIS_OPTIONS.map((condition) => (
+                    <option key={condition} value={condition}>
+                      {CONDITION_LABELS[condition]}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <SectionLabel>Holat</SectionLabel>
                 <select
-                  value={selectedToothData.states[0] || ""}
-                  onChange={(e) =>
-                    updateSelectedTooth({ states: e.target.value ? [e.target.value as ToothCondition] : [] })
+                  value={selectedToothData.states?.[0] || ""}
+                  onChange={(event) =>
+                    updateSelectedTooth({
+                      states: event.target.value
+                        ? [event.target.value as ToothCondition]
+                        : [],
+                    })
                   }
-                  className="w-full rounded-2xl border border-border-color bg-slate-50 px-4 py-3 text-sm font-semibold text-dark-navy outline-none transition focus:border-[#35a8f5] focus:bg-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
                 >
-                  <option value="">Tanlang</option>
-                  {STATE_OPTIONS.map((s) => <option key={s} value={s}>{conditionLabel(s)}</option>)}
+                  <option value="">Holat tanlang</option>
+                  {STATE_OPTIONS.map((condition) => (
+                    <option key={condition} value={condition}>
+                      {CONDITION_LABELS[condition]}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <SectionLabel>Izoh</SectionLabel>
                 <textarea
-                  value={selectedToothData.note}
-                  onChange={(e) => updateSelectedTooth({ note: e.target.value })}
-                  rows={3}
-                  placeholder="Shifokor izohi..."
-                  className="w-full resize-none rounded-2xl border border-border-color bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
+                  value={selectedToothData.note || ""}
+                  onChange={(event) =>
+                    updateSelectedTooth({ note: event.target.value })
+                  }
+                  rows={4}
+                  placeholder="Tish bo'yicha izoh..."
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
                 />
-              </div>
-
-              <div className="rounded-2xl border border-border-color bg-slate-50 p-3.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-text-light">Diagnoz</span>
-                  <span className="font-bold text-dark-navy">
-                    {selectedToothData.diagnoses[0] ? conditionLabel(selectedToothData.diagnoses[0] as ToothCondition) : "—"}
-                  </span>
-                </div>
-                <div className="mt-1.5 flex justify-between">
-                  <span className="text-text-light">Holat</span>
-                  <span className="font-bold text-dark-navy">
-                    {selectedToothData.states[0] ? conditionLabel(selectedToothData.states[0] as ToothCondition) : "—"}
-                  </span>
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={handleClearTooth}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-border-color py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
                 >
-                  <X size={16} /> Tozalash
+                  <Trash2 size={16} />
+                  Tozalash
                 </button>
+
                 <button
                   type="button"
                   onClick={handleSaveChart}
                   disabled={isCreating || isUpdating}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1d8ee8] disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-60"
                 >
-                  <Save size={16} /> {isCreating || isUpdating ? "..." : "Saqlash"}
+                  {isCreating || isUpdating ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  Saqlash
                 </button>
               </div>
             </div>
@@ -1607,206 +2369,322 @@ export default function TreatmentPatientPage() {
         </div>
       )}
 
-      {/* ====== COURSE tab ====== */}
       {activeTab === "COURSE" && (
-        <div className="grid gap-5 xl:grid-cols-[1fr_1.4fr]">
-          {/* Course list */}
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-border-color bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-extrabold text-dark-navy">Davolash kurslari</h2>
-                <div className="flex rounded-2xl border border-border-color bg-slate-50 p-1 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setCourseStatusFilter("ACTIVE")}
-                    className={`rounded-xl px-3 py-1.5 transition ${
-                      courseStatusFilter === "ACTIVE" ? "bg-[#35a8f5] text-white shadow-sm" : "text-slate-500"
-                    }`}
-                  >
-                    Aktiv ({activeCourses.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCourseStatusFilter("COMPLETED")}
-                    className={`rounded-xl px-3 py-1.5 transition ${
-                      courseStatusFilter === "COMPLETED" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-500"
-                    }`}
-                  >
-                    Tugallangan ({completedCourses.length})
-                  </button>
-                </div>
+        <div className="grid gap-5 xl:grid-cols-[390px_1fr]">
+          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+                  Davolash kurslari
+                </p>
+                <h2 className="text-lg font-extrabold text-slate-950">
+                  Kurslar ro'yxati
+                </h2>
               </div>
 
-              {coursesLoading ? (
-                <DentalLoader fullScreen={false} text="Kurslar yuklanmoqda..." />
-              ) : visibleCourses.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                  <ClipboardList size={26} className="mx-auto text-slate-300" />
-                  <p className="mt-2 text-sm font-semibold text-slate-400">Kurs yo'q</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {visibleCourses.map((course) => {
-                    const cId = getId(course);
-                    const isSelected = selectedHistoryCourse ? getId(selectedHistoryCourse) === cId : false;
-                    const isCompleted = course.status === "COMPLETED";
-
-                    return (
-                      <div
-                        key={cId}
-                        className={`overflow-hidden rounded-2xl border transition ${
-                          isSelected
-                            ? "border-[#35a8f5] bg-blue-50/60 ring-1 ring-[#35a8f5]/20"
-                            : "border-border-color bg-white hover:border-[#35a8f5]/30"
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCourseId(cId)}
-                          className="w-full p-4 text-left"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="font-bold leading-snug text-dark-navy">{course.mainDiagnosis}</p>
-                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${
-                              isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                            }`}>
-                              {isCompleted ? "Yakunlangan" : "Aktiv"}
-                            </span>
-                          </div>
-                          <div className="mt-2 flex items-center gap-3 text-xs font-semibold text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <ClipboardList size={13} />
-                              {course.visits?.length || 0} visit
-                            </span>
-                            <span className="flex items-center gap-1 text-[#35a8f5]">
-                              <Wallet size={13} />
-                              {formatMoney(course.totalCoursePrice)}
-                            </span>
-                          </div>
-                        </button>
-
-                        {/* Actions — faqat active course uchun */}
-                        {!isCompleted && (
-                          <div className="flex gap-2 border-t border-border-color/70 bg-slate-50/60 p-3">
-                            <button
-                              type="button"
-                              onClick={() => openAddVisitModal(cId)}
-                              className="flex-1 rounded-xl bg-[#35a8f5] py-2 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
-                            >
-                              + Visit qo'shish
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCompleteCourse(cId)}
-                              disabled={isCompleting}
-                              className="flex-1 rounded-xl bg-emerald-500 py-2 text-xs font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-                            >
-                              ✓ Yakunlash
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Completed badge */}
-                        {isCompleted && (
-                          <div className="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50/70 px-4 py-2.5">
-                            <Lock size={13} className="text-emerald-600" />
-                            <p className="text-xs font-bold text-emerald-700">Kurs yakunlangan</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Visit history */}
-          <div className="rounded-3xl border border-border-color bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-dark-navy">Visit tarixi</h2>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-                {selectedHistoryVisits.length} ta
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const teeth = chartProblemTeeth.map(
+                    (item) => item.toothNumber
+                  );
+                  setSelectedCourseTeeth(teeth);
+                  if (teeth.length) setSelectedTooth(teeth[0]);
+                  setMainDiagnosis(buildDiagnosis(teeth));
+                  setIsCreateCourseModalOpen(true);
+                }}
+                disabled={chartProblemTeeth.length === 0}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus size={14} />
+                Yangi kurs
+              </button>
             </div>
 
-            {!selectedHistoryCourse ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
-                <Calendar size={26} className="mx-auto text-slate-300" />
-                <p className="mt-2 text-sm font-semibold text-slate-400">Kurs tanlang</p>
-              </div>
-            ) : selectedHistoryVisits.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
-                <Calendar size={26} className="mx-auto text-slate-300" />
-                <p className="mt-2 text-sm font-semibold text-slate-400">Bu kursda visit yo'q</p>
+            <div className="mb-4 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => setCourseStatusFilter("ACTIVE")}
+                className={`rounded-xl px-3 py-2 text-xs font-black transition ${
+                  courseStatusFilter === "ACTIVE"
+                    ? "bg-white text-[#35a8f5] shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
+                Aktiv ({activeCourses.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCourseStatusFilter("COMPLETED")}
+                className={`rounded-xl px-3 py-2 text-xs font-black transition ${
+                  courseStatusFilter === "COMPLETED"
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
+                Yakunlangan ({completedCourses.length})
+              </button>
+            </div>
+
+            {coursesLoading ? (
+              <DentalLoader fullScreen={false} text="Kurslar yuklanmoqda..." />
+            ) : visibleCourses.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <ClipboardList
+                  size={26}
+                  className="mx-auto text-slate-300"
+                />
+                <p className="mt-2 text-sm font-semibold text-slate-400">
+                  Kurs yo'q
+                </p>
               </div>
             ) : (
-              <div className="relative space-y-4 pl-8">
-                <div className="absolute bottom-4 left-[15px] top-4 w-px bg-slate-200" />
-                {selectedHistoryVisits.map((visit: any, idx: number) => (
-                  <div key={idx} className="relative">
-                    <div className={`absolute -left-8 top-4 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black text-white ring-4 ring-white ${
-                      idx === 0 ? "bg-emerald-500" : "bg-[#35a8f5]"
-                    }`}>
-                      {idx + 1}
-                    </div>
-                    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-extrabold text-dark-navy">Visit {idx + 1}</p>
-                          <p className="mt-0.5 flex items-center gap-1 text-xs text-text-light">
-                            <Calendar size={12} />
-                            {formatVisitDateTime(visit.visitDate)}
+              <div className="space-y-3">
+                {visibleCourses.map((course) => {
+                  const courseId = getId(course);
+                  const selected =
+                    selectedHistoryCourse &&
+                    getId(selectedHistoryCourse) === courseId;
+                  const completed = course.status === "COMPLETED";
+
+                  return (
+                    <div
+                      key={courseId}
+                      className={`overflow-hidden rounded-2xl border transition ${
+                        selected
+                          ? "border-[#35a8f5] bg-blue-50/60 ring-1 ring-[#35a8f5]/20"
+                          : "border-slate-200 bg-white hover:border-[#35a8f5]/30"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCourseId(courseId)}
+                        className="w-full p-4 text-left"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="font-bold leading-snug text-slate-950">
+                            {course.mainDiagnosis}
                           </p>
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${
+                              completed
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            {completed ? "Yakunlangan" : "Aktiv"}
+                          </span>
                         </div>
-                        <p className="shrink-0 text-sm font-black text-[#35a8f5]">{formatMoney(getVisitTotal(visit))}</p>
-                      </div>
 
-                      <p className="mt-3 flex items-center gap-1.5 text-sm text-slate-600">
-                        <Stethoscope size={14} className="text-slate-400" />
-                        <span className="font-semibold text-dark-navy">{getVisitDoctorName(visit, doctorsMap)}</span>
-                      </p>
+                        <div className="mt-2 flex items-center gap-3 text-xs font-semibold text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <ClipboardList size={13} />
+                            {course.visits?.length || 0} visit
+                          </span>
+                          <span className="flex items-center gap-1 text-[#35a8f5]">
+                            <Wallet size={13} />
+                            {formatMoney(course.totalCoursePrice)}
+                          </span>
+                        </div>
+                      </button>
 
-                      {visit.doctorNotes && (
-                        <p className="mt-2.5 rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
-                          {visit.doctorNotes}
-                        </p>
-                      )}
-
-                      {visit.items?.length > 0 && (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          {visit.items.map((item: any, i: number) => (
-                            <div key={i} className="rounded-xl bg-slate-50 p-2.5">
-                              <p className="text-sm font-bold text-dark-navy">{item.toothNumber}-tish</p>
-                              <p className="truncate text-xs text-slate-500">
-                                {item.note || item.procedureNameSnapshot}
-                              </p>
-                              <p className="text-xs font-bold text-[#35a8f5]">{formatMoney(getItemPrice(item))}</p>
-                            </div>
-                          ))}
+                      {!completed && (
+                        <div className="flex gap-2 border-t border-slate-200 bg-slate-50/60 p-3">
+                          <button
+                            type="button"
+                            onClick={() => openAddVisitModal(courseId)}
+                            className="flex-1 rounded-xl bg-[#35a8f5] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
+                          >
+                            + Visit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteCourse(courseId)}
+                            disabled={isCompleting}
+                            className="inline-flex items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                          >
+                            <CheckCircle2 size={14} />
+                            Yakunlash
+                          </button>
                         </div>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-                      <VisitXrayGallery images={getVisitImages(visit)} />
+          <div className="min-h-[420px] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            {!selectedHistoryCourse ? (
+              <div className="flex min-h-[380px] flex-col items-center justify-center text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-400">
+                  <ClipboardList size={28} />
+                </div>
+                <h3 className="mt-4 text-lg font-black text-slate-950">
+                  Davolash kursi tanlanmagan
+                </h3>
+                <p className="mt-2 max-w-sm text-sm text-slate-500">
+                  Chap tomondan kurs tanlang yoki yangi kurs yarating.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+                      Asosiy tashxis
+                    </p>
+                    <h2 className="mt-1 text-xl font-black text-slate-950">
+                      {selectedHistoryCourse.mainDiagnosis}
+                    </h2>
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={13} />
+                        {formatVisitDateTime(
+                          selectedHistoryCourse.startDate
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 text-[#35a8f5]">
+                        <Wallet size={13} />
+                        {formatMoney(
+                          selectedHistoryCourse.totalCoursePrice
+                        )}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {selectedHistoryCourse.status !== "COMPLETED" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openAddVisitModal(getId(selectedHistoryCourse))
+                      }
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                    >
+                      <Plus size={16} />
+                      Visit qo'shish
+                    </button>
+                  )}
+                </div>
+
+                {selectedHistoryVisits.length === 0 ? (
+                  <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
+                    <Calendar size={28} className="text-slate-300" />
+                    <p className="mt-3 text-sm font-bold text-slate-500">
+                      Hali visit mavjud emas
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-5 space-y-4">
+                    {selectedHistoryVisits.map(
+                      (visit: any, visitIndex: number) => {
+                        const visitAppointmentId = String(
+                          visit?.appointmentId || ""
+                        );
+
+                        const images = mergeVisitImages(
+                          getVisitImages(visit),
+                          visitAppointmentId
+                            ? createdImagesByAppointmentId[
+                                visitAppointmentId
+                              ] || []
+                            : []
+                        );
+
+                        return (
+                          <div
+                            key={`${visit.appointmentId || "visit"}-${visitIndex}`}
+                            className="rounded-3xl border border-slate-200 bg-slate-50/60 p-4"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className="flex items-center gap-2 text-sm font-black text-slate-950">
+                                  <Calendar
+                                    size={16}
+                                    className="text-[#35a8f5]"
+                                  />
+                                  {formatVisitDateTime(visit.visitDate)}
+                                </p>
+                                <p className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                                  <Stethoscope size={13} />
+                                  {getVisitDoctorName(visit, doctorsMap)}
+                                </p>
+                              </div>
+
+                              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-[#35a8f5] ring-1 ring-slate-200">
+                                {formatMoney(getVisitTotal(visit))}
+                              </span>
+                            </div>
+
+                            {visit.doctorNotes && (
+                              <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                                <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+                                  Shifokor izohi
+                                </p>
+                                <p className="mt-1 text-sm leading-relaxed text-slate-700">
+                                  {visit.doctorNotes}
+                                </p>
+                              </div>
+                            )}
+
+                            {Array.isArray(visit.items) &&
+                              visit.items.length > 0 && (
+                                <div className="mt-3 space-y-2">
+                                  {visit.items.map(
+                                    (item: any, itemIndex: number) => (
+                                      <div
+                                        key={`${item.procedureId}-${item.toothNumber}-${itemIndex}`}
+                                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3"
+                                      >
+                                        <div className="min-w-0">
+                                          <p className="truncate text-sm font-bold text-slate-950">
+                                            {item.toothNumber}-tish ·{" "}
+                                            {item.procedureNameSnapshot ||
+                                              item.note ||
+                                              "Muolaja"}
+                                          </p>
+                                          {item.completed && (
+                                            <p className="mt-0.5 text-xs font-bold text-emerald-600">
+                                              Bajarildi
+                                            </p>
+                                          )}
+                                        </div>
+                                        <p className="shrink-0 text-sm font-black text-[#35a8f5]">
+                                          {formatMoney(getItemPrice(item))}
+                                        </p>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+
+                            <VisitXrayGallery images={images} />
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       )}
 
-      {/* ====== Create Course Modal ====== */}
       {isCreateCourseModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
             <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border-color bg-slate-50/60 px-6 py-5">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-5">
                 <div>
-                  <h2 className="text-lg font-extrabold text-dark-navy">Davolash kursi ochish</h2>
-                  <p className="mt-0.5 text-sm text-text-light">Davolanadigan tishlarni tanlang</p>
+                  <h2 className="text-lg font-extrabold text-slate-950">
+                    Davolash kursi yaratish
+                  </h2>
+                  <p className="mt-0.5 text-sm text-slate-500">
+                    Davolanadigan tishlarni tanlang
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -1819,70 +2697,98 @@ export default function TreatmentPatientPage() {
 
               <div className="max-h-[75vh] space-y-5 overflow-y-auto p-6">
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-blue-900">
-                      Davolanadigan tishlar ({selectedCourseTeeth.length} ta tanlandi)
+                      Davolanadigan tishlar ({selectedCourseTeeth.length} ta)
                     </p>
                     <button
                       type="button"
-                      onClick={() => setMainDiagnosis(buildDiagnosis(selectedCourseTeeth))}
+                      onClick={() =>
+                        setMainDiagnosis(
+                          buildDiagnosis(selectedCourseTeeth)
+                        )
+                      }
                       disabled={!selectedCourseTeeth.length}
                       className="rounded-xl bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-40"
                     >
                       Auto to'ldirish
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {chartProblemTeeth.map((item) => {
-                      const isActive = selectedCourseTeeth.includes(item.toothNumber);
-                      return (
-                        <button
-                          key={item.toothNumber}
-                          type="button"
-                          onClick={() => handleToggleTooth(item.toothNumber)}
-                          className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
-                            isActive
-                              ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
-                              : "bg-white text-slate-700 ring-1 ring-inset ring-border-color hover:bg-blue-50"
-                          }`}
-                        >
-                          <span className="block text-lg">#{item.toothNumber}</span>
-                          <span className="block text-xs opacity-80">
-                            {conditionLabel(item.diagnosis as ToothCondition) || item.diagnosis || "—"}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+
+                  {chartProblemTeeth.length === 0 ? (
+                    <p className="rounded-xl bg-white p-4 text-sm font-semibold text-slate-500">
+                      Avval Dental Chart bo'limida tish holatini belgilang.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {chartProblemTeeth.map((item) => {
+                        const active = selectedCourseTeeth.includes(
+                          item.toothNumber
+                        );
+
+                        return (
+                          <button
+                            key={item.toothNumber}
+                            type="button"
+                            onClick={() =>
+                              handleToggleCourseTooth(item.toothNumber)
+                            }
+                            className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
+                              active
+                                ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
+                                : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-blue-50"
+                            }`}
+                          >
+                            <span className="block text-lg">
+                              #{item.toothNumber}
+                            </span>
+                            <span className="block text-xs opacity-80">
+                              {CONDITION_LABELS[
+                                item.diagnosis as ToothCondition
+                              ] ||
+                                item.diagnosis ||
+                                "—"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <SectionLabel>Asosiy tashxis</SectionLabel>
                   <textarea
                     value={mainDiagnosis}
-                    onChange={(e) => setMainDiagnosis(e.target.value)}
+                    onChange={(event) =>
+                      setMainDiagnosis(event.target.value)
+                    }
                     placeholder="Masalan: 11 va 21-tish karies davolanishi"
                     rows={3}
-                    className="w-full resize-none rounded-2xl border border-border-color bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 border-t border-border-color bg-slate-50/60 px-6 py-4">
+              <div className="flex gap-3 border-t border-slate-200 bg-slate-50/60 px-6 py-4">
                 <button
                   type="button"
                   onClick={() => setIsCreateCourseModalOpen(false)}
-                  className="flex-1 rounded-2xl border border-border-color bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                  className="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateCourse}
-                  disabled={isCreatingCourse || !selectedCourseTeeth.length}
-                  className="flex-1 rounded-2xl bg-dark-navy py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+                  disabled={
+                    isCreatingCourse || !selectedCourseTeeth.length
+                  }
+                  className="flex-1 rounded-2xl bg-slate-950 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
                 >
-                  {isCreatingCourse ? "Yaratilmoqda..." : "Kurs yaratish"}
+                  {isCreatingCourse
+                    ? "Yaratilmoqda..."
+                    : "Kurs yaratish"}
                 </button>
               </div>
             </div>
@@ -1890,33 +2796,75 @@ export default function TreatmentPatientPage() {
           document.body
         )}
 
-      {/* ====== Add Visit Modal ====== */}
       {isAddVisitModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
             <div className="my-8 w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              {/* Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-color bg-slate-50/80 px-6 py-5 backdrop-blur">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-6 py-5 backdrop-blur">
                 <div>
-                  <h2 className="text-lg font-extrabold text-dark-navy">Visit qo'shish</h2>
+                  <h2 className="text-lg font-extrabold text-slate-950">
+                    Visit qo'shish
+                  </h2>
                   {selectedCourse && (
-                    <p className="mt-0.5 text-sm text-text-light">
-                      Kurs: <span className="font-semibold text-dark-navy">{selectedCourse.mainDiagnosis}</span>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      Kurs:{" "}
+                      <span className="font-semibold text-slate-950">
+                        {selectedCourse.mainDiagnosis}
+                      </span>
                     </p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={closeAddVisitModal}
-                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+                  disabled={isVisitSaving}
+                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900 disabled:opacity-50"
                 >
                   <X size={20} />
                 </button>
               </div>
 
               <div className="p-6">
-                <VisitPanel {...visitPanelProps} />
+                <VisitForm
+                  activeCourses={activeCourses}
+                  selectedCourseId={selectedCourseId}
+                  onCourseChange={setSelectedCourseId}
+                  doctors={doctors}
+                  doctorId={doctorId}
+                  onDoctorChange={setDoctorId}
+                  doctorLocked={isDoctorUser}
+                  lockedDoctorName={currentUserName}
+                  visitDate={visitDate}
+                  onVisitDateChange={setVisitDate}
+                  doctorNotes={doctorNotes}
+                  onDoctorNotesChange={setDoctorNotes}
+                  selectedXrays={selectedXrays}
+                  onSelectXrays={handleSelectXrays}
+                  onRemoveXray={handleRemoveXray}
+                  selectedTooth={selectedTooth}
+                  onToothChange={setSelectedTooth}
+                  treatmentTeeth={treatmentTeeth}
+                  visitItems={visitItems}
+                  onRemoveVisitItem={(index) =>
+                    setVisitItems((previous) =>
+                      previous.filter((_, itemIndex) => itemIndex !== index)
+                    )
+                  }
+                  procedures={procedures}
+                  proceduresLoading={proceduresLoading}
+                  procedureSearch={procedureSearch}
+                  onProcedureSearchChange={setProcedureSearch}
+                  onAddProcedure={handleAddProcedure}
+                  onGoToChart={() => {
+                    closeAddVisitModal();
+                    setActiveTab("CHART");
+                  }}
+                  onSave={handleAddVisit}
+                  isSaving={isVisitSaving}
+                  isCompleted={Boolean(isSelectedCourseCompleted)}
+                  isNewAppointment={!appointmentId}
+                />
               </div>
             </div>
           </div>,
