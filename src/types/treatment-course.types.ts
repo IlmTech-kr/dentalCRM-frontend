@@ -2,33 +2,52 @@
 
 import { AppointmentStatus } from "../lib/enums/enums.types";
 
-/**
- * Visit davomida bajarilgan bitta muolaja.
- */
 export interface TreatmentVisitItem {
   toothNumber: string;
   procedureId: string;
+
+  /**
+   * Frontend visit yaratishda yuboradigan narx.
+   */
   price: number;
+
+  /**
+   * Backend response'da snapshot nomi bilan ham qaytishi mumkin.
+   */
+  priceSnapshot?: number;
+  procedureNameSnapshot?: string;
+
   completed: boolean;
-  note: string;
+  note: string | null;
 }
 
 /**
- * Davolash kursidagi bitta visit.
+ * Backend visit ichida qaytaradigan rasm metadata'si.
  */
-export interface TreatmentVisit {
+export interface TreatmentVisitImage {
   id?: string;
   _id?: string;
 
-  /**
-   * Mavjud appointment ID.
-   *
-   * Visit appointment orqali ochilgan bo‘lsa oldindan mavjud bo‘ladi.
-   * "Muolajani hoziroq boshlash" oqimida backend appointment yaratib,
-   * response ichida appointmentId qaytarishi mumkin.
-   */
+  patientId?: string;
   appointmentId?: string;
 
+  toothNumber?: string;
+  imageType?: "XRAY" | string;
+
+  /**
+   * Backend response'dagi to‘liq S3/B2 URL.
+   */
+  s3Url: string;
+
+  fileName?: string;
+  notes?: string | null;
+
+  uploadedByDoctorId?: string;
+  uploadedAt?: string;
+}
+
+export interface TreatmentVisit {
+  appointmentId?: string;
   visitDate: string;
   doctorId: string;
   doctorNotes: string;
@@ -36,20 +55,24 @@ export interface TreatmentVisit {
   items: TreatmentVisitItem[];
 
   /**
-   * Rentgen rasmlarining storage pathlari.
-   * Rentgen yuklash majburiy emas.
+   * Yangi backend response formati:
    *
-   * Misol:
-   * [
-   *   "documents/xray-before.png",
-   *   "documents/xray-after.png"
+   * images: [
+   *   {
+   *     imageType: "XRAY",
+   *     s3Url: "https://s3.../file.png"
+   *   }
    * ]
    */
-  xrayUrls?: string[];
+  images?: TreatmentVisitImage[];
 
   /**
-   * Backend hisoblab qaytarishi mumkin bo‘lgan visit summalari.
+   * Eski frontend/backend formatlari bilan moslik uchun.
    */
+  xrayUrls?: string[];
+  radiographUrls?: string[];
+  xrays?: Array<string | TreatmentVisitImage>;
+
   totalPrice?: number;
   totalAmount?: number;
 
@@ -57,11 +80,8 @@ export interface TreatmentVisit {
   updatedAt?: string;
 }
 
-/**
- * Bemorning davolash kursi.
- */
 export interface TreatmentCourse {
-  _id: string;
+  _id?: string;
   id?: string;
 
   tenantId?: string;
@@ -70,7 +90,7 @@ export interface TreatmentCourse {
   mainDiagnosis: string;
 
   startDate?: string;
-  endDate?: string;
+  endDate?: string | null;
 
   status: AppointmentStatus;
 
@@ -84,34 +104,25 @@ export interface TreatmentCourse {
   _class?: string;
 }
 
-/**
- * Yangi davolash kursini yaratish payloadi.
- */
 export interface CreateTreatmentCourseDto {
   patientId: string;
   mainDiagnosis: string;
 }
 
 /**
- * Davolash kursiga yangi visit qo‘shish payloadi.
- *
  * appointmentId ixtiyoriy:
- * - Bo‘lsa, visit mavjud appointmentga biriktiriladi.
- * - Bo‘lmasa, backend doctorId va visitDate asosida appointment yaratadi.
+ * - Bo‘lsa, mavjud appointmentga visit biriktiriladi.
+ * - Bo‘lmasa, backend appointmentni avtomatik yaratadi.
  *
- * xrayUrls ham ixtiyoriy:
- * - Rentgen tanlanmasa yuborilmaydi.
- * - Tanlansa, rasmlar avval storage endpointga yuklanadi va qaytgan
- *   storage pathlar xrayUrls ichida yuboriladi.
+ * Rentgen yuklash ham ixtiyoriy.
+ * Frontend avval storage'ga yuklaydi va storage pathlarni xrayUrls bilan yuboradi.
+ * Backend response'da ular `images` objectlari sifatida qaytishi mumkin.
  */
 export interface AddTreatmentVisitDto {
   appointmentId?: string;
-
   visitDate: string;
   doctorId: string;
   doctorNotes: string;
-
   items: TreatmentVisitItem[];
-
   xrayUrls?: string[];
 }

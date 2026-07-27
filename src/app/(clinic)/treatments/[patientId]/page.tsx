@@ -81,6 +81,33 @@ type SelectedXray = {
   previewUrl: string;
 };
 
+/**
+ * Backend visit ichida rentgenlarni `images` array ko‘rinishida qaytaradi.
+ *
+ * Misol:
+ * {
+ *   id: "...",
+ *   toothNumber: "26",
+ *   imageType: "XRAY",
+ *   s3Url: "https://s3.../tooth_26_xray.png",
+ *   fileName: "tooth_26_xray.jpg",
+ *   notes: "...",
+ *   uploadedAt: "2026-07-26T20:24:46.654"
+ * }
+ */
+type VisitImage = {
+  id?: string;
+  patientId?: string;
+  appointmentId?: string;
+  toothNumber?: string;
+  imageType?: string;
+  s3Url: string;
+  fileName?: string;
+  notes?: string | null;
+  uploadedByDoctorId?: string;
+  uploadedAt?: string;
+};
+
 const MAX_XRAY_FILES = 10;
 const MAX_XRAY_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -192,18 +219,120 @@ function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
-function getVisitXrayUrls(visit: any): string[] {
-  const value =
+/**
+ * Backend yangi formatda rentgenlarni `visit.images` ichida object sifatida
+ * qaytaradi. Eski `xrayUrls`, `radiographUrls` va `xrays` formatlari ham
+ * backward compatibility uchun qo‘llab-quvvatlanadi.
+ */
+function getVisitImages(visit: any): VisitImage[] {
+  const rawImages = Array.isArray(visit?.images) ? visit.images : [];
+
+  const imagesFromObjects = rawImages
+    .map((item: any, index: number): VisitImage | null => {
+      if (typeof item === "string") {
+        const source = item.trim();
+
+        return source
+          ? {
+              id: `${source}-${index}`,
+              s3Url: source,
+              imageType: "XRAY",
+            }
+          : null;
+      }
+
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const source = String(
+        item.s3Url ??
+          item.url ??
+          item.fileUrl ??
+          item.storagePath ??
+          item.path ??
+          ""
+      ).trim();
+
+      if (!source) {
+        return null;
+      }
+
+      return {
+        id: String(item.id ?? item._id ?? `${source}-${index}`),
+        patientId: item.patientId,
+        appointmentId: item.appointmentId,
+        toothNumber: item.toothNumber,
+        imageType: item.imageType || "XRAY",
+        s3Url: source,
+        fileName: item.fileName,
+        notes: item.notes,
+        uploadedByDoctorId: item.uploadedByDoctorId,
+        uploadedAt: item.uploadedAt,
+      };
+    })
+    .filter((item: VisitImage | null): item is VisitImage => Boolean(item));
+
+  if (imagesFromObjects.length > 0) {
+    return imagesFromObjects;
+  }
+
+  const oldValues =
     visit?.xrayUrls ??
     visit?.radiographUrls ??
     visit?.xrays ??
     [];
 
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(oldValues)) {
+    return [];
+  }
 
-  return value.filter(
-    (item): item is string =>
-      typeof item === "string" && Boolean(item.trim())
+  return oldValues
+    .map((item: any, index: number): VisitImage | null => {
+      if (typeof item === "string" && item.trim()) {
+        return {
+          id: `${item}-${index}`,
+          s3Url: item.trim(),
+          imageType: "XRAY",
+        };
+      }
+
+      if (item && typeof item === "object") {
+        const source = String(
+          item.s3Url ??
+            item.url ??
+            item.fileUrl ??
+            item.storagePath ??
+            item.path ??
+            ""
+        ).trim();
+
+        if (!source) {
+          return null;
+        }
+
+        return {
+          id: String(item.id ?? item._id ?? `${source}-${index}`),
+          toothNumber: item.toothNumber,
+          imageType: item.imageType || "XRAY",
+          s3Url: source,
+          fileName: item.fileName,
+          notes: item.notes,
+          uploadedAt: item.uploadedAt,
+        };
+      }
+
+      return null;
+    })
+    .filter((item: VisitImage | null): item is VisitImage => Boolean(item));
+}
+
+function isDirectImageUrl(value: string): boolean {
+  return (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
   );
 }
 
@@ -348,53 +477,120 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ---------------------------------------------------------------------------
 
 function VisitXrayImage({
-  storagePath,
+  visitImage,
   index,
 }: {
-  storagePath: string;
+  visitImage: VisitImage;
   index: number;
 }) {
-  const image = useStorageImage(storagePath, STORAGE_BUCKET);
+  const source = visitImage.s3Url.trim();
+  const isDirectUrl = isDirectImageUrl(source);
 
-  if (image.isFetching && !image.url) {
+  /**
+   * `s3Url` to‘liq HTTPS URL bo‘lsa to‘g‘ridan-to‘g‘ri ishlatiladi.
+   * Eski storage path bo‘lsa useStorageImage orqali Blob URL olinadi.
+   */
+  const storageImage = useStorageImage(
+    isDirectUrl ? "" : source,
+    STORAGE_BUCKET
+  );
+
+  const imageUrl = isDirectUrl ? source : storageImage.url;
+  const isLoading = !isDirectUrl && storageImage.isFetching && !imageUrl;
+  const hasError = !isDirectUrl && storageImage.isError;
+
+  if (isLoading) {
     return (
-      <div className="aspect-video animate-pulse rounded-xl bg-slate-200" />
+      <div className="overflow-hidden rounded-2xl border border-border-color bg-white">
+        <div className="aspect-video animate-pulse bg-slate-200" />
+        <div className="space-y-2 p-3">
+          <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+          <div className="h-3 w-40 animate-pulse rounded bg-slate-100" />
+        </div>
+      </div>
     );
   }
 
-  if (!image.url || image.isError) {
+  if (!imageUrl || hasError) {
     return (
-      <div className="flex aspect-video items-center justify-center rounded-xl bg-red-50 px-3 text-center text-xs font-bold text-red-500">
-        Rentgen ochilmadi
+      <div className="overflow-hidden rounded-2xl border border-red-100 bg-white">
+        <div className="flex aspect-video items-center justify-center bg-red-50 px-3 text-center text-xs font-bold text-red-500">
+          Rentgen ochilmadi
+        </div>
+
+        <div className="p-3">
+          <p className="truncate text-xs font-bold text-slate-700">
+            {visitImage.fileName || `Rentgen ${index + 1}`}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <a
-      href={image.url}
-      target="_blank"
-      rel="noreferrer"
-      className="group relative block overflow-hidden rounded-xl border border-border-color bg-slate-950"
-    >
-      <img
-        src={image.url}
-        alt={`Rentgen ${index + 1}`}
-        className="aspect-video h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
-      />
-
-      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/0 transition group-hover:bg-slate-950/30">
-        <ExternalLink
-          size={20}
-          className="text-white opacity-0 transition group-hover:opacity-100"
+    <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
+      <a
+        href={imageUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="group relative block bg-slate-950"
+      >
+        <img
+          src={imageUrl}
+          alt={visitImage.fileName || `Rentgen ${index + 1}`}
+          loading="lazy"
+          className="aspect-video h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
         />
+
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/0 transition group-hover:bg-slate-950/30">
+          <ExternalLink
+            size={20}
+            className="text-white opacity-0 transition group-hover:opacity-100"
+          />
+        </div>
+      </a>
+
+      <div className="space-y-1.5 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-xs font-black text-dark-navy">
+            {visitImage.fileName || `Rentgen ${index + 1}`}
+          </p>
+
+          {visitImage.imageType && (
+            <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
+              {visitImage.imageType}
+            </span>
+          )}
+        </div>
+
+        {visitImage.toothNumber && (
+          <p className="text-xs font-semibold text-[#35a8f5]">
+            {visitImage.toothNumber}-tish
+          </p>
+        )}
+
+        {visitImage.notes && (
+          <p className="text-xs leading-relaxed text-slate-500">
+            {visitImage.notes}
+          </p>
+        )}
+
+        {visitImage.uploadedAt && (
+          <p className="text-[11px] text-slate-400">
+            {formatVisitDateTime(visitImage.uploadedAt)}
+          </p>
+        )}
       </div>
-    </a>
+    </div>
   );
 }
 
-function VisitXrayGallery({ paths }: { paths: string[] }) {
-  if (!paths.length) return null;
+function VisitXrayGallery({
+  images,
+}: {
+  images: VisitImage[];
+}) {
+  if (!images.length) return null;
 
   return (
     <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
@@ -406,15 +602,15 @@ function VisitXrayGallery({ paths }: { paths: string[] }) {
         </p>
 
         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
-          {paths.length} ta
+          {images.length} ta
         </span>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        {paths.map((path, index) => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {images.map((image, index) => (
           <VisitXrayImage
-            key={`${path}-${index}`}
-            storagePath={path}
+            key={image.id || `${image.s3Url}-${index}`}
+            visitImage={image}
             index={index}
           />
         ))}
@@ -1591,7 +1787,7 @@ export default function TreatmentPatientPage() {
                         </div>
                       )}
 
-                      <VisitXrayGallery paths={getVisitXrayUrls(visit)} />
+                      <VisitXrayGallery images={getVisitImages(visit)} />
                     </div>
                   </div>
                 ))}
