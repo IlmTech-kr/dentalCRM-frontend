@@ -17,8 +17,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, Loader2, Search } from "lucide-react";
+import { ArrowRight, Building2, Search } from "lucide-react";
 
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { mainHttp, getApiErrorMessage, publicMainHttp, MAIN_API_URL } from "@/src/lib/api/http";
 import axios from "axios";
 
@@ -135,7 +136,7 @@ export default function SubdomainCheckPage() {
             >
               {isChecking ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
+                  <DentalLoaderIcon size={18} />
                   Tekshirilmoqda...
                 </>
               ) : (

@@ -13,7 +13,6 @@ import {
 import {
   CheckCircle2,
   HardDrive,
-  Loader2,
   MessageSquare,
   Pencil,
   Rocket,
@@ -22,6 +21,8 @@ import {
   Users,
   X,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
@@ -249,10 +250,7 @@ export default function PlansPage() {
             className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {activateMutation.isPending ? (
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
+              <DentalLoaderIcon size={16} />
             ) : (
               <CheckCircle2
                 size={16}
@@ -277,10 +275,7 @@ export default function PlansPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <Loader2
-              className="animate-spin text-slate-400"
-              size={22}
-            />
+            <DentalLoaderIcon className="text-slate-400" size={22} />
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">
@@ -651,10 +646,7 @@ function EditPlanPriceModal({
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {updateMutation.isPending ? (
-              <Loader2
-                className="animate-spin"
-                size={16}
-              />
+              <DentalLoaderIcon size={16} />
             ) : (
               <Save size={16} />
             )}

@@ -36,7 +36,7 @@ import { Gender, Role } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
-import DentalLoader from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import RoleGuard from "@/src/components/layout/RoleGuard";
 
 const PAGE_SIZE = 10;
@@ -693,7 +693,7 @@ const filteredPatients = useMemo(() => {
                       className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {phoneSearchLoading ? (
-                        <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> {t("phoneSearchModal.searching")}</>
+                        <><DentalLoaderIcon size={16} className="text-white" /> {t("phoneSearchModal.searching")}</>
                       ) : (
                         <><Search size={16} /> {t("phoneSearchModal.searchButton")}</>
                       )}

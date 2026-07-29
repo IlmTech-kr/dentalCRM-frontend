@@ -13,9 +13,9 @@ import {
   ShieldCheck,
   CheckCircle,
   AlertCircle,
-  Loader,
 } from "lucide-react";
 
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { useForgotPassword } from "@/src/features/auth/hooks/useAuth";
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -199,7 +199,7 @@ export default function ForgotPasswordPage() {
                 className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {forgotPasswordMutation.isPending ? (
-                  <><Loader size={18} className="animate-spin" />{t("forgotPassword.submitting")}</>
+                  <><DentalLoaderIcon size={18} />{t("forgotPassword.submitting")}</>
                 ) : (
                   t("forgotPassword.submitButton")
                 )}

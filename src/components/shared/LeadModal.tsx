@@ -10,7 +10,9 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, Phone, User, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { X, Phone, User, ArrowRight, CheckCircle2 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 const SHOW_DELAY_MS = 1000;
 
@@ -201,7 +203,7 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 font-bold text-white shadow-lg shadow-violet-200 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {formState === "loading" ? (
-                    <><Loader2 size={18} className="animate-spin" />{t("leadModal.submitting")}</>
+                    <><DentalLoaderIcon size={18} />{t("leadModal.submitting")}</>
                   ) : (
                     <>{t("leadModal.submitButton")} <ArrowRight size={18} /></>
                   )}

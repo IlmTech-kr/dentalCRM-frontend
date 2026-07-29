@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 import {
   BadgeDollarSign,
   Edit3,
-  Loader2,
   Plus,
   Save,
   Search,
@@ -20,6 +19,8 @@ import {
   CircleDollarSign,
   Activity,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -296,7 +297,7 @@ export default function ProceduresPage() {
                   <tr>
                     <td colSpan={5} className="px-4 py-14 text-center">
                       <div className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-500">
-                        <Loader2 size={18} className="animate-spin" />
+                        <DentalLoaderIcon size={18} />
                         {t("list.loading")}
                       </div>
                     </td>
@@ -498,7 +499,7 @@ export default function ProceduresPage() {
                 disabled={isSaving}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {isSaving ? <DentalLoaderIcon size={18} /> : <Save size={18} />}
                 {editingProcedure ? t("modal.update") : t("modal.create")}
               </button>
             </div>

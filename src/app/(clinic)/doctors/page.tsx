@@ -14,6 +14,8 @@ import {
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+
 import {
   useDeleteDoctor,
   useGetDoctors,
@@ -895,7 +897,10 @@ export default function DoctorsPage() {
                       colSpan={tableColSpan}
                       className="px-5 py-10 text-center text-sm text-slate-500"
                     >
-                      {t("list.loading")}
+                      <span className="inline-flex items-center gap-2">
+                        <DentalLoaderIcon size={16} />
+                        {t("list.loading")}
+                      </span>
                     </td>
                   </tr>
                 ) : filteredDoctors.length === 0 ? (

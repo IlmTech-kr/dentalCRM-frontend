@@ -7,12 +7,13 @@
 
 import {
   Camera,
-  Loader2,
   Mail,
   Phone,
   Save,
   User,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useTranslations } from "next-intl";
 
@@ -542,10 +543,7 @@ export default function ProfilePage() {
 
               {isAvatarLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40">
-                  <Loader2
-                    size={22}
-                    className="animate-spin text-white"
-                  />
+                  <DentalLoaderIcon size={22} className="text-white" />
                 </div>
               )}
             </div>
@@ -712,19 +710,13 @@ export default function ProfilePage() {
             >
               {updateMutation.isPending ? (
                 <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
+                  <DentalLoaderIcon size={16} />
 
                   {t("submit.saving")}
                 </>
               ) : uploadMutation.isPending ? (
                 <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
+                  <DentalLoaderIcon size={16} />
 
                   {t("submit.uploadingImage")}
                 </>

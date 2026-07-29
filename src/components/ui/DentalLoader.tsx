@@ -7,7 +7,47 @@
  * <DentalLoader />
  * <DentalLoader text="Saving..." />
  * <DentalLoader fullScreen />
+ *
+ * Compact inline variant (buttons, avatar overlays, table rows):
+ * <DentalLoaderIcon />
+ * <DentalLoaderIcon size={18} className="text-white" />
  */
+
+interface DentalLoaderIconProps {
+  size?: number;
+  className?: string;
+}
+
+export function DentalLoaderIcon({
+  size = 20,
+  className = "",
+}: DentalLoaderIconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      role="img"
+      aria-label="Loading"
+      className={className}
+    >
+      <style>{`
+        @keyframes dl-icon-pulse {
+          0%, 100% { transform: scaleY(1); opacity: 1; }
+          50% { transform: scaleY(0.82); opacity: 0.55; }
+        }
+      `}</style>
+      <path
+        d="M12 2c-1.1 0-2 .5-2.5 1.3C9 2.5 8.1 2 7 2 4.8 2 3 4 3 6.8c0 2 .7 3.9 1.3 5.6.5 1.5 1 2.9 1.2 4.3.2 1.6.7 3.3 2.5 3.3s2.3-1.7 2.5-3.3c.1-.7.2-1.4.5-2.1.3.7.4 1.4.5 2.1.2 1.6.7 3.3 2.5 3.3s2.3-1.7 2.5-3.3c.2-1.4.7-2.8 1.2-4.3C20.3 10.7 21 8.8 21 6.8 21 4 19.2 2 17 2c-1.1 0-2 .5-2.5 1.3C14 2.5 13.1 2 12 2z"
+        fill="currentColor"
+        style={{
+          transformOrigin: "12px 6px",
+          animation: "dl-icon-pulse 0.9s ease-in-out infinite",
+        }}
+      />
+    </svg>
+  );
+}
 
 interface DentalLoaderProps {
   text?: string;

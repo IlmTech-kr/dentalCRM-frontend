@@ -8,7 +8,6 @@
 import {
   Bell,
   ChevronDown,
-  Loader2,
   LogOut,
   Search,
 } from "lucide-react";
@@ -21,6 +20,7 @@ import { useStorageImage } from "@/src/features/storage/hooks/useStorage";
 import { STORAGE_BUCKET } from "@/src/types/storage.types";
 import { useAuthStore } from "@/src/store/auth.store";
 import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 export default function Header() {
   const t = useTranslations("layout");
@@ -146,10 +146,7 @@ export default function Header() {
 
                 {isAvatarLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
-                    <Loader2
-                      size={14}
-                      className="animate-spin text-white"
-                    />
+                    <DentalLoaderIcon size={14} className="text-white" />
                   </div>
                 )}
               </div>
@@ -192,10 +189,7 @@ export default function Header() {
 
                       {isAvatarLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
-                          <Loader2
-                            size={16}
-                            className="animate-spin text-white"
-                          />
+                          <DentalLoaderIcon size={16} className="text-white" />
                         </div>
                       )}
                     </div>
@@ -255,10 +249,7 @@ export default function Header() {
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {logoutMutation.isPending ? (
-                      <Loader2
-                        size={16}
-                        className="animate-spin"
-                      />
+                      <DentalLoaderIcon size={16} />
                     ) : (
                       <LogOut size={16} />
                     )}

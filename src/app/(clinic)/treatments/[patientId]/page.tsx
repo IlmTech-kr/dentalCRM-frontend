@@ -24,7 +24,6 @@ import {
   Edit3,
   ExternalLink,
   ImageIcon,
-  Loader2,
   Lock,
   Plus,
   Save,
@@ -37,6 +36,8 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { Dental3DChart } from "@/src/features/treatments/components/Dental3DChart";
@@ -884,7 +885,7 @@ function VisitXrayImage({
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex aspect-video items-center justify-center bg-slate-100">
-          <Loader2 size={24} className="animate-spin text-[#35a8f5]" />
+          <DentalLoaderIcon size={24} className="text-[#35a8f5]" />
         </div>
 
         <div className="p-3">
@@ -1195,7 +1196,7 @@ function VisitForm({
             }`}
           >
             {isSaving ? (
-              <Loader2 size={24} className="animate-spin text-[#35a8f5]" />
+              <DentalLoaderIcon size={24} className="text-[#35a8f5]" />
             ) : (
               <Upload size={24} className="text-[#35a8f5]" />
             )}
@@ -1368,7 +1369,7 @@ function VisitForm({
             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-black text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? (
-              <Loader2 size={18} className="animate-spin" />
+              <DentalLoaderIcon size={18} />
             ) : (
               <Save size={18} />
             )}
@@ -2357,7 +2358,7 @@ export default function TreatmentPatientPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-60"
                 >
                   {isCreating || isUpdating ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <DentalLoaderIcon size={16} />
                   ) : (
                     <Save size={16} />
                   )}

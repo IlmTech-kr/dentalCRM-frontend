@@ -22,6 +22,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/src/components/layout/DashboardLayout";
+import DentalLoader from "@/src/components/ui/DentalLoader";
 import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
 import { getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
 import { useAuthStore } from "@/src/store/auth.store";
@@ -70,16 +71,7 @@ export default function ClinicLayout({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!checked) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-light-background">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#35a8f5]" />
-          <p className="mt-4 text-sm font-semibold text-slate-500">
-            Loading...
-          </p>
-        </div>
-      </div>
-    );
+    return <DentalLoader fullScreen text="Loading..." />;
   }
 
   return <DashboardLayout>{children}</DashboardLayout>;

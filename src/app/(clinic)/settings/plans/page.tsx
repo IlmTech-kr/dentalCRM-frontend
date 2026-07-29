@@ -12,7 +12,6 @@ import {
   Check,
   CreditCard,
   HardDrive,
-  Loader2,
   MessageCircle,
   RefreshCcw,
   Sparkles,
@@ -21,6 +20,8 @@ import {
   Zap,
   ZapOff,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import {
   useCancelPlan,
@@ -259,7 +260,7 @@ function CurrentPlanCard({
             disabled={isCanceling || !isActive}
             className="flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isCanceling ? <Loader2 size={16} className="animate-spin" /> : <ZapOff size={16} />}
+            {isCanceling ? <DentalLoaderIcon size={16} /> : <ZapOff size={16} />}
             {t("current.cancelButton")}
           </button>
         </div>
@@ -433,7 +434,7 @@ function PlanCard({
               style={{ backgroundColor: config.color }}
             >
               {isActivating ? (
-                <Loader2 size={16} className="animate-spin" />
+                <DentalLoaderIcon size={16} />
               ) : (
                 <CreditCard size={16} />
               )}
@@ -548,7 +549,7 @@ export default function PlansPage() {
         <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
           {isCurrentLoading ? (
             <div className="flex min-h-[300px] items-center justify-center rounded-3xl border border-slate-200 bg-white">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <DentalLoaderIcon className="h-8 w-8 text-blue-600" />
             </div>
           ) : currentPlan ? (
             <CurrentPlanCard
@@ -607,7 +608,7 @@ export default function PlansPage() {
         <>
           {isPlansLoading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <Loader2 className="h-9 w-9 animate-spin text-blue-600" />
+              <DentalLoaderIcon className="h-9 w-9 text-blue-600" />
             </div>
           ) : sortedPlans.length === 0 ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">

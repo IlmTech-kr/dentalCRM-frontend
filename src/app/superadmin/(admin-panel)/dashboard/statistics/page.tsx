@@ -8,10 +8,11 @@ import { useMemo, useState } from "react";
 import {
   ArrowDownUp,
   Building2,
-  Loader2,
   Receipt,
   TrendingUp,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useRevenueByClinic } from "@/src/features/superadmin/statistics/UseStatisticsAdmin";
 
@@ -145,7 +146,7 @@ export default function StatisticsPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin text-slate-400" size={22} />
+            <DentalLoaderIcon className="text-slate-400" size={22} />
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">

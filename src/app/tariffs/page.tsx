@@ -12,7 +12,6 @@ import {
   Building2,
   CheckCircle2,
   HardDrive,
-  Loader2,
   MessageCircle,
   Sparkles,
   Stethoscope,
@@ -24,6 +23,7 @@ import {
 import LandingHeader from "@/src/components/layout/LandingHeader";
 import Footer from "@/src/components/layout/Footer";
 import LeadModal from "@/src/components/shared/LeadModal";
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { usePlans } from "@/src/features/superadmin/subscriptions/UseSupscriptionAdmin";
 
@@ -286,7 +286,7 @@ export default function TariffsPage() {
             {isLoading && (
               <div className="flex min-h-[400px] items-center justify-center">
                 <div className="text-center">
-                  <Loader2 className="mx-auto h-9 w-9 animate-spin text-violet-600" />
+                  <DentalLoaderIcon className="mx-auto h-9 w-9 text-violet-600" />
 
                   <p className="mt-4 text-sm font-semibold text-slate-600">
                     Tariflar yuklanmoqda...
@@ -314,7 +314,7 @@ export default function TariffsPage() {
                   className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isFetching && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <DentalLoaderIcon className="h-4 w-4" />
                   )}
 
                   Qayta urinish

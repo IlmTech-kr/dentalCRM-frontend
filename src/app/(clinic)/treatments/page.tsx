@@ -11,12 +11,13 @@ import {
   Clock3,
   LayoutGrid,
   List,
-  Loader2,
   RefreshCcw,
   Search,
   UserRound,
   Users,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useTodayInProgressAppointments } from "@/src/features/treatments/hooks/useTodayInProgressAppointments";
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
@@ -294,7 +295,7 @@ export default function TreatmentsPage() {
             {isLoading ? (
               <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-slate-50 py-16">
                 <div className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-500">
-                  <Loader2 size={20} className="animate-spin" />
+                  <DentalLoaderIcon size={20} />
                   {t("inProgress.loading")}
                 </div>
               </div>

@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Clock,
   Edit2,
-  Loader2,
   Plus,
   RefreshCcw,
   Search,
@@ -15,6 +14,8 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import {
   useCreateDoctorSchedule,
@@ -728,7 +729,7 @@ function WeekEditorModal({
                 disabled={isDeleting || isSubmitting}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {isDeleting ? <DentalLoaderIcon className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                 {t("modal.deleteSchedule")}
               </button>
             ) : (
@@ -748,7 +749,7 @@ function WeekEditorModal({
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isSubmitting && <DentalLoaderIcon className="h-4 w-4" />}
                 {hasExistingSchedule ? t("modal.saveSchedule") : t("modal.createSchedule")}
               </button>
             </div>
@@ -1117,7 +1118,7 @@ export default function DoctorSchedulePage() {
       <main className="mx-auto max-w-7xl px-6 py-8">
         {isDataLoading ? (
           <div className="flex items-center justify-center gap-3 py-24 text-sm font-bold text-slate-500">
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+            <DentalLoaderIcon className="h-5 w-5 text-blue-600" />
             {t("loading")}
           </div>
         ) : isError ? (

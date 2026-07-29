@@ -15,9 +15,10 @@ import type { ReactNode } from "react";
 import {
   Ban,
   Info,
-  Loader2,
   X,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
@@ -628,10 +629,7 @@ export default function DashboardPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20 text-slate-400">
-          <Loader2
-            className="animate-spin"
-            size={25}
-          />
+          <DentalLoaderIcon size={25} />
         </div>
       ) : isTenantsError ? (
         <p className="px-6 py-12 text-center text-sm text-red-500">
@@ -1218,10 +1216,7 @@ function TenantLimitsEditModal({
       <div className="p-6">
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2
-              className="animate-spin text-slate-400"
-              size={23}
-            />
+            <DentalLoaderIcon className="text-slate-400" size={23} />
           </div>
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-500">
@@ -1480,10 +1475,7 @@ function SectionLoading({
       </div>
 
       <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
-        <Loader2
-          className="animate-spin"
-          size={19}
-        />
+        <DentalLoaderIcon size={19} />
 
         Yuklanmoqda...
       </div>

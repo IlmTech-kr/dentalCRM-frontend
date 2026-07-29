@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Clock,
   Edit2,
-  Loader2,
   Plus,
   RefreshCcw,
   Search,
@@ -21,6 +20,8 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import {
   useCreateAppointment,
@@ -431,7 +432,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <input type="tel" value={phoneSearch} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={t("modal.phonePlaceholder")} maxLength={13} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
                   <button type="button" onClick={handleSearchPatient} disabled={isPatientSearching || phoneDigits.length !== 12} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                    {isPatientSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    {isPatientSearching ? <DentalLoaderIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     {tCommon("actions.search")}
                   </button>
                 </div>
@@ -488,7 +489,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
           <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50">{tCommon("actions.cancel")}</button>
             <button type="submit" disabled={isSubmitting || (!selectedAppointment && !form.patientId)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isSubmitting && <DentalLoaderIcon className="h-4 w-4" />}
               {selectedAppointment ? t("modal.saveChanges") : t("modal.createAppointment")}
             </button>
           </div>
