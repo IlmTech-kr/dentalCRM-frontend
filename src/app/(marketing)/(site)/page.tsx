@@ -24,10 +24,9 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import LandingHeader from "../components/layout/LandingHeader";
-import { BRAND, LogoMark } from "../components/shared/BrandLogo";
-import Footer from "../components/layout/Footer";
-import LeadModal from "../components/shared/LeadModal";
+import { BRAND, LogoMark } from "@/src/components/shared/BrandLogo";
+import Footer from "./_components/Footer";
+import LeadModal from "./_components/LeadModal";
 
 const FEATURE_ICONS = [
   Users,
@@ -63,8 +62,6 @@ export default function HomePage() {
 
   return (
     <div className="bg-white text-slate-900">
-      <LandingHeader />
-
       <main>
         {/* ── HERO ─────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#e0f7ff,transparent_38%),radial-gradient(circle_at_top_right,#f5d0fe,transparent_30%),linear-gradient(to_bottom,#ffffff,#f8fbff)]">

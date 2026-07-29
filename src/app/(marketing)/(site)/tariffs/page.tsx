@@ -17,9 +17,8 @@ import {
   X,
 } from "lucide-react";
 
-import LandingHeader from "@/src/components/layout/LandingHeader";
-import Footer from "@/src/components/layout/Footer";
-import LeadModal from "@/src/components/shared/LeadModal";
+import Footer from "../_components/Footer";
+import LeadModal from "../_components/LeadModal";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { usePublicPlans } from "@/src/features/subscriptions/hooks/useSubscription";
@@ -166,7 +165,6 @@ export default function TariffsPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <LandingHeader/>
 
       <main>
         {/* Hero */}
