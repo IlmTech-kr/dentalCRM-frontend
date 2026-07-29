@@ -25,7 +25,7 @@ import Footer from "@/src/components/layout/Footer";
 import LeadModal from "@/src/components/shared/LeadModal";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
-import { usePlans } from "@/src/features/superadmin/subscriptions/UseSupscriptionAdmin";
+import { usePublicPlans } from "@/src/features/subscriptions/hooks/useSubscription";
 
 type PlanUiConfig = {
   icon: LucideIcon;
@@ -207,7 +207,7 @@ export default function TariffsPage() {
     isError,
     isFetching,
     refetch,
-  } = usePlans();
+  } = usePublicPlans();
 
   const duration =
     durations.find(

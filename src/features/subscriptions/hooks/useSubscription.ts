@@ -10,12 +10,14 @@ import {
   cancelPlan,
   getCurrentPlan,
   getPlans,
+  getPublicPlans,
 } from "@/src/features/subscriptions/services/subscription.service";
 
 export const subscriptionKeys = {
   all: ["subscriptions"] as const,
   current: () => [...subscriptionKeys.all, "current"] as const,
   plans: () => [...subscriptionKeys.all, "plans"] as const,
+  publicPlans: () => [...subscriptionKeys.all, "public-plans"] as const,
 };
 
 export function useGetCurrentPlan() {
@@ -36,6 +38,18 @@ export function useGetPlans() {
     queryKey: subscriptionKeys.plans(),
     queryFn: getPlans,
     enabled: isAuthenticated,
+    staleTime: 1000 * 60,
+  });
+}
+
+/**
+ * Login/tenant talab qilmaydi — `/tariffs` kabi ochiq marketing
+ * sahifalarida ishlatiladi.
+ */
+export function usePublicPlans() {
+  return useQuery({
+    queryKey: subscriptionKeys.publicPlans(),
+    queryFn: getPublicPlans,
     staleTime: 1000 * 60,
   });
 }

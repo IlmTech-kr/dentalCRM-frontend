@@ -2,7 +2,7 @@
  * File: src/features/subscriptions/services/subscription.service.ts
  */
 
-import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
+import { tenantHttp, publicMainHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
   CurrentSubscription,
@@ -70,6 +70,38 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[Subscription] getPlans failed:", getApiErrorMessage(error));
+    }
+    throw error;
+  }
+}
+
+/**
+ * GET /api/dental/subscriptions/plans (public, root domain) response shape —
+ * unlike the generic SubscriptionPlan type, every field is always present.
+ */
+export interface PublicSubscriptionPlan {
+  planType: string;
+  monthlyPrice: number;
+  durationMonths: number;
+  maxDoctors: number;
+  maxStaff: number;
+  storageLimitBytes: number;
+  includedSmsCount: number;
+  active: boolean;
+}
+
+/**
+ * Login/tenant kontekstisiz, ochiq (public) tarif ro'yxati.
+ * `/tariffs` kabi marketing sahifalari uchun — mainHttp emas,
+ * publicMainHttp orqali (401 interceptor va /login redirect'siz).
+ */
+export async function getPublicPlans(): Promise<PublicSubscriptionPlan[]> {
+  try {
+    const response = await publicMainHttp.get(ENDPOINTS.subscriptions.plans);
+    return normalizePlansResponse(response.data) as PublicSubscriptionPlan[];
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Subscription] getPublicPlans failed:", getApiErrorMessage(error));
     }
     throw error;
   }
