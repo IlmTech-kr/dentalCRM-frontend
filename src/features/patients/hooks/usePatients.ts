@@ -111,19 +111,23 @@ export function useCreatePatient() {
   });
 }
 
-export function useUpdatePatient(patientId: string) {
+export function useUpdatePatient() {
   const queryClient = useQueryClient();
 
   return useMutation<Patient, Error, UpdatePatientDto>({
-    mutationFn: (payload) => updatePatient(patientId, payload),
+    mutationFn: (payload) => updatePatient(payload),
 
     onSuccess: (updatedPatient) => {
-      queryClient.setQueryData(
-        patientKeys.detail(patientId),
-        updatedPatient
-      );
+      if (updatedPatient?.id) {
+        queryClient.setQueryData(
+          patientKeys.detail(updatedPatient.id),
+          updatedPatient
+        );
+      }
 
-      queryClient.invalidateQueries({ queryKey: patientKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: patientKeys.lists(),
+      });
     },
 
     onError: (error) => {

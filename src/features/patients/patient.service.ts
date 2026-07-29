@@ -204,27 +204,30 @@ export async function createPatient(payload: CreatePatientDto): Promise<Patient>
 }
 
 /**
- * PATCH /patients/:id
- *
- * UpdatePatientDto partial bo'lgani uchun PATCH ishlatiladi.
- * Agar backend PUT kutsa — shu yerda o'zgartirish kifoya.
+ * PUT /patients/:id
  */
 export async function updatePatient(
-  id: string,
   payload: UpdatePatientDto
 ): Promise<Patient> {
   try {
     const http = tenantHttp();
-    const normalizedPayload = normalizePatientPayload(payload);
-    const response = await http.patch(ENDPOINTS.patients.byId(id), normalizedPayload);
+
+    const { id, ...rest } = normalizePatientPayload(payload);
+
+    const response = await http.put(ENDPOINTS.patients.byId(id), rest);
 
     return normalizePatient(response.data);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Patient Service] updatePatient failed:", getApiErrorMessage(error));
+      console.warn(
+        "[Patient Service] updatePatient failed:",
+        getApiErrorMessage(error)
+      );
     }
 
-    throw new Error(getApiErrorMessage(error, "Failed to update patient"));
+    throw new Error(
+      getApiErrorMessage(error, "Failed to update patient")
+    );
   }
 }
 

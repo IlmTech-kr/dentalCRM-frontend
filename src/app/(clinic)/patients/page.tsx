@@ -130,7 +130,7 @@ export default function PatientsPage() {
   // Yangi yaratilgan patient — "start-confirm" modalida ishlatiladi
   const [pendingNewPatient, setPendingNewPatient] = useState<Patient | null>(null);
 
-  const updateMutation = useUpdatePatient(editingPatient?.id || "");
+  const updateMutation = useUpdatePatient();
 
   const [phoneSearch, setPhoneSearch] = useState<string>("+998");
   const [phoneSearchError, setPhoneSearchError] = useState("");
@@ -292,9 +292,18 @@ const filteredPatients = useMemo(() => {
     e.preventDefault();
     try {
       const payload = { ...form, phone: formatPhoneNumber(form.phone) };
-
+      
       if (editingPatient) {
-        await updateMutation.mutateAsync({ id: editingPatient.id, ...payload });
+        await updateMutation.mutateAsync({
+          id: editingPatient.id,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          birthDate: payload.birthDate,
+          phone: payload.phone,
+          gender: payload.gender,
+          anamnesis: payload.anamnesis,
+        });
+
         toast.success(t("toast.patientUpdated"));
         closeModal();
         return;

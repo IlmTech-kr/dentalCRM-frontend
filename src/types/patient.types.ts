@@ -34,7 +34,6 @@ export interface CreatePatientDto {
 
 export interface UpdatePatientDto {
   id: string;
-
   firstName?: string;
   lastName?: string;
   birthDate?: string;

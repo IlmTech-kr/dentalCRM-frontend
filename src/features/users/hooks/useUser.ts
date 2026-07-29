@@ -39,6 +39,19 @@ export function useUpdateProfile() {
     mutationFn: (payload) => updateMe(payload),
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(userKeys.profile(), updatedProfile);
+
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        useAuthStore.getState().setAuthData({
+          user: {
+            ...currentUser,
+            firstName: updatedProfile.firstName,
+            lastName: updatedProfile.lastName,
+            phoneNumber: updatedProfile.phoneNumber,
+            avatarUrl: updatedProfile.avatarUrl,
+          },
+        });
+      }
     },
   });
 }
