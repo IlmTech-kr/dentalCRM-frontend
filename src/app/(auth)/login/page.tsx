@@ -7,7 +7,7 @@ import { Lock, Mail, ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react"
 
 import { useLogin } from "@/src/features/auth/hooks/useAuth";
 import { useToast } from "@/src/lib/hooks/Usetoast";
-import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";

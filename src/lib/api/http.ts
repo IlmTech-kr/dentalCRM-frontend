@@ -17,7 +17,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { clearAuthStorage } from "@/src/lib/auth/storage";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 

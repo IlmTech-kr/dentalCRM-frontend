@@ -13,7 +13,7 @@ import {
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { useForgotPassword } from "@/src/features/auth/hooks/useAuth";
-import { getCurrentSubdomain } from "@/src/lib/utils/tenant";
+import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 
 function isValidEmail(email: string): boolean {
