@@ -57,10 +57,14 @@ function buildNavItems(
 
   const items: NavItem[] = [
     { href: "/dashboard", label: t("sidebar.navDashboard"), icon: LayoutDashboard },
-    { href: "/patients", label: t("sidebar.navPatients"), icon: Users },
-    // Calendar — hammaga ochiq (Doctor, Receptionist, Assistant, Admin)
-    { href: "/calendar", label: t("sidebar.navCalendar"), icon: CalendarRange },
   ];
+
+  if (!isDoctor) {
+    items.push({ href: "/patients", label: t("sidebar.navPatients"), icon: Users });
+  }
+
+  // Calendar — hammaga ochiq (Doctor, Receptionist, Assistant, Admin)
+  items.push({ href: "/calendar", label: t("sidebar.navCalendar"), icon: CalendarRange });
 
   if (canSeeDoctorsSection) {
     const children: SubLink[] = [
@@ -89,7 +93,9 @@ function buildNavItems(
     items.push({ href: "/my-schedule", label: t("sidebar.navMySchedule"), icon: Clock });
   }
 
-  items.push({ href: "/appointments", label: t("sidebar.navAppointments"), icon: CalendarDays });
+  if (!isDoctor) {
+    items.push({ href: "/appointments", label: t("sidebar.navAppointments"), icon: CalendarDays });
+  }
   items.push({ href: "/treatments", label: t("sidebar.navTreatments"), icon: Activity });
 
   if (isStaffAdmin) {

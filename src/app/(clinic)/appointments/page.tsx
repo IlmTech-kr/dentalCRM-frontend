@@ -40,6 +40,7 @@ import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import DentalLoader from "@/src/components/ui/DentalLoader";
+import RoleGuard from "@/src/components/layout/RoleGuard";
 
 import type {
   Appointment,
@@ -495,7 +496,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 // AppointmentsPage
 // ---------------------------------------------------------------------------
 
-export default function AppointmentsPage() {
+function AppointmentsPage() {
   const t = useTranslations("appointments");
   const toast = useToast();
   const searchParams = useSearchParams();
@@ -954,5 +955,15 @@ export default function AppointmentsPage() {
         onSubmit={handleSubmit}
       />
     </div>
+  );
+}
+
+export default function AppointmentsPageGuarded() {
+  return (
+    <RoleGuard
+      allowedRoles={[Role.SUPER_ADMIN, Role.CLINIC_ADMIN, Role.RECEPTIONIST, Role.ASSISTANT]}
+    >
+      <AppointmentsPage />
+    </RoleGuard>
   );
 }
