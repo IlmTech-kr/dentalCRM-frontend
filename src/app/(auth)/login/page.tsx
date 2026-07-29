@@ -11,7 +11,7 @@ import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { getMe } from "@/src/features/users/user.service";
 import { useAuthStore } from "@/src/store/auth.store";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
-import DentalLoader from "@/src/components/ui/DentalLoader";
+import SessionGate from "@/src/components/shared/SessionGate";
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (!error) return fallback;
@@ -115,11 +115,6 @@ export default function LoginPage() {
     initLoginPage();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Session tekshirilayotganda — DentalLoader
-  if (checkingSession) {
-    return <DentalLoader text={t("login.checkingSession")} />;
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -146,6 +141,7 @@ export default function LoginPage() {
   }
 
   return (
+    <SessionGate ready={!checkingSession} loadingText={t("login.checkingSession")}>
     <main className="min-h-screen bg-light-background lg:grid lg:grid-cols-[48%_52%]">
       <section className="relative hidden min-h-screen overflow-hidden bg-[#3498db] px-14 py-12 text-white lg:flex lg:flex-col">
         <div className="absolute -left-28 top-20 h-96 w-96 rounded-full bg-white/10" />
@@ -265,5 +261,6 @@ export default function LoginPage() {
         </form>
       </section>
     </main>
+    </SessionGate>
   );
 }

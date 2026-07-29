@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import DashboardLayout from "./_components/DashboardLayout";
-import DentalLoader from "@/src/components/ui/DentalLoader";
+import SessionGate from "@/src/components/shared/SessionGate";
 import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
 import { useAuthStore } from "@/src/store/auth.store";
@@ -91,9 +91,9 @@ export default function ClinicLayout({
     }
   }, [checked, pathname, router]);
 
-  if (!checked) {
-    return <DentalLoader fullScreen text="Loading..." />;
-  }
-
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <SessionGate ready={checked}>
+      <DashboardLayout>{children}</DashboardLayout>
+    </SessionGate>
+  );
 }

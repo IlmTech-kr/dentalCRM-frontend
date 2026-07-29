@@ -14,7 +14,7 @@ import { useSuperAdminLogin } from "@/src/features/superadmin/auth/hook/UseSuper
 import { getSuperAdminMe } from "@/src/features/superadmin/auth/service/superadmin.auth.service";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getStoredUser, saveUser, clearAuthStorage } from "@/src/lib/auth/storage";
-import DentalLoader from "@/src/components/ui/DentalLoader";
+import SessionGate from "@/src/components/shared/SessionGate";
 
 function getErrorMessage(error: unknown): string {
   if (!error) return "Login failed";
@@ -59,10 +59,6 @@ export default function SuperAdminLoginPage() {
     init();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (checkingSession) {
-    return <DentalLoader text="Checking session..." />;
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -86,6 +82,7 @@ export default function SuperAdminLoginPage() {
   }
 
   return (
+    <SessionGate ready={!checkingSession} loadingText="Checking session...">
     <main className="flex min-h-screen items-center justify-center bg-light-background px-6">
       <form
         onSubmit={handleSubmit}
@@ -159,5 +156,6 @@ export default function SuperAdminLoginPage() {
         </div>
       </form>
     </main>
+    </SessionGate>
   );
 }
