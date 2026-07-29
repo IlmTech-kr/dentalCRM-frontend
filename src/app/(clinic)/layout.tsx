@@ -19,7 +19,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "@/src/components/layout/DashboardLayout";
+import DashboardLayout from "./_components/DashboardLayout";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
