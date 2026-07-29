@@ -198,10 +198,6 @@ function DoctorCard({
         </div>
         <div className="min-w-0">
           <p className="truncate font-extrabold text-slate-900">{group.doctorName}</p>
-          <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-            <UserRound className="h-3 w-3" />
-            <span className="truncate">{group.doctorId}</span>
-          </p>
         </div>
       </div>
 

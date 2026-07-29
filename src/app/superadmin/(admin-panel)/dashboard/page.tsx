@@ -21,6 +21,7 @@ import {
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { getApiErrorMessage } from "@/src/lib/api/http";
 
 import {
   useSuspendTenant,
@@ -569,9 +570,9 @@ export default function DashboardPage() {
       toast.success(
         "Tenant to‘xtatildi"
       );
-    } catch {
+    } catch (error) {
       toast.error(
-        "Tenantni to‘xtatib bo‘lmadi"
+        getApiErrorMessage(error, "Tenantni to‘xtatib bo‘lmadi")
       );
     }
   }
@@ -1183,9 +1184,9 @@ function TenantLimitsEditModal({
       );
 
       onClose();
-    } catch {
+    } catch (error) {
       toast.error(
-        "Limitlarni saqlab bo‘lmadi"
+        getApiErrorMessage(error, "Limitlarni saqlab bo‘lmadi")
       );
     }
   }

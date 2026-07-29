@@ -102,7 +102,7 @@
     "emptyFilteredTitle": "Нет расписаний по заданному фильтру",
     "emptyFilteredSubtitle": "Выберите другой день или очистите поиск.",
     "clearFilters": "Сбросить фильтры",
-    "viewSchedule": "Смотреть расписание",
+    "viewSchedule": "Смотреть",
     "editScheduleTitle": "Редактировать недельное расписание",
     "deleteScheduleTitle": "Удалить расписание",
     "daysPerWeek": "{count} дн./нед.",

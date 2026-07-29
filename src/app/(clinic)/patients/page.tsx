@@ -36,6 +36,7 @@ import { Gender, Role } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { getApiErrorMessage } from "@/src/lib/api/http";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import RoleGuard from "@/src/components/layout/RoleGuard";
 
@@ -317,8 +318,8 @@ const filteredPatients = useMemo(() => {
       setForm(emptyForm);
       setPendingNewPatient(createdPatient);
       setModalState("start-confirm");
-    } catch {
-      toast.error(t("toast.saveFailed"));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t("toast.saveFailed")));
     }
   }
 
@@ -341,8 +342,8 @@ const filteredPatients = useMemo(() => {
       });
       toast.success(t("toast.appointmentCreated"));
       closeModal();
-    } catch {
-      toast.error(t("toast.appointmentCreateFailed"));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t("toast.appointmentCreateFailed")));
     }
   }
 
@@ -352,8 +353,8 @@ const filteredPatients = useMemo(() => {
     try {
       await deleteMutation.mutateAsync(id);
       toast.success(t("toast.patientDeleted"));
-    } catch {
-      toast.error(t("toast.deleteFailed"));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t("toast.deleteFailed")));
     }
   }
 

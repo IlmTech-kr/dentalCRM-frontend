@@ -102,7 +102,7 @@
     "emptyFilteredTitle": "No schedule matches the filter",
     "emptyFilteredSubtitle": "Choose a different day or clear the search.",
     "clearFilters": "Clear filters",
-    "viewSchedule": "View schedule",
+    "viewSchedule": "View",
     "editScheduleTitle": "Edit weekly schedule",
     "deleteScheduleTitle": "Delete schedule",
     "daysPerWeek": "{count} days/wk",

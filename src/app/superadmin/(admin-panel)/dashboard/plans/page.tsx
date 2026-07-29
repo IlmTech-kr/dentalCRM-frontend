@@ -25,6 +25,7 @@ import {
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { getApiErrorMessage } from "@/src/lib/api/http";
 
 import {
   useActivateSubscription,
@@ -135,9 +136,9 @@ export default function PlansPage() {
 
       setSelectedTenant("");
       setSelectedPlan("");
-    } catch {
+    } catch (error) {
       toast.error(
-        "Obunani faollashtirib bo‘lmadi"
+        getApiErrorMessage(error, "Obunani faollashtirib bo‘lmadi")
       );
     }
   }
@@ -532,9 +533,9 @@ function EditPlanPriceModal({
       );
 
       onClose();
-    } catch {
+    } catch (error) {
       toast.error(
-        "Tarif narxini yangilab bo‘lmadi"
+        getApiErrorMessage(error, "Tarif narxini yangilab bo‘lmadi")
       );
     }
   }

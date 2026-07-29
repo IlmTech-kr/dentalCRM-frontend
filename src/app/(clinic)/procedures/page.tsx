@@ -24,6 +24,7 @@ import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { getApiErrorMessage } from "@/src/lib/api/http";
 import type {
   CreateDentalProcedureDto,
   DentalProcedure,
@@ -176,7 +177,7 @@ export default function ProceduresPage() {
 
       closeModal();
     } catch (error) {
-      toast.error(t("toast.saveFailed"));
+      toast.error(getApiErrorMessage(error, t("toast.saveFailed")));
     }
   }
 
@@ -198,8 +199,8 @@ export default function ProceduresPage() {
     try {
       await deleteProcedure(procedureId);
       toast.success(t("toast.deleted"));
-    } catch {
-      toast.error(t("toast.deleteFailed"));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t("toast.deleteFailed")));
     }
   }
 
