@@ -58,17 +58,13 @@ function formatAppointmentTime(appointment: TreatmentAppointment) {
 
     const value = String(time).trim();
 
-    if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
-      return value.slice(0, 5);
-    }
-
-    if (/^\d{2}:\d{2}$/.test(value)) {
-      return value;
-    }
-
     if (value.includes("T")) {
       const timePart = value.split("T")[1];
       return timePart ? timePart.slice(0, 5) : "";
+    }
+
+    if (/^\d{2}:\d{2}/.test(value)) {
+      return value.slice(0, 5);
     }
 
     return value;
@@ -90,17 +86,13 @@ function getStartTimeSortValue(appointment: TreatmentAppointment) {
 
   const value = String(startTime).trim();
 
-  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
-    return value.slice(0, 5);
-  }
-
-  if (/^\d{2}:\d{2}$/.test(value)) {
-    return value;
-  }
-
   if (value.includes("T")) {
     const timePart = value.split("T")[1];
     return timePart ? timePart.slice(0, 5) : "99:99";
+  }
+
+  if (/^\d{2}:\d{2}/.test(value)) {
+    return value.slice(0, 5);
   }
 
   return value;

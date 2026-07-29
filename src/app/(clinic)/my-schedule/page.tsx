@@ -89,7 +89,7 @@ type DayDescriptor = { value: DayOfWeek; label: string; short: string };
 function normalizeScheduleTime(time?: string | null): string {
   if (!time) return "";
   const value = String(time).trim();
-  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 5);
+  if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
   return value;
 }
 

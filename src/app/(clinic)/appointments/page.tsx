@@ -112,10 +112,16 @@ function normalizeDateForInput(date?: string | Date | null): string {
 function normalizeTimeForInput(time?: string | null): string {
   if (!time) return "";
   const value = String(time).trim();
-  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 5);
+  if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
   return value;
 }
-function formatTime(time?: string | null): string { return normalizeTimeForInput(time) || "-"; }
+function formatTime(time?: string | null): string {
+  if (!time) return "-";
+  const value = String(time).trim();
+  if (/^\d{2}:\d{2}:\d{2}/.test(value)) return value.slice(0, 8);
+  if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
+  return value;
+}
 function timeToMinutes(time?: string | null): number {
   const normalized = normalizeTimeForInput(time);
   if (!normalized) return 99999;
