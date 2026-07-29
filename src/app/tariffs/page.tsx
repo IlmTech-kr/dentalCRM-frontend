@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   AlertCircle,
   ArrowRight,
@@ -29,89 +30,63 @@ import { usePublicPlans } from "@/src/features/subscriptions/hooks/useSubscripti
 
 type PlanUiConfig = {
   icon: LucideIcon;
-  tag: string;
-  desc: string;
   color: string;
   textColor: string;
   bgColor: string;
   borderColor: string;
   featured?: boolean;
-  extraFeatures: string[];
-  notIncluded: string[];
+  extraFeatureKeys: string[];
+  notIncludedKeys: string[];
 };
 
 const PLAN_UI: Record<string, PlanUiConfig> = {
   START: {
     icon: Sparkles,
-    tag: "Kichik klinika",
-    desc: "Tizimni sinab ko'rish yoki bitta xonali yangi klinikalar uchun.",
     color: "from-sky-500 to-cyan-500",
     textColor: "text-sky-600",
     bgColor: "bg-sky-50",
     borderColor: "border-sky-200",
-    extraFeatures: [
-      "Bemorlar bazasi",
-      "Qabul jadvali",
-      "Dental chart",
-    ],
-    notIncluded: [
-      "Kengaytirilgan hisobotlar",
-      "API integratsiya",
-    ],
+    extraFeatureKeys: ["patientsDb", "schedule", "dentalChart"],
+    notIncludedKeys: ["advancedReports", "apiIntegration"],
   },
 
   PRO: {
     icon: UserRoundCog,
-    tag: "Eng ideal tanlov",
-    desc: "Bir nechta xonaga ega va bemorlar oqimi barqaror klinikalar uchun.",
     color: "from-violet-600 to-purple-600",
     textColor: "text-violet-600",
     bgColor: "bg-violet-50",
     borderColor: "border-violet-300",
     featured: true,
-    extraFeatures: [
-      "Bemorlar bazasi",
-      "Qabul jadvali",
-      "Dental chart",
-      "Kengaytirilgan hisobotlar",
-    ],
-    notIncluded: ["API integratsiya"],
+    extraFeatureKeys: ["patientsDb", "schedule", "dentalChart", "advancedReports"],
+    notIncludedKeys: ["apiIntegration"],
   },
 
   ENTERPRISE: {
     icon: Building2,
-    tag: "Katta tarmoq",
-    desc: "Filialli yoki katta xodimlar tarkibiga ega markazlar uchun.",
     color: "from-rose-500 to-pink-600",
     textColor: "text-rose-600",
     bgColor: "bg-rose-50",
     borderColor: "border-rose-200",
-    extraFeatures: [
-      "Bemorlar bazasi",
-      "Qabul jadvali",
-      "Dental chart",
-      "Kengaytirilgan hisobotlar",
-      "API integratsiya",
-      "Maxsus qo'llab-quvvatlash",
+    extraFeatureKeys: [
+      "patientsDb",
+      "schedule",
+      "dentalChart",
+      "advancedReports",
+      "apiIntegration",
+      "prioritySupport",
     ],
-    notIncluded: [],
+    notIncludedKeys: [],
   },
 };
 
 const DEFAULT_PLAN_UI: PlanUiConfig = {
   icon: Sparkles,
-  tag: "Tarif",
-  desc: "Klinikangiz uchun mos imkoniyatlar to'plami.",
   color: "from-slate-600 to-slate-800",
   textColor: "text-slate-700",
   bgColor: "bg-slate-100",
   borderColor: "border-slate-200",
-  extraFeatures: [
-    "Bemorlar bazasi",
-    "Qabul jadvali",
-    "Dental chart",
-  ],
-  notIncluded: [],
+  extraFeatureKeys: ["patientsDb", "schedule", "dentalChart"],
+  notIncludedKeys: [],
 };
 
 const PLAN_ORDER: Record<string, number> = {
@@ -121,26 +96,10 @@ const PLAN_ORDER: Record<string, number> = {
 };
 
 const durations = [
-  {
-    months: 1,
-    label: "1 oy",
-    discount: 0,
-  },
-  {
-    months: 3,
-    label: "3 oy",
-    discount: 5,
-  },
-  {
-    months: 6,
-    label: "6 oy",
-    discount: 10,
-  },
-  {
-    months: 12,
-    label: "12 oy",
-    discount: 20,
-  },
+  { months: 1, discount: 0 },
+  { months: 3, discount: 5 },
+  { months: 6, discount: 10 },
+  { months: 12, discount: 20 },
 ];
 
 function formatPrice(amount: number): string {
@@ -171,33 +130,9 @@ function formatStorage(bytes: number): string {
   } GB`;
 }
 
-function formatLimit(
-  value: number,
-  resourceName: string,
-  planType: string
-): string {
-  const normalizedPlanType = planType.toUpperCase();
-
-  if (
-    normalizedPlanType === "ENTERPRISE" ||
-    value <= 0 ||
-    value >= 2147483647
-  ) {
-    return `Cheksiz ${resourceName}`;
-  }
-
-  return `${value} ta ${resourceName}gacha`;
-}
-
-function formatSmsCount(count: number): string {
-  if (count <= 0) {
-    return "SMS: alohida balans";
-  }
-
-  return `${formatPrice(count)} ta bepul SMS`;
-}
-
 export default function TariffsPage() {
+  const t = useTranslations("marketing.tariffsPage");
+
   const [selectedDuration, setSelectedDuration] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -242,16 +177,15 @@ export default function TariffsPage() {
         <section className="bg-gradient-to-b from-slate-50 to-white py-16 sm:py-20">
           <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">
-              Tariflar
+              {t("eyebrow")}
             </p>
 
             <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-[#07105f] sm:text-4xl lg:text-5xl">
-              Klinikangiz hajmiga mos tarifni tanlang
+              {t("title")}
             </h1>
 
             <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
-              Klinikangiz hajmi va xodimlar soniga mos tarifni
-              tanlang.
+              {t("subtitle")}
             </p>
 
             {/* Duration selector */}
@@ -267,7 +201,7 @@ export default function TariffsPage() {
                       : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
-                  {item.label}
+                  {t("durationLabel", { months: item.months })}
 
                   {item.discount > 0 && (
                     <span className="absolute -right-1 -top-2 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black text-white">
@@ -285,7 +219,7 @@ export default function TariffsPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {isLoading && (
               <div className="flex min-h-[400px] items-center justify-center">
-                <DentalLoader fullScreen={false} text="Tariflar yuklanmoqda..." />
+                <DentalLoader fullScreen={false} text={t("loading")} />
               </div>
             )}
 
@@ -294,11 +228,11 @@ export default function TariffsPage() {
                 <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
 
                 <h2 className="mt-4 text-lg font-extrabold text-red-900">
-                  Tariflarni yuklab bo&apos;lmadi
+                  {t("errorTitle")}
                 </h2>
 
                 <p className="mt-2 text-sm text-red-700">
-                  Backend bilan bog&apos;lanishda xatolik yuz berdi.
+                  {t("errorDesc")}
                 </p>
 
                 <button
@@ -311,7 +245,7 @@ export default function TariffsPage() {
                     <DentalLoaderIcon className="h-4 w-4" />
                   )}
 
-                  Qayta urinish
+                  {t("retry")}
                 </button>
               </div>
             )}
@@ -321,11 +255,11 @@ export default function TariffsPage() {
                 <Sparkles className="mx-auto h-10 w-10 text-slate-400" />
 
                 <h2 className="mt-4 text-lg font-extrabold text-slate-900">
-                  Faol tariflar topilmadi
+                  {t("emptyTitle")}
                 </h2>
 
                 <p className="mt-2 text-sm text-slate-600">
-                  Hozircha foydalanish uchun faol tarif mavjud emas.
+                  {t("emptyDesc")}
                 </p>
               </div>
             )}
@@ -335,8 +269,10 @@ export default function TariffsPage() {
                 {plans.map((plan) => {
                   const planCode = plan.planType.toUpperCase();
 
-                  const ui =
-                    PLAN_UI[planCode] ?? DEFAULT_PLAN_UI;
+                  const isKnownPlan = Boolean(PLAN_UI[planCode]);
+                  const ui = PLAN_UI[planCode] ?? DEFAULT_PLAN_UI;
+                  const planTagKey = isKnownPlan ? planCode : "default";
+                  const planDescKey = isKnownPlan ? planCode : "default";
 
                   const Icon = ui.icon;
                   const price = calcPrice(plan.monthlyPrice);
@@ -344,32 +280,36 @@ export default function TariffsPage() {
                   const originalPrice =
                     plan.monthlyPrice * selectedDuration;
 
+                  const isUnlimited =
+                    planCode === "ENTERPRISE";
+
                   const dynamicFeatures = [
                     {
                       icon: Stethoscope,
-                      text: formatLimit(
-                        plan.maxDoctors,
-                        "shifokor",
-                        planCode
-                      ),
+                      text:
+                        isUnlimited || plan.maxDoctors <= 0 || plan.maxDoctors >= 2147483647
+                          ? t("limitUnlimitedDoctors")
+                          : t("limitDoctors", { count: plan.maxDoctors }),
                     },
                     {
                       icon: Users,
-                      text: formatLimit(
-                        plan.maxStaff,
-                        "xodim",
-                        planCode
-                      ),
+                      text:
+                        isUnlimited || plan.maxStaff <= 0 || plan.maxStaff >= 2147483647
+                          ? t("limitUnlimitedStaff")
+                          : t("limitStaff", { count: plan.maxStaff }),
                     },
                     {
                       icon: HardDrive,
-                      text: `${formatStorage(
-                        plan.storageLimitBytes
-                      )} saqlash`,
+                      text: t("storageSuffix", {
+                        storage: formatStorage(plan.storageLimitBytes),
+                      }),
                     },
                     {
                       icon: MessageCircle,
-                      text: formatSmsCount(plan.includedSmsCount),
+                      text:
+                        plan.includedSmsCount <= 0
+                          ? t("smsSeparateBalance")
+                          : t("smsFree", { count: plan.includedSmsCount }),
                     },
                   ];
 
@@ -385,7 +325,7 @@ export default function TariffsPage() {
                       {ui.featured && (
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                           <span className="whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-1 text-xs font-black text-white shadow">
-                            ⭐ Eng ko&apos;p tanlanadi
+                            {t("mostPopular")}
                           </span>
                         </div>
                       )}
@@ -401,7 +341,7 @@ export default function TariffsPage() {
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${ui.bgColor} ${ui.textColor}`}
                         >
-                          {ui.tag}
+                          {t(`planTag.${planTagKey}`)}
                         </span>
                       </div>
 
@@ -410,7 +350,7 @@ export default function TariffsPage() {
                       </h2>
 
                       <p className="mt-1 min-h-[40px] text-sm text-slate-500">
-                        {ui.desc}
+                        {t(`planDesc.${planDescKey}`)}
                       </p>
 
                       {/* Price */}
@@ -422,14 +362,19 @@ export default function TariffsPage() {
                         </span>
 
                         <span className="mb-1 text-sm text-slate-400">
-                          so&apos;m / {duration.label}
+                          {t("perUnit", {
+                            currency: t("currency"),
+                            duration: t("durationLabel", { months: selectedDuration }),
+                          })}
                         </span>
                       </div>
 
                       {duration.discount > 0 && (
                         <p className="mt-1 text-xs font-semibold text-emerald-600">
-                          {duration.discount}% chegirma —{" "}
-                          {formatPrice(originalPrice)} o&apos;rniga
+                          {t("discountLabel", {
+                            discount: duration.discount,
+                            price: formatPrice(originalPrice),
+                          })}
                         </p>
                       )}
 
@@ -443,7 +388,7 @@ export default function TariffsPage() {
                             : "border-2 border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50"
                         }`}
                       >
-                        Demo olish
+                        {t("ctaButton")}
                         <ArrowRight className="h-4 w-4" />
                       </button>
 
@@ -468,27 +413,27 @@ export default function TariffsPage() {
                           );
                         })}
 
-                        {ui.extraFeatures.map((feature, index) => (
+                        {ui.extraFeatureKeys.map((key) => (
                           <li
-                            key={`extra-${index}`}
+                            key={`extra-${key}`}
                             className="flex items-center gap-2.5 text-sm text-slate-700"
                           >
                             <CheckCircle2
                               className={`h-4 w-4 shrink-0 ${ui.textColor}`}
                             />
 
-                            {feature}
+                            {t(`extraFeature.${key}`)}
                           </li>
                         ))}
 
-                        {ui.notIncluded.map((feature, index) => (
+                        {ui.notIncludedKeys.map((key) => (
                           <li
-                            key={`excluded-${index}`}
+                            key={`excluded-${key}`}
                             className="flex items-center gap-2.5 text-sm text-slate-400"
                           >
                             <X className="h-4 w-4 shrink-0" />
 
-                            {feature}
+                            {t(`extraFeature.${key}`)}
                           </li>
                         ))}
                       </ul>
@@ -504,28 +449,11 @@ export default function TariffsPage() {
         <section className="bg-slate-50 py-16">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <h2 className="mb-10 text-center text-2xl font-extrabold text-[#07105f] sm:text-3xl">
-              Ko&apos;p so&apos;raladigan savollar
+              {t("faqTitle")}
             </h2>
 
             <div className="space-y-4">
-              {[
-                {
-                  q: "Sinov muddati bormi?",
-                  a: "Ha, ro'yxatdan o'tgandan so'ng 14 kunlik bepul sinov muddati beriladi. Kredit karta talab qilinmaydi.",
-                },
-                {
-                  q: "To'lovni qanday amalga oshiraman?",
-                  a: "Payme orqali to'lash mumkin. To'lov muvaffaqiyatli bo'lgandan so'ng tarif darhol faollashadi.",
-                },
-                {
-                  q: "Tarifni o'zgartirish mumkinmi?",
-                  a: "Ha, istalgan vaqtda yuqori tarifga o'tish mumkin. Farq hisoblab chiqiladi.",
-                },
-                {
-                  q: "Ma'lumotlarim xavfsizmi?",
-                  a: "Har bir klinika alohida subdomain va alohida ma'lumotlar muhitida ishlaydi. Sizning ma'lumotlaringizga boshqalar kira olmaydi.",
-                },
-              ].map((faq, index) => (
+              {(t.raw("faq") as { q: string; a: string }[]).map((faq, index) => (
                 <div
                   key={index}
                   className="rounded-2xl border border-slate-200 bg-white p-5"
@@ -548,12 +476,11 @@ export default function TariffsPage() {
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
             <div className="rounded-3xl bg-gradient-to-br from-[#07105f] via-violet-800 to-rose-600 p-8 text-white sm:p-12">
               <h2 className="text-2xl font-extrabold sm:text-3xl">
-                Hali ham savollaringiz bormi?
+                {t("ctaTitle")}
               </h2>
 
               <p className="mt-3 text-sky-100/80">
-                Mutaxassisimiz klinikangizga mos tarifni tanlashda
-                yordam beradi.
+                {t("ctaDesc")}
               </p>
 
               <button
@@ -561,7 +488,7 @@ export default function TariffsPage() {
                 onClick={() => setModalOpen(true)}
                 className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-[#07105f] transition hover:scale-[1.02]"
               >
-                Bepul konsultatsiya
+                {t("ctaSecondaryButton")}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

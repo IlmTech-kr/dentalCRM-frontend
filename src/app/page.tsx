@@ -1,9 +1,12 @@
+"use client";
+
 /**
  * File: src/app/page.tsx
  * Fully responsive — mobile first
  */
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Activity,
   ArrowRight,
@@ -27,51 +30,38 @@ import { BRAND, LogoMark } from "../components/shared/BrandLogo";
 import Footer from "../components/layout/Footer";
 import LeadModal from "../components/shared/LeadModal";
 
-
-const features = [
-  { icon: Users,        title: "Bemorlar bazasi",      desc: "Bemor ma'lumotlari, telefon raqami, anamnez, hujjatlar va rentgen suratlari bitta kartada." },
-  { icon: CalendarCheck,title: "Qabul jadvali",         desc: "Qabullarni kun, hafta va shifokor kesimida boshqaring. Vaqt to'qnashuvlarini kamaytiring." },
-  { icon: Stethoscope,  title: "Shifokorlar",           desc: "Shifokor, reception, assistent va adminlar uchun alohida rollar va kirish huquqlari." },
-  { icon: Activity,     title: "Dental chart",          desc: "Tishlar bo'yicha tashxis, holat, plomba, implant, root canal va izohlarni belgilang." },
-  { icon: ClipboardList,title: "Davolash kurslari",     desc: "Muolajalar rejasini bosqichma-bosqich yuriting, tashriflar va bajarilgan ishlarni nazorat qiling." },
-  { icon: Wallet,       title: "To'lov va qarzdorlik",  desc: "Bemor to'lovlari, xizmat narxlari va qoldiq qarzdorlikni aniq hisobda ko'ring." },
-  { icon: BarChart3,    title: "Hisobotlar",            desc: "Qabullar, daromad, xodimlar samaradorligi va bemorlar oqimi bo'yicha statistikani kuzating." },
-  { icon: Building2,    title: "Multi-tenant tizim",    desc: "Har bir klinika yoki filial alohida subdomain va alohida ma'lumotlar muhiti bilan ishlaydi." },
+const FEATURE_ICONS = [
+  Users,
+  CalendarCheck,
+  Stethoscope,
+  Activity,
+  ClipboardList,
+  Wallet,
+  BarChart3,
+  Building2,
 ];
 
-const steps = [
-  { number: "01", title: "Klinikani ro'yxatdan o'tkazing", desc: "Subdomain, klinika profili va asosiy sozlamalarni bir necha daqiqada tayyorlang." },
-  { number: "02", title: "Jamoani qo'shing",               desc: "Shifokor, reception, assistent va adminlarga rol bo'yicha kirish huquqi bering." },
-  { number: "03", title: "Bemorlarni qabulga yozing",       desc: "Telefon raqam orqali bemorni toping, yangi bemor oching va qabul vaqtini belgilang." },
-  { number: "04", title: "Davolash va hisobotlarni kuzating", desc: "Dental chart, kurs, to'lovlar va klinika ko'rsatkichlarini real vaqtda boshqaring." },
-];
+const BENEFIT_ICONS = [Clock, ShieldCheck, LayoutGrid, MessageCircle];
 
-const benefits = [
-  { icon: Clock,        title: "Vaqtni tejaydi",               desc: "Qabul, hisobot va bemor qidirish jarayonlarini tezlashtiradi." },
-  { icon: ShieldCheck,  title: "Ma'lumotni himoyalaydi",        desc: "Har bir xodim faqat o'z roliga mos bo'limlarni ko'radi." },
-  { icon: LayoutGrid,   title: "Ishni tartiblaydi",             desc: "Klinikadagi asosiy jarayonlar bitta CRM oqimiga tushadi." },
-  { icon: MessageCircle,title: "Bemor bilan aloqani kuchaytiradi", desc: "SMS eslatmalar orqali qabulga kelmaslik holati kamayadi." },
-];
+const TARIFF_ICONS = [Sparkles, UserRoundCog, Building2];
 
-const tariffPreview = [
-  {
-    name: "START", icon: Sparkles, tag: "Kichik klinika",
-    desc: "Tizimni sinab ko'rish yoki bitta xonali yangi klinikalar uchun.",
-    items: ["2 ta shifokorgacha", "2 ta xodimgacha", "10 GB saqlash", "SMS: alohida balans"],
-  },
-  {
-    name: "PRO", icon: UserRoundCog, tag: "Eng ideal tanlov",
-    desc: "Bir nechta xonaga ega va bemorlar oqimi barqaror klinikalar uchun.",
-    items: ["7 ta shifokorgacha", "5 ta xodimgacha", "50 GB saqlash", "500 ta bepul SMS"],
-  },
-  {
-    name: "ENTERPRISE", icon: Building2, tag: "Katta tarmoq",
-    desc: "Filialli yoki katta xodimlar tarkibiga ega markazlar uchun.",
-    items: ["Cheksiz shifokor", "Cheksiz xodim", "1 TB saqlash", "5000 ta bepul SMS"],
-  },
-];
+const CHECKLIST_COLORS = ["text-sky-500", "text-violet-500", "text-rose-500", "text-cyan-500"];
 
 export default function HomePage() {
+  const t = useTranslations("marketing");
+
+  const features = t.raw("features.items") as { title: string; desc: string }[];
+  const steps = t.raw("howItWorks.steps") as { title: string; desc: string }[];
+  const benefits = t.raw("about.benefits") as { title: string; desc: string }[];
+  const stats = t.raw("about.stats") as { value: string; label: string }[];
+  const tariffPlans = t.raw("tariffs.plans") as {
+    name: string;
+    tag: string;
+    desc: string;
+    items: string[];
+  }[];
+  const checklist = t.raw("hero.checklist") as string[];
+
   return (
     <div className="bg-white text-slate-900">
       <LandingHeader />
@@ -86,17 +76,15 @@ export default function HomePage() {
             <div className="relative text-center lg:text-left">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/75 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur sm:px-4 sm:text-sm">
                 <LogoMark small />
-                Stomatologiya klinikalari uchun CRM
+                {t("hero.badge")}
               </div>
 
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-[#07105f] sm:text-4xl lg:text-[3.2rem]">
-                Dental klinikangizni bitta zamonaviy tizimda boshqaring
+                {t("hero.title")}
               </h1>
 
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-slate-600 lg:mx-0 lg:text-lg">
-                {BRAND} bemorlar bazasi, qabul jadvali, shifokorlar, dental
-                chart, davolash kurslari, to'lovlar va SMS eslatmalarni bitta
-                platformaga birlashtiradi.
+                {t("hero.description", { brand: BRAND })}
               </p>
 
               <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
@@ -104,25 +92,20 @@ export default function HomePage() {
                   href="/subdomains"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-100 transition-all hover:scale-[1.02] sm:px-7 sm:py-3.5 sm:text-base"
                 >
-                  Login <ArrowRight className="h-4 w-4" />
+                  {t("hero.loginButton")} <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/register"
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 sm:px-7 sm:py-3.5 sm:text-base"
                 >
-                  Ro'yxatdan o'tish <ArrowRight className="h-4 w-4" />
+                  {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
 
               <div className="mt-8 grid grid-cols-2 gap-2 text-sm text-slate-600">
-                {[
-                  ["text-sky-500",    "O'rnatish 1 kun ichida"],
-                  ["text-violet-500", "Multi-tenant SaaS"],
-                  ["text-rose-500",   "Role-based access"],
-                  ["text-cyan-500",   "SMS eslatmalar"],
-                ].map(([color, text]) => (
+                {checklist.map((text, i) => (
                   <div key={text} className="flex items-center justify-center gap-2 lg:justify-start">
-                    <CheckCircle2 className={`h-4 w-4 shrink-0 ${color}`} />
+                    <CheckCircle2 className={`h-4 w-4 shrink-0 ${CHECKLIST_COLORS[i]}`} />
                     <span className="text-xs sm:text-sm">{text}</span>
                   </div>
                 ))}
@@ -168,8 +151,8 @@ export default function HomePage() {
                         {/* Top bar */}
                         <div className="mb-2 flex items-center justify-between sm:mb-3">
                           <div>
-                            <p className="text-[8px] font-bold text-slate-400 sm:text-[9px]">Dashboard</p>
-                            <p className="text-[10px] font-black text-slate-800 sm:text-[11px]">Xush kelibsiz 👋</p>
+                            <p className="text-[8px] font-bold text-slate-400 sm:text-[9px]">{t("hero.mockup.dashboardLabel")}</p>
+                            <p className="text-[10px] font-black text-slate-800 sm:text-[11px]">{t("hero.mockup.welcome")}</p>
                           </div>
                           <div className="flex items-center gap-1 sm:gap-1.5">
                             <div className="h-4 w-12 rounded-lg bg-white shadow-sm sm:h-5 sm:w-16" />
@@ -181,9 +164,9 @@ export default function HomePage() {
                         {/* Stats */}
                         <div className="mb-2 grid grid-cols-3 gap-1.5 sm:mb-3 sm:gap-2">
                           {[
-                            { label: "Bemorlar", value: "1,248", color: "text-blue-600",    bg: "bg-blue-50" },
-                            { label: "Bugungi",  value: "24",    color: "text-violet-600",  bg: "bg-violet-50" },
-                            { label: "Daromad",  value: "4.2M",  color: "text-emerald-600", bg: "bg-emerald-50" },
+                            { label: t("hero.mockup.statPatients"), value: "1,248", color: "text-blue-600",    bg: "bg-blue-50" },
+                            { label: t("hero.mockup.statToday"),    value: "24",    color: "text-violet-600",  bg: "bg-violet-50" },
+                            { label: t("hero.mockup.statRevenue"),  value: "4.2M",  color: "text-emerald-600", bg: "bg-emerald-50" },
                           ].map((s) => (
                             <div key={s.label} className="rounded-xl bg-white p-2 shadow-sm sm:p-2.5">
                               <span className={`inline-block rounded-md px-1 py-0.5 text-[7px] font-black sm:text-[8px] ${s.bg} ${s.color}`}>{s.label}</span>
@@ -195,8 +178,8 @@ export default function HomePage() {
                         {/* Appointments */}
                         <div className="rounded-xl bg-white p-2 shadow-sm sm:p-2.5">
                           <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-                            <p className="text-[9px] font-black text-slate-700 sm:text-[10px]">Bugungi qabullar</p>
-                            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[7px] font-black text-emerald-600 sm:text-[8px]">+18%</span>
+                            <p className="text-[9px] font-black text-slate-700 sm:text-[10px]">{t("hero.mockup.appointmentsTitle")}</p>
+                            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[7px] font-black text-emerald-600 sm:text-[8px]">{t("hero.mockup.appointmentsGrowth")}</span>
                           </div>
                           <div className="space-y-1 sm:space-y-1.5">
                             {[
@@ -220,7 +203,7 @@ export default function HomePage() {
 
                         {/* Dental chart strip */}
                         <div className="mt-2 flex items-center gap-2 rounded-xl bg-white px-2 py-1.5 shadow-sm sm:px-3 sm:py-2">
-                          <p className="shrink-0 text-[8px] font-black text-slate-400 sm:text-[9px]">Dental chart</p>
+                          <p className="shrink-0 text-[8px] font-black text-slate-400 sm:text-[9px]">{t("hero.mockup.dentalChartLabel")}</p>
                           <div className="flex flex-1 gap-0.5 overflow-hidden sm:gap-1">
                             {Array.from({ length: 20 }).map((_, i) => (
                               <div key={i} className="h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3"
@@ -243,8 +226,8 @@ export default function HomePage() {
                       <CheckCircle2 className="h-3.5 w-3.5" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-black text-slate-800">Yangi bemor</p>
-                      <p className="text-[9px] text-slate-400">Hozir qo'shildi</p>
+                      <p className="text-[11px] font-black text-slate-800">{t("hero.mockup.notificationTitle")}</p>
+                      <p className="text-[9px] text-slate-400">{t("hero.mockup.notificationSubtitle")}</p>
                     </div>
                   </div>
                 </div>
@@ -265,25 +248,28 @@ export default function HomePage() {
         <section id="features" className="bg-white py-14 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">Imkoniyatlar</p>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("features.eyebrow")}</p>
               <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                Klinikadagi asosiy jarayonlar bitta CRM ichida
+                {t("features.title")}
               </h2>
               <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                Administrator, shifokor va klinika rahbari bir tizimda ishlaydi.
+                {t("features.subtitle")}
               </p>
             </div>
 
             <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-              {features.map((f) => (
-                <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 sm:rounded-3xl sm:p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-12 sm:w-12">
-                    <f.icon className="h-5 w-5 text-violet-700 sm:h-6 sm:w-6" />
+              {features.map((f, i) => {
+                const Icon = FEATURE_ICONS[i];
+                return (
+                  <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 sm:rounded-3xl sm:p-6">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-12 sm:w-12">
+                      <Icon className="h-5 w-5 text-violet-700 sm:h-6 sm:w-6" />
+                    </div>
+                    <h3 className="mt-4 text-base font-bold text-slate-900 sm:mt-5 sm:text-lg">{f.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{f.desc}</p>
                   </div>
-                  <h3 className="mt-4 text-base font-bold text-slate-900 sm:mt-5 sm:text-lg">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{f.desc}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -293,21 +279,21 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-12">
               <div className="text-center lg:text-left">
-                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">Qanday ishlaydi</p>
+                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("howItWorks.eyebrow")}</p>
                 <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                  Klinikani CRM'ga ulash oson
+                  {t("howItWorks.title")}
                 </h2>
                 <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                  Tizimni ishga tushirish, xodimlarni qo'shish va birinchi bemorni qabulga yozish juda sodda.
+                  {t("howItWorks.subtitle")}
                 </p>
               </div>
 
               <div className="grid gap-4 sm:gap-5">
-                {steps.map((step) => (
-                  <div key={step.number} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:rounded-3xl sm:p-6">
+                {steps.map((step, i) => (
+                  <div key={step.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:rounded-3xl sm:p-6">
                     <div className="flex gap-4 sm:gap-5">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-xs font-extrabold text-white sm:h-12 sm:w-12 sm:text-sm">
-                        {step.number}
+                        {String(i + 1).padStart(2, "0")}
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-slate-900 sm:text-lg">{step.title}</h3>
@@ -326,50 +312,48 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
               <div className="text-center lg:text-left">
-                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">Nima uchun Dental CRM?</p>
+                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("about.eyebrow")}</p>
                 <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                  Klinikangizni tartibli, tezkor va nazorat qilinadigan tizimga o'tkazing
+                  {t("about.title")}
                 </h2>
                 <p className="mt-4 text-sm text-slate-600 sm:mt-5 sm:text-base">
-                  {BRAND} klinika ichidagi qabul, bemor kartasi, shifokor jadvali, davolash kursi va hisobotlarni bir joyda birlashtiradi.
+                  {t("about.description", { brand: BRAND })}
                 </p>
 
                 <div className="mt-7 grid gap-4 sm:grid-cols-2 sm:mt-8">
-                  {benefits.map((b) => (
-                    <div key={b.title} className="flex gap-3 text-left">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-11 sm:w-11">
-                        <b.icon className="h-4 w-4 text-violet-700 sm:h-5 sm:w-5" />
+                  {benefits.map((b, i) => {
+                    const Icon = BENEFIT_ICONS[i];
+                    return (
+                      <div key={b.title} className="flex gap-3 text-left">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-11 sm:w-11">
+                          <Icon className="h-4 w-4 text-violet-700 sm:h-5 sm:w-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">{b.title}</p>
+                          <p className="mt-1 text-sm text-slate-600">{b.desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{b.title}</p>
-                        <p className="mt-1 text-sm text-slate-600">{b.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="rounded-[1.5rem] bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 p-1 sm:rounded-[2rem]">
                 <div className="rounded-[1.3rem] bg-white p-5 sm:rounded-[1.8rem] sm:p-8">
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    {[
-                      ["32",   "Dental chart tish raqamlari"],
-                      ["24/7", "Online CRM access"],
-                      ["SMS",  "Avtomatik eslatmalar"],
-                      ["Role", "Xodimlarga alohida huquq"],
-                    ].map(([value, label]) => (
-                      <div key={label} className="rounded-2xl bg-slate-50 p-4 text-center sm:rounded-3xl sm:p-6">
-                        <p className="text-2xl font-extrabold text-[#07105f] sm:text-3xl">{value}</p>
-                        <p className="mt-1.5 text-xs text-slate-600 sm:mt-2 sm:text-sm">{label}</p>
+                    {stats.map((stat) => (
+                      <div key={stat.label} className="rounded-2xl bg-slate-50 p-4 text-center sm:rounded-3xl sm:p-6">
+                        <p className="text-2xl font-extrabold text-[#07105f] sm:text-3xl">{stat.value}</p>
+                        <p className="mt-1.5 text-xs text-slate-600 sm:mt-2 sm:text-sm">{stat.label}</p>
                       </div>
                     ))}
                   </div>
 
                   <div className="mt-4 rounded-2xl bg-[#07105f] p-4 text-white sm:mt-6 sm:rounded-3xl sm:p-6">
-                    <p className="text-base font-bold sm:text-lg">START, PRO va ENTERPRISE tariflar</p>
-                    <p className="mt-1.5 text-xs text-sky-100/75 sm:mt-2 sm:text-sm">Kichik klinikadan yirik tibbiy markazgacha mos yechim.</p>
+                    <p className="text-base font-bold sm:text-lg">{t("about.cardTitle")}</p>
+                    <p className="mt-1.5 text-xs text-sky-100/75 sm:mt-2 sm:text-sm">{t("about.cardSubtitle")}</p>
                     <Link href="/tariffs" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-sky-200 sm:mt-5 sm:text-sm">
-                      Tariflarni ko'rish <ArrowRight className="h-4 w-4" />
+                      {t("about.cardLink")} <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
                 </div>
@@ -382,54 +366,57 @@ export default function HomePage() {
         <section id="tariffs" className="bg-slate-50 py-14 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">Tariflar</p>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("tariffs.eyebrow")}</p>
               <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                Klinikangiz hajmiga mos tarifni tanlang
+                {t("tariffs.title")}
               </h2>
               <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                START kichik klinikalar uchun, PRO barqaror ishlayotgan klinikalar uchun, ENTERPRISE esa yirik filialli markazlar uchun.
+                {t("tariffs.subtitle")}
               </p>
             </div>
 
             <div className="mt-10 grid gap-5 sm:mt-14 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-              {tariffPreview.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`rounded-[1.5rem] border bg-white p-6 shadow-sm sm:rounded-[2rem] sm:p-7 ${
-                    plan.name === "PRO" ? "border-violet-200 shadow-xl shadow-violet-100" : "border-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 sm:h-12 sm:w-12">
-                      <plan.icon className="h-5 w-5 text-white sm:h-6 sm:w-6" />
-                    </div>
-                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{plan.tag}</span>
-                  </div>
-
-                  <h3 className="mt-5 text-xl font-extrabold text-[#07105f] sm:mt-6 sm:text-2xl">{plan.name}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{plan.desc}</p>
-
-                  <ul className="mt-5 space-y-2.5 sm:mt-6 sm:space-y-3">
-                    {plan.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-600" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href="/tariffs"
-                    className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all ${
-                      plan.name === "PRO"
-                        ? "bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 text-white shadow-lg shadow-violet-100"
-                        : "border border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50"
+              {tariffPlans.map((plan, i) => {
+                const Icon = TARIFF_ICONS[i];
+                return (
+                  <div
+                    key={plan.name}
+                    className={`rounded-[1.5rem] border bg-white p-6 shadow-sm sm:rounded-[2rem] sm:p-7 ${
+                      plan.name === "PRO" ? "border-violet-200 shadow-xl shadow-violet-100" : "border-slate-100"
                     }`}
                   >
-                    Batafsil ko'rish <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 sm:h-12 sm:w-12">
+                        <Icon className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+                      </div>
+                      <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{plan.tag}</span>
+                    </div>
+
+                    <h3 className="mt-5 text-xl font-extrabold text-[#07105f] sm:mt-6 sm:text-2xl">{plan.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{plan.desc}</p>
+
+                    <ul className="mt-5 space-y-2.5 sm:mt-6 sm:space-y-3">
+                      {plan.items.map((item) => (
+                        <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-600" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      href="/tariffs"
+                      className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all ${
+                        plan.name === "PRO"
+                          ? "bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 text-white shadow-lg shadow-violet-100"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50"
+                      }`}
+                    >
+                      {t("tariffs.viewButton")} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -439,11 +426,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
             <div className="rounded-[1.5rem] bg-gradient-to-br from-[#07105f] via-violet-800 to-rose-600 p-6 text-white shadow-2xl shadow-violet-100 sm:rounded-[2rem] sm:p-12">
               <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
-                CRM'ni klinikangizda sinab ko'ring
+                {t("cta.title")}
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm text-sky-100/80 sm:text-base">
-                Demo so'rovi qoldiring. Klinikangiz hajmi, shifokorlar soni va
-                jarayonlaringizga qarab eng mos yechimni tavsiya qilamiz.
+                {t("cta.description")}
               </p>
 
               <div className="mt-7 flex flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
@@ -451,13 +437,13 @@ export default function HomePage() {
                   href="/register"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#07105f] transition-all hover:scale-[1.02] sm:w-auto sm:px-7 sm:py-3.5 sm:text-base"
                 >
-                  Ro'yxatdan o'tish <ArrowRight className="h-4 w-4" />
+                  {t("cta.registerButton")} <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/tariffs"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 sm:w-auto sm:px-7 sm:py-3.5 sm:text-base"
                 >
-                  Tariflarni ko'rish <ArrowRight className="h-4 w-4" />
+                  {t("cta.tariffsButton")} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>

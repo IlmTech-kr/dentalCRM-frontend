@@ -17,6 +17,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Building2, Search } from "lucide-react";
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
@@ -50,6 +51,7 @@ function extractExists(result: any): boolean {
 
 export default function SubdomainCheckPage() {
   const router = useRouter();
+  const t = useTranslations("marketing.subdomains");
 
   const [subdomain, setSubdomain] = useState("");
   const [isChecking, setIsChecking] = useState(false);
@@ -62,7 +64,7 @@ export default function SubdomainCheckPage() {
     const value = normalizeSubdomain(subdomain);
 
     if (!value) {
-      setErrorMessage("Subdomain kiriting.");
+      setErrorMessage(t("errorEmpty"));
       return;
     }
 
@@ -83,7 +85,7 @@ export default function SubdomainCheckPage() {
         router.push(`/register?subdomain=${encodeURIComponent(value)}`);
       }
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error, "Subdomainni tekshirishda xatolik yuz berdi."));
+      setErrorMessage(getApiErrorMessage(error, t("errorCheckFailed")));
     } finally {
       setIsChecking(false);
     }
@@ -96,16 +98,16 @@ export default function SubdomainCheckPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#35a8f5] text-white shadow-lg shadow-blue-200">
             <Building2 size={26} />
           </div>
-          <h1 className="text-2xl font-extrabold text-dark-navy">Klinikangizni toping</h1>
+          <h1 className="text-2xl font-extrabold text-dark-navy">{t("title")}</h1>
           <p className="mt-2 text-sm text-text-light">
-            Klinikangizning subdomainini kiriting — sizni to'g'ri sahifaga yo'naltiramiz.
+            {t("subtitle")}
           </p>
         </div>
 
         <div className="rounded-3xl border border-border-color bg-white p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-bold text-slate-700">Subdomain</label>
+              <label className="mb-1.5 block text-sm font-bold text-slate-700">{t("label")}</label>
               <div className="flex items-center overflow-hidden rounded-2xl border border-border-color bg-slate-50 transition focus-within:border-[#35a8f5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#35a8f5]/10">
                 <span className="pl-4 text-slate-400">
                   <Search size={16} />
@@ -117,7 +119,7 @@ export default function SubdomainCheckPage() {
                     setSubdomain(e.target.value);
                     if (errorMessage) setErrorMessage("");
                   }}
-                  placeholder="masalan: clinic11"
+                  placeholder={t("placeholder")}
                   className="min-w-0 flex-1 bg-transparent px-3 py-3.5 text-sm font-semibold text-dark-navy outline-none placeholder:text-slate-400"
                 />
                 <span className="shrink-0 pr-4 text-sm font-semibold text-slate-400">
@@ -137,11 +139,11 @@ export default function SubdomainCheckPage() {
               {isChecking ? (
                 <>
                   <DentalLoaderIcon size={18} />
-                  Tekshirilmoqda...
+                  {t("checking")}
                 </>
               ) : (
                 <>
-                  Davom etish
+                  {t("continueButton")}
                   <ArrowRight size={18} />
                 </>
               )}
@@ -150,9 +152,9 @@ export default function SubdomainCheckPage() {
         </div>
 
         <p className="mt-5 text-center text-sm text-text-light">
-          Klinikangiz hali ro'yxatdan o'tmaganmi?{" "}
+          {t("notRegisteredText")}{" "}
           <a href="/register" className="font-bold text-[#35a8f5] hover:underline">
-            Ro'yxatdan o'tish
+            {t("registerLink")}
           </a>
         </p>
       </div>

@@ -1,1 +1,171 @@
-{}
+{
+  "hero": {
+    "badge": "Stomatologiya klinikalari uchun CRM",
+    "title": "Dental klinikangizni bitta zamonaviy tizimda boshqaring",
+    "description": "{brand} bemorlar bazasi, qabul jadvali, shifokorlar, dental chart, davolash kurslari, to'lovlar va SMS eslatmalarni bitta platformaga birlashtiradi.",
+    "loginButton": "Login",
+    "registerButton": "Ro'yxatdan o'tish",
+    "checklist": [
+      "O'rnatish 1 kun ichida",
+      "Multi-tenant SaaS",
+      "Role-based access",
+      "SMS eslatmalar"
+    ],
+    "mockup": {
+      "dashboardLabel": "Dashboard",
+      "welcome": "Xush kelibsiz 👋",
+      "statPatients": "Bemorlar",
+      "statToday": "Bugungi",
+      "statRevenue": "Daromad",
+      "appointmentsTitle": "Bugungi qabullar",
+      "appointmentsGrowth": "+18%",
+      "dentalChartLabel": "Dental chart",
+      "notificationTitle": "Yangi bemor",
+      "notificationSubtitle": "Hozir qo'shildi"
+    }
+  },
+  "features": {
+    "eyebrow": "Imkoniyatlar",
+    "title": "Klinikadagi asosiy jarayonlar bitta CRM ichida",
+    "subtitle": "Administrator, shifokor va klinika rahbari bir tizimda ishlaydi.",
+    "items": [
+      { "title": "Bemorlar bazasi", "desc": "Bemor ma'lumotlari, telefon raqami, anamnez, hujjatlar va rentgen suratlari bitta kartada." },
+      { "title": "Qabul jadvali", "desc": "Qabullarni kun, hafta va shifokor kesimida boshqaring. Vaqt to'qnashuvlarini kamaytiring." },
+      { "title": "Shifokorlar", "desc": "Shifokor, reception, assistent va adminlar uchun alohida rollar va kirish huquqlari." },
+      { "title": "Dental chart", "desc": "Tishlar bo'yicha tashxis, holat, plomba, implant, root canal va izohlarni belgilang." },
+      { "title": "Davolash kurslari", "desc": "Muolajalar rejasini bosqichma-bosqich yuriting, tashriflar va bajarilgan ishlarni nazorat qiling." },
+      { "title": "To'lov va qarzdorlik", "desc": "Bemor to'lovlari, xizmat narxlari va qoldiq qarzdorlikni aniq hisobda ko'ring." },
+      { "title": "Hisobotlar", "desc": "Qabullar, daromad, xodimlar samaradorligi va bemorlar oqimi bo'yicha statistikani kuzating." },
+      { "title": "Multi-tenant tizim", "desc": "Har bir klinika yoki filial alohida subdomain va alohida ma'lumotlar muhiti bilan ishlaydi." }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "Qanday ishlaydi",
+    "title": "Klinikani CRM'ga ulash oson",
+    "subtitle": "Tizimni ishga tushirish, xodimlarni qo'shish va birinchi bemorni qabulga yozish juda sodda.",
+    "steps": [
+      { "title": "Klinikani ro'yxatdan o'tkazing", "desc": "Subdomain, klinika profili va asosiy sozlamalarni bir necha daqiqada tayyorlang." },
+      { "title": "Jamoani qo'shing", "desc": "Shifokor, reception, assistent va adminlarga rol bo'yicha kirish huquqi bering." },
+      { "title": "Bemorlarni qabulga yozing", "desc": "Telefon raqam orqali bemorni toping, yangi bemor oching va qabul vaqtini belgilang." },
+      { "title": "Davolash va hisobotlarni kuzating", "desc": "Dental chart, kurs, to'lovlar va klinika ko'rsatkichlarini real vaqtda boshqaring." }
+    ]
+  },
+  "about": {
+    "eyebrow": "Nima uchun Dental CRM?",
+    "title": "Klinikangizni tartibli, tezkor va nazorat qilinadigan tizimga o'tkazing",
+    "description": "{brand} klinika ichidagi qabul, bemor kartasi, shifokor jadvali, davolash kursi va hisobotlarni bir joyda birlashtiradi.",
+    "benefits": [
+      { "title": "Vaqtni tejaydi", "desc": "Qabul, hisobot va bemor qidirish jarayonlarini tezlashtiradi." },
+      { "title": "Ma'lumotni himoyalaydi", "desc": "Har bir xodim faqat o'z roliga mos bo'limlarni ko'radi." },
+      { "title": "Ishni tartiblaydi", "desc": "Klinikadagi asosiy jarayonlar bitta CRM oqimiga tushadi." },
+      { "title": "Bemor bilan aloqani kuchaytiradi", "desc": "SMS eslatmalar orqali qabulga kelmaslik holati kamayadi." }
+    ],
+    "stats": [
+      { "value": "32", "label": "Dental chart tish raqamlari" },
+      { "value": "24/7", "label": "Online CRM access" },
+      { "value": "SMS", "label": "Avtomatik eslatmalar" },
+      { "value": "Role", "label": "Xodimlarga alohida huquq" }
+    ],
+    "cardTitle": "START, PRO va ENTERPRISE tariflar",
+    "cardSubtitle": "Kichik klinikadan yirik tibbiy markazgacha mos yechim.",
+    "cardLink": "Tariflarni ko'rish"
+  },
+  "tariffs": {
+    "eyebrow": "Tariflar",
+    "title": "Klinikangiz hajmiga mos tarifni tanlang",
+    "subtitle": "START kichik klinikalar uchun, PRO barqaror ishlayotgan klinikalar uchun, ENTERPRISE esa yirik filialli markazlar uchun.",
+    "plans": [
+      {
+        "name": "START",
+        "tag": "Kichik klinika",
+        "desc": "Tizimni sinab ko'rish yoki bitta xonali yangi klinikalar uchun.",
+        "items": ["2 ta shifokorgacha", "2 ta xodimgacha", "10 GB saqlash", "SMS: alohida balans"]
+      },
+      {
+        "name": "PRO",
+        "tag": "Eng ideal tanlov",
+        "desc": "Bir nechta xonaga ega va bemorlar oqimi barqaror klinikalar uchun.",
+        "items": ["7 ta shifokorgacha", "5 ta xodimgacha", "50 GB saqlash", "500 ta bepul SMS"]
+      },
+      {
+        "name": "ENTERPRISE",
+        "tag": "Katta tarmoq",
+        "desc": "Filialli yoki katta xodimlar tarkibiga ega markazlar uchun.",
+        "items": ["Cheksiz shifokor", "Cheksiz xodim", "1 TB saqlash", "5000 ta bepul SMS"]
+      }
+    ],
+    "viewButton": "Batafsil ko'rish"
+  },
+  "cta": {
+    "title": "CRM'ni klinikangizda sinab ko'ring",
+    "description": "Demo so'rovi qoldiring. Klinikangiz hajmi, shifokorlar soni va jarayonlaringizga qarab eng mos yechimni tavsiya qilamiz.",
+    "registerButton": "Ro'yxatdan o'tish",
+    "tariffsButton": "Tariflarni ko'rish"
+  },
+  "tariffsPage": {
+    "eyebrow": "Tariflar",
+    "title": "Klinikangiz hajmiga mos tarifni tanlang",
+    "subtitle": "Klinikangiz hajmi va xodimlar soniga mos tarifni tanlang.",
+    "durationLabel": "{months, plural, other {# oy}}",
+    "planTag": {
+      "START": "Kichik klinika",
+      "PRO": "Eng ideal tanlov",
+      "ENTERPRISE": "Katta tarmoq",
+      "default": "Tarif"
+    },
+    "planDesc": {
+      "START": "Tizimni sinab ko'rish yoki bitta xonali yangi klinikalar uchun.",
+      "PRO": "Bir nechta xonaga ega va bemorlar oqimi barqaror klinikalar uchun.",
+      "ENTERPRISE": "Filialli yoki katta xodimlar tarkibiga ega markazlar uchun.",
+      "default": "Klinikangiz uchun mos imkoniyatlar to'plami."
+    },
+    "limitUnlimitedDoctors": "Cheksiz shifokor",
+    "limitUnlimitedStaff": "Cheksiz xodim",
+    "limitDoctors": "{count, plural, other {# ta shifokorgacha}}",
+    "limitStaff": "{count, plural, other {# ta xodimgacha}}",
+    "storageSuffix": "{storage} saqlash",
+    "smsFree": "{count, plural, other {# ta bepul SMS}}",
+    "smsSeparateBalance": "SMS: alohida balans",
+    "extraFeature": {
+      "patientsDb": "Bemorlar bazasi",
+      "schedule": "Qabul jadvali",
+      "dentalChart": "Dental chart",
+      "advancedReports": "Kengaytirilgan hisobotlar",
+      "apiIntegration": "API integratsiya",
+      "prioritySupport": "Maxsus qo'llab-quvvatlash"
+    },
+    "mostPopular": "⭐ Eng ko'p tanlanadi",
+    "currency": "so'm",
+    "perUnit": "{currency} / {duration}",
+    "discountLabel": "{discount}% chegirma — {price} o'rniga",
+    "ctaButton": "Demo olish",
+    "loading": "Tariflar yuklanmoqda...",
+    "errorTitle": "Tariflarni yuklab bo'lmadi",
+    "errorDesc": "Backend bilan bog'lanishda xatolik yuz berdi.",
+    "retry": "Qayta urinish",
+    "emptyTitle": "Faol tariflar topilmadi",
+    "emptyDesc": "Hozircha foydalanish uchun faol tarif mavjud emas.",
+    "faqTitle": "Ko'p so'raladigan savollar",
+    "faq": [
+      { "q": "Sinov muddati bormi?", "a": "Ha, ro'yxatdan o'tgandan so'ng 14 kunlik bepul sinov muddati beriladi. Kredit karta talab qilinmaydi." },
+      { "q": "To'lovni qanday amalga oshiraman?", "a": "Payme orqali to'lash mumkin. To'lov muvaffaqiyatli bo'lgandan so'ng tarif darhol faollashadi." },
+      { "q": "Tarifni o'zgartirish mumkinmi?", "a": "Ha, istalgan vaqtda yuqori tarifga o'tish mumkin. Farq hisoblab chiqiladi." },
+      { "q": "Ma'lumotlarim xavfsizmi?", "a": "Har bir klinika alohida subdomain va alohida ma'lumotlar muhitida ishlaydi. Sizning ma'lumotlaringizga boshqalar kira olmaydi." }
+    ],
+    "ctaTitle": "Hali ham savollaringiz bormi?",
+    "ctaDesc": "Mutaxassisimiz klinikangizga mos tarifni tanlashda yordam beradi.",
+    "ctaSecondaryButton": "Bepul konsultatsiya"
+  },
+  "subdomains": {
+    "title": "Klinikangizni toping",
+    "subtitle": "Klinikangizning subdomainini kiriting — sizni to'g'ri sahifaga yo'naltiramiz.",
+    "label": "Subdomain",
+    "placeholder": "masalan: clinic11",
+    "errorEmpty": "Subdomain kiriting.",
+    "errorCheckFailed": "Subdomainni tekshirishda xatolik yuz berdi.",
+    "checking": "Tekshirilmoqda...",
+    "continueButton": "Davom etish",
+    "notRegisteredText": "Klinikangiz hali ro'yxatdan o'tmaganmi?",
+    "registerLink": "Ro'yxatdan o'tish"
+  }
+}

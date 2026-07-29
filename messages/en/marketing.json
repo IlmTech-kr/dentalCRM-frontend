@@ -1,1 +1,171 @@
-{}
+{
+  "hero": {
+    "badge": "CRM for dental clinics",
+    "title": "Run your dental clinic in one modern system",
+    "description": "{brand} brings your patient database, appointment schedule, doctors, dental chart, treatment courses, payments, and SMS reminders together in one platform.",
+    "loginButton": "Login",
+    "registerButton": "Sign up",
+    "checklist": [
+      "Set up in 1 day",
+      "Multi-tenant SaaS",
+      "Role-based access",
+      "SMS reminders"
+    ],
+    "mockup": {
+      "dashboardLabel": "Dashboard",
+      "welcome": "Welcome 👋",
+      "statPatients": "Patients",
+      "statToday": "Today",
+      "statRevenue": "Revenue",
+      "appointmentsTitle": "Today's appointments",
+      "appointmentsGrowth": "+18%",
+      "dentalChartLabel": "Dental chart",
+      "notificationTitle": "New patient",
+      "notificationSubtitle": "Just added"
+    }
+  },
+  "features": {
+    "eyebrow": "Features",
+    "title": "The clinic's core workflows in one CRM",
+    "subtitle": "Administrators, doctors, and clinic managers all work in one system.",
+    "items": [
+      { "title": "Patient database", "desc": "Patient details, phone number, medical history, documents, and X-rays in a single card." },
+      { "title": "Appointment schedule", "desc": "Manage appointments by day, week, and doctor. Reduce scheduling conflicts." },
+      { "title": "Doctors", "desc": "Separate roles and access rights for doctors, reception, assistants, and admins." },
+      { "title": "Dental chart", "desc": "Track diagnosis, condition, fillings, implants, root canals, and notes per tooth." },
+      { "title": "Treatment courses", "desc": "Run treatment plans step by step and track visits and completed work." },
+      { "title": "Payments and debt", "desc": "Track patient payments, service prices, and outstanding balances accurately." },
+      { "title": "Reports", "desc": "Monitor statistics on appointments, revenue, staff performance, and patient flow." },
+      { "title": "Multi-tenant system", "desc": "Each clinic or branch runs on its own subdomain with an isolated data environment." }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "How it works",
+    "title": "Connecting your clinic to the CRM is easy",
+    "subtitle": "Launching the system, adding staff, and booking your first patient is simple.",
+    "steps": [
+      { "title": "Register your clinic", "desc": "Set up your subdomain, clinic profile, and core settings in a few minutes." },
+      { "title": "Add your team", "desc": "Grant doctors, reception, assistants, and admins role-based access." },
+      { "title": "Book patients for appointments", "desc": "Find patients by phone number, create new patients, and set appointment times." },
+      { "title": "Track treatment and reports", "desc": "Manage the dental chart, treatment courses, payments, and clinic metrics in real time." }
+    ]
+  },
+  "about": {
+    "eyebrow": "Why Dental CRM?",
+    "title": "Move your clinic to an organized, fast, and controllable system",
+    "description": "{brand} brings appointments, patient records, doctor schedules, treatment courses, and reports together in one place.",
+    "benefits": [
+      { "title": "Saves time", "desc": "Speeds up appointments, reporting, and patient lookup." },
+      { "title": "Protects data", "desc": "Each staff member only sees the sections relevant to their role." },
+      { "title": "Organizes work", "desc": "Core clinic processes flow into a single CRM workflow." },
+      { "title": "Strengthens patient communication", "desc": "SMS reminders reduce missed appointments." }
+    ],
+    "stats": [
+      { "value": "32", "label": "Dental chart tooth numbers" },
+      { "value": "24/7", "label": "Online CRM access" },
+      { "value": "SMS", "label": "Automatic reminders" },
+      { "value": "Roles", "label": "Separate staff permissions" }
+    ],
+    "cardTitle": "START, PRO, and ENTERPRISE plans",
+    "cardSubtitle": "The right fit — from small clinics to large medical centers.",
+    "cardLink": "View pricing"
+  },
+  "tariffs": {
+    "eyebrow": "Pricing",
+    "title": "Choose the plan that fits your clinic's size",
+    "subtitle": "START for small clinics, PRO for clinics with steady patient flow, and ENTERPRISE for large multi-branch centers.",
+    "plans": [
+      {
+        "name": "START",
+        "tag": "Small clinic",
+        "desc": "For trying out the system or new single-room clinics.",
+        "items": ["Up to 2 doctors", "Up to 2 staff members", "10 GB storage", "SMS: separate balance"]
+      },
+      {
+        "name": "PRO",
+        "tag": "Most popular",
+        "desc": "For clinics with multiple rooms and steady patient flow.",
+        "items": ["Up to 7 doctors", "Up to 5 staff members", "50 GB storage", "500 free SMS"]
+      },
+      {
+        "name": "ENTERPRISE",
+        "tag": "Large network",
+        "desc": "For multi-branch centers or clinics with a large staff.",
+        "items": ["Unlimited doctors", "Unlimited staff", "1 TB storage", "5000 free SMS"]
+      }
+    ],
+    "viewButton": "View details"
+  },
+  "cta": {
+    "title": "Try the CRM at your clinic",
+    "description": "Leave a demo request. We'll recommend the best-fit solution based on your clinic's size, number of doctors, and workflows.",
+    "registerButton": "Sign up",
+    "tariffsButton": "View pricing"
+  },
+  "tariffsPage": {
+    "eyebrow": "Pricing",
+    "title": "Choose the plan that fits your clinic's size",
+    "subtitle": "Pick a plan based on your clinic's size and number of staff.",
+    "durationLabel": "{months, plural, one {# month} other {# months}}",
+    "planTag": {
+      "START": "Small clinic",
+      "PRO": "Most popular",
+      "ENTERPRISE": "Large network",
+      "default": "Plan"
+    },
+    "planDesc": {
+      "START": "For trying out the system or new single-room clinics.",
+      "PRO": "For clinics with multiple rooms and steady patient flow.",
+      "ENTERPRISE": "For multi-branch centers or clinics with a large staff.",
+      "default": "A set of features that fits your clinic."
+    },
+    "limitUnlimitedDoctors": "Unlimited doctors",
+    "limitUnlimitedStaff": "Unlimited staff",
+    "limitDoctors": "{count, plural, one {Up to # doctor} other {Up to # doctors}}",
+    "limitStaff": "{count, plural, one {Up to # staff member} other {Up to # staff members}}",
+    "storageSuffix": "{storage} storage",
+    "smsFree": "{count, plural, one {# free SMS} other {# free SMS}}",
+    "smsSeparateBalance": "SMS: separate balance",
+    "extraFeature": {
+      "patientsDb": "Patient database",
+      "schedule": "Appointment schedule",
+      "dentalChart": "Dental chart",
+      "advancedReports": "Advanced reports",
+      "apiIntegration": "API integration",
+      "prioritySupport": "Priority support"
+    },
+    "mostPopular": "⭐ Most popular",
+    "currency": "UZS",
+    "perUnit": "{currency} / {duration}",
+    "discountLabel": "{discount}% discount — instead of {price}",
+    "ctaButton": "Get a demo",
+    "loading": "Loading plans...",
+    "errorTitle": "Failed to load plans",
+    "errorDesc": "An error occurred while connecting to the server.",
+    "retry": "Retry",
+    "emptyTitle": "No active plans found",
+    "emptyDesc": "There are currently no active plans available.",
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      { "q": "Is there a trial period?", "a": "Yes, after signing up you get a 14-day free trial. No credit card required." },
+      { "q": "How do I pay?", "a": "You can pay via Payme. The plan activates immediately after a successful payment." },
+      { "q": "Can I change my plan?", "a": "Yes, you can upgrade to a higher plan at any time. The price difference will be calculated." },
+      { "q": "Is my data secure?", "a": "Each clinic runs on its own subdomain in an isolated data environment. No one else can access your data." }
+    ],
+    "ctaTitle": "Still have questions?",
+    "ctaDesc": "Our specialist will help you choose the right plan for your clinic.",
+    "ctaSecondaryButton": "Free consultation"
+  },
+  "subdomains": {
+    "title": "Find your clinic",
+    "subtitle": "Enter your clinic's subdomain — we'll redirect you to the right page.",
+    "label": "Subdomain",
+    "placeholder": "e.g. clinic11",
+    "errorEmpty": "Enter a subdomain.",
+    "errorCheckFailed": "An error occurred while checking the subdomain.",
+    "checking": "Checking...",
+    "continueButton": "Continue",
+    "notRegisteredText": "Hasn't your clinic registered yet?",
+    "registerLink": "Sign up"
+  }
+}
