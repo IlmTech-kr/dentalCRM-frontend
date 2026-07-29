@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getApiErrorMessage } from "@/src/lib/api/http";
@@ -630,7 +630,7 @@ export default function DashboardPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20 text-slate-400">
-          <DentalLoaderIcon size={25} />
+          <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
         </div>
       ) : isTenantsError ? (
         <p className="px-6 py-12 text-center text-sm text-red-500">
@@ -1217,7 +1217,7 @@ function TenantLimitsEditModal({
       <div className="p-6">
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <DentalLoaderIcon className="text-slate-400" size={23} />
+            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
           </div>
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-500">
@@ -1475,11 +1475,7 @@ function SectionLoading({
         </h3>
       </div>
 
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
-        <DentalLoaderIcon size={19} />
-
-        Yuklanmoqda...
-      </div>
+      <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
     </section>
   );
 }

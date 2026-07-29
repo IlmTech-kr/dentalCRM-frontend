@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import { useTodayInProgressAppointments } from "@/src/features/treatments/hooks/useTodayInProgressAppointments";
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
@@ -294,10 +294,7 @@ export default function TreatmentsPage() {
           <div className="mt-6">
             {isLoading ? (
               <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-slate-50 py-16">
-                <div className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-500">
-                  <DentalLoaderIcon size={20} />
-                  {t("inProgress.loading")}
-                </div>
+                <DentalLoader fullScreen={false} text={t("inProgress.loading")} />
               </div>
             ) : filteredAppointments.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 py-16 text-center">

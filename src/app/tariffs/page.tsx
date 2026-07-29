@@ -23,7 +23,7 @@ import {
 import LandingHeader from "@/src/components/layout/LandingHeader";
 import Footer from "@/src/components/layout/Footer";
 import LeadModal from "@/src/components/shared/LeadModal";
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { usePlans } from "@/src/features/superadmin/subscriptions/UseSupscriptionAdmin";
 
@@ -285,13 +285,7 @@ export default function TariffsPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {isLoading && (
               <div className="flex min-h-[400px] items-center justify-center">
-                <div className="text-center">
-                  <DentalLoaderIcon className="mx-auto h-9 w-9 text-violet-600" />
-
-                  <p className="mt-4 text-sm font-semibold text-slate-600">
-                    Tariflar yuklanmoqda...
-                  </p>
-                </div>
+                <DentalLoader fullScreen={false} text="Tariflar yuklanmoqda..." />
               </div>
             )}
 

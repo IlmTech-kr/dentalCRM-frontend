@@ -20,7 +20,7 @@ import {
   Activity,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -297,10 +297,7 @@ export default function ProceduresPage() {
                 {isLoading || isFetching ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-14 text-center">
-                      <div className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-500">
-                        <DentalLoaderIcon size={18} />
-                        {t("list.loading")}
-                      </div>
+                      <DentalLoader fullScreen={false} text={t("list.loading")} />
                     </td>
                   </tr>
                 ) : procedures.length === 0 ? (

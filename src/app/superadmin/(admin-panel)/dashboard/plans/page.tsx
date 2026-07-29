@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getApiErrorMessage } from "@/src/lib/api/http";
@@ -276,7 +276,7 @@ export default function PlansPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <DentalLoaderIcon className="text-slate-400" size={22} />
+            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">

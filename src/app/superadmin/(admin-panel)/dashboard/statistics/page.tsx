@@ -12,7 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import { useRevenueByClinic } from "@/src/features/superadmin/statistics/UseStatisticsAdmin";
 
@@ -146,7 +146,7 @@ export default function StatisticsPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <DentalLoaderIcon className="text-slate-400" size={22} />
+            <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
           </div>
         ) : isError ? (
           <p className="px-6 py-10 text-center text-sm text-red-500">

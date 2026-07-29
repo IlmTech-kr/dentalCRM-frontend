@@ -24,7 +24,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CalendarDays, Clock, Edit2, Plus, RefreshCcw, Trash2, X } from "lucide-react";
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import {
   useCreateDoctorSchedule,
@@ -649,10 +649,7 @@ export default function MySchedulePage() {
             </p>
           </div>
         ) : isLoading ? (
-          <div className="flex items-center justify-center gap-3 py-24 text-sm font-bold text-slate-500">
-            <DentalLoaderIcon className="h-5 w-5 text-blue-600" />
-            {t("loading")}
-          </div>
+          <DentalLoader fullScreen={false} text={t("loading")} />
         ) : isError ? (
           <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">!</div>

@@ -21,7 +21,7 @@ import {
   ZapOff,
 } from "lucide-react";
 
-import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import {
   useCancelPlan,
@@ -549,7 +549,7 @@ export default function PlansPage() {
         <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
           {isCurrentLoading ? (
             <div className="flex min-h-[300px] items-center justify-center rounded-3xl border border-slate-200 bg-white">
-              <DentalLoaderIcon className="h-8 w-8 text-blue-600" />
+              <DentalLoader fullScreen={false} />
             </div>
           ) : currentPlan ? (
             <CurrentPlanCard
@@ -608,7 +608,7 @@ export default function PlansPage() {
         <>
           {isPlansLoading ? (
             <div className="flex min-h-[320px] items-center justify-center">
-              <DentalLoaderIcon className="h-9 w-9 text-blue-600" />
+              <DentalLoader fullScreen={false} />
             </div>
           ) : sortedPlans.length === 0 ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
