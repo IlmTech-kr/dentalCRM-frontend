@@ -4,7 +4,8 @@
  * Tekshiruvlar:
  * 1. currentSubdomain yo'q          → /login
  * 2. storedUser yo'q                → /login (cookie ham yo'q deb hisoblanadi)
- * 3. Hammasi OK                     → DashboardLayout ko'rsatiladi
+ * 3. Route uchun rol mos emas       → /dashboard (access.ts, CLINIC_ACCESS_RULES)
+ * 4. Hammasi OK                     → DashboardLayout ko'rsatiladi
  *
  * Eslatma: subDomain solishtirish (localStorage vs URL) OLIB TASHLANDI.
  * subDomain endi localStorage'da saqlanmaydi — chunki bu eski/boshqa
@@ -15,15 +16,23 @@
  * har bir so'rovda cookie (token) va Host header (subdomain) solishtiriladi,
  * mos kelmasa backend 403 AUTH_TENANT_MISMATCH qaytaradi va
  * http.ts interceptori buni ushlab avtomatik /login ga yo'naltiradi.
+ *
+ * Bu layout (clinic) ichidagi route'lar orasida qayta mount BO'LMAYDI —
+ * shuning uchun rol tekshiruvi pathname o'zgarganda alohida effekt sifatida
+ * qayta ishga tushadi (pastdagi ikkinchi useEffect). Faqat mount-vaqtidagi
+ * bitta tekshiruv yetarli bo'lmaydi: masalan DOCTOR /dashboard'dan
+ * to'g'ridan-to'g'ri /patients'ga client-side navigatsiya qilsa, layout hech
+ * qachon qayta mount bo'lmagani uchun birinchi effekt qayta ishlamaydi.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import DashboardLayout from "./_components/DashboardLayout";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { getStoredUser, clearAuthStorage } from "@/src/lib/auth/storage";
 import { useAuthStore } from "@/src/store/auth.store";
+import { CLINIC_ACCESS_RULES, isRouteAllowed } from "@/src/config/access";
 
 export default function ClinicLayout({
   children,
@@ -31,9 +40,11 @@ export default function ClinicLayout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  const pathname = usePathname();
   const [checked, setChecked] = useState(false);
   const initDone = useRef(false);
 
+  // Bir martalik sessiya tekshiruvi: subdomain + storedUser bor-yo'qligi.
   useEffect(() => {
     if (initDone.current) return;
     initDone.current = true;
@@ -67,6 +78,18 @@ export default function ClinicLayout({
 
     setChecked(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Rol tekshiruvi — har bir client-side navigatsiyada qayta ishlaydi
+  // (layout qayta mount bo'lmagani uchun pathname'ga bog'liq).
+  useEffect(() => {
+    if (!checked) return;
+
+    const roles = useAuthStore.getState().user?.roles || [];
+
+    if (!isRouteAllowed(pathname, roles, CLINIC_ACCESS_RULES)) {
+      router.replace("/dashboard");
+    }
+  }, [checked, pathname, router]);
 
   if (!checked) {
     return <DentalLoader fullScreen text="Loading..." />;

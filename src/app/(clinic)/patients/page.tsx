@@ -34,7 +34,6 @@ import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
-import RoleGuard from "@/src/components/layout/RoleGuard";
 
 const PAGE_SIZE = 10;
 
@@ -107,7 +106,7 @@ function getGenderBadgeClass(gender?: string) {
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-function PatientsPage() {
+export default function PatientsPage() {
   const t = useTranslations("patients");
   const tCommon = useTranslations("common");
   const toast = useToast();
@@ -952,15 +951,5 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <p className="mt-1 font-semibold text-dark-navy">{value}</p>
     </div>
-  );
-}
-
-export default function PatientsPageGuarded() {
-  return (
-    <RoleGuard
-      allowedRoles={[Role.SUPER_ADMIN, Role.CLINIC_ADMIN, Role.RECEPTIONIST, Role.ASSISTANT]}
-    >
-      <PatientsPage />
-    </RoleGuard>
   );
 }
