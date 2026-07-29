@@ -1,7 +1,3 @@
-/**
- * File: src/store/Usetoaststore.ts
- */
-
 import { create } from "zustand";
 
 export type ToastType = "success" | "error" | "info" | "warning";

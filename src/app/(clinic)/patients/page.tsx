@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(dashboard)/patients/page.tsx
- */
-
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useTranslations } from "next-intl";

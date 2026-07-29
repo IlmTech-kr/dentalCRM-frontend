@@ -1,6 +1,4 @@
 /**
- * File: src/lib/i18n/storage.ts
- *
  * Foydalanuvchi til tanlovi faqat client'da (localStorage) saqlanadi.
  * Server tomonida locale aniqlash yo'q — bu ilova auth ortida ishlaydi,
  * SEO/URL locale-routing shart emas.

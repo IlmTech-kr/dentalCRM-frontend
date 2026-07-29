@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/features/storage/hooks/useStorage.ts
- */
-
 import {
   useMutation,
   useQuery,

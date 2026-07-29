@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/subdomains/page.tsx
- *
  * dental.ilmtech.uz/subdomains — foydalanuvchi klinika subdomainini kiritadi:
  * - GET /api/auth/check/subdomain/exists?subdomain={value} (mainHttp,
  *   root domain so'rovi — hali qaysi tenant ekanligi noma'lum bo'lgani

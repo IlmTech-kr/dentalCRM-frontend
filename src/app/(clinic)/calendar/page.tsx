@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/(clinic)/calendar/page.tsx
- *
  * Oy va hafta ko'rinishi almashtiriladigan calendar.
  * Kunga bosilganda modal ochiladi — o'sha kundagi barcha appointmentlar
  * to'liq ko'rinishda (bemor, shifokor, vaqt, izoh, status).

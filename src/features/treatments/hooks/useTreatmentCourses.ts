@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/features/treatments/hooks/useTreatmentCourses.ts
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/src/store/auth.store";
 import { treatmentCourseService } from "../services/treatment-course.service";

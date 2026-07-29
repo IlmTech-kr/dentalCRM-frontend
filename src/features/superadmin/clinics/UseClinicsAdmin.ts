@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/features/superadmin/clinics/UseClinicsAdmin.ts
- */
-
 import { useQuery } from "@tanstack/react-query";
 
 import {

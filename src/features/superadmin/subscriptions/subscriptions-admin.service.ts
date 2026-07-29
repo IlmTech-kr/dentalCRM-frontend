@@ -1,8 +1,3 @@
-/**
- * File:
- * src/features/superadmin/subscriptions/subscriptions-admin.service.ts
- */
-
 import { mainHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 

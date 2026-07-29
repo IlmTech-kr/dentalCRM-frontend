@@ -1,8 +1,3 @@
-/**
- * File:
- * src/features/storage/storage.types.ts
- */
-
 export const STORAGE_BUCKET = "dental-storage";
 
 export enum StorageTarget {

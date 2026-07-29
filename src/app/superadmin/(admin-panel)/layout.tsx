@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/superadmin/(dashboard)/layout.tsx
- *
  * /dashboard va /dashboard/plans shu layout ostida ochiladi.
  * Auth tekshiruvi shu yerda — ichki sahifalar faqat UI bilan shug'ullanadi.
  */

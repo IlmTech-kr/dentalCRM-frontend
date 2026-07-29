@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/app/(clinic)/settings/profile/page.tsx
- */
-
 import {
   Camera,
   Mail,

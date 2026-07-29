@@ -1,7 +1,3 @@
-/**
- * File: src/features/doctors/services/doctor.service.ts
- */
-
 import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { Role } from "@/src/lib/enums/enums.types";
 

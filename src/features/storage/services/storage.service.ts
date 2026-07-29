@@ -1,8 +1,3 @@
-/**
- * File:
- * src/features/storage/storage.service.ts
- */
-
 import {
   AxiosHeaders,
   type AxiosRequestConfig,

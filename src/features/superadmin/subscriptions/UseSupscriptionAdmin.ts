@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/features/superadmin/subscriptions/UseSupscriptionAdmin.ts
- */
-
 import {
   useMutation,
   useQuery,

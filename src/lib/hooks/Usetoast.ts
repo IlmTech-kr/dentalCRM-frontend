@@ -1,7 +1,3 @@
-/**
- * File: src/lib/hooks/Usetoast.ts
- */
-
 import { useMemo } from "react";
 import { useToastStore } from "@/src/store/Usetoaststore";
 

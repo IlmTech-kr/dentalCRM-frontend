@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(clinic)/dashboard/page.tsx
- */
-
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";

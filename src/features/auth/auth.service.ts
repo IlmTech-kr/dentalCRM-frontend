@@ -1,7 +1,3 @@
-/**
- * File: src/features/auth/auth.service.ts
- */
-
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import {
   mainHttp,

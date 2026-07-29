@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/(clinic)/treatments/[patientId]/page.tsx
- *
  * Flow:
  * 1. Rentgen fayllari storage'ga yuklanadi.
  * 2. Visit yaratiladi.

@@ -1,5 +1,3 @@
-// File: src/features/statistics/services/statistics.service.ts
-
 import { tenantHttp, mainHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 

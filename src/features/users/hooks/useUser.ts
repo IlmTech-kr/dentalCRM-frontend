@@ -1,7 +1,5 @@
 "use client";
 
-// File: src/features/users/hooks/useUser.ts
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getMe, updateMe, changePassword } from "../user.service";

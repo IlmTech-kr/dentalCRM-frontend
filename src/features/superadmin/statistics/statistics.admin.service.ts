@@ -1,7 +1,3 @@
-/**
- * File: src/features/superadmin/statistics/statistics-admin.service.ts
- */
-
 import { mainHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type { ClinicSummary } from "@/src/features/superadmin/clinics/clinics.admin.service";

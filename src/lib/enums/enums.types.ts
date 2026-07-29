@@ -1,5 +1,3 @@
-// File: src/lib/enums/enums.types.ts
-
 // =========================
 // Subscription Enums
 // =========================

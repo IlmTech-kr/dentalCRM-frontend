@@ -1,5 +1,3 @@
-// File: src/types/doctor-schedule.types.ts
-
 import { DayOfWeek } from "../lib/enums/enums.types";
 
 export interface DoctorScheduleDay {

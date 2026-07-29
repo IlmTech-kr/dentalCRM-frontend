@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/superadmin/login/page.tsx
- *
  * admin.dental.ilmtech.uz/login shu sahifaga middleware orqali rewrite qilinadi.
  * Bu yerda hech qanday tenant subdomain tekshirilmaydi — login to'g'ridan-to'g'ri
  * mainHttp (dental.api.ilmtech.uz) ga ketadi.

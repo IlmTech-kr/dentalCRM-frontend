@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/app/superadmin/(dashboard)/dashboard/page.tsx
- */
-
 import {
   useEffect,
   useMemo,

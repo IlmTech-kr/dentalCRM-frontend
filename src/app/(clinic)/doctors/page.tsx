@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(dashboard)/doctors/page.tsx
- */
-
 import {
   useEffect,
   useMemo,

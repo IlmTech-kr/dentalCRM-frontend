@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(clinic)/appointments/page.tsx
- */
-
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";

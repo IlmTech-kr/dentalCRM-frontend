@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/components/layout/Header.tsx
- */
-
 import {
   Bell,
   ChevronDown,

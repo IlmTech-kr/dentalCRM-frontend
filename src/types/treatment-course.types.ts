@@ -1,5 +1,3 @@
-// File: src/types/treatment-course.types.ts
-
 import { AppointmentStatus } from "../lib/enums/enums.types";
 
 export interface TreatmentVisitItem {

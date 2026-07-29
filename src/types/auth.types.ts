@@ -1,5 +1,3 @@
-// File: src/types/auth.types.ts
-
 import { Role, UserStatus } from "../lib/enums/enums.types";
 
 export interface RegisterClinicDto {

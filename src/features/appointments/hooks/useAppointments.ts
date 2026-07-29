@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/features/appointments/hooks/useAppointments.ts
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {

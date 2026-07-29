@@ -1,7 +1,3 @@
-/**
- * File: src/features/payment/services/payment.service.ts
- */
-
 import axios from "axios";
 import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";

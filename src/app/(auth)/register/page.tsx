@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/register/page.tsx
- */
-
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {

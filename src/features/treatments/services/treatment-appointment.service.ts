@@ -1,6 +1,4 @@
 /**
- * File: src/features/treatments/services/treatment-appointment.service.ts
- *
  * tenantHttp() argumentsiz chaqiriladi — subdomain URL dan olinadi.
  * getHttp() / getSubdomain() olib tashlandi.
  */

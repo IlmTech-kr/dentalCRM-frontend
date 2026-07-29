@@ -1,5 +1,3 @@
-// File: src/types/dental-procedure.types.ts
-
 import { ToothCondition } from "../lib/enums/enums.types";
 
 export type ResultingCondition =

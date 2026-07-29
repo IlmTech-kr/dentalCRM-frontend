@@ -1,6 +1,4 @@
 /**
- * File: src/lib/i18n/messages.ts
- *
  * Har bir namespace/locale statik import qilinadi (dinamik
  * import(`.../${locale}/${ns}.json`) emas) — Next.js 16 default
  * bundleri (Turbopack) template-literal asosidagi dinamik import

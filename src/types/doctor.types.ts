@@ -1,5 +1,3 @@
-// File: src/types/doctor.types.ts
-
 import { Role, UserStatus } from "../lib/enums/enums.types";
 
 export type StaffRole = Role.DOCTOR | Role.RECEPTIONIST | Role.ASSISTANT;
@@ -33,7 +31,6 @@ export interface Doctor {
   createdAt?: string;
   updatedAt?: string;
 }
-
 
 export interface UpdateDoctorDto {
   firstName: string;

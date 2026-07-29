@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * File:
- * src/app/superadmin/(dashboard)/dashboard/plans/page.tsx
- */
-
 import {
   useEffect,
   useState,

@@ -1,5 +1,3 @@
-// File: src/types/dental-chart.types.ts
-
 import { ToothCondition } from "../lib/enums/enums.types";
 
 export interface ToothItem {

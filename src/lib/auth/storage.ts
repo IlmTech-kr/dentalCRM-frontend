@@ -1,6 +1,4 @@
 /**
- * File: src/lib/auth/storage.ts
- *
  * accessToken localStorage'da SAQLANMAYDI.
  * Token backend tomonidan HttpOnly cookie sifatida boshqariladi.
  *

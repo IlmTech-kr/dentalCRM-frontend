@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/superadmin/(dashboard)/dashboard/statistics/page.tsx
- */
-
 import { useMemo, useState } from "react";
 import {
   ArrowDownUp,

@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/features/treatments/hooks/useDentalProcedures.ts
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { dentalProcedureService } from "../services/dental-procedure.service";

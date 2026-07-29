@@ -1,7 +1,3 @@
-/**
- * File: src/lib/utils/tenant.ts
- */
-
 const FRONTEND_ROOT_DOMAIN =
   process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
 

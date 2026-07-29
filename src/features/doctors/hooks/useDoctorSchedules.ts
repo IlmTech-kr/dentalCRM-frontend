@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/features/doctors/hooks/useDoctorSchedules.ts
- */
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {

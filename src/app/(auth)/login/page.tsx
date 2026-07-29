@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/login/page.tsx
- */
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";

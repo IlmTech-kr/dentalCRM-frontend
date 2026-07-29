@@ -1,6 +1,4 @@
 /**
- * File: src/lib/api/http.ts
- *
  * Cookie-based auth.
  * 401 bo'lganda avval /api/auth/refresh ga uriniladi,
  * muvaffaqiyatli bo'lsa asl request qayta yuboriladi.

@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/components/ui/DentalLoader.tsx
- *
  * Usage:
  * <DentalLoader />
  * <DentalLoader text="Saving..." />

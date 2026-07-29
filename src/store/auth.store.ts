@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/store/auth.store.ts
- *
  * accessToken localStorage'da saqlanmaydi.
  * Token backend tomonidan HttpOnly cookie sifatida boshqariladi.
  */

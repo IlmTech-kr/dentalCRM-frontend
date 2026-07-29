@@ -1,6 +1,4 @@
 /**
- * File: src/types/subscription.types.ts
- *
  * API response ga mos keltirildi:
  *
  * Current plan response:

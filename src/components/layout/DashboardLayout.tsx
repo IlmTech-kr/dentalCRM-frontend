@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/(dashboard)/layout.tsx
- *
  * Bu layout ClinicLayout dan keyin ishlaydi.
  * ClinicLayout allaqachon auth tekshirgan — bu yerda faqat UI.
  */

@@ -1,5 +1,3 @@
-// File: src/types/patient.types.ts
-
 import { Gender } from "../lib/enums/enums.types";
 
 export interface Patient {

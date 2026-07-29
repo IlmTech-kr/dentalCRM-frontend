@@ -1,7 +1,3 @@
-/**
- * File: src/features/doctors/services/doctor-schedule.service.ts
- */
-
 import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 
 import type {

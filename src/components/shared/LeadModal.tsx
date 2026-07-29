@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/components/shared/LeadModal.tsx
- *
  * Ikki xil ishlatish:
  * 1. Auto: prop berilmasa — 1 soniyadan keyin avtomatik ochiladi
  * 2. Manual: open={true} — tashqaridan boshqariladi (Demo olish tugmasi)

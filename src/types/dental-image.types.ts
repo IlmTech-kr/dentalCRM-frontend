@@ -1,7 +1,3 @@
-/**
- * File: src/features/images/dental-image.types.ts
- */
-
 export type DentalImageType =
   | "XRAY"
   | "PHOTO"

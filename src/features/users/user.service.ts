@@ -1,5 +1,3 @@
-// File: src/features/users/user.service.ts
-
 import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {

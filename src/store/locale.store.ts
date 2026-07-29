@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/store/locale.store.ts
- *
  * isHydrated faqat hydrateFromStorage() chaqirilganda true bo'ladi
  * (auth.store.ts'dagi kabi module-init'da emas) — Providers butun
  * komponent daraxtini shu flag orqali bloklaydi, chunki useTranslations()

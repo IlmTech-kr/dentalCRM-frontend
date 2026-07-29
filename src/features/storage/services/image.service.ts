@@ -1,7 +1,3 @@
-/**
- * File: src/features/images/dental-image.service.ts
- */
-
 import { tenantHttp } from "@/src/lib/api/http";
 import type {
   CreateDentalImagePayload,

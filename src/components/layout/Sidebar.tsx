@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(dashboard)/Sidebar.tsx
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";

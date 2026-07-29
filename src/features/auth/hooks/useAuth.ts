@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/features/auth/hooks/useAuth.ts
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {

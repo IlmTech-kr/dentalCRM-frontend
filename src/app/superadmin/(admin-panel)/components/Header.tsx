@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/superadmin/(dashboard)/Header.tsx
- */
-
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";

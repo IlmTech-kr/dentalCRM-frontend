@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/(clinic)/settings/change-password/page.tsx
- */
-
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";

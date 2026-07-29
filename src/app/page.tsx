@@ -1,7 +1,6 @@
 "use client";
 
 /**
- * File: src/app/page.tsx
  * Fully responsive — mobile first
  */
 

@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/app/superadmin/(dashboard)/Sidebar.tsx
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, CreditCard, LineChart, ShieldCheck } from "lucide-react";

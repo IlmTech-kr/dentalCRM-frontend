@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * File: src/components/shared/LanguageSwitcher.tsx
- */
-
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 

@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/(clinic)/layout.tsx  (yoki ClinicLayout)
- *
  * Tekshiruvlar:
  * 1. currentSubdomain yo'q          → /login
  * 2. storedUser yo'q                → /login (cookie ham yo'q deb hisoblanadi)

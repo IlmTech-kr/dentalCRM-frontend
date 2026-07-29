@@ -1,7 +1,3 @@
-/**
- * File: src/features/subscriptions/services/subscription.service.ts
- */
-
 import { tenantHttp, publicMainHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {

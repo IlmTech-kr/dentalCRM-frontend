@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * File: src/app/(dashboard)/my-schedule/page.tsx
- *
  * Doctor role uchun MUSTAQIL sahifa — /doctors/schedule (admin sahifasi)
  * dan butunlay ajratilgan. useGetDoctors() UMUMAN chaqirilmaydi.
  *

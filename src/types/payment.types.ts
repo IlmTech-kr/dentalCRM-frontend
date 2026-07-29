@@ -1,5 +1,3 @@
-// File: src/types/payment.types.ts
-
 export interface CreatePaymentOrderDto {
   planType: string;
   durationMonths: number;
