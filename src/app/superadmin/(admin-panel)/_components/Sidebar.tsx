@@ -31,7 +31,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 h-screen w-64 overflow-hidden bg-slate-900 px-4 py-6 text-white transition-transform duration-300 ease-in-out lg:z-30 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 h-dvh w-64 overflow-hidden bg-slate-900 px-4 py-6 text-white transition-transform duration-300 ease-in-out lg:z-30 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
