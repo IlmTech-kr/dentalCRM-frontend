@@ -124,14 +124,14 @@ export default function ForgotPasswordPage() {
         <p className="mt-auto text-white/70">{t("forgotPassword.copyright")}</p>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center px-6 py-8">
+      <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-[430px] rounded-[24px] border border-border-color bg-white px-8 py-8 shadow-xl"
+          className="w-full max-w-md rounded-2xl border border-border-color bg-white px-5 py-7 shadow-xl sm:rounded-[24px] sm:px-8 sm:py-8"
         >
           {!success ? (
             <>
-              <h2 className="text-3xl font-extrabold text-dark-navy">{t("forgotPassword.title")}</h2>
+              <h2 className="text-2xl font-extrabold text-dark-navy sm:text-3xl">{t("forgotPassword.title")}</h2>
               <p className="mt-2 text-sm text-text-light">
                 {t("forgotPassword.subtitle")}
               </p>
@@ -147,21 +147,21 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <label className="mb-2 block text-sm font-bold text-slate-600">{t("forgotPassword.emailLabel")}</label>
 
-                <div className={`flex h-14 items-center gap-3 rounded-2xl border px-5 transition-colors ${
+                <div className={`flex h-12 items-center gap-3 rounded-2xl border px-4 transition-colors sm:h-14 sm:px-5 ${
                   forgotPasswordMutation.error
                     ? "border-red-300 bg-red-50"
                     : isValidEmailInput && email
                       ? "border-green-300 bg-green-50"
                       : "border-border-color bg-slate-50"
                 }`}>
-                  <Mail size={20} className={
+                  <Mail size={20} className={`shrink-0 ${
                     forgotPasswordMutation.error ? "text-red-400"
                       : isValidEmailInput && email ? "text-green-400"
                       : "text-slate-400"
-                  } />
+                  }`} />
 
                   <input
                     type="email"
@@ -192,7 +192,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={forgotPasswordMutation.isPending || !email || !isValidEmailInput}
-                className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60 sm:h-14"
               >
                 {forgotPasswordMutation.isPending ? (
                   <><DentalLoaderIcon size={18} />{t("forgotPassword.submitting")}</>
@@ -219,7 +219,7 @@ export default function ForgotPasswordPage() {
                   <CheckCircle size={48} className="text-green-600" />
                 </div>
 
-                <h2 className="text-2xl font-extrabold text-dark-navy">{t("forgotPassword.successTitle")}</h2>
+                <h2 className="text-xl font-extrabold text-dark-navy sm:text-2xl">{t("forgotPassword.successTitle")}</h2>
                 <p className="mt-3 text-sm text-text-light">{t("forgotPassword.successSubtitle")}</p>
                 <p className="mt-2 break-all font-semibold text-slate-700">{email}</p>
 
@@ -246,7 +246,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={handleReset}
                 disabled={resendCountdown > 0}
-                className="mt-8 h-14 w-full rounded-2xl bg-slate-100 font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-8 h-12 w-full rounded-2xl bg-slate-100 font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 sm:h-14"
               >
                 {resendCountdown > 0 ? t("forgotPassword.resendCountdown", { seconds: resendCountdown }) : t("forgotPassword.resendButton")}
               </button>

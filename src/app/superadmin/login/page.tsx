@@ -83,17 +83,17 @@ export default function SuperAdminLoginPage() {
 
   return (
     <SessionGate ready={!checkingSession} loadingText="Checking session...">
-    <main className="flex min-h-screen items-center justify-center bg-light-background px-6">
+    <main className="flex min-h-screen items-center justify-center bg-light-background px-4 py-8 sm:px-6">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-[440px] rounded-[28px] border border-border-color bg-white px-9 py-10 shadow-2xl shadow-slate-300/40"
+        className="w-full max-w-[440px] rounded-[28px] border border-border-color bg-white px-6 py-8 shadow-2xl shadow-slate-300/40 sm:px-9 sm:py-10"
       >
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3498db] text-white shadow-lg">
-            <ShieldCheck size={28} />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#3498db] text-white shadow-lg sm:h-14 sm:w-14">
+            <ShieldCheck size={26} />
           </div>
-          <div>
-            <h2 className="text-2xl font-extrabold text-dark-navy">Super Admin</h2>
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold text-dark-navy sm:text-2xl">Super Admin</h2>
             <p className="text-sm text-text-light">DentalCRM boshqaruv paneli</p>
           </div>
         </div>

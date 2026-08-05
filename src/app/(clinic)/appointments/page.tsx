@@ -197,7 +197,7 @@ function Pagination({
     }, []);
 
   return (
-    <div className="border-t border-slate-100 bg-white px-6 py-4">
+    <div className="border-t border-slate-100 bg-white px-4 py-4 sm:px-6">
       <p className="mb-3 text-center text-sm text-slate-500">
         <span className="font-bold text-slate-900">{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)}</span>
         {" "}/{" "}
@@ -396,7 +396,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div onClick={onClose} className="absolute inset-0 backdrop-blur-md" />
       <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-7 text-white">
+        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-4 py-6 text-white sm:px-6 sm:py-7">
           <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 left-12 h-44 w-44 rounded-full bg-white/10" />
           <div className="relative flex items-start justify-between gap-4">
@@ -404,16 +404,16 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
                 <Calendar className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-black">{selectedAppointment ? t("modal.editTitle") : t("modal.createTitle")}</h2>
+              <h2 className="text-xl font-black sm:text-2xl">{selectedAppointment ? t("modal.editTitle") : t("modal.createTitle")}</h2>
               <p className="mt-2 text-sm font-medium text-blue-50">{t("modal.subtitle")}</p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-2xl bg-white/10 p-2 text-white transition hover:bg-white/20">
+            <button type="button" onClick={onClose} className="shrink-0 rounded-2xl bg-white/10 p-2 text-white transition hover:bg-white/20">
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-6 py-7">
+        <form onSubmit={onSubmit} className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-4 py-6 sm:px-6 sm:py-7">
           {selectedAppointment ? (
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
               <p className="text-xs font-black uppercase text-blue-600">{t("modal.patientLabel")}</p>
@@ -718,20 +718,45 @@ export default function AppointmentsPage() {
 
   const pageLoading = currentLoading || isPatientsLoading || isDoctorsLoading;
 
+  // ---------------------------------------------------------------------------
+  // Shared row/card action buttons
+  // ---------------------------------------------------------------------------
+
+  function renderAppointmentActionButtons(appointment: Appointment) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => openEditModal(appointment)}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+        >
+          <Edit2 className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete(appointment)}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-700 transition hover:bg-red-100"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F6F8FC]">
       {/* Header */}
       <div className="relative overflow-hidden border-b border-white/40 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950">
         <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-6 py-8">
+        <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-extrabold text-blue-50 backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 {t("header.badge")}
               </div>
-              <h1 className="text-4xl font-black tracking-tight text-white">{t("header.title")}</h1>
+              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">{t("header.title")}</h1>
               <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-blue-100">
                 {t("header.subtitle")}
               </p>
@@ -747,7 +772,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Stats */}
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
             {[
               { label: t("stats.total"), value: stats.total },
               { label: t("stats.scheduled"), value: stats.scheduled },
@@ -755,18 +780,18 @@ export default function AppointmentsPage() {
               { label: t("stats.completed"), value: stats.completed },
               { label: t("stats.cancelled"), value: stats.cancelled },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-3xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur">
+              <div key={stat.label} className="rounded-3xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur sm:p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-100">{stat.label}</p>
-                <p className="mt-2 text-3xl font-black">{stat.value}</p>
+                <p className="mt-2 text-2xl font-black sm:text-3xl">{stat.value}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
         {/* Filters */}
-        <section className="-mt-14 rounded-[2rem] border border-white bg-white/95 p-5 shadow-xl shadow-slate-200/70 backdrop-blur">
+        <section className="-mt-14 rounded-[2rem] border border-white bg-white/95 p-4 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={() => setViewMode("BY_DATE")} className={`rounded-2xl px-5 py-3 text-sm font-black transition ${viewMode === "BY_DATE" ? "bg-slate-950 text-white shadow-lg shadow-slate-300" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
@@ -790,7 +815,7 @@ export default function AppointmentsPage() {
         <section>
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-black text-slate-950">
+              <h2 className="text-xl font-black text-slate-950 sm:text-2xl">
                 {viewMode === "BY_DATE" ? t("list.titleByDate", { date: selectedDate }) : t("list.titleAll")}
               </h2>
               <p className="mt-1 text-sm font-semibold text-slate-500">{t("list.sortedByTime")}</p>
@@ -805,14 +830,14 @@ export default function AppointmentsPage() {
               <DentalLoader fullScreen={false} text={t("list.loading")} />
             </div>
           ) : currentError ? (
-            <div className="rounded-[2rem] border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
+            <div className="rounded-[2rem] border border-red-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-black text-red-600">!</div>
               <p className="text-lg font-black text-slate-900">{t("list.errorTitle")}</p>
               <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">{getApiErrorMessage(currentErrorObject, t("list.errorFallback"))}</p>
               <button type="button" onClick={refreshCurrent} className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700">{t("list.tryAgain")}</button>
             </div>
           ) : filteredAppointments.length === 0 ? (
-            <div className="rounded-[2rem] border border-white bg-white px-6 py-20 text-center shadow-sm">
+            <div className="rounded-[2rem] border border-white bg-white px-4 py-20 text-center shadow-sm sm:px-6">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                 <Calendar className="h-8 w-8" />
               </div>
@@ -826,7 +851,60 @@ export default function AppointmentsPage() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-[2rem] border border-white bg-white shadow-sm">
-              <div className="overflow-x-auto">
+              {/* Mobile card list */}
+              <div className="divide-y divide-slate-100 md:hidden">
+                {paginatedAppointments.map((appointment, index) => {
+                  const appointmentId = getAppointmentId(appointment);
+                  const currentStatus = ((appointment as any).status as AppointmentStatus) || AppointmentStatus.SCHEDULED;
+                  return (
+                    <div key={appointmentId || index} className="flex flex-col gap-3 px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={(appointment as any).patientName} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-black text-slate-950">{(appointment as any).patientName}</p>
+                          <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-semibold text-slate-500">
+                            <UserRound className="h-3 w-3 shrink-0 text-blue-600" />
+                            {(appointment as any).doctorName}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-600">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                          {appointment.appointmentDate}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-blue-600" />
+                          {formatTime(appointment.startTime)}
+                          {(appointment as any).endTime ? ` - ${formatTime((appointment as any).endTime)}` : ""}
+                        </span>
+                      </div>
+
+                      {appointment.notes && (
+                        <p className="truncate text-xs font-medium text-slate-500">{appointment.notes}</p>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={currentStatus}
+                          disabled={changingStatusId === appointmentId}
+                          onChange={(e) => handleStatusChange(appointment, e.target.value as AppointmentStatus)}
+                          className={`flex-1 rounded-xl border px-3 py-2 text-xs font-black outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(currentStatus)}`}
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>{getStatusLabel(status, t)}</option>
+                          ))}
+                        </select>
+                        {renderAppointmentActionButtons(appointment)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full border-collapse text-left">
                   <thead className="bg-slate-50">
                     <tr>
@@ -909,21 +987,8 @@ export default function AppointmentsPage() {
                           </td>
 
                           <td className="px-5 py-4 align-middle">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openEditModal(appointment)}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
-                              >
-                                <Edit2 className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(appointment)}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-700 transition hover:bg-red-100"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              {renderAppointmentActionButtons(appointment)}
                             </div>
                           </td>
                         </tr>

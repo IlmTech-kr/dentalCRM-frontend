@@ -4,6 +4,7 @@ import {
   Bell,
   ChevronDown,
   LogOut,
+  Menu,
   Search,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,7 +18,7 @@ import { useAuthStore } from "@/src/store/auth.store";
 import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const t = useTranslations("layout");
   const tCommon = useTranslations("common");
 
@@ -86,18 +87,28 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border-color bg-white/80 px-8 backdrop-blur">
-        <div>
-          <h2 className="text-2xl font-extrabold text-dark-navy">
-            {t("header.dashboardTitle")}
-          </h2>
+      <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white/80 px-4 backdrop-blur sm:h-20 sm:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border-color text-slate-600 transition hover:bg-slate-50 lg:hidden"
+          >
+            <Menu size={20} />
+          </button>
 
-          <p className="text-sm text-text-light">
-            {t("header.welcomeSubtitle")}
-          </p>
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-extrabold text-dark-navy sm:text-2xl">
+              {t("header.dashboardTitle")}
+            </h2>
+
+            <p className="hidden text-sm text-text-light sm:block">
+              {t("header.welcomeSubtitle")}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="hidden h-11 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4 md:flex">
             <Search
               size={18}
@@ -114,7 +125,7 @@ export default function Header() {
 
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border-color bg-white transition hover:bg-slate-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border-color bg-white transition hover:bg-slate-50 sm:h-11 sm:w-11"
           >
             <Bell size={19} />
           </button>
@@ -125,7 +136,7 @@ export default function Header() {
               onClick={() =>
                 setDropdownOpen((previous) => !previous)
               }
-              className="flex h-11 items-center gap-2 rounded-2xl bg-white px-3 transition hover:bg-slate-50"
+              className="flex h-10 items-center gap-2 rounded-2xl bg-white px-2 transition hover:bg-slate-50 sm:h-11 sm:px-3"
             >
               <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-bold text-blue-600">
                 {avatarSrc ? (

@@ -747,7 +747,7 @@ function PatientInfoCard({
 }) {
   if (isLoading) {
     return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex items-center gap-4">
           <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-100" />
           <div className="flex-1 space-y-2.5">
@@ -767,7 +767,7 @@ function PatientInfoCard({
   const isActive = patient?.active !== false && patient?.status !== "INACTIVE";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#35a8f5]/[0.06]" />
 
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -2120,7 +2120,7 @@ export default function TreatmentPatientPage() {
     uploadXraysMutation.isPending;
 
   return (
-    <div className="space-y-6 bg-[#F7FAFC] pb-6">
+    <div className="space-y-5 bg-[#F7FAFC] pb-6 sm:space-y-6">
       <PatientInfoCard
         patient={patient as PatientInfo | undefined}
         isLoading={patientLoading}
@@ -2266,7 +2266,7 @@ export default function TreatmentPatientPage() {
             )}
           </div>
 
-          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-400">
@@ -2370,7 +2370,7 @@ export default function TreatmentPatientPage() {
 
       {activeTab === "COURSE" && (
         <div className="grid gap-5 xl:grid-cols-[390px_1fr]">
-          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="h-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-400">
@@ -2514,7 +2514,7 @@ export default function TreatmentPatientPage() {
             )}
           </div>
 
-          <div className="min-h-[420px] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="min-h-[420px] rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             {!selectedHistoryCourse ? (
               <div className="flex min-h-[380px] flex-col items-center justify-center text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-400">
@@ -2676,7 +2676,7 @@ export default function TreatmentPatientPage() {
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
             <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-5">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-4 sm:px-6 sm:py-5">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-950">
                     Davolash kursi yaratish
@@ -2694,7 +2694,7 @@ export default function TreatmentPatientPage() {
                 </button>
               </div>
 
-              <div className="max-h-[75vh] space-y-5 overflow-y-auto p-6">
+              <div className="max-h-[75vh] space-y-5 overflow-y-auto p-4 sm:p-6">
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-blue-900">
@@ -2769,7 +2769,7 @@ export default function TreatmentPatientPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 border-t border-slate-200 bg-slate-50/60 px-6 py-4">
+              <div className="flex gap-3 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:px-6">
                 <button
                   type="button"
                   onClick={() => setIsCreateCourseModalOpen(false)}
@@ -2800,7 +2800,7 @@ export default function TreatmentPatientPage() {
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
             <div className="my-8 w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-6 py-5 backdrop-blur">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-4 sm:px-6 sm:py-5 backdrop-blur">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-950">
                     Visit qo'shish
@@ -2824,7 +2824,7 @@ export default function TreatmentPatientPage() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <VisitForm
                   activeCourses={activeCourses}
                   selectedCourseId={selectedCourseId}

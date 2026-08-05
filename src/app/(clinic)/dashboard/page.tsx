@@ -110,14 +110,16 @@ function StatCard({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
-      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
+    <div className="group rounded-2xl border border-border-color bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5">
+      <div
+        className={`flex h-11 w-11 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105 ${color}`}
+      >
         <Icon size={22} className="text-white" />
       </div>
       {loading ? (
         <div className="mt-3 h-7 w-24 animate-pulse rounded-lg bg-slate-100" />
       ) : (
-        <p className="mt-3 text-2xl font-extrabold text-dark-navy">{value}</p>
+        <p className="mt-3 text-xl font-extrabold text-dark-navy sm:text-2xl">{value}</p>
       )}
       <p className="mt-1 text-sm text-text-light">{label}</p>
     </div>
@@ -447,18 +449,18 @@ export default function DashboardPage() {
   const doctorRevenueList = doctorRevenueData ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-dark-navy">{t("header.title")}</h1>
+        <h1 className="text-xl font-extrabold text-dark-navy sm:text-2xl">{t("header.title")}</h1>
         <p className="mt-1 text-sm text-text-light">
           {t("header.welcome", { name: user?.firstName ?? "", date: formatDisplayDate(new Date(), months) })}
         </p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={Users}
           label={t("stats.totalPatients")}
@@ -496,7 +498,7 @@ export default function DashboardPage() {
 
         {/* Revenue chart — faqat CLINIC_ADMIN/ADMIN */}
         {isStaffAdmin && (
-          <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <BarChart3 size={18} className="text-[#35a8f5]" />
@@ -577,7 +579,7 @@ export default function DashboardPage() {
         )}
 
         {/* Today appointments — hammaga */}
-        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={18} className="text-violet-500" />
@@ -635,7 +637,7 @@ export default function DashboardPage() {
 
       {/* Payroll Summary — faqat CLINIC_ADMIN/ADMIN */}
       {isStaffAdmin && (
-        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center gap-2">
             <Wallet size={18} className="text-emerald-500" />
             <h2 className="font-extrabold text-dark-navy">{t("payroll.title")}</h2>
@@ -750,7 +752,7 @@ export default function DashboardPage() {
 
       {/* Doctor Revenue Statistics — admin (barcha doctorlar) yoki doctor (o'ziniki) */}
       {(isStaffAdmin || isDoctorUser) && (
-        <div className="rounded-2xl border border-border-color bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center gap-2">
             <Percent size={18} className="text-amber-500" />
             <h2 className="font-extrabold text-dark-navy">

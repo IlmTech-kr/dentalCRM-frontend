@@ -71,9 +71,9 @@ export default function StatisticsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Filtrlar */}
-      <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-4 shadow-sm sm:p-6">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/10 via-violet-500/10 to-rose-400/10 blur-2xl" />
 
         <div className="relative flex flex-wrap items-end gap-3">
@@ -124,7 +124,7 @@ export default function StatisticsPage() {
       </div>
 
       {/* Statistik kartalar */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard
           icon={TrendingUp}
           label="Jami daromad"
@@ -136,7 +136,7 @@ export default function StatisticsPage() {
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-3xl border border-border-color bg-white shadow-sm">
-        <div className="border-b border-border-color px-6 py-4">
+        <div className="border-b border-border-color px-4 py-4 sm:px-6">
           <h2 className="text-base font-bold text-dark-navy">Klinikalar bo'yicha daromad</h2>
         </div>
 
@@ -153,6 +153,63 @@ export default function StatisticsPage() {
             Tanlangan davr uchun ma'lumot topilmadi.
           </p>
         ) : (
+          <>
+          {/* Mobile card list */}
+          <div className="divide-y divide-slate-100 md:hidden">
+            {rows.map((r, i) => {
+              const name = r.clinic?.name || r.tenantId;
+              const share = Math.round(((r.revenue || 0) / maxRevenue) * 100);
+
+              return (
+                <div key={r.tenantId} className="flex flex-col gap-3 px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    {i < 3 ? (
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold shadow-md ${RANK_STYLES[i]}`}
+                      >
+                        {i + 1}
+                      </span>
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-xs font-bold text-slate-400">
+                        {i + 1}
+                      </span>
+                    )}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-xs font-bold text-white">
+                      {initials(name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-dark-navy">{name}</p>
+                      {r.clinic?.subDomain && (
+                        <p className="truncate text-xs text-slate-400">{r.clinic.subDomain}</p>
+                      )}
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                        SUBSCRIPTION_STYLES[r.clinic?.subscriptionStatus || ""] ||
+                        "border-slate-200 bg-slate-50 text-slate-500"
+                      }`}
+                    >
+                      {r.clinic?.subscriptionStatus || "—"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-slate-500">Tranzaksiyalar: {r.transactionCount}</span>
+                    <span className="font-bold text-dark-navy">{formatMoney(r.revenue)} so‘m</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 transition-all"
+                      style={{ width: `${Math.max(share, 4)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border-color text-xs uppercase text-slate-400">
@@ -232,6 +289,8 @@ export default function StatisticsPage() {
               })}
             </tbody>
           </table>
+          </div>
+          </>
         )}
       </div>
     </div>
@@ -248,13 +307,13 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-3xl border border-border-color bg-white p-6 shadow-sm">
+    <div className="flex items-center gap-3 rounded-3xl border border-border-color bg-white p-4 shadow-sm sm:p-6">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-white">
         <Icon size={20} />
       </div>
       <div className="min-w-0">
         <p className="text-xs font-bold uppercase text-slate-400">{label}</p>
-        <p className="truncate text-xl font-extrabold text-dark-navy">{value}</p>
+        <p className="truncate text-lg font-extrabold text-dark-navy sm:text-xl">{value}</p>
       </div>
     </div>
   );

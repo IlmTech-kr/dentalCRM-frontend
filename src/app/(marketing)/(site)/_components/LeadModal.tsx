@@ -104,7 +104,7 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
           <X size={18} />
         </button>
 
-        <div className="px-8 py-7">
+        <div className="px-5 py-6 sm:px-8 sm:py-7">
           {formState === "success" ? (
             <div className="flex flex-col items-center py-6 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">

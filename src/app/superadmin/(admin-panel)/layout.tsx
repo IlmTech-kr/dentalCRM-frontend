@@ -27,6 +27,7 @@ export default function SuperAdminDashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!getStoredUser()) {
@@ -49,11 +50,11 @@ export default function SuperAdminDashboardLayout({
   return (
     <SessionGate ready={ready}>
       <div className="h-screen overflow-hidden bg-light-background">
-        <Sidebar />
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className="ml-64 flex h-screen flex-col">
-          <Header />
-          <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <div className="flex h-screen flex-col lg:ml-64">
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
         </div>
       </div>
     </SessionGate>

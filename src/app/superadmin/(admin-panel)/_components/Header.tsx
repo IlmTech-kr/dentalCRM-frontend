@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { clearAuthStorage, getStoredUser } from "@/src/lib/auth/storage";
 import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 
@@ -27,7 +27,7 @@ interface StoredSuperAdminUser {
   fullName?: string;
 }
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const t = useTranslations("layout");
   const tCommon = useTranslations("common");
 
@@ -47,16 +47,26 @@ export default function Header() {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-border-color bg-white px-8 py-5">
-      <div>
-        <h2 className="text-xl font-extrabold text-dark-navy">{meta.title}</h2>
-        {meta.subtitle && <p className="text-sm text-text-light">{meta.subtitle}</p>}
+    <header className="flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white px-4 py-5 sm:h-20 sm:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border-color text-slate-600 transition hover:bg-slate-50 lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-extrabold text-dark-navy sm:text-xl">{meta.title}</h2>
+          {meta.subtitle && <p className="hidden truncate text-sm text-text-light sm:block">{meta.subtitle}</p>}
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <LanguageSwitcher />
 
-        <div className="flex items-center gap-3 rounded-2xl border border-border-color px-3 py-2">
+        <div className="hidden items-center gap-3 rounded-2xl border border-border-color px-3 py-2 sm:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-xs font-bold text-white">
             {initial}
           </div>
@@ -65,10 +75,10 @@ export default function Header() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 rounded-xl border border-border-color px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+          className="flex items-center gap-2 rounded-xl border border-border-color px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 sm:px-4"
         >
           <LogOut size={16} />
-          {tCommon("actions.logout")}
+          <span className="hidden sm:inline">{tCommon("actions.logout")}</span>
         </button>
       </div>
     </header>

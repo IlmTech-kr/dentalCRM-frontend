@@ -145,10 +145,35 @@ export default function TreatmentsPage() {
     });
   }, [sortedAppointments, search]);
 
+  function renderQueueActionButton(patientId: string, appointmentId: string) {
+    const treatmentHref =
+      patientId && appointmentId
+        ? `/treatments/${patientId}?appointmentId=${appointmentId}`
+        : "#";
+
+    return patientId && appointmentId ? (
+      <Link
+        href={treatmentHref}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
+      >
+        {t("inProgress.open")}
+        <ArrowRight size={16} />
+      </Link>
+    ) : (
+      <button
+        type="button"
+        disabled
+        className="inline-flex cursor-not-allowed items-center justify-center rounded-2xl bg-slate-200 px-4 py-2.5 text-sm font-black text-slate-500"
+      >
+        {t("inProgress.noId")}
+      </button>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F7FAFC] p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-7 shadow-sm">
+    <div className="min-h-screen bg-[#F7FAFC] p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
+        <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100 blur-3xl" />
           <div className="absolute bottom-0 right-44 h-32 w-32 rounded-full bg-cyan-100 blur-3xl" />
 
@@ -159,7 +184,7 @@ export default function TreatmentsPage() {
                 {t("inProgress.badge")}
               </div>
 
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">
+              <h1 className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
                 {t("inProgress.title")}
               </h1>
 
@@ -182,8 +207,8 @@ export default function TreatmentsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-500">{t("inProgress.todayLabel")}</p>
               <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
@@ -191,10 +216,10 @@ export default function TreatmentsPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-2xl font-black text-slate-950">{today}</p>
+            <p className="mt-3 text-xl font-black text-slate-950 sm:text-2xl">{today}</p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-500">IN_PROGRESS</p>
               <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
@@ -202,12 +227,12 @@ export default function TreatmentsPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-2xl font-black text-emerald-600">
+            <p className="mt-3 text-xl font-black text-emerald-600 sm:text-2xl">
               {appointments.length}
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="col-span-2 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:col-span-1">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-500">{t("inProgress.visibleLabel")}</p>
               <div className="rounded-2xl bg-purple-50 p-3 text-purple-600">
@@ -215,16 +240,16 @@ export default function TreatmentsPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-2xl font-black text-slate-950">
+            <p className="mt-3 text-xl font-black text-slate-950 sm:text-2xl">
               {filteredAppointments.length}
             </p>
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h2 className="text-xl font-black text-slate-950">
+              <h2 className="text-lg font-black text-slate-950 sm:text-xl">
                 {t("inProgress.queueTitle")}
               </h2>
 
@@ -238,7 +263,7 @@ export default function TreatmentsPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("CARD")}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition ${
+                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition md:flex-none ${
                     viewMode === "CARD"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
@@ -251,7 +276,7 @@ export default function TreatmentsPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("LIST")}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition ${
+                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition md:flex-none ${
                     viewMode === "LIST"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
@@ -392,7 +417,7 @@ export default function TreatmentsPage() {
                         {patientId && appointmentId ? (
                           <Link
                             href={treatmentHref}
-                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:w-auto"
                           >
                             {t("inProgress.openTreatment")}
                             <ArrowRight size={18} />
@@ -401,7 +426,7 @@ export default function TreatmentsPage() {
                           <button
                             type="button"
                             disabled
-                            className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500"
+                            className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500 sm:w-auto"
                           >
                             {t("inProgress.noIds")}
                           </button>
@@ -413,7 +438,57 @@ export default function TreatmentsPage() {
               </div>
             ) : (
               <div className="overflow-hidden rounded-3xl border border-slate-200">
-                <div className="overflow-x-auto">
+                {/* Mobile card list */}
+                <div className="divide-y divide-slate-100 bg-white md:hidden">
+                  {filteredAppointments.map((appointment, index) => {
+                    const appointmentId = getId(appointment);
+                    const patientId = getPatientId(appointment);
+
+                    const patientName = getPersonName(
+                      appointment.patient,
+                      t("inProgress.unknownPatient")
+                    );
+
+                    return (
+                      <div key={appointmentId || patientId} className="flex flex-col gap-3 p-4">
+                        <div className="flex items-center gap-3">
+                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
+                            #{index + 1}
+                          </span>
+
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <UserRound size={20} />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-black text-slate-950">
+                              {patientName}
+                            </p>
+                            <p className="mt-0.5 flex items-center gap-1.5 text-xs font-black text-slate-500">
+                              <Clock3 size={14} className="text-blue-600" />
+                              {formatAppointmentTime(appointment)}
+                            </p>
+                          </div>
+
+                          <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 ring-1 ring-emerald-100">
+                            IN_PROGRESS
+                          </span>
+                        </div>
+
+                        <p className="truncate text-sm font-bold text-slate-700">
+                          {getReason(appointment, t("inProgress.defaultReason"))}
+                        </p>
+
+                        <div className="flex justify-end">
+                          {renderQueueActionButton(patientId, appointmentId)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[820px] border-collapse text-left">
                     <thead className="bg-slate-50">
                       <tr>
@@ -447,11 +522,6 @@ export default function TreatmentsPage() {
                           appointment.patient,
                           t("inProgress.unknownPatient")
                         );
-
-                        const treatmentHref =
-                          patientId && appointmentId
-                            ? `/treatments/${patientId}?appointmentId=${appointmentId}`
-                            : "#";
 
                         return (
                           <tr
@@ -498,23 +568,7 @@ export default function TreatmentsPage() {
                             </td>
 
                             <td className="px-5 py-4 text-right">
-                              {patientId && appointmentId ? (
-                                <Link
-                                  href={treatmentHref}
-                                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
-                                >
-                                  {t("inProgress.open")}
-                                  <ArrowRight size={16} />
-                                </Link>
-                              ) : (
-                                <button
-                                  type="button"
-                                  disabled
-                                  className="inline-flex cursor-not-allowed items-center justify-center rounded-2xl bg-slate-200 px-4 py-2.5 text-sm font-black text-slate-500"
-                                >
-                                  {t("inProgress.noId")}
-                                </button>
-                              )}
+                              {renderQueueActionButton(patientId, appointmentId)}
                             </td>
                           </tr>
                         );

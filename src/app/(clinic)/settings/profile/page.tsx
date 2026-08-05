@@ -73,12 +73,12 @@ function getInitials(
 
 function ProfileSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
         <div className="h-2 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
 
-        <div className="flex items-center gap-6 px-8 py-7">
-          <div className="h-14 w-14 animate-pulse rounded-2xl bg-slate-200" />
+        <div className="flex items-center gap-4 px-4 py-5 sm:gap-6 sm:px-8 sm:py-7">
+          <div className="h-12 w-12 shrink-0 animate-pulse rounded-2xl bg-slate-200 sm:h-14 sm:w-14" />
 
           <div className="space-y-2">
             <div className="h-6 w-40 animate-pulse rounded-lg bg-slate-200" />
@@ -88,7 +88,7 @@ function ProfileSkeleton() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-8">
         <div className="space-y-4">
           {[1, 2, 3, 4].map(
             (item) => (
@@ -517,13 +517,13 @@ export default function ProfilePage() {
     uploadMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
 
-        <div className="flex items-center gap-6 px-8 py-7">
+        <div className="flex items-center gap-4 px-4 py-5 sm:gap-6 sm:px-8 sm:py-7">
           <div className="relative shrink-0">
-            <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-600 shadow-md ring-4 ring-white">
+            <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-600 shadow-md ring-4 ring-white sm:h-20 sm:w-20">
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
@@ -531,7 +531,7 @@ export default function ProfilePage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-2xl font-black">
+                <span className="text-xl font-black sm:text-2xl">
                   {initials}
                 </span>
               )}
@@ -572,7 +572,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-3xl font-black text-slate-900">
+            <h1 className="truncate text-2xl font-black text-slate-900 sm:text-3xl">
               {displayName}
             </h1>
 
@@ -601,7 +601,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-8">
         <form
           onSubmit={handleSubmit}
           className="space-y-5"
@@ -701,7 +701,7 @@ export default function ProfilePage() {
               disabled={
                 isSaveDisabled
               }
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {updateMutation.isPending ? (
                 <>

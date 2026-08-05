@@ -286,7 +286,7 @@ function DayDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-color bg-gradient-to-r from-[#35a8f5]/10 to-violet-500/10 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border-color bg-gradient-to-r from-[#35a8f5]/10 to-violet-500/10 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#35a8f5] shadow-sm">
               <CalendarRange size={20} />
@@ -308,7 +308,7 @@ function DayDetailModal({
         </div>
 
         {/* Body */}
-        <div className="max-h-[calc(85vh-76px)] overflow-y-auto p-6">
+        <div className="max-h-[calc(85vh-76px)] overflow-y-auto p-4 sm:p-6">
           {appointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400">
               <CalendarRange size={32} className="opacity-30" />
@@ -522,16 +522,16 @@ export default function CalendarPage() {
     : [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
 
       {/* Header */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border-color bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#35a8f5] to-violet-500 text-white shadow-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#35a8f5] to-violet-500 text-white shadow-sm">
             <CalendarRange size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-dark-navy">{t("title")}</h1>
+            <h1 className="text-lg font-extrabold text-dark-navy sm:text-xl">{t("title")}</h1>
             <p className="text-sm text-text-light">
               {headerLabel}
               {isDoctorUser && (
@@ -631,7 +631,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-color bg-white px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border-color bg-white px-3 py-3 shadow-sm sm:gap-3 sm:px-4">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
           <Users size={14} /> {t("legendStatus")}
         </span>
@@ -654,139 +654,147 @@ export default function CalendarPage() {
       ) : view === "MONTH" ? (
         // ====== MONTH VIEW ======
         <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
-          <div className="grid grid-cols-7 border-b border-border-color bg-slate-50">
-            {weekdayLabels.map((label) => (
-              <div key={label} className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-500">
-                {label}
+          <div className="overflow-x-auto">
+            <div className="min-w-[700px]">
+              <div className="grid grid-cols-7 border-b border-border-color bg-slate-50">
+                {weekdayLabels.map((label) => (
+                  <div key={label} className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-500">
+                    {label}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="grid grid-cols-7">
-            {monthMatrix.flat().map((date, idx) => {
-              const inCurrentMonth = date.getMonth() === anchorDate.getMonth();
-              const isHighlighted = isSameDay(date, highlightDate);
-              const dayAppointments = appointmentsByDate.get(toYMD(date)) || [];
+              <div className="grid grid-cols-7">
+                {monthMatrix.flat().map((date, idx) => {
+                  const inCurrentMonth = date.getMonth() === anchorDate.getMonth();
+                  const isHighlighted = isSameDay(date, highlightDate);
+                  const dayAppointments = appointmentsByDate.get(toYMD(date)) || [];
 
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => openDay(date)}
-                  className={`relative min-h-[130px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-blue-50/40 ${
-                    inCurrentMonth ? "bg-white" : "bg-slate-50/60"
-                  }`}
-                  style={isHighlighted ? { boxShadow: `inset 0 0 0 2px ${TODAY_RING_COLOR}`, zIndex: 10 } : undefined}
-                >
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                        isHighlighted
-                          ? "bg-[#35a8f5] text-white"
-                          : inCurrentMonth
-                            ? "text-dark-navy"
-                            : "text-slate-300"
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => openDay(date)}
+                      className={`relative min-h-[110px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-blue-50/40 sm:min-h-[130px] ${
+                        inCurrentMonth ? "bg-white" : "bg-slate-50/60"
                       }`}
+                      style={isHighlighted ? { boxShadow: `inset 0 0 0 2px ${TODAY_RING_COLOR}`, zIndex: 10 } : undefined}
                     >
-                      {date.getDate()}
-                    </span>
-                    {dayAppointments.length > 0 && (
-                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
-                        {dayAppointments.length}
-                      </span>
-                    )}
-                  </div>
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span
+                          className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                            isHighlighted
+                              ? "bg-[#35a8f5] text-white"
+                              : inCurrentMonth
+                                ? "text-dark-navy"
+                                : "text-slate-300"
+                          }`}
+                        >
+                          {date.getDate()}
+                        </span>
+                        {dayAppointments.length > 0 && (
+                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                            {dayAppointments.length}
+                          </span>
+                        )}
+                      </div>
 
-                  <div className="max-h-[92px] space-y-1 overflow-y-auto pr-0.5">
-                    {dayAppointments.map((apt) => (
-                      <MonthEventChip key={apt.id} apt={apt} doctorName={resolveDoctorName(apt)} />
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
+                      <div className="max-h-[92px] space-y-1 overflow-y-auto pr-0.5">
+                        {dayAppointments.map((apt) => (
+                          <MonthEventChip key={apt.id} apt={apt} doctorName={resolveDoctorName(apt)} />
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       ) : (
         // ====== WEEK VIEW ======
         <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
-          {/* Day headers */}
-          <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-border-color bg-slate-50">
-            <div />
-            {weekDays.map((date) => {
-              const isHighlighted = isSameDay(date, highlightDate);
-              return (
-                <button
-                  key={date.toISOString()}
-                  type="button"
-                  onClick={() => openDay(date)}
-                  className={`border-l border-border-color px-2 py-2.5 text-center transition hover:bg-blue-50/40 ${
-                    isHighlighted ? "bg-[#35a8f5]/5" : ""
-                  }`}
-                  style={isHighlighted ? { boxShadow: `inset 0 -2px 0 0 ${TODAY_RING_COLOR}` } : undefined}
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                    {weekdayLabels[(date.getDay() + 6) % 7]}
-                  </p>
-                  <p
-                    className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-extrabold ${
-                      isHighlighted ? "bg-[#35a8f5] text-white" : "text-dark-navy"
-                    }`}
-                  >
-                    {date.getDate()}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+              {/* Day headers */}
+              <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-border-color bg-slate-50">
+                <div />
+                {weekDays.map((date) => {
+                  const isHighlighted = isSameDay(date, highlightDate);
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      type="button"
+                      onClick={() => openDay(date)}
+                      className={`border-l border-border-color px-2 py-2.5 text-center transition hover:bg-blue-50/40 ${
+                        isHighlighted ? "bg-[#35a8f5]/5" : ""
+                      }`}
+                      style={isHighlighted ? { boxShadow: `inset 0 -2px 0 0 ${TODAY_RING_COLOR}` } : undefined}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        {weekdayLabels[(date.getDay() + 6) % 7]}
+                      </p>
+                      <p
+                        className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-extrabold ${
+                          isHighlighted ? "bg-[#35a8f5] text-white" : "text-dark-navy"
+                        }`}
+                      >
+                        {date.getDate()}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {/* Time grid */}
-          <div className="grid grid-cols-[56px_repeat(7,1fr)] overflow-x-auto">
-            {/* Hour labels */}
-            <div className="relative">
-              {hours.map((h) => (
-                <div
-                  key={h}
-                  className="flex items-start justify-end border-r border-border-color pr-2 text-[10px] font-semibold text-slate-400"
-                  style={{ height: HOUR_HEIGHT }}
-                >
-                  {padZ(h)}:00
-                </div>
-              ))}
-            </div>
-
-            {/* Day columns */}
-            {weekDays.map((date) => {
-              const dayAppointments = appointmentsByDate.get(toYMD(date)) || [];
-              const isHighlighted = isSameDay(date, highlightDate);
-              return (
-                <div
-                  key={date.toISOString()}
-                  className={`relative border-l border-border-color ${isHighlighted ? "bg-[#35a8f5]/5" : ""}`}
-                  style={{
-                    height: HOUR_HEIGHT * hours.length,
-                    ...(isHighlighted ? { boxShadow: `inset 2px 0 0 0 ${TODAY_RING_COLOR}, inset -2px 0 0 0 ${TODAY_RING_COLOR}` } : {}),
-                  }}
-                >
+              {/* Time grid */}
+              <div className="grid grid-cols-[56px_repeat(7,1fr)]">
+                {/* Hour labels */}
+                <div className="relative">
                   {hours.map((h) => (
                     <div
                       key={h}
-                      className="border-b border-dashed border-slate-100"
+                      className="flex items-start justify-end border-r border-border-color pr-2 text-[10px] font-semibold text-slate-400"
                       style={{ height: HOUR_HEIGHT }}
-                    />
-                  ))}
-
-                  {dayAppointments.map((apt) => (
-                    <WeekEventBlock
-                      key={apt.id}
-                      apt={apt}
-                      doctorName={resolveDoctorName(apt)}
-                      onClick={() => openDay(date)}
-                    />
+                    >
+                      {padZ(h)}:00
+                    </div>
                   ))}
                 </div>
-              );
-            })}
+
+                {/* Day columns */}
+                {weekDays.map((date) => {
+                  const dayAppointments = appointmentsByDate.get(toYMD(date)) || [];
+                  const isHighlighted = isSameDay(date, highlightDate);
+                  return (
+                    <div
+                      key={date.toISOString()}
+                      className={`relative border-l border-border-color ${isHighlighted ? "bg-[#35a8f5]/5" : ""}`}
+                      style={{
+                        height: HOUR_HEIGHT * hours.length,
+                        ...(isHighlighted ? { boxShadow: `inset 2px 0 0 0 ${TODAY_RING_COLOR}, inset -2px 0 0 0 ${TODAY_RING_COLOR}` } : {}),
+                      }}
+                    >
+                      {hours.map((h) => (
+                        <div
+                          key={h}
+                          className="border-b border-dashed border-slate-100"
+                          style={{ height: HOUR_HEIGHT }}
+                        />
+                      ))}
+
+                      {dayAppointments.map((apt) => (
+                        <WeekEventBlock
+                          key={apt.id}
+                          apt={apt}
+                          doctorName={resolveDoctorName(apt)}
+                          onClick={() => openDay(date)}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}

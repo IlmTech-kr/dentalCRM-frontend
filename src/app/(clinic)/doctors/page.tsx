@@ -716,6 +716,33 @@ export default function DoctorsPage() {
   }
 
   // ---------------------------------------------------------------------------
+  // Shared row/card action buttons
+  // ---------------------------------------------------------------------------
+
+  function renderDoctorActionButtons(doctor: Doctor) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => handleOpenEditModal(doctor)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+        >
+          {t("actions.edit")}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleDeleteDoctor(doctor)}
+          disabled={deleteDoctorMutation.isPending}
+          className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {t("actions.delete")}
+        </button>
+      </>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
@@ -725,10 +752,10 @@ export default function DoctorsPage() {
     statusFilter !== "ALL";
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-4 sm:p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
             {t("page.title")}
           </h1>
 
@@ -749,7 +776,7 @@ export default function DoctorsPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-200 p-5">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-4 sm:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
@@ -758,7 +785,7 @@ export default function DoctorsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="w-full sm:w-56">
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
                 {t("list.roleLabel")}
@@ -853,167 +880,210 @@ export default function DoctorsPage() {
               {t("list.tryAgain")}
             </button>
           </div>
+        ) : isLoading ? (
+          <div className="px-5 py-10 text-center text-sm text-slate-500">
+            <DentalLoader fullScreen={false} text={t("list.loading")} />
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t("table.staff")}
-                  </th>
+          <>
+            {/* Mobile card list */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {filteredDoctors.length === 0 ? (
+                <div className="px-5 py-10 text-center text-sm text-slate-500">
+                  {hasActiveFilters
+                    ? t("list.emptyFiltered")
+                    : t("list.emptyNoStaff")}
+                </div>
+              ) : (
+                filteredDoctors.map((doctor) => (
+                  <div
+                    key={getDoctorId(doctor)}
+                    className="flex flex-col gap-3 px-4 py-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <DoctorAvatar doctor={doctor} />
 
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t("table.email")}
-                  </th>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-slate-900">
+                          {doctor.firstName || "-"}{" "}
+                          {doctor.lastName || ""}
+                        </p>
+                        <p className="truncate text-sm text-slate-500">
+                          {doctor.email || "-"}
+                        </p>
+                      </div>
 
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t("table.phone")}
-                  </th>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                          doctor.status
+                        )}`}
+                      >
+                        {doctor.status}
+                      </span>
+                    </div>
 
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t("table.role")}
-                  </th>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span>
+                        {t("table.phone")}:{" "}
+                        {doctor.phoneNumber || doctor.phone || "-"}
+                      </span>
+                    </div>
 
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t("table.status")}
-                  </th>
+                    <div className="flex flex-wrap gap-2">
+                      {doctor.roles?.length ? (
+                        doctor.roles.map((role) => (
+                          <span
+                            key={role}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
+                              role
+                            )}`}
+                          >
+                            {role}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
+                    </div>
 
-                  {isStaffAdmin && (
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {t("table.actions")}
+                    {isStaffAdmin && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {renderDoctorActionButtons(doctor)}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full border-collapse text-left">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("table.staff")}
                     </th>
-                  )}
-                </tr>
-              </thead>
 
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td
-                      colSpan={tableColSpan}
-                      className="px-5 py-10 text-center text-sm text-slate-500"
-                    >
-                      <DentalLoader fullScreen={false} text={t("list.loading")} />
-                    </td>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("table.email")}
+                    </th>
+
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("table.phone")}
+                    </th>
+
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("table.role")}
+                    </th>
+
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("table.status")}
+                    </th>
+
+                    {isStaffAdmin && (
+                      <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t("table.actions")}
+                      </th>
+                    )}
                   </tr>
-                ) : filteredDoctors.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={tableColSpan}
-                      className="px-5 py-10 text-center text-sm text-slate-500"
-                    >
-                      {hasActiveFilters
-                        ? t("list.emptyFiltered")
-                        : t("list.emptyNoStaff")}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDoctors.map((doctor) => (
-                    <tr
-                      key={getDoctorId(doctor)}
-                      className="border-t border-slate-100 transition hover:bg-slate-50"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <DoctorAvatar
-                            doctor={doctor}
-                          />
+                </thead>
 
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-slate-900">
-                              {doctor.firstName || "-"}{" "}
-                              {doctor.lastName || ""}
-                            </p>
-                          </div>
-                        </div>
+                <tbody>
+                  {filteredDoctors.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={tableColSpan}
+                        className="px-5 py-10 text-center text-sm text-slate-500"
+                      >
+                        {hasActiveFilters
+                          ? t("list.emptyFiltered")
+                          : t("list.emptyNoStaff")}
                       </td>
-
-                      <td className="px-5 py-4 text-sm text-slate-600">
-                        {doctor.email || "-"}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm text-slate-600">
-                        {doctor.phoneNumber ||
-                          doctor.phone ||
-                          "-"}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {doctor.roles?.length ? (
-                            doctor.roles.map((role) => (
-                              <span
-                                key={role}
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
-                                  role
-                                )}`}
-                              >
-                                {role}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-sm text-slate-400">
-                              -
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
-                            doctor.status
-                          )}`}
-                        >
-                          {doctor.status}
-                        </span>
-                      </td>
-
-                      {isStaffAdmin && (
+                    </tr>
+                  ) : (
+                    filteredDoctors.map((doctor) => (
+                      <tr
+                        key={getDoctorId(doctor)}
+                        className="border-t border-slate-100 transition hover:bg-slate-50"
+                      >
                         <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleOpenEditModal(
-                                  doctor
-                                )
-                              }
-                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
-                            >
-                              {t("actions.edit")}
-                            </button>
+                          <div className="flex items-center gap-3">
+                            <DoctorAvatar
+                              doctor={doctor}
+                            />
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleDeleteDoctor(
-                                  doctor
-                                )
-                              }
-                              disabled={
-                                deleteDoctorMutation.isPending
-                              }
-                              className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {t("actions.delete")}
-                            </button>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-slate-900">
+                                {doctor.firstName || "-"}{" "}
+                                {doctor.lastName || ""}
+                              </p>
+                            </div>
                           </div>
                         </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+
+                        <td className="px-5 py-4 text-sm text-slate-600">
+                          {doctor.email || "-"}
+                        </td>
+
+                        <td className="px-5 py-4 text-sm text-slate-600">
+                          {doctor.phoneNumber ||
+                            doctor.phone ||
+                            "-"}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            {doctor.roles?.length ? (
+                              doctor.roles.map((role) => (
+                                <span
+                                  key={role}
+                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeClass(
+                                    role
+                                  )}`}
+                                >
+                                  {role}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm text-slate-400">
+                                -
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                              doctor.status
+                            )}`}
+                          >
+                            {doctor.status}
+                          </span>
+                        </td>
+
+                        {isStaffAdmin && (
+                          <td className="px-5 py-4">
+                            <div className="flex justify-end gap-2">
+                              {renderDoctorActionButtons(doctor)}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* Invite Modal */}
       {isInviteModalOpen && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl sm:p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
@@ -1193,7 +1263,7 @@ export default function DoctorsPage() {
       {/* Edit Modal */}
       {selectedDoctor && isStaffAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl sm:p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">

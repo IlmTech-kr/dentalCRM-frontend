@@ -155,24 +155,24 @@ export default function ChangePasswordPage() {
   const canSubmit = form.currentPassword && form.newPassword && form.confirmPassword && !changePasswordMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header card */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
 
-        <div className="flex items-center gap-5 px-8 py-6">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+        <div className="flex items-center gap-4 px-4 py-5 sm:gap-5 sm:px-8 sm:py-6">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 sm:h-14 sm:w-14">
             <ShieldCheck size={28} />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">{t("header.title")}</h1>
+            <h1 className="text-xl font-black text-slate-900 sm:text-2xl">{t("header.title")}</h1>
             <p className="mt-0.5 text-sm text-slate-500">{t("header.subtitle")}</p>
           </div>
         </div>
       </div>
 
       {/* Form card */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           <PasswordField
             label={t("fields.currentPassword")}
@@ -255,7 +255,7 @@ export default function ChangePasswordPage() {
       </div>
 
       {/* Security tip */}
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4 sm:px-5">
         <p className="text-sm text-blue-700">
           <span className="font-bold">{t("tip.label")}</span> {t("tip.text")}
         </p>

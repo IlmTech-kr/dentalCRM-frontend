@@ -110,8 +110,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="grid h-screen grid-cols-1 overflow-hidden bg-[#eef7ff] lg:grid-cols-2">
-      <section className="relative hidden h-screen overflow-hidden bg-[#3498db] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+    <main className="grid min-h-screen grid-cols-1 bg-[#eef7ff] lg:grid-cols-2">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#3498db] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -left-20 top-20 h-80 w-80 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 right-10 h-96 w-96 rounded-full bg-white/10" />
 
@@ -139,12 +139,12 @@ export default function RegisterPage() {
         </p>
       </section>
 
-      <section className="flex h-screen items-center justify-center overflow-hidden px-6 py-4">
+      <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 sm:py-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-[470px] rounded-[26px] border border-[#d7e8f7] bg-white px-7 py-4 shadow-xl shadow-slate-300/30"
+          className="w-full max-w-md rounded-2xl border border-[#d7e8f7] bg-white px-5 py-6 shadow-xl shadow-slate-300/30 sm:rounded-[26px] sm:px-7 sm:py-4"
         >
-          <h2 className="text-[28px] font-bold text-[#0f2f4f]">
+          <h2 className="text-2xl font-bold text-[#0f2f4f] sm:text-[28px]">
             {t("register.title")}
           </h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -251,8 +251,8 @@ export default function RegisterPage() {
               <label className="mb-1 block text-sm font-semibold text-slate-600">
                 {t("register.subdomainLabel")}
               </label>
-              <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
-                <Building2 size={18} className="text-slate-400" />
+              <div className="flex h-11 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
+                <Building2 size={18} className="shrink-0 text-slate-400" />
                 <input
                   className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
                   placeholder={t("register.subdomainPlaceholder")}
@@ -283,7 +283,7 @@ export default function RegisterPage() {
                 !form.subDomain ||
                 !passwordsMatch
               }
-              className="mt-1 h-10 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-1 h-11 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {registerMutation.isPending ? t("register.submitting") : t("register.submitButton")}
             </button>
@@ -325,8 +325,8 @@ function Input({
       <label className="mb-1 block text-sm font-semibold text-slate-600">
         {label}
       </label>
-      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
-        <span className="text-slate-400">{icon}</span>
+      <div className="flex h-11 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
+        <span className="shrink-0 text-slate-400">{icon}</span>
         <input
           type={type}
           inputMode={inputMode}
@@ -363,8 +363,8 @@ function PasswordInput({
       <label className="mb-1 block text-sm font-semibold text-slate-600">
         {label}
       </label>
-      <div className="flex h-10 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
-        <Lock size={18} className="text-slate-400" />
+      <div className="flex h-11 items-center gap-3 rounded-xl border border-[#d7e8f7] bg-slate-50 px-4">
+        <Lock size={18} className="shrink-0 text-slate-400" />
         <input
           type={show ? "text" : "password"}
           className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
@@ -377,7 +377,7 @@ function PasswordInput({
           type="button"
           onClick={onToggle}
           disabled={disabled}
-          className="text-slate-400 transition hover:text-[#35a8f5] disabled:opacity-50"
+          className="shrink-0 text-slate-400 transition hover:text-[#35a8f5] disabled:opacity-50"
         >
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

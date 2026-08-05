@@ -189,7 +189,7 @@ function DoctorCard({
   const uniqueActiveDays = [...new Set(activeDays.map((s) => s.dayOfWeek))];
 
   return (
-    <div className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div className="flex flex-col rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
       <div className="mb-4 flex items-center gap-3">
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${bg} ${text}`}
@@ -318,7 +318,7 @@ function WeeklyCalendar({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={onEditSchedule}
@@ -525,10 +525,10 @@ function WeekEditorModal({
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
       <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
+        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-4 py-6 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">
+              <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                 {hasExistingSchedule ? t("modal.editTitle") : t("modal.createTitle")}
               </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
@@ -547,7 +547,7 @@ function WeekEditorModal({
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
+        <form onSubmit={onSubmit} className="space-y-6 px-4 py-7 sm:px-6">
           <div>
             <label className="mb-3 block text-sm font-bold text-slate-900">
               {t("modal.doctorLabel")} <span className="text-red-500">*</span>
@@ -1058,25 +1058,25 @@ export default function DoctorSchedulePage() {
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50">
       <div className="relative top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-6 py-5">
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">{t("headerTitle")}</h1>
+                <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">{t("headerTitle")}</h1>
                 <p className="text-sm font-medium text-slate-500">
                   {t("headerSubtitle")}
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:flex-none"
               >
                 <RefreshCcw className="h-4 w-4" />
                 {t("refresh")}
@@ -1084,7 +1084,7 @@ export default function DoctorSchedulePage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 sm:flex-none"
               >
                 <Plus className="h-4 w-4" />
                 {t("addSchedule")}
@@ -1111,11 +1111,11 @@ export default function DoctorSchedulePage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {isDataLoading ? (
           <DentalLoader fullScreen={false} text={t("loading")} />
         ) : isError ? (
-          <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
+          <div className="rounded-3xl border border-red-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">!</div>
             <p className="text-lg font-extrabold text-slate-900">{t("loadErrorTitle")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
@@ -1139,21 +1139,21 @@ export default function DoctorSchedulePage() {
           />
         ) : (
           <>
-            <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {[
                 { label: t("statTotalActive"), value: enrichedSchedules.filter((s) => s.active).length, color: "text-slate-900" },
                 { label: t("statDoctorsWithSchedule"), value: doctorGroups.length, color: "text-emerald-600" },
                 { label: t("statDoctors"), value: doctors.length, color: "text-blue-600" },
                 { label: t("statSelectedDay"), value: selectedDay === "ALL" ? t("all") : getDayShort(selectedDay), color: "text-indigo-600" },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                <div key={stat.label} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
                   <p className="text-sm font-bold text-slate-500">{stat.label}</p>
-                  <p className={`mt-3 text-3xl font-extrabold ${stat.color}`}>{stat.value}</p>
+                  <p className={`mt-3 text-2xl font-extrabold sm:text-3xl ${stat.color}`}>{stat.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mb-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="mb-8 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative w-full lg:max-w-md">
                   <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -1195,7 +1195,7 @@ export default function DoctorSchedulePage() {
             </div>
 
             {doctorGroups.length === 0 ? (
-              <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center shadow-sm">
+              <div className="rounded-3xl border border-slate-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6 sm:py-20">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
                   <CalendarDays className="h-7 w-7" />
                 </div>
@@ -1213,7 +1213,7 @@ export default function DoctorSchedulePage() {
                 </button>
               </div>
             ) : filteredDoctorGroups.length === 0 ? (
-              <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center shadow-sm">
+              <div className="rounded-3xl border border-slate-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6 sm:py-20">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
                   <Search className="h-7 w-7" />
                 </div>

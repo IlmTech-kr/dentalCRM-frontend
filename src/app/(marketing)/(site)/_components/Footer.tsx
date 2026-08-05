@@ -74,13 +74,13 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
   return (
     <footer id="contact" className="bg-[#07105f]">
       <div className="border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
           <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
             <div>
-              <h3 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h3 className="text-xl font-bold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 {t("footer.ctaTitle")}
               </h3>
-              <p className="mt-2 max-w-2xl text-sky-100/75">
+              <p className="mt-2 max-w-2xl text-sm text-sky-100/75 sm:text-base">
                 {t("footer.ctaSubtitle")}
               </p>
             </div>
@@ -88,7 +88,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
             <button
               type="button"
               onClick={onDemoClick}
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-violet-500 to-rose-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition-all hover:scale-[1.02]"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-violet-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition-all hover:scale-[1.02] sm:w-auto sm:px-7 sm:py-3.5 sm:text-base"
             >
               {t("footer.ctaButton")}
               <ArrowRight className="h-4 w-4" />
@@ -97,8 +97,8 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 sm:gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>
             <BrandLogo dark />
 
@@ -185,7 +185,7 @@ export default function Footer({ onDemoClick }: FooterProps = {}) {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-center sm:flex-row sm:text-left lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 text-center sm:flex-row sm:px-6 sm:text-left lg:px-8">
           <p className="text-sm text-sky-100/50">
             {t("footer.copyright", { year: new Date().getFullYear(), brand: BRAND })}
           </p>

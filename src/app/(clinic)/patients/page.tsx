@@ -354,14 +354,66 @@ const filteredPatients = useMemo(() => {
   }
 
   // ---------------------------------------------------------------------------
+  // Shared row/card action buttons
+  // ---------------------------------------------------------------------------
+
+  function renderPatientActionButtons(patient: Patient) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => { setSelectedPatient(patient); setModalState("view"); }}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
+          title={tCommon("actions.view")}
+        >
+          <Eye size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => goToTreatment(patient)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+          title={t("actions.startTreatment")}
+        >
+          <Play size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => openAppointmentModal(patient)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+          title={t("actions.createAppointment")}
+        >
+          <Plus size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => openEditModal(patient)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          title={tCommon("actions.edit")}
+        >
+          <Pencil size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete(patient.id)}
+          disabled={deleteMutation.isPending}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+          title={tCommon("actions.delete")}
+        >
+          <Trash2 size={16} />
+        </button>
+      </>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-dark-navy">{t("list.title")}</h1>
+          <h1 className="text-2xl font-bold text-dark-navy sm:text-3xl">{t("list.title")}</h1>
           <p className="mt-1 text-text-light">{t("list.subtitle")}</p>
         </div>
         <button
@@ -375,7 +427,7 @@ const filteredPatients = useMemo(() => {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border-color bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-border-color px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 border-b border-border-color px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-dark-navy">{t("list.sectionTitle")}</h2>
             <span className="rounded-full bg-[#35a8f5]/10 px-3 py-1 text-sm font-medium text-[#35a8f5]">
@@ -412,7 +464,49 @@ const filteredPatients = useMemo(() => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card list */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {paginatedPatients.length > 0 ? (
+                paginatedPatients.map((patient) => (
+                  <div key={patient.id} className="flex flex-col gap-3 px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#35a8f5]/10 font-bold text-[#35a8f5]">
+                        {patient.firstName?.[0]}{patient.lastName?.[0]}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-dark-navy">
+                          {patient.firstName} {patient.lastName}
+                        </p>
+                        <p className="text-sm text-slate-500">{getPatientPhone(patient)}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getGenderBadgeClass(patient.gender)}`}>
+                        {getGenderLabel(patient.gender, t)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span>{t("table.birthDate")}: {patient.birthDate || "-"}</span>
+                    </div>
+                    {patient.anamnesis && (
+                      <p className="truncate text-xs text-slate-500">
+                        {t("table.anamnesis")}: {patient.anamnesis}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {renderPatientActionButtons(patient)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-6 py-12 text-center text-slate-500">
+                  {tableSearch ? t("list.emptyNoResults") : t("list.emptyNoPatients")}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
@@ -458,47 +552,7 @@ const filteredPatients = useMemo(() => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => { setSelectedPatient(patient); setModalState("view"); }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
-                              title={tCommon("actions.view")}
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => goToTreatment(patient)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                              title={t("actions.startTreatment")}
-                            >
-                              <Play size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openAppointmentModal(patient)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
-                              title={t("actions.createAppointment")}
-                            >
-                              <Plus size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(patient)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                              title={tCommon("actions.edit")}
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(patient.id)}
-                              disabled={deleteMutation.isPending}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
-                              title={tCommon("actions.delete")}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            {renderPatientActionButtons(patient)}
                           </div>
                         </td>
                       </tr>
@@ -518,7 +572,7 @@ const filteredPatients = useMemo(() => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-border-color px-6 py-4">
+              <div className="flex flex-col items-center gap-3 border-t border-border-color px-4 py-4 sm:flex-row sm:justify-between sm:px-6">
                 {/* Left: counter */}
                 <p className="text-sm text-text-light">
                   {t.rich("list.paginationSummary", {
@@ -530,7 +584,7 @@ const filteredPatients = useMemo(() => {
                 </p>
 
                 {/* Right: pagination */}
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center justify-center gap-1">
                   <button
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -591,14 +645,14 @@ const filteredPatients = useMemo(() => {
       {modalState === "phone-search" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
               <h2 className="text-xl font-bold text-dark-navy">{t("phoneSearchModal.title")}</h2>
               <button type="button" onClick={closeModal} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-4 p-4 sm:p-6">
               {phoneSearchResult ? (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
@@ -716,7 +770,7 @@ const filteredPatients = useMemo(() => {
       {modalState === "appointment" && selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
               <div>
                 <h2 className="text-xl font-bold text-dark-navy">{t("appointmentModal.title")}</h2>
                 <p className="mt-1 text-sm text-text-light">
@@ -728,7 +782,7 @@ const filteredPatients = useMemo(() => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateAppointment} className="space-y-4 p-6">
+            <form onSubmit={handleCreateAppointment} className="space-y-4 p-4 sm:p-6">
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <p className="text-xs font-medium uppercase text-[#35a8f5]">{t("appointmentModal.patientLabel")}</p>
                 <p className="mt-1 font-semibold text-dark-navy">{selectedPatient.firstName} {selectedPatient.lastName}</p>
@@ -819,7 +873,7 @@ const filteredPatients = useMemo(() => {
       {modalState === "form" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-border-color px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
               <h2 className="text-xl font-bold text-dark-navy">
                 {editingPatient ? t("form.editTitle") : t("form.createTitle")}
               </h2>
@@ -828,7 +882,7 @@ const filteredPatients = useMemo(() => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2">
               <input name="firstName" value={form.firstName} onChange={handleChange} placeholder={t("form.firstNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
               <input name="lastName" value={form.lastName} onChange={handleChange} placeholder={t("form.lastNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
               <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />

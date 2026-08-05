@@ -210,10 +210,10 @@ function WeekEditorModal({
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
       <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-6">
+        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-4 py-5 sm:px-6 sm:py-6">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">
+            <div className="min-w-0">
+              <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
                 {hasExistingSchedule ? t("modal.editTitle") : t("modal.createTitle")}
               </h2>
               <p className="mt-2 text-sm font-medium text-slate-600">
@@ -225,14 +225,14 @@ function WeekEditorModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+              className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6 px-6 py-7">
+        <form onSubmit={onSubmit} className="space-y-6 px-4 py-5 sm:px-6 sm:py-7">
           {hasExistingSchedule ? (
             // ── EDIT: har kuni alohida qator (mavjud holat) ──
             <div className="space-y-2.5">
@@ -241,11 +241,11 @@ function WeekEditorModal({
                 return (
                   <div
                     key={day.value}
-                    className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
+                    className={`flex flex-wrap items-center gap-2 rounded-2xl border-2 p-3 transition sm:gap-3 ${
                       row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
                     }`}
                   >
-                    <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
+                    <label className="flex w-full shrink-0 cursor-pointer items-center gap-2.5 sm:w-28">
                       <input
                         type="checkbox"
                         checked={row.active}
@@ -260,7 +260,7 @@ function WeekEditorModal({
                       value={row.startTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                     <span className="text-xs text-slate-400">—</span>
                     <input
@@ -268,7 +268,7 @@ function WeekEditorModal({
                       value={row.endTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                 );
@@ -602,25 +602,25 @@ export default function MySchedulePage() {
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50">
       <div className="relative top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto max-w-5xl px-6 py-5">
+        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg sm:h-11 sm:w-11">
                 <CalendarDays className="h-5 w-5" />
               </div>
-              <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">{t("header.title")}</h1>
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-extrabold text-slate-900 sm:text-2xl">{t("header.title")}</h1>
                 <p className="text-sm font-medium text-slate-500">
                   {t("header.subtitle")}
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:flex-none"
               >
                 <RefreshCcw className="h-4 w-4" />
                 {t("actions.refresh")}
@@ -628,7 +628,7 @@ export default function MySchedulePage() {
               <button
                 type="button"
                 onClick={openEditor}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 sm:flex-none"
               >
                 <Edit2 className="h-4 w-4" />
                 {t("actions.editSchedule")}
@@ -638,9 +638,9 @@ export default function MySchedulePage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {!isDoctorRole ? (
-          <div className="rounded-3xl border border-amber-100 bg-white px-6 py-16 text-center shadow-sm">
+          <div className="rounded-3xl border border-amber-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6">
             <p className="text-lg font-extrabold text-slate-900">{t("accessDenied.title")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
               {t("accessDenied.description")}
@@ -649,7 +649,7 @@ export default function MySchedulePage() {
         ) : isLoading ? (
           <DentalLoader fullScreen={false} text={t("loading")} />
         ) : isError ? (
-          <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
+          <div className="rounded-3xl border border-red-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-red-50 text-2xl font-extrabold text-red-600">!</div>
             <p className="text-lg font-extrabold text-slate-900">{t("error.title")}</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
@@ -664,7 +664,7 @@ export default function MySchedulePage() {
             </button>
           </div>
         ) : !hasExistingSchedule ? (
-          <div className="rounded-3xl border border-slate-100 bg-white px-6 py-20 text-center shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-white px-4 py-20 text-center shadow-sm sm:px-6">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
               <CalendarDays className="h-7 w-7" />
             </div>

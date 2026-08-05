@@ -139,10 +139,10 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Subscription activate */}
 
-      <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-border-color bg-white p-4 shadow-sm sm:p-6">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/10 via-violet-500/10 to-rose-400/10 blur-2xl" />
 
         <div className="relative mb-4 flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function PlansPage() {
       {/* Plans list */}
 
       <div className="rounded-3xl border border-border-color bg-white shadow-sm">
-        <div className="border-b border-border-color px-6 py-4">
+        <div className="border-b border-border-color px-4 py-4 sm:px-6">
           <h2 className="text-base font-bold text-dark-navy">
             Barcha tariflar
           </h2>
@@ -283,7 +283,7 @@ export default function PlansPage() {
             Tariflar topilmadi.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
             {plans.map(
               (plan) => (
                 <div
@@ -322,7 +322,7 @@ export default function PlansPage() {
                     </button>
                   </div>
 
-                  <p className="mt-3 bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 bg-clip-text text-2xl font-extrabold text-transparent">
+                  <p className="mt-3 bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 bg-clip-text text-xl font-extrabold text-transparent sm:text-2xl">
                     {formatPrice(
                       plan.monthlyPrice
                     )}{" "}
@@ -550,7 +550,7 @@ function EditPlanPriceModal({
       <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl">
         {/* Header */}
 
-        <div className="flex items-center justify-between border-b border-border-color px-6 py-5">
+        <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <h2 className="text-lg font-bold text-dark-navy">
               Tarif narxini
@@ -573,7 +573,7 @@ function EditPlanPriceModal({
 
         {/* Content */}
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-xs font-bold uppercase text-slate-400">
               Hozirgi narx
@@ -622,7 +622,7 @@ function EditPlanPriceModal({
 
         {/* Footer */}
 
-        <div className="flex justify-end gap-2 border-t border-border-color px-6 py-4">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-border-color px-4 py-4 sm:px-6">
           <button
             type="button"
             onClick={onClose}

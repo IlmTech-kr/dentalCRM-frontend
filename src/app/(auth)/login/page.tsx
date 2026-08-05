@@ -166,22 +166,22 @@ export default function LoginPage() {
         <p className="relative z-10 mt-auto text-sm text-white/75">{t("login.copyright")}</p>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center px-6">
+      <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-[500px] rounded-[28px] border border-border-color bg-white px-9 py-10 shadow-2xl shadow-slate-300/40"
+          className="w-full max-w-lg rounded-2xl border border-border-color bg-white px-5 py-8 shadow-2xl shadow-slate-300/40 sm:rounded-[28px] sm:px-9 sm:py-10"
         >
-          <h2 className="text-[38px] font-extrabold leading-tight text-dark-navy">{t("login.title")}</h2>
+          <h2 className="text-[28px] font-extrabold leading-tight text-dark-navy sm:text-[38px]">{t("login.title")}</h2>
           <p className="mt-3 text-base text-text-light">{t("login.subtitle")}</p>
 
           {tenantMissing && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle size={20} className="mt-0.5 text-red-500" />
+                <AlertCircle size={20} className="mt-0.5 shrink-0 text-red-500" />
                 <div>
                   <p className="text-sm font-bold text-red-700">{t("login.tenantMissingTitle")}</p>
                   <p className="mt-1 text-sm text-red-600">{t("login.tenantMissingHint")}</p>
-                  <p className="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-red-700">
+                  <p className="mt-2 break-all rounded-md bg-white px-3 py-2 font-mono text-xs text-red-700">
                     http://clinic1.localhost:3000/login
                   </p>
                 </div>
@@ -197,11 +197,11 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="mt-8 space-y-5">
+          <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.emailLabel")}</label>
-              <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
-                <Mail size={21} className="text-slate-400" />
+              <div className="flex h-14 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4 sm:h-16 sm:px-5">
+                <Mail size={21} className="shrink-0 text-slate-400" />
                 <input
                   type="email"
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
@@ -215,8 +215,8 @@ export default function LoginPage() {
 
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-600">{t("login.passwordLabel")}</label>
-              <div className="flex h-16 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-5">
-                <Lock size={21} className="text-slate-400" />
+              <div className="flex h-14 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4 sm:h-16 sm:px-5">
+                <Lock size={21} className="shrink-0 text-slate-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
@@ -228,7 +228,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-slate-400 transition hover:text-primary-blue"
+                  className="shrink-0 text-slate-400 transition hover:text-primary-blue"
                   disabled={loginMutation.isPending || tenantMissing}
                   aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
                 >
@@ -253,7 +253,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={tenantMissing || loginMutation.isPending || !form.email.trim() || !form.password}
-              className="h-16 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60 sm:h-16"
             >
               {loginMutation.isPending ? t("login.submitting") : t("login.submitButton")}
             </button>

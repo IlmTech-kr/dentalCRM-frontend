@@ -183,13 +183,13 @@ export default function TariffsPage() {
             </p>
 
             {/* Duration selector */}
-            <div className="mt-8 inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1">
+            <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1">
               {durations.map((item) => (
                 <button
                   key={item.months}
                   type="button"
                   onClick={() => setSelectedDuration(item.months)}
-                  className={`relative rounded-xl px-4 py-2 text-sm font-bold transition ${
+                  className={`relative rounded-xl px-3 py-2 text-xs font-bold transition sm:px-4 sm:text-sm ${
                     selectedDuration === item.months
                       ? "bg-white text-slate-900 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -259,7 +259,7 @@ export default function TariffsPage() {
             )}
 
             {!isLoading && !isError && plans.length > 0 && (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan) => {
                   const planCode = plan.planType.toUpperCase();
 

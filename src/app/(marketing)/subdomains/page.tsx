@@ -90,24 +90,24 @@ export default function SubdomainCheckPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7FAFC] p-6">
+    <div className="flex min-h-screen items-center justify-center bg-[#F7FAFC] p-4 sm:p-6">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#35a8f5] text-white shadow-lg shadow-blue-200">
             <Building2 size={26} />
           </div>
-          <h1 className="text-2xl font-extrabold text-dark-navy">{t("title")}</h1>
+          <h1 className="text-xl font-extrabold text-dark-navy sm:text-2xl">{t("title")}</h1>
           <p className="mt-2 text-sm text-text-light">
             {t("subtitle")}
           </p>
         </div>
 
-        <div className="rounded-3xl border border-border-color bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-border-color bg-white p-4 shadow-sm sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-bold text-slate-700">{t("label")}</label>
               <div className="flex items-center overflow-hidden rounded-2xl border border-border-color bg-slate-50 transition focus-within:border-[#35a8f5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#35a8f5]/10">
-                <span className="pl-4 text-slate-400">
+                <span className="pl-3 text-slate-400 sm:pl-4">
                   <Search size={16} />
                 </span>
                 <input
@@ -118,9 +118,9 @@ export default function SubdomainCheckPage() {
                     if (errorMessage) setErrorMessage("");
                   }}
                   placeholder={t("placeholder")}
-                  className="min-w-0 flex-1 bg-transparent px-3 py-3.5 text-sm font-semibold text-dark-navy outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent px-2 py-3.5 text-sm font-semibold text-dark-navy outline-none placeholder:text-slate-400 sm:px-3"
                 />
-                <span className="shrink-0 pr-4 text-sm font-semibold text-slate-400">
+                <span className="shrink-0 pr-3 text-xs font-semibold text-slate-400 sm:pr-4 sm:text-sm">
                   .{ROOT_DOMAIN}
                 </span>
               </div>

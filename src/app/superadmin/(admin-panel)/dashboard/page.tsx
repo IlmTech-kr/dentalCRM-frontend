@@ -572,11 +572,64 @@ export default function DashboardPage() {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Shared row/card action buttons
+  // ---------------------------------------------------------------------------
+
+  function renderTenantActionButtons(
+    tenant: TenantSubscription,
+    tenantId: string,
+    clinicName: string
+  ) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setDetailsTenantId(tenantId);
+          }}
+          className="flex items-center gap-1 rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+        >
+          <Info size={14} />
+          Batafsil
+        </button>
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setLimitsTenantId(tenantId);
+          }}
+          className="rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+        >
+          Limitlar
+        </button>
+
+        <button
+          type="button"
+          disabled={
+            suspendMutation.isPending ||
+            tenant.status === "SUSPENDED"
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+            void handleSuspend(tenantId, clinicName);
+          }}
+          className="flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Ban size={14} />
+          To‘xtatish
+        </button>
+      </>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-3xl border border-border-color bg-white shadow-sm">
       {/* Header */}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-color px-6 py-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-color px-4 py-4 sm:px-6 sm:py-5">
         <div>
           <p className="text-sm text-text-light">
             Jami:{" "}
@@ -637,7 +690,58 @@ export default function DashboardPage() {
           Tenantlar topilmadi.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Mobile card list */}
+        <div className="divide-y divide-slate-100 md:hidden">
+          {tenants.map((tenant) => {
+            const tenantId = tenant.tenantId;
+
+            const clinic =
+              clinicByTenantId.get(tenantId);
+
+            const clinicName =
+              clinic?.name || "Klinika topilmadi";
+
+            return (
+              <div
+                key={tenantId}
+                onClick={() => setDetailsTenantId(tenantId)}
+                className="flex cursor-pointer flex-col gap-3 px-4 py-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-dark-navy">
+                      {clinicName}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {clinic?.subDomain
+                        ? `${clinic.subDomain}.dental.ilmtech.uz`
+                        : "Subdomain mavjud emas"}
+                    </p>
+                  </div>
+                  <StatusBadge status={tenant.status} />
+                </div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  <span>Tarif: {tenant.currentPlan || "—"}</span>
+                  <span>SMS: {tenant.smsBalance ?? 0}</span>
+                  <span>Xotira: {formatBytes(tenant.currentStorageBytes)}</span>
+                </div>
+
+                <p className="text-xs text-slate-500">
+                  {formatDate(tenant.startDate)} {" → "} {formatDate(tenant.endDate)}
+                </p>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {renderTenantActionButtons(tenant, tenantId, clinicName)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1050px] text-left text-sm">
             <thead>
               <tr className="border-b border-border-color text-xs uppercase text-slate-400">
@@ -758,67 +862,11 @@ export default function DashboardPage() {
 
                       <td className="px-6 py-5">
                         <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={(
-                              event
-                            ) => {
-                              event.stopPropagation();
-
-                              setDetailsTenantId(
-                                tenantId
-                              );
-                            }}
-                            className="flex items-center gap-1 rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
-                          >
-                            <Info
-                              size={14}
-                            />
-
-                            Batafsil
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(
-                              event
-                            ) => {
-                              event.stopPropagation();
-
-                              setLimitsTenantId(
-                                tenantId
-                              );
-                            }}
-                            className="rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
-                          >
-                            Limitlar
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={
-                              suspendMutation.isPending ||
-                              tenant.status ===
-                                "SUSPENDED"
-                            }
-                            onClick={(
-                              event
-                            ) => {
-                              event.stopPropagation();
-
-                              void handleSuspend(
-                                tenantId,
-                                clinicName
-                              );
-                            }}
-                            className="flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <Ban
-                              size={14}
-                            />
-
-                            To‘xtatish
-                          </button>
+                          {renderTenantActionButtons(
+                            tenant,
+                            tenantId,
+                            clinicName
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -828,12 +876,13 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Pagination */}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 border-t border-border-color px-6 py-5">
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border-color px-4 py-4 sm:px-6 sm:py-5">
           <button
             type="button"
             disabled={page === 0}
@@ -976,7 +1025,7 @@ function ClinicDetailModal({
     >
       {/* Header */}
 
-      <div className="sticky top-0 z-10 flex items-start justify-between border-b border-border-color bg-white px-6 py-5">
+      <div className="sticky top-0 z-10 flex items-start justify-between border-b border-border-color bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div>
           <h2 className="text-xl font-bold text-dark-navy">
             {clinic?.name ||
@@ -1001,7 +1050,7 @@ function ClinicDetailModal({
 
       {/* Content */}
 
-      <div className="space-y-5 p-6">
+      <div className="space-y-5 p-4 sm:p-6">
         {clinic ? (
           <DetailSection
             title="Klinika ma’lumotlari"
@@ -1068,7 +1117,7 @@ function ClinicDetailModal({
 
       {/* Footer */}
 
-      <div className="sticky bottom-0 flex justify-end border-t border-border-color bg-white px-6 py-4">
+      <div className="sticky bottom-0 flex justify-end border-t border-border-color bg-white px-4 py-4 sm:px-6">
         <button
           type="button"
           onClick={onClose}
@@ -1193,7 +1242,7 @@ function TenantLimitsEditModal({
     >
       {/* Header */}
 
-      <div className="flex items-center justify-between border-b border-border-color px-6 py-5">
+      <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6 sm:py-5">
         <h2 className="text-lg font-bold text-dark-navy">
           Tenant limitlari
         </h2>
@@ -1209,7 +1258,7 @@ function TenantLimitsEditModal({
 
       {/* Form */}
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <DentalLoader fullScreen={false} text="Yuklanmoqda..." />
@@ -1270,7 +1319,7 @@ function TenantLimitsEditModal({
 
       {/* Footer */}
 
-      <div className="flex justify-end gap-2 border-t border-border-color px-6 py-4">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-border-color px-4 py-4 sm:px-6">
         <button
           type="button"
           onClick={onClose}

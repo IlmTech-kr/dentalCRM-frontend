@@ -171,19 +171,19 @@ function CurrentPlanCard({
       {/* Top accent bar */}
       <div className="h-1.5 w-full" style={{ backgroundColor: config.color }} />
 
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         {/* Plan header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white sm:h-14 sm:w-14"
               style={{ backgroundColor: config.color }}
             >
               <Zap size={24} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-black text-slate-900">{planType || "—"}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{planType || "—"}</h2>
                 <span
                   className="rounded-full px-2.5 py-0.5 text-xs font-black"
                   style={{ backgroundColor: config.bg, color: config.color }}
@@ -198,8 +198,8 @@ function CurrentPlanCard({
           </div>
 
           {/* Price */}
-          <div className="text-right shrink-0">
-            <p className="text-3xl font-black text-slate-900 leading-none">
+          <div className="shrink-0 sm:text-right">
+            <p className="text-2xl font-black text-slate-900 leading-none sm:text-3xl">
               {formatMoney(monthlyPrice)}
             </p>
             <p className="mt-1 text-xs font-bold text-slate-400">{t("current.perMonth")}</p>
@@ -239,7 +239,7 @@ function CurrentPlanCard({
         ) : null}
 
         {/* Actions */}
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={onChangePlan}
@@ -254,7 +254,7 @@ function CurrentPlanCard({
             type="button"
             onClick={onCancel}
             disabled={isCanceling || !isActive}
-            className="flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isCanceling ? <DentalLoaderIcon size={16} /> : <ZapOff size={16} />}
             {t("current.cancelButton")}
@@ -329,7 +329,7 @@ function PlanCard({
       {/* Top bar */}
       <div className="h-1 w-full rounded-t-3xl" style={{ backgroundColor: config.color }} />
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-4 sm:p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -339,7 +339,7 @@ function PlanCard({
             >
               {config.badge || planType}
             </span>
-            <h3 className="mt-2 text-2xl font-black text-slate-900">{planType}</h3>
+            <h3 className="mt-2 text-xl font-black text-slate-900 sm:text-2xl">{planType}</h3>
           </div>
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white"
@@ -356,7 +356,7 @@ function PlanCard({
         {/* Price display */}
         <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: config.bg }}>
           <div className="flex items-end gap-1">
-            <span className="text-4xl font-black leading-none" style={{ color: config.color }}>
+            <span className="text-3xl font-black leading-none sm:text-4xl" style={{ color: config.color }}>
               {formatMoney(monthlyPrice)}
             </span>
             <span className="mb-1 text-sm font-bold text-slate-500">{t("card.perMonth")}</span>
@@ -500,17 +500,17 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">{t("page.title")}</h1>
+          <h1 className="text-xl font-black text-slate-900 sm:text-2xl">{t("page.title")}</h1>
           <p className="mt-1 text-sm text-slate-500">{t("page.subtitle")}</p>
         </div>
         <button
           type="button"
           onClick={() => { refetchCurrent(); refetchPlans(); }}
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50"
+          className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 sm:w-fit"
         >
           <RefreshCcw size={15} className={isCurrentLoading || isPlansLoading ? "animate-spin" : ""} />
           {t("page.refresh")}
@@ -518,7 +518,7 @@ export default function PlansPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 w-fit">
+      <div className="flex w-full gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:w-fit">
         {[
           { key: "current" as TabType, label: t("tabs.current"), icon: <CreditCard size={15} /> },
           { key: "available" as TabType, label: t("tabs.available"), icon: <Sparkles size={15} /> },
@@ -528,7 +528,7 @@ export default function PlansPage() {
             type="button"
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black transition",
+              "flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition sm:px-5",
               activeTab === tab.key
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
@@ -573,7 +573,7 @@ export default function PlansPage() {
 
           {/* Billing sidebar */}
           <div className="space-y-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">{t("sidebar.billingInfoTitle")}</h3>
               <div className="mt-4 space-y-3">
                 {[
@@ -607,7 +607,7 @@ export default function PlansPage() {
               <DentalLoader fullScreen={false} />
             </div>
           ) : sortedPlans.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center sm:p-12">
               <h2 className="text-xl font-black text-slate-900">{t("empty.noPlansTitle")}</h2>
               <p className="mt-2 text-sm text-slate-500">{t("empty.noPlansSubtitle")}</p>
             </div>
@@ -616,7 +616,7 @@ export default function PlansPage() {
               <p className="text-sm text-slate-500">
                 {t("helperText")}
               </p>
-              <div className="grid gap-6 lg:grid-cols-3 mt-2">
+              <div className="mt-2 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {sortedPlans.map((plan, index) => {
                   const planKey = getPlanKey(plan, index);
                   const planType = getPlanType(plan);
