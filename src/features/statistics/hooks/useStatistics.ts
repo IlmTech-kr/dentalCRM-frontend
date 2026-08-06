@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getRevenue,
   getRevenueByClinic,
@@ -39,6 +39,7 @@ export function useRevenue(params: RevenueParams & { enabled?: boolean }) {
     staleTime: 1000 * 60 * 5,
     retry: false,
     enabled,
+    placeholderData: keepPreviousData,
   });
 }
 

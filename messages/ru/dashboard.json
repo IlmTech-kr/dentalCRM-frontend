@@ -9,65 +9,71 @@
   ],
   "stats": {
     "totalPatients": "Всего пациентов",
-    "todayAppointments": "Приёмы на сегодня",
+    "todayAppointments": "Приёмы сегодня",
     "completedCancelled": "Завершено / Отменено",
     "doctors": "Врачи"
   },
   "revenue": {
-    "title": "Статистика дохода",
-    "filterDay": "День",
-    "filterMonth": "Месяц",
-    "filterYear": "Год",
+    "title": "Статистика выручки",
     "currency": "сум",
     "transactions": "{count, plural, one {# платёж} few {# платежа} many {# платежей} other {# платежа}}",
-    "selectDate": "Выберите дату"
+    "activeBadge": "Активно",
+    "cardToday": "Сегодня",
+    "cardTodayHint": "Выручка за сегодня",
+    "cardMonth": "Этот месяц",
+    "cardMonthHint": "С начала месяца",
+    "cardYear": "Этот год",
+    "cardYearHint": "С начала года",
+    "chartTitle": "{period} — динамика",
+    "chartCustomTitle": "{from} — {to}",
+    "reset": "Сбросить"
   },
   "todayAppointments": {
-    "title": "Приёмы на сегодня",
+    "title": "Приёмы сегодня",
     "count": "{count, plural, one {# приём} few {# приёма} many {# приёмов} other {# приёма}}",
     "empty": "Сегодня приёмов нет"
   },
-  "unknownDoctor": "Врач неизвестен",
+  "unknownDoctor": "Неизвестный врач",
   "appointmentStatus": {
-    "scheduled": "Ожидается",
+    "scheduled": "Запланирован",
     "inProgress": "В процессе",
-    "completed": "Завершено",
-    "cancelled": "Отменено",
-    "noShow": "Не пришёл"
+    "completed": "Завершён",
+    "cancelled": "Отменён",
+    "noShow": "Не явился"
   },
   "doctorPayments": {
-    "title": "Доход врачей и выплаты"
+    "title": "Выручка и выплаты врачам"
   },
   "payroll": {
-    "title": "Расчёт зарплаты — общие расходы",
-    "monthlyExpense": "Расходы на зарплату",
-    "commissionExpense": "Расходы на комиссию",
-    "totalExpense": "Общие расходы",
+    "title": "Зарплата — общие расходы",
+    "monthlyExpense": "Расходы на оклады",
+    "commissionExpense": "Расходы на проценты",
+    "totalExpense": "Общий расход",
     "doctorsTableTitle": "Врачи",
-    "staffTableTitle": "Прочий персонал (ресепшн, ассистент)",
+    "staffTableTitle": "Другие сотрудники (ресепшн, ассистент)",
     "columns": {
       "name": "Имя",
       "type": "Тип",
-      "revenue": "Доход",
+      "revenue": "Выручка",
       "percent": "Процент",
-      "totalCost": "Общие расходы",
-      "role": "Роль",
-      "salary": "Зарплата"
+      "totalCost": "Итого",
+      "role": "Должность",
+      "salary": "Оклад"
     },
     "percentageType": "Процент",
-    "salaryType": "Зарплата"
+    "salaryType": "Оклад"
   },
   "doctorRevenue": {
-    "myTitle": "Мой доход",
-    "allTitle": "Доход по врачам",
+    "myTitle": "Моя выручка",
+    "allTitle": "Выручка по врачам",
     "columns": {
       "doctor": "Врач",
-      "revenue": "Доход",
+      "revenue": "Выручка",
       "transactions": "Транзакции",
-      "compensation": "Компенсация",
+      "compensation": "Тип оплаты",
       "commissionAmount": "Сумма комиссии"
     },
     "transactionsCount": "{count, plural, one {# транзакция} few {# транзакции} many {# транзакций} other {# транзакции}}",
-    "salaryLabel": "Зарплата"
+    "salaryLabel": "Оклад"
   }
 }

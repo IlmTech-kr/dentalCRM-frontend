@@ -15,12 +15,18 @@
   },
   "revenue": {
     "title": "Revenue statistics",
-    "filterDay": "Day",
-    "filterMonth": "Month",
-    "filterYear": "Year",
     "currency": "UZS",
     "transactions": "{count, plural, one {# payment} other {# payments}}",
-    "selectDate": "Select a date"
+    "activeBadge": "Active",
+    "cardToday": "Today",
+    "cardTodayHint": "Revenue for today",
+    "cardMonth": "This month",
+    "cardMonthHint": "Month to date",
+    "cardYear": "This year",
+    "cardYearHint": "Year to date",
+    "chartTitle": "{period} — trend",
+    "chartCustomTitle": "{from} — {to}",
+    "reset": "Reset"
   },
   "todayAppointments": {
     "title": "Today's appointments",

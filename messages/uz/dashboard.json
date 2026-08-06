@@ -10,51 +10,57 @@
   "stats": {
     "totalPatients": "Jami bemorlar",
     "todayAppointments": "Bugungi qabullar",
-    "completedCancelled": "Bajarildi / Bekor",
+    "completedCancelled": "Yakunlangan / Bekor qilingan",
     "doctors": "Shifokorlar"
   },
   "revenue": {
     "title": "Daromad statistikasi",
-    "filterDay": "Kun",
-    "filterMonth": "Oy",
-    "filterYear": "Yil",
     "currency": "so'm",
-    "transactions": "{count, plural, other {# ta to'lov}}",
-    "selectDate": "Sanani tanlang"
+    "transactions": "{count, plural, one {# ta to'lov} other {# ta to'lov}}",
+    "activeBadge": "Faol",
+    "cardToday": "Bugun",
+    "cardTodayHint": "Bugungi tushum",
+    "cardMonth": "Bu oy",
+    "cardMonthHint": "Oy boshidan bugungacha",
+    "cardYear": "Bu yil",
+    "cardYearHint": "Yil boshidan bugungacha",
+    "chartTitle": "{period} — dinamika",
+    "chartCustomTitle": "{from} — {to}",
+    "reset": "Tozalash"
   },
   "todayAppointments": {
     "title": "Bugungi qabullar",
-    "count": "{count, plural, other {# ta}}",
-    "empty": "Bugun qabul yo'q"
+    "count": "{count, plural, one {# ta qabul} other {# ta qabul}}",
+    "empty": "Bugun qabullar yo'q"
   },
-  "unknownDoctor": "Shifokor noma'lum",
+  "unknownDoctor": "Noma'lum shifokor",
   "appointmentStatus": {
-    "scheduled": "Kutilmoqda",
+    "scheduled": "Rejalashtirilgan",
     "inProgress": "Jarayonda",
-    "completed": "Bajarildi",
-    "cancelled": "Bekor",
+    "completed": "Yakunlangan",
+    "cancelled": "Bekor qilingan",
     "noShow": "Kelmadi"
   },
   "doctorPayments": {
-    "title": "Shifokorlar daromadi va to'lovlar"
+    "title": "Shifokorlar daromadi va to'lovlari"
   },
   "payroll": {
-    "title": "Payroll — umumiy chiqimlar",
+    "title": "Ish haqi — umumiy chiqimlar",
     "monthlyExpense": "Oylik chiqimlar",
     "commissionExpense": "Komissiya chiqimlari",
-    "totalExpense": "Jami chiqim",
+    "totalExpense": "Umumiy chiqim",
     "doctorsTableTitle": "Shifokorlar",
-    "staffTableTitle": "Boshqa xodimlar (reseption, assistent)",
+    "staffTableTitle": "Boshqa xodimlar (registratura, assistent)",
     "columns": {
       "name": "Ism",
       "type": "Turi",
       "revenue": "Daromad",
       "percent": "Foiz",
-      "totalCost": "Jami xarajat",
-      "role": "Rol",
+      "totalCost": "Umumiy summa",
+      "role": "Lavozim",
       "salary": "Oylik"
     },
-    "percentageType": "Foiz",
+    "percentageType": "Foizli",
     "salaryType": "Oylik"
   },
   "doctorRevenue": {
@@ -64,10 +70,10 @@
       "doctor": "Shifokor",
       "revenue": "Daromad",
       "transactions": "Tranzaksiyalar",
-      "compensation": "Kompensatsiya",
+      "compensation": "To'lov turi",
       "commissionAmount": "Komissiya summasi"
     },
-    "transactionsCount": "{count, plural, other {# ta}}",
+    "transactionsCount": "{count, plural, one {# ta tranzaksiya} other {# ta tranzaksiya}}",
     "salaryLabel": "Oylik"
   }
 }
