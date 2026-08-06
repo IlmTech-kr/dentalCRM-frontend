@@ -35,8 +35,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { tenantHttp } from "@/src/lib/api/http";
-import { ENDPOINTS } from "@/src/lib/api/endpoints";
+import { getAppointmentsByDate } from "@/src/features/appointments/appointment.service";
 import { useAuthStore } from "@/src/store/auth.store";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { Role } from "@/src/lib/enums/enums.types";
@@ -423,22 +422,29 @@ export default function CalendarPage() {
     return doctorNameById.get(apt?.doctorId) || "";
   }
 
-  const { data: rawAppointments, isLoading } = useQuery({
-    queryKey: ["appointments-all"],
+  const monthMatrix = useMemo(() => getMonthMatrix(anchorDate), [anchorDate]);
+  const weekDays = useMemo(() => getWeekDays(anchorDate), [anchorDate]);
+
+  const visibleDateKeys = useMemo(() => {
+    const dates = view === "MONTH" ? monthMatrix.flat() : weekDays;
+    return dates.map(toYMD);
+  }, [view, monthMatrix, weekDays]);
+
+  const { data: allAppointments = [], isLoading } = useQuery({
+    // "/api/dental/appointments" (no page/limit) only returns the backend's
+    // default page, so most days ended up empty. by-date is the endpoint
+    // that's actually verified to return full per-day results — fetch it
+    // once per visible day instead.
+    queryKey: ["appointments-by-range", visibleDateKeys[0], visibleDateKeys[visibleDateKeys.length - 1]],
     queryFn: async () => {
-      const res = await tenantHttp().get(ENDPOINTS.appointments.list);
-      return res.data;
+      const results = await Promise.all(
+        visibleDateKeys.map((date) => getAppointmentsByDate(date).catch(() => []))
+      );
+      return results.flat();
     },
     staleTime: 1000 * 60 * 2,
     retry: false,
   });
-
-  const allAppointments: any[] =
-    (Array.isArray(rawAppointments) && rawAppointments) ||
-    rawAppointments?.appointments ||
-    rawAppointments?.content ||
-    rawAppointments?.data ||
-    [];
 
   // DOCTOR uchun har doim faqat o'zinikiga filtrlanadi — foydalanuvchi
   // hech qanday tanlov orqali buni chetlab o'ta olmaydi (dropdown yashirin).
@@ -497,8 +503,6 @@ export default function CalendarPage() {
     setSelectedDate(date);
   }
 
-  const monthMatrix = useMemo(() => getMonthMatrix(anchorDate), [anchorDate]);
-  const weekDays = useMemo(() => getWeekDays(anchorDate), [anchorDate]);
   const hours = useMemo(
     () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => DAY_START_HOUR + i),
     []
