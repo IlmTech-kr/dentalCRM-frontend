@@ -1082,31 +1082,38 @@ export default function DoctorsPage() {
 
       {/* Invite Modal */}
       {isInviteModalOpen && isStaffAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl sm:p-6">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  {t("inviteModal.title")}
-                </h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div
+            onClick={handleCloseInviteModal}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          />
 
-                <p className="mt-1 text-sm text-slate-500">
-                  {t("inviteModal.subtitle")}
-                </p>
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-lg sm:rounded-[2rem]">
+            <div className="border-b border-slate-100 px-4 py-6 sm:px-6 sm:py-7">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                    {t("inviteModal.title")}
+                  </h2>
+
+                  <p className="mt-1 break-words text-sm text-slate-500">
+                    {t("inviteModal.subtitle")}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCloseInviteModal}
+                  className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
+                >
+                  {t("inviteModal.close")}
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={handleCloseInviteModal}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
-              >
-                {t("inviteModal.close")}
-              </button>
             </div>
 
             <form
               onSubmit={handleInviteDoctor}
-              className="space-y-4"
+              className="max-h-[calc(92vh-150px)] space-y-4 overflow-y-auto px-4 py-6 sm:px-6 sm:py-7"
             >
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -1234,11 +1241,11 @@ export default function DoctorsPage() {
                 {t("inviteModal.hint")}
               </div>
 
-              <div className="flex justify-end gap-3 pt-3">
+              <div className="flex flex-col-reverse gap-3 pt-3 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseInviteModal}
-                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="w-full rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
                 >
                   {t("inviteModal.cancel")}
                 </button>
@@ -1248,7 +1255,7 @@ export default function DoctorsPage() {
                   disabled={
                     inviteDoctorMutation.isPending
                   }
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {inviteDoctorMutation.isPending
                     ? t("inviteModal.sending")
@@ -1262,46 +1269,53 @@ export default function DoctorsPage() {
 
       {/* Edit Modal */}
       {selectedDoctor && isStaffAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl sm:p-6">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  {t("editModal.title")}
-                </h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div
+            onClick={handleCloseEditModal}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          />
 
-                <p className="mt-1 text-sm text-slate-500">
-                  {t("editModal.subtitle")}
-                </p>
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-xl sm:rounded-[2rem]">
+            <div className="border-b border-slate-100 px-4 py-6 sm:px-6 sm:py-7">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                    {t("editModal.title")}
+                  </h2>
+
+                  <p className="mt-1 break-words text-sm text-slate-500">
+                    {t("editModal.subtitle")}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
+                >
+                  {t("editModal.close")}
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={handleCloseEditModal}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
-              >
-                {t("editModal.close")}
-              </button>
-            </div>
-
-            <div className="mb-6 flex justify-center">
-              <DoctorAvatar
-                doctor={{
-                  ...selectedDoctor,
-                  firstName: editForm.firstName,
-                  lastName: editForm.lastName,
-                  avatarUrl: editForm.avatarUrl,
-                }}
-                sizeClassName="h-24 w-24"
-                textClassName="text-2xl"
-              />
             </div>
 
             <form
               onSubmit={handleUpdateDoctor}
-              className="space-y-4"
+              className="max-h-[calc(92vh-150px)] space-y-4 overflow-y-auto px-4 py-6 sm:px-6 sm:py-7"
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="flex justify-center">
+                <DoctorAvatar
+                  doctor={{
+                    ...selectedDoctor,
+                    firstName: editForm.firstName,
+                    lastName: editForm.lastName,
+                    avatarUrl: editForm.avatarUrl,
+                  }}
+                  sizeClassName="h-24 w-24"
+                  textClassName="text-2xl"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
                     {t("editModal.firstNameLabel")}
@@ -1440,11 +1454,11 @@ export default function DoctorsPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3">
+              <div className="flex flex-col-reverse gap-3 pt-3 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseEditModal}
-                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="w-full rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
                 >
                   {t("editModal.cancel")}
                 </button>
@@ -1454,7 +1468,7 @@ export default function DoctorsPage() {
                   disabled={
                     updateDoctorMutation.isPending
                   }
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {updateDoctorMutation.isPending
                     ? t("editModal.saving")

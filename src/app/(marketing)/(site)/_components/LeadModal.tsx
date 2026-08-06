@@ -93,7 +93,7 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl shadow-slate-900/20">
+      <div className="relative flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-y-auto rounded-3xl bg-white shadow-2xl shadow-slate-900/20">
         <div className="h-1.5 w-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500" />
 
         <button

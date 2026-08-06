@@ -536,28 +536,23 @@ function EditPlanPriceModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-[1px]"
-      onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose();
-        }
-      }}
-    >
-      <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+      />
+
+      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-md sm:rounded-[2rem]">
         {/* Header */}
 
         <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6 sm:py-5">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-lg font-bold text-dark-navy">
               Tarif narxini
               o‘zgartirish
             </h2>
 
-            <p className="mt-1 text-sm font-bold text-violet-500">
+            <p className="mt-1 truncate text-sm font-bold text-violet-500">
               {plan.planType}
             </p>
           </div>
@@ -565,7 +560,7 @@ function EditPlanPriceModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
           >
             <X size={20} />
           </button>
@@ -573,13 +568,13 @@ function EditPlanPriceModal({
 
         {/* Content */}
 
-        <div className="p-4 sm:p-6">
+        <div className="max-h-[calc(92vh-160px)] overflow-y-auto p-4 sm:p-6">
           <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-xs font-bold uppercase text-slate-400">
               Hozirgi narx
             </p>
 
-            <p className="mt-1 text-lg font-bold text-dark-navy">
+            <p className="mt-1 break-words text-lg font-bold text-dark-navy">
               {formatPrice(
                 plan.monthlyPrice
               )}{" "}
@@ -622,11 +617,11 @@ function EditPlanPriceModal({
 
         {/* Footer */}
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-border-color px-4 py-4 sm:px-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-border-color px-4 py-4 sm:flex-row sm:justify-end sm:gap-2 sm:px-6">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+            className="w-full rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
           >
             Bekor qilish
           </button>
@@ -639,7 +634,7 @@ function EditPlanPriceModal({
             onClick={() =>
               void handleSave()
             }
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {updateMutation.isPending ? (
               <DentalLoaderIcon size={16} />

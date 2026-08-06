@@ -5,7 +5,6 @@ import {
   ChevronDown,
   LogOut,
   Menu,
-  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -87,7 +86,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white/80 px-4 backdrop-blur sm:h-20 sm:px-8">
+      <header className="fixed inset-x-0 top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white/80 px-4 backdrop-blur sm:h-20 sm:px-8 lg:sticky lg:inset-x-auto">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -109,18 +108,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <div className="hidden h-11 items-center gap-3 rounded-2xl border border-border-color bg-slate-50 px-4 md:flex">
-            <Search
-              size={18}
-              className="text-slate-400"
-            />
-
-            <input
-              className="bg-transparent text-sm outline-none"
-              placeholder={t("header.searchPlaceholder")}
-            />
-          </div>
-
           <LanguageSwitcher />
 
           <button

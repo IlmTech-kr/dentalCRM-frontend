@@ -1415,7 +1415,7 @@ function VisitForm({
             </Link>
           </div>
         ) : (
-          <div className="grid max-h-[680px] auto-rows-min gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          <div className="grid max-h-[50vh] auto-rows-min gap-2 overflow-y-auto pr-1 sm:max-h-[680px] sm:grid-cols-2">
             {procedures.map((procedure) => (
               <button
                 key={getId(procedure)}
@@ -2674,11 +2674,15 @@ export default function TreatmentPatientPage() {
       {isCreateCourseModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-4 sm:px-6 sm:py-5">
-                <div>
-                  <h2 className="text-lg font-extrabold text-slate-950">
+          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+            <div
+              onClick={() => setIsCreateCourseModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-6 sm:px-6 sm:py-7">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-extrabold text-slate-950 sm:text-2xl">
                     Davolash kursi yaratish
                   </h2>
                   <p className="mt-0.5 text-sm text-slate-500">
@@ -2688,13 +2692,13 @@ export default function TreatmentPatientPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateCourseModalOpen(false)}
-                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+                  className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="max-h-[75vh] space-y-5 overflow-y-auto p-4 sm:p-6">
+              <div className="max-h-[calc(92vh-150px)] space-y-5 overflow-y-auto p-4 sm:p-6">
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-blue-900">
@@ -2769,11 +2773,11 @@ export default function TreatmentPatientPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:px-6">
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:flex-row sm:px-6">
                 <button
                   type="button"
                   onClick={() => setIsCreateCourseModalOpen(false)}
-                  className="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                  className="w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:flex-1"
                 >
                   Bekor qilish
                 </button>
@@ -2783,7 +2787,7 @@ export default function TreatmentPatientPage() {
                   disabled={
                     isCreatingCourse || !selectedCourseTeeth.length
                   }
-                  className="flex-1 rounded-2xl bg-slate-950 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+                  className="w-full rounded-2xl bg-slate-950 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60 sm:w-auto sm:flex-1"
                 >
                   {isCreatingCourse
                     ? "Yaratilmoqda..."
@@ -2798,15 +2802,19 @@ export default function TreatmentPatientPage() {
       {isAddVisitModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">
-            <div className="my-8 w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-4 sm:px-6 sm:py-5 backdrop-blur">
-                <div>
-                  <h2 className="text-lg font-extrabold text-slate-950">
+          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+            <div
+              onClick={closeAddVisitModal}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-5xl sm:rounded-[2rem]">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-6 sm:px-6 sm:py-7">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-extrabold text-slate-950 sm:text-2xl">
                     Visit qo'shish
                   </h2>
                   {selectedCourse && (
-                    <p className="mt-0.5 text-sm text-slate-500">
+                    <p className="mt-0.5 truncate text-sm text-slate-500">
                       Kurs:{" "}
                       <span className="font-semibold text-slate-950">
                         {selectedCourse.mainDiagnosis}
@@ -2818,13 +2826,13 @@ export default function TreatmentPatientPage() {
                   type="button"
                   onClick={closeAddVisitModal}
                   disabled={isVisitSaving}
-                  className="rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900 disabled:opacity-50"
+                  className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-white hover:text-slate-900 disabled:opacity-50"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="p-4 sm:p-6">
+              <div className="max-h-[calc(92vh-150px)] overflow-y-auto p-4 sm:p-6">
                 <VisitForm
                   activeCourses={activeCourses}
                   selectedCourseId={selectedCourseId}

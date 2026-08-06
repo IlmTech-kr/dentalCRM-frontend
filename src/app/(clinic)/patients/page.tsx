@@ -643,8 +643,9 @@ const filteredPatients = useMemo(() => {
 
       {/* Phone Search Modal */}
       {modalState === "phone-search" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div onClick={closeModal} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-md sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
               <h2 className="text-xl font-bold text-dark-navy">{t("phoneSearchModal.title")}</h2>
               <button type="button" onClick={closeModal} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
@@ -652,7 +653,7 @@ const filteredPatients = useMemo(() => {
               </button>
             </div>
 
-            <div className="space-y-4 p-4 sm:p-6">
+            <div className="max-h-[calc(92vh-72px)] space-y-4 overflow-y-auto p-4 sm:p-6">
               {phoneSearchResult ? (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
@@ -768,21 +769,22 @@ const filteredPatients = useMemo(() => {
 
       {/* Appointment Modal */}
       {modalState === "appointment" && selectedPatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div onClick={closeModal} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-xl sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-xl font-bold text-dark-navy">{t("appointmentModal.title")}</h2>
-                <p className="mt-1 text-sm text-text-light">
+                <p className="mt-1 break-words text-sm text-text-light">
                   {t("appointmentModal.subtitle", { name: `${selectedPatient.firstName} ${selectedPatient.lastName}` })}
                 </p>
               </div>
-              <button type="button" onClick={closeModal} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <button type="button" onClick={closeModal} className="shrink-0 rounded-lg p-2 text-slate-500 hover:bg-slate-100">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateAppointment} className="space-y-4 p-4 sm:p-6">
+            <form onSubmit={handleCreateAppointment} className="max-h-[calc(92vh-88px)] space-y-4 overflow-y-auto p-4 sm:p-6">
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <p className="text-xs font-medium uppercase text-[#35a8f5]">{t("appointmentModal.patientLabel")}</p>
                 <p className="mt-1 font-semibold text-dark-navy">{selectedPatient.firstName} {selectedPatient.lastName}</p>
@@ -805,7 +807,7 @@ const filteredPatients = useMemo(() => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-bold text-slate-700">{t("appointmentModal.dateLabel")}</label>
                   <input
@@ -852,14 +854,14 @@ const filteredPatients = useMemo(() => {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-border-color pt-4">
-                <button type="button" onClick={closeModal} className="rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50">
+              <div className="flex flex-col-reverse gap-3 border-t border-border-color pt-4 sm:flex-row sm:justify-end">
+                <button type="button" onClick={closeModal} className="w-full rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto">
                   {tCommon("actions.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={createAppointmentMutation.isPending}
-                  className="rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50"
+                  className="w-full rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50 sm:w-auto"
                 >
                   {createAppointmentMutation.isPending ? t("appointmentModal.creating") : t("actions.createAppointment")}
                 </button>
@@ -871,8 +873,9 @@ const filteredPatients = useMemo(() => {
 
       {/* Create / Edit Patient Modal */}
       {modalState === "form" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div onClick={closeModal} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6">
               <h2 className="text-xl font-bold text-dark-navy">
                 {editingPatient ? t("form.editTitle") : t("form.createTitle")}
@@ -882,7 +885,7 @@ const filteredPatients = useMemo(() => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2">
+            <form onSubmit={handleSubmit} className="grid max-h-[calc(92vh-88px)] grid-cols-1 gap-4 overflow-y-auto p-4 sm:grid-cols-2 sm:p-6">
               <input name="firstName" value={form.firstName} onChange={handleChange} placeholder={t("form.firstNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
               <input name="lastName" value={form.lastName} onChange={handleChange} placeholder={t("form.lastNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
               <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
@@ -899,16 +902,16 @@ const filteredPatients = useMemo(() => {
                 <option value={Gender.MALE}>{t("gender.male")}</option>
                 <option value={Gender.FEMALE}>{t("gender.female")}</option>
               </select>
-              <textarea name="anamnesis" value={form.anamnesis} onChange={handleChange} placeholder={t("form.anamnesisPlaceholder")} className="min-h-[110px] rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5] md:col-span-2" />
+              <textarea name="anamnesis" value={form.anamnesis} onChange={handleChange} placeholder={t("form.anamnesisPlaceholder")} className="min-h-[110px] rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5] sm:col-span-2" />
 
-              <div className="flex justify-end gap-3 border-t border-border-color pt-4 md:col-span-2">
-                <button type="button" onClick={closeModal} className="rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50">
+              <div className="flex flex-col-reverse gap-3 border-t border-border-color pt-4 sm:col-span-2 sm:flex-row sm:justify-end">
+                <button type="button" onClick={closeModal} className="w-full rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto">
                   {tCommon("actions.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50"
+                  className="w-full rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50 sm:w-auto"
                 >
                   {editingPatient ? t("form.saveChangesButton") : t("form.createButton")}
                 </button>
@@ -963,22 +966,23 @@ const filteredPatients = useMemo(() => {
 
       {/* View Patient Modal */}
       {modalState === "view" && selectedPatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div onClick={closeModal} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl">
+            <div className="flex items-center justify-between px-4 pt-6 sm:px-6">
               <h2 className="text-2xl font-bold text-dark-navy">{t("viewModal.title")}</h2>
               <button type="button" onClick={closeModal} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-4 text-sm">
+            <div className="max-h-[calc(92vh-180px)] space-y-4 overflow-y-auto px-4 py-5 text-sm sm:px-6">
               <Info label={t("info.name")} value={`${selectedPatient.firstName} ${selectedPatient.lastName}`} />
               <Info label={t("info.phone")} value={getPatientPhone(selectedPatient)} />
               <Info label={t("info.gender")} value={getGenderLabel(selectedPatient.gender, t)} />
               <Info label={t("info.birthDate")} value={selectedPatient.birthDate} />
               <Info label={t("info.anamnesis")} value={selectedPatient.anamnesis || "-"} />
             </div>
-            <div className="mt-6 flex flex-col gap-3 border-t border-border-color pt-4 sm:flex-row">
+            <div className="flex flex-col gap-3 border-t border-border-color px-4 py-4 sm:flex-row sm:px-6">
               <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
                 {tCommon("actions.close")}
               </button>
@@ -1003,7 +1007,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 p-4">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-1 font-semibold text-dark-navy">{value}</p>
+      <p className="mt-1 break-words font-semibold text-dark-navy">{value}</p>
     </div>
   );
 }

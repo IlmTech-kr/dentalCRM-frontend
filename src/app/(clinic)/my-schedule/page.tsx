@@ -209,8 +209,8 @@ function WeekEditorModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
-      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        <div className="sticky top-0 z-10 border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-4 py-5 sm:px-6 sm:py-6">
+      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
+        <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-4 py-6 sm:px-6 sm:py-7">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -232,7 +232,7 @@ function WeekEditorModal({
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6 px-4 py-5 sm:px-6 sm:py-7">
+        <form onSubmit={onSubmit} className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-4 py-6 sm:px-6 sm:py-7">
           {hasExistingSchedule ? (
             // ── EDIT: har kuni alohida qator (mavjud holat) ──
             <div className="space-y-2.5">
@@ -374,33 +374,35 @@ function WeekEditorModal({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-6">
-            {hasExistingSchedule ? (
+          <div
+            className={`flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center ${
+              hasExistingSchedule ? "sm:justify-between" : "sm:justify-end"
+            }`}
+          >
+            {hasExistingSchedule && (
               <button
                 type="button"
                 onClick={onDeleteSchedule}
                 disabled={isDeleting || isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 {isDeleting ? <DentalLoaderIcon className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                 {t("modal.deleteSchedule")}
               </button>
-            ) : (
-              <span />
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                className="w-full rounded-xl border-2 border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
               >
                 {tCommon("actions.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isSubmitting && <DentalLoaderIcon className="h-4 w-4" />}
                 {hasExistingSchedule ? t("modal.saveSchedule") : t("modal.createScheduleButton")}

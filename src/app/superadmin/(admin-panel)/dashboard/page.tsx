@@ -1319,11 +1319,11 @@ function TenantLimitsEditModal({
 
       {/* Footer */}
 
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border-color px-4 py-4 sm:px-6">
+      <div className="flex flex-col-reverse gap-3 border-t border-border-color px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+          className="w-full rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
         >
           Bekor qilish
         </button>
@@ -1340,7 +1340,7 @@ function TenantLimitsEditModal({
           onClick={() =>
             void handleSave()
           }
-          className="rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {updateMutation.isPending
             ? "Saqlanmoqda..."
@@ -1365,21 +1365,14 @@ function ModalContainer({
   maxWidth: string;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-[1px]"
-      onMouseDown={(
-        event
-      ) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose();
-        }
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className={`max-h-[92vh] w-full overflow-y-auto rounded-3xl bg-white shadow-2xl ${maxWidth}`}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+      />
+
+      <div
+        className={`relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-[2rem] bg-white shadow-2xl sm:rounded-[2rem] ${maxWidth}`}
       >
         {children}
       </div>

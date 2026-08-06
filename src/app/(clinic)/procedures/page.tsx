@@ -697,7 +697,7 @@ export default function ProceduresPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
 
           <button
             type="button"
@@ -706,10 +706,10 @@ export default function ProceduresPage() {
             aria-label={tCommon("actions.close")}
           />
 
-          <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-[32px] border border-white/40 bg-white shadow-2xl shadow-slate-950/20">
+          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] border border-white/40 bg-white shadow-2xl shadow-slate-950/20 sm:max-w-2xl sm:rounded-[32px]">
 
             {/* Modal Header */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 p-5 text-white sm:p-6">
+            <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 px-4 py-6 text-white sm:px-6 sm:py-7">
 
               <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
 
@@ -727,13 +727,13 @@ export default function ProceduresPage() {
                       : t("modal.createModeBadge")}
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-black tracking-tight">
+                  <h2 className="mt-4 text-xl font-black tracking-tight sm:text-2xl">
                     {editingProcedure
                       ? t("modal.editTitle")
                       : t("modal.createTitle")}
                   </h2>
 
-                  <p className="mt-2 max-w-lg text-sm leading-6 text-blue-50">
+                  <p className="mt-2 max-w-lg break-words text-sm leading-6 text-blue-50">
                     {t("modal.subtitle")}
                   </p>
 
@@ -753,7 +753,7 @@ export default function ProceduresPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="space-y-5 p-4 sm:p-6">
+            <div className="max-h-[calc(92vh-150px)] space-y-5 overflow-y-auto p-4 sm:p-6">
 
               {/* Procedure Code */}
               <div>
@@ -856,7 +856,7 @@ export default function ProceduresPage() {
                   )}
                 </label>
 
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
 
                   {RESULTING_CONDITIONS.map(
                     (condition) => {
@@ -903,9 +903,9 @@ export default function ProceduresPage() {
 
                 <div className="mt-3 flex flex-col gap-3 rounded-2xl bg-white p-4 md:flex-row md:items-center md:justify-between">
 
-                  <div>
+                  <div className="min-w-0">
 
-                    <p className="text-sm font-black text-slate-950">
+                    <p className="break-words text-sm font-black text-slate-950">
                       {form.name ||
                         t(
                           "modal.previewNameFallback"
@@ -921,7 +921,7 @@ export default function ProceduresPage() {
 
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
 
                     <span
                       className={`rounded-full px-3 py-1.5 text-xs font-black ring-1 ${getConditionStyle(

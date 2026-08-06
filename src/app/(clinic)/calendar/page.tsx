@@ -276,22 +276,17 @@ function DayDetailModal({
   const weekdayLabels = t.raw("weekdaysShort") as string[];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[85vh] w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-xl sm:rounded-[2rem]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-color bg-gradient-to-r from-[#35a8f5]/10 to-violet-500/10 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#35a8f5] shadow-sm">
+        <div className="flex items-center justify-between gap-4 border-b border-border-color bg-gradient-to-r from-[#35a8f5]/10 to-violet-500/10 px-4 py-6 sm:px-6 sm:py-7">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#35a8f5] shadow-sm">
               <CalendarRange size={20} />
             </div>
-            <div>
-              <h2 className="font-extrabold text-dark-navy">{formatFullDate(date, monthLabels, weekdayLabels)}</h2>
+            <div className="min-w-0">
+              <h2 className="break-words text-xl font-extrabold text-dark-navy sm:text-2xl">{formatFullDate(date, monthLabels, weekdayLabels)}</h2>
               <p className="text-xs text-text-light">
                 {t("dayModal.appointmentsCount", { count: appointments.length })}
               </p>
@@ -300,14 +295,14 @@ function DayDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-white/60"
+            className="shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-white/60"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="max-h-[calc(85vh-76px)] overflow-y-auto p-4 sm:p-6">
+        <div className="max-h-[calc(92vh-150px)] overflow-y-auto p-4 sm:p-6">
           {appointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400">
               <CalendarRange size={32} className="opacity-30" />
@@ -343,19 +338,19 @@ function DayDetailModal({
                       </span>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-2">
-                      <UserRound size={15} className="text-slate-400" />
-                      <p className="text-sm font-bold text-dark-navy">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <UserRound size={15} className="shrink-0 text-slate-400" />
+                      <p className="break-words text-sm font-bold text-dark-navy">
                         {patientName || t("patientUnknown")}
                       </p>
                       {apt.patient?.phone && (
-                        <span className="text-xs text-slate-400">· {apt.patient.phone}</span>
+                        <span className="break-words text-xs text-slate-400">· {apt.patient.phone}</span>
                       )}
                     </div>
 
                     <div className="mt-1.5 flex items-center gap-2">
-                      <Stethoscope size={15} className="text-slate-400" />
-                      <p className="text-sm text-slate-600">
+                      <Stethoscope size={15} className="shrink-0 text-slate-400" />
+                      <p className="break-words text-sm text-slate-600">
                         {doctorName || t("doctorUnknown")}
                       </p>
                     </div>
@@ -363,7 +358,7 @@ function DayDetailModal({
                     {apt.notes && (
                       <div className="mt-2 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2">
                         <StickyNote size={14} className="mt-0.5 shrink-0 text-slate-400" />
-                        <p className="text-sm text-slate-600">{apt.notes}</p>
+                        <p className="break-words text-sm text-slate-600">{apt.notes}</p>
                       </div>
                     )}
                   </div>

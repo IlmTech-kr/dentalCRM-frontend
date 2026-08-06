@@ -23,7 +23,7 @@ export default function DashboardLayout({
       <div className="flex h-dvh flex-col lg:ml-64">
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 pt-16 sm:p-6 sm:pt-20 lg:p-8">{children}</main>
       </div>
     </div>
   );
