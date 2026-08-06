@@ -4,6 +4,7 @@
  */
 
 import { tenantHttp } from "@/src/lib/api/http";
+import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
 
 function normalizeAppointment(item: any): TreatmentAppointment {
@@ -55,35 +56,16 @@ function sortByTime(a: TreatmentAppointment, b: TreatmentAppointment) {
 }
 
 export const treatmentAppointmentService = {
-  /**
-   * Backend endpoint noaniq bo'lgani uchun bir nechta URL sinab ko'riladi.
-   * Bu intentional — aniq endpoint ma'lum bo'lsa, bitta URL qoldirish mumkin.
-   */
   async getTodayInProgress(date: string): Promise<TreatmentAppointment[]> {
-    const requests = [
-      `/api/dental/appointments?date=${encodeURIComponent(date)}&status=IN_PROGRESS`,
-      `/api/dental/appointments?appointmentDate=${encodeURIComponent(date)}&status=IN_PROGRESS`,
-      `/api/dental/appointments?date=${encodeURIComponent(date)}`,
-      `/api/dental/appointments`,
-    ];
+    const res = await tenantHttp().get(
+      `${ENDPOINTS.appointments.byDate}?date=${encodeURIComponent(date)}`
+    );
 
-    let lastError: unknown = null;
+    const list = extractArray(res.data).map(normalizeAppointment);
 
-    for (const url of requests) {
-      try {
-        const res = await tenantHttp().get(url);
-
-        const list = extractArray(res.data).map(normalizeAppointment);
-
-        return list
-          .filter((item) => isSameDate(item, date))
-          .filter(isInProgress)
-          .sort(sortByTime);
-      } catch (error) {
-        lastError = error;
-      }
-    }
-
-    throw lastError;
+    return list
+      .filter((item) => isSameDate(item, date))
+      .filter(isInProgress)
+      .sort(sortByTime);
   },
 };

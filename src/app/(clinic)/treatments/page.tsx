@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Activity,
@@ -23,6 +23,15 @@ import { useTodayInProgressAppointments } from "@/src/features/treatments/hooks/
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
 
 type ViewMode = "CARD" | "LIST";
+
+const VIEW_MODE_STORAGE_KEY = "treatments:viewMode";
+
+function getStoredViewMode(): ViewMode {
+  if (typeof window === "undefined") return "CARD";
+
+  const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+  return stored === "LIST" ? "LIST" : "CARD";
+}
 
 function getId(item?: { id?: string; _id?: string } | null) {
   return item?.id || item?._id || "";
@@ -111,7 +120,16 @@ function getReason(appointment: TreatmentAppointment, fallback: string) {
 export default function TreatmentsPage() {
   const t = useTranslations("treatments");
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("CARD");
+  const [viewMode, setViewModeState] = useState<ViewMode>("CARD");
+
+  useEffect(() => {
+    setViewModeState(getStoredViewMode());
+  }, []);
+
+  function setViewMode(mode: ViewMode) {
+    setViewModeState(mode);
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  }
 
   const { today, appointments, isLoading, isFetching, error, refetch } =
     useTodayInProgressAppointments();
