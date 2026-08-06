@@ -29,8 +29,12 @@ const VIEW_MODE_STORAGE_KEY = "treatments:viewMode";
 function getStoredViewMode(): ViewMode {
   if (typeof window === "undefined") return "CARD";
 
-  const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-  return stored === "LIST" ? "LIST" : "CARD";
+  try {
+    const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return stored === "LIST" ? "LIST" : "CARD";
+  } catch {
+    return "CARD";
+  }
 }
 
 function getId(item?: { id?: string; _id?: string } | null) {
@@ -59,29 +63,35 @@ function getPatientId(appointment: TreatmentAppointment) {
   );
 }
 
+/** "13:00:00" -> "13:00" ; "2026-08-06T13:00:00Z" -> "13:00" (lokal) */
+function formatTimeValue(time: unknown): string {
+  const value = String(time ?? "").trim();
+
+  if (!value) return "";
+
+  if (value.includes("T")) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    const timePart = value.split("T")[1];
+    return timePart ? timePart.slice(0, 5) : "";
+  }
+
+  if (/^\d{1,2}:\d{2}/.test(value)) {
+    return value.padStart(5, "0").slice(0, 5);
+  }
+
+  return value;
+}
+
 function formatAppointmentTime(appointment: TreatmentAppointment) {
-  const startTime = appointment.startTime || "";
-  const endTime = (appointment as any).endTime || "";
-
-  const format = (time: string) => {
-    if (!time) return "";
-
-    const value = String(time).trim();
-
-    if (value.includes("T")) {
-      const timePart = value.split("T")[1];
-      return timePart ? timePart.slice(0, 5) : "";
-    }
-
-    if (/^\d{2}:\d{2}/.test(value)) {
-      return value.slice(0, 5);
-    }
-
-    return value;
-  };
-
-  const start = format(String(startTime));
-  const end = format(String(endTime));
+  const start = formatTimeValue(appointment.startTime);
+  const end = formatTimeValue((appointment as any).endTime);
 
   if (start && end) return `${start} - ${end}`;
   if (start) return start;
@@ -89,32 +99,11 @@ function formatAppointmentTime(appointment: TreatmentAppointment) {
   return "--:--";
 }
 
-function getStartTimeSortValue(appointment: TreatmentAppointment) {
-  const startTime = appointment.startTime || "";
-
-  if (!startTime) return "99:99";
-
-  const value = String(startTime).trim();
-
-  if (value.includes("T")) {
-    const timePart = value.split("T")[1];
-    return timePart ? timePart.slice(0, 5) : "99:99";
-  }
-
-  if (/^\d{2}:\d{2}/.test(value)) {
-    return value.slice(0, 5);
-  }
-
-  return value;
-}
-
 function getReason(appointment: TreatmentAppointment, fallback: string) {
-  return (
-    appointment.reason ||
-    appointment.complaint ||
-    appointment.notes ||
-    fallback
-  );
+  const reason =
+    appointment.reason || appointment.complaint || appointment.notes || "";
+
+  return String(reason).trim() || fallback;
 }
 
 export default function TreatmentsPage() {
@@ -128,29 +117,26 @@ export default function TreatmentsPage() {
 
   function setViewMode(mode: ViewMode) {
     setViewModeState(mode);
-    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      /* private mode — e'tiborsiz qoldiramiz */
+    }
   }
 
   const { today, appointments, isLoading, isFetching, error, refetch } =
     useTodayInProgressAppointments();
 
-  const sortedAppointments = useMemo(() => {
-    return [...appointments].sort((a, b) => {
-      const aTime = getStartTimeSortValue(a);
-      const bTime = getStartTimeSortValue(b);
-
-      return aTime.localeCompare(bTime);
-    });
-  }, [appointments]);
-
+  // Service allaqachon vaqt bo'yicha to'g'ri sortlagan.
   const filteredAppointments = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    if (!q) return sortedAppointments;
+    if (!q) return appointments;
 
-    return sortedAppointments.filter((appointment) => {
+    return appointments.filter((appointment) => {
       const patientName = getPersonName(appointment.patient, "").toLowerCase();
-      const reason = getReason(appointment, t("inProgress.defaultReason")).toLowerCase();
+      const reason = getReason(appointment, "").toLowerCase();
       const appointmentId = getId(appointment).toLowerCase();
       const time = formatAppointmentTime(appointment).toLowerCase();
 
@@ -161,7 +147,7 @@ export default function TreatmentsPage() {
         time.includes(q)
       );
     });
-  }, [sortedAppointments, search]);
+  }, [appointments, search]);
 
   function renderQueueActionButton(patientId: string, appointmentId: string) {
     const treatmentHref =
@@ -172,16 +158,16 @@ export default function TreatmentsPage() {
     return patientId && appointmentId ? (
       <Link
         href={treatmentHref}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
       >
         {t("inProgress.open")}
-        <ArrowRight size={16} />
+        <ArrowRight size={16} className="shrink-0" />
       </Link>
     ) : (
       <button
         type="button"
         disabled
-        className="inline-flex cursor-not-allowed items-center justify-center rounded-2xl bg-slate-200 px-4 py-2.5 text-sm font-black text-slate-500"
+        className="inline-flex cursor-not-allowed items-center justify-center whitespace-nowrap rounded-2xl bg-slate-200 px-4 py-2.5 text-sm font-black text-slate-500"
       >
         {t("inProgress.noId")}
       </button>
@@ -191,14 +177,15 @@ export default function TreatmentsPage() {
   return (
     <div className="min-h-screen bg-[#F7FAFC] p-4 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
+        {/* ---------------- Header ---------------- */}
         <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100 blur-3xl" />
           <div className="absolute bottom-0 right-44 h-32 w-32 rounded-full bg-cyan-100 blur-3xl" />
 
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700 ring-1 ring-blue-100">
-                <Activity size={18} />
+                <Activity size={18} className="shrink-0" />
                 {t("inProgress.badge")}
               </div>
 
@@ -214,33 +201,38 @@ export default function TreatmentsPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <RefreshCcw
                 size={18}
-                className={isFetching ? "animate-spin" : ""}
+                className={`shrink-0 ${isFetching ? "animate-spin" : ""}`}
               />
               {t("inProgress.refresh")}
             </button>
           </div>
         </div>
 
+        {/* ---------------- Stat cards ---------------- */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
           <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-500">{t("inProgress.todayLabel")}</p>
-              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+            <div className="flex items-center justify-between gap-2">
+              <p className="min-w-0 text-sm font-bold text-slate-500">
+                {t("inProgress.todayLabel")}
+              </p>
+              <div className="shrink-0 rounded-2xl bg-blue-50 p-3 text-blue-600">
                 <CalendarDays size={20} />
               </div>
             </div>
 
-            <p className="mt-3 text-xl font-black text-slate-950 sm:text-2xl">{today}</p>
+            <p className="mt-3 text-xl font-black text-slate-950 sm:text-2xl">
+              {today}
+            </p>
           </div>
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-500">IN_PROGRESS</p>
-              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
+            <div className="flex items-center justify-between gap-2">
+              <p className="min-w-0 text-sm font-bold text-slate-500">IN_PROGRESS</p>
+              <div className="shrink-0 rounded-2xl bg-emerald-50 p-3 text-emerald-600">
                 <Clock3 size={20} />
               </div>
             </div>
@@ -251,9 +243,11 @@ export default function TreatmentsPage() {
           </div>
 
           <div className="col-span-2 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:col-span-1">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-500">{t("inProgress.visibleLabel")}</p>
-              <div className="rounded-2xl bg-purple-50 p-3 text-purple-600">
+            <div className="flex items-center justify-between gap-2">
+              <p className="min-w-0 text-sm font-bold text-slate-500">
+                {t("inProgress.visibleLabel")}
+              </p>
+              <div className="shrink-0 rounded-2xl bg-purple-50 p-3 text-purple-600">
                 <Users size={20} />
               </div>
             </div>
@@ -264,9 +258,11 @@ export default function TreatmentsPage() {
           </div>
         </div>
 
+        {/* ---------------- Queue ---------------- */}
         <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          {/* ⬇️ TUZATILGAN TOOLBAR */}
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-black text-slate-950 sm:text-xl">
                 {t("inProgress.queueTitle")}
               </h2>
@@ -276,46 +272,48 @@ export default function TreatmentsPage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center xl:w-auto">
+              {/* View toggle — hech qachon siqilmaydi */}
+              <div className="flex shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
                   onClick={() => setViewMode("CARD")}
-                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition md:flex-none ${
+                  className={`inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-black transition sm:flex-none sm:px-4 ${
                     viewMode === "CARD"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
                   }`}
                 >
-                  <LayoutGrid size={17} />
+                  <LayoutGrid size={17} className="shrink-0" />
                   {t("inProgress.cardView")}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setViewMode("LIST")}
-                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black transition md:flex-none ${
+                  className={`inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-black transition sm:flex-none sm:px-4 ${
                     viewMode === "LIST"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
                   }`}
                 >
-                  <List size={17} />
+                  <List size={17} className="shrink-0" />
                   {t("inProgress.listView")}
                 </button>
               </div>
 
-              <div className="relative">
+              {/* Qidiruv — qolgan joyni egallaydi, qattiq kenglik yo'q */}
+              <div className="relative w-full min-w-0 sm:flex-1 xl:w-[320px] xl:flex-none">
                 <Search
                   size={17}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                 />
 
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t("inProgress.searchPlaceholder")}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 md:w-[360px]"
+                  className="w-full truncate rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
                 />
               </div>
             </div>
@@ -324,7 +322,7 @@ export default function TreatmentsPage() {
           {error ? (
             <div className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5 text-red-700">
               <div className="flex items-center gap-2 font-black">
-                <AlertCircle size={20} />
+                <AlertCircle size={20} className="shrink-0" />
                 {t("inProgress.errorTitle")}
               </div>
 
@@ -340,7 +338,7 @@ export default function TreatmentsPage() {
                 <DentalLoader fullScreen={false} text={t("inProgress.loading")} />
               </div>
             ) : filteredAppointments.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 py-16 text-center">
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-16 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
                   <CalendarDays size={28} />
                 </div>
@@ -371,51 +369,51 @@ export default function TreatmentsPage() {
 
                   return (
                     <div
-                      key={appointmentId || patientId}
+                      key={`${appointmentId || patientId}-${index}`}
                       className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/60"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-4">
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black text-white shadow-sm">
                             #{index + 1}
                           </div>
 
-                          <div>
-                            <h3 className="text-base font-black text-slate-950">
+                          <div className="min-w-0">
+                            <h3 className="break-words text-base font-black text-slate-950">
                               {patientName}
                             </h3>
 
                             <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-700">
-                              <Clock3 size={16} className="text-blue-600" />
+                              <Clock3 size={16} className="shrink-0 text-blue-600" />
                               {formatAppointmentTime(appointment)}
                             </p>
                           </div>
                         </div>
 
-                        <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
                           IN_PROGRESS
                         </span>
                       </div>
 
                       <div className="mt-5 grid gap-3 md:grid-cols-2">
-                        <div className="rounded-2xl bg-slate-50 p-4">
+                        <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
                           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
                             {t("table.date")}
                           </p>
 
                           <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-800">
-                            <CalendarDays size={16} />
-                            {appointment.appointmentDate || today}
+                            <CalendarDays size={16} className="shrink-0" />
+                            {String(appointment.appointmentDate || today).slice(0, 10)}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
+                        <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
                           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
                             {t("table.time")}
                           </p>
 
                           <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-800">
-                            <Clock3 size={16} />
+                            <Clock3 size={16} className="shrink-0" />
                             {formatAppointmentTime(appointment)}
                           </p>
                         </div>
@@ -426,7 +424,7 @@ export default function TreatmentsPage() {
                           {t("table.reason")}
                         </p>
 
-                        <p className="mt-1 text-sm font-bold text-slate-700">
+                        <p className="mt-1 whitespace-pre-line break-words text-sm font-bold text-slate-700">
                           {getReason(appointment, t("inProgress.defaultReason"))}
                         </p>
                       </div>
@@ -435,16 +433,16 @@ export default function TreatmentsPage() {
                         {patientId && appointmentId ? (
                           <Link
                             href={treatmentHref}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:w-auto"
+                            className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:w-auto"
                           >
                             {t("inProgress.openTreatment")}
-                            <ArrowRight size={18} />
+                            <ArrowRight size={18} className="shrink-0" />
                           </Link>
                         ) : (
                           <button
                             type="button"
                             disabled
-                            className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500 sm:w-auto"
+                            className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500 sm:w-auto"
                           >
                             {t("inProgress.noIds")}
                           </button>
@@ -468,7 +466,10 @@ export default function TreatmentsPage() {
                     );
 
                     return (
-                      <div key={appointmentId || patientId} className="flex flex-col gap-3 p-4">
+                      <div
+                        key={`${appointmentId || patientId}-${index}`}
+                        className="flex flex-col gap-3 p-4"
+                      >
                         <div className="flex items-center gap-3">
                           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
                             #{index + 1}
@@ -483,17 +484,17 @@ export default function TreatmentsPage() {
                               {patientName}
                             </p>
                             <p className="mt-0.5 flex items-center gap-1.5 text-xs font-black text-slate-500">
-                              <Clock3 size={14} className="text-blue-600" />
+                              <Clock3 size={14} className="shrink-0 text-blue-600" />
                               {formatAppointmentTime(appointment)}
                             </p>
                           </div>
 
-                          <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 ring-1 ring-emerald-100">
+                          <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 ring-1 ring-emerald-100">
                             IN_PROGRESS
                           </span>
                         </div>
 
-                        <p className="truncate text-sm font-bold text-slate-700">
+                        <p className="line-clamp-2 text-sm font-bold text-slate-700">
                           {getReason(appointment, t("inProgress.defaultReason"))}
                         </p>
 
@@ -510,22 +511,22 @@ export default function TreatmentsPage() {
                   <table className="w-full min-w-[820px] border-collapse text-left">
                     <thead className="bg-slate-50">
                       <tr>
-                        <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.number")}
                         </th>
-                        <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.time")}
                         </th>
-                        <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.patient")}
                         </th>
-                        <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.reason")}
                         </th>
-                        <th className="px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.status")}
                         </th>
-                        <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
+                        <th className="whitespace-nowrap px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
                           {t("table.action")}
                         </th>
                       </tr>
@@ -543,7 +544,7 @@ export default function TreatmentsPage() {
 
                         return (
                           <tr
-                            key={appointmentId || patientId}
+                            key={`${appointmentId || patientId}-${index}`}
                             className="transition hover:bg-blue-50/40"
                           >
                             <td className="px-5 py-4">
@@ -553,23 +554,21 @@ export default function TreatmentsPage() {
                             </td>
 
                             <td className="px-5 py-4">
-                              <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-                                <Clock3 size={16} className="text-blue-600" />
+                              <div className="flex items-center gap-2 whitespace-nowrap text-sm font-black text-slate-900">
+                                <Clock3 size={16} className="shrink-0 text-blue-600" />
                                 {formatAppointmentTime(appointment)}
                               </div>
                             </td>
 
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                   <UserRound size={20} />
                                 </div>
 
-                                <div>
-                                  <p className="text-sm font-black text-slate-950">
-                                    {patientName}
-                                  </p>
-                                </div>
+                                <p className="text-sm font-black text-slate-950">
+                                  {patientName}
+                                </p>
                               </div>
                             </td>
 
@@ -580,7 +579,7 @@ export default function TreatmentsPage() {
                             </td>
 
                             <td className="px-5 py-4">
-                              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+                              <span className="whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
                                 IN_PROGRESS
                               </span>
                             </td>
