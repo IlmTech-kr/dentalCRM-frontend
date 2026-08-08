@@ -144,6 +144,12 @@
       "paymeInfoText": "You'll be redirected to the Payme checkout page when you activate a plan. Payment is safe and fast."
     },
     "helperText": "Choose a plan and set the duration — the total amount is calculated automatically.",
+    "lock": {
+      "title": "Your plan has expired",
+      "subtitle": "The system is temporarily locked because your clinic's plan has expired. Pay for your plan to continue — access unlocks immediately after payment.",
+      "expiredOn": "Expired on: {date}",
+      "cta": "Pay for plan"
+    },
     "toast": {
       "planTypeNotFound": "Plan type not found",
       "priceNotFound": "Price not found for this plan.",

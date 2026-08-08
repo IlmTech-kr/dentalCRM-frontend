@@ -144,6 +144,12 @@
       "paymeInfoText": "Tarif aktivlashtirilganda Payme checkout sahifasiga yo'naltirilasiz. To'lov xavfsiz va tezkor."
     },
     "helperText": "Tarifni tanlang va muddat belgilang — jami summa avtomatik hisoblanadi.",
+    "lock": {
+      "title": "Tarif muddati tugagan",
+      "subtitle": "Klinikangiz tarifi muddati tugagani uchun tizim vaqtincha bloklandi. Davom etish uchun tarifni to'lang — to'lovdan so'ng darhol qayta faollashadi.",
+      "expiredOn": "Tugash sanasi: {date}",
+      "cta": "Tarifni to'lash"
+    },
     "toast": {
       "planTypeNotFound": "Plan type topilmadi",
       "priceNotFound": "Bu tarif uchun narx topilmadi.",
