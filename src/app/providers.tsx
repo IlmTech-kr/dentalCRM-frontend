@@ -8,6 +8,7 @@ import { queryClient } from "../lib/react-query/client";
 import { ToastContainer } from "../components/ui/Toastcontainer";
 import DentalLoader from "../components/ui/DentalLoader";
 import { useLocaleStore } from "../store/locale.store";
+import { useUiStore } from "../store/ui.store";
 import { MESSAGES } from "../lib/i18n/messages";
 
 export default function Providers({
@@ -20,10 +21,12 @@ export default function Providers({
   const hydrateFromStorage = useLocaleStore(
     (state) => state.hydrateFromStorage
   );
+  const hydrateUiFromStorage = useUiStore((state) => state.hydrateFromStorage);
 
   useEffect(() => {
     hydrateFromStorage();
-  }, [hydrateFromStorage]);
+    hydrateUiFromStorage();
+  }, [hydrateFromStorage, hydrateUiFromStorage]);
 
   useEffect(() => {
     if (isHydrated) {

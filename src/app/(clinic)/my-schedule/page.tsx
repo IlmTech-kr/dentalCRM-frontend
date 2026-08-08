@@ -242,7 +242,7 @@ function WeekEditorModal({
                   <div
                     key={day.value}
                     className={`flex flex-wrap items-center gap-2 rounded-2xl border-2 p-3 transition sm:gap-3 ${
-                      row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+                      row.active ? "border-primary-blue/20 bg-primary-blue/10" : "border-slate-100 bg-slate-50"
                     }`}
                   >
                     <label className="flex w-full shrink-0 cursor-pointer items-center gap-2.5 sm:w-28">
@@ -250,7 +250,7 @@ function WeekEditorModal({
                         type="checkbox"
                         checked={row.active}
                         onChange={(e) => updateRow(index, { active: e.target.checked })}
-                        className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="h-5 w-5 rounded border-slate-300 text-primary-blue focus:ring-primary-blue"
                       />
                       <span className="text-sm font-extrabold text-slate-900">{day.label}</span>
                     </label>
@@ -260,7 +260,7 @@ function WeekEditorModal({
                       value={row.startTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                     <span className="text-xs text-slate-400">—</span>
                     <input
@@ -268,7 +268,7 @@ function WeekEditorModal({
                       value={row.endTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[100px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                 );
@@ -282,7 +282,7 @@ function WeekEditorModal({
                   type="button"
                   onClick={() => onCreateModeChange("WEEKLY")}
                   className={`flex-1 py-3 transition ${
-                    createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                    createMode === "WEEKLY" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
                   {t("modal.modeWeekly")}
@@ -291,7 +291,7 @@ function WeekEditorModal({
                   type="button"
                   onClick={() => onCreateModeChange("DAILY")}
                   className={`flex-1 py-3 transition ${
-                    createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                    createMode === "DAILY" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
                   {t("modal.modeDaily")}
@@ -313,8 +313,8 @@ function WeekEditorModal({
                           onClick={() => onToggleCreateDay(day.value)}
                           className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
                             isSelected
-                              ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                              ? "border-primary-blue bg-primary-blue text-white shadow-lg shadow-primary-blue/20"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-primary-blue/30 hover:bg-primary-blue/5"
                           }`}
                         >
                           {day.short}
@@ -356,7 +356,7 @@ function WeekEditorModal({
                     type="time"
                     value={createStartTime}
                     onChange={(e) => onCreateStartTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
                 <div>
@@ -367,7 +367,7 @@ function WeekEditorModal({
                     type="time"
                     value={createEndTime}
                     onChange={(e) => onCreateEndTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
               </div>
@@ -607,7 +607,7 @@ export default function MySchedulePage() {
         <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg sm:h-11 sm:w-11">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-blue text-white shadow-lg sm:h-11 sm:w-11">
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div className="min-w-0">
@@ -660,14 +660,14 @@ export default function MySchedulePage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+              className="mt-6 rounded-xl bg-primary-blue px-6 py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark"
             >
               {t("error.retry")}
             </button>
           </div>
         ) : !hasExistingSchedule ? (
           <div className="rounded-3xl border border-slate-100 bg-white px-4 py-20 text-center shadow-sm sm:px-6">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-primary-blue/5 text-primary-blue">
               <CalendarDays className="h-7 w-7" />
             </div>
             <p className="text-lg font-extrabold text-slate-900">{t("empty.title")}</p>
@@ -675,7 +675,7 @@ export default function MySchedulePage() {
             <button
               type="button"
               onClick={openEditor}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary-blue px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-primary-blue-dark"
             >
               <Plus className="h-4 w-4" />
               {t("empty.cta")}
@@ -684,7 +684,7 @@ export default function MySchedulePage() {
         ) : (
           <div>
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-xs font-extrabold text-blue-800">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-blue/10 text-xs font-extrabold text-primary-blue">
                 {getDoctorInitials(ownDoctorName)}
               </div>
               <div>
@@ -726,7 +726,7 @@ export default function MySchedulePage() {
                       <div
                         key={d.value}
                         className={`py-3 text-center text-xs font-extrabold uppercase tracking-wider ${
-                          hasSlots ? "text-blue-600" : "text-slate-400"
+                          hasSlots ? "text-primary-blue" : "text-slate-400"
                         }`}
                       >
                         {d.short}
@@ -764,11 +764,11 @@ export default function MySchedulePage() {
                                 const spanH = endH - startH;
                                 return (
                                   <div
-                                    className="absolute inset-x-1 z-10 overflow-hidden rounded-lg border-l-2 border-blue-400 bg-blue-50"
+                                    className="absolute inset-x-1 z-10 overflow-hidden rounded-lg border-l-2 border-primary-blue bg-primary-blue/5"
                                     style={{ top: 2, height: spanH * ROW_H - 4 }}
                                   >
                                     <div className="flex h-full flex-col justify-between p-2">
-                                      <p className="text-[10px] font-extrabold text-blue-800">
+                                      <p className="text-[10px] font-extrabold text-primary-blue">
                                         {start} – {end}
                                       </p>
                                       <span className="w-fit rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700">
@@ -789,7 +789,7 @@ export default function MySchedulePage() {
 
             <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-blue-400 bg-blue-50" />
+                <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-primary-blue bg-primary-blue/5" />
                 {t("legend.workHours")}
               </span>
               <span className="flex items-center gap-1.5">

@@ -337,14 +337,14 @@ function RevenueChart({
                 className="group relative flex h-full min-w-0 flex-1 flex-col items-center justify-end outline-none"
               >
                 {isPeak && (
-                  <span className="mb-1 whitespace-nowrap text-[10px] font-bold text-[#1d8ee8]">
+                  <span className="mb-1 whitespace-nowrap text-[10px] font-bold text-primary-blue-dark">
                     {formatMoney(value)}
                   </span>
                 )}
 
                 <div
                   className={`w-full max-w-[24px] rounded-t-[4px] transition-colors duration-150 ${
-                    isHovered ? "bg-[#1d8ee8]" : "bg-[#35a8f5]"
+                    isHovered ? "bg-primary-blue-dark" : "bg-primary-blue"
                   }`}
                   style={{ height: `${pct}%` }}
                 />
@@ -358,7 +358,7 @@ function RevenueChart({
                   <p className="font-bold text-dark-navy">
                     {formatPeriodLabel(d.period, filter, months)}
                   </p>
-                  <p className="mt-0.5 font-extrabold text-[#1d8ee8]">
+                  <p className="mt-0.5 font-extrabold text-primary-blue-dark">
                     {formatFullMoney(value)}
                   </p>
                   <p className="text-[10px] text-text-light">
@@ -412,8 +412,8 @@ function AppointmentRow({ apt, doctorName }: { apt: any; doctorName: string }) {
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border-color bg-white px-4 py-3 transition hover:border-[#35a8f5]/40 hover:bg-slate-50/50">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#35a8f5]/10 text-xs font-bold text-[#35a8f5]">
+    <div className="flex items-center gap-3 rounded-xl border border-border-color bg-white px-4 py-3 transition hover:border-primary-blue/40 hover:bg-slate-50/50">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-blue/10 text-xs font-bold text-primary-blue">
         {apt.startTime?.slice(0, 5) ?? "--:--"}
       </div>
       <div className="min-w-0 flex-1">
@@ -791,8 +791,8 @@ export default function DashboardPage() {
             {/* Toolbar */}
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#35a8f5]/10">
-                  <BarChart3 size={17} className="text-[#35a8f5]" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+                  <BarChart3 size={17} className="text-primary-blue" />
                 </span>
                 <h2 className="truncate font-extrabold text-dark-navy">
                   {t("revenue.title")}
@@ -904,14 +904,14 @@ export default function DashboardPage() {
           <div className="flex flex-col rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5 lg:absolute lg:inset-0">
             <div className="mb-4 flex shrink-0 items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
-                  <Clock size={17} className="text-violet-600" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+                  <Clock size={17} className="text-primary-blue" />
                 </span>
                 <h2 className="truncate font-extrabold text-dark-navy">
                   {t("todayAppointments.title")}
                 </h2>
               </div>
-              <span className="shrink-0 whitespace-nowrap rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-primary-blue/10 px-3 py-1 text-xs font-bold text-primary-blue">
                 {t("todayAppointments.count", { count: todayCount })}
               </span>
             </div>
@@ -946,8 +946,8 @@ export default function DashboardPage() {
       {(isStaffAdmin || isDoctorUser) && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-color bg-white p-4 shadow-sm">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#35a8f5]/10">
-              <TrendingUp size={17} className="text-[#35a8f5]" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+              <TrendingUp size={17} className="text-primary-blue" />
             </span>
             <h2 className="truncate font-extrabold text-dark-navy">
               {t("doctorPayments.title")}
@@ -1000,11 +1000,11 @@ export default function DashboardPage() {
                     {formatFullMoney(payrollData.totalCommissionExpense)}
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#35a8f5]/20 bg-[#35a8f5]/10 p-4">
-                  <p className="text-xs font-semibold text-[#1d8ee8]">
+                <div className="rounded-xl border border-primary-blue/20 bg-primary-blue/10 p-4">
+                  <p className="text-xs font-semibold text-primary-blue-dark">
                     {t("payroll.totalExpense")}
                   </p>
-                  <p className="mt-1.5 text-lg font-extrabold text-[#1d8ee8] sm:text-xl">
+                  <p className="mt-1.5 text-lg font-extrabold text-primary-blue-dark sm:text-xl">
                     {formatFullMoney(payrollData.totalExpense)}
                   </p>
                 </div>

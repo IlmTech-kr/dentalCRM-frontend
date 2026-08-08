@@ -10,7 +10,7 @@ export default function ClinicNotFound() {
       </p>
       <Link
         href="/dashboard"
-        className="mt-2 rounded-2xl bg-[#35a8f5] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:bg-[#1d8ee8]"
+        className="mt-2 rounded-2xl bg-primary-blue px-5 py-3 text-sm font-bold text-white shadow-md shadow-primary-blue/20 transition hover:bg-primary-blue-dark"
       >
         Dashboardga qaytish
       </Link>

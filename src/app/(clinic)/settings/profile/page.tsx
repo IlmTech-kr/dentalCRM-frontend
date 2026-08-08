@@ -75,7 +75,7 @@ function ProfileSkeleton() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
-        <div className="h-2 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+        <div className="h-2 animate-pulse bg-gradient-to-r from-primary-blue to-primary-blue-dark" />
 
         <div className="flex items-center gap-4 px-4 py-5 sm:gap-6 sm:px-8 sm:py-7">
           <div className="h-12 w-12 shrink-0 animate-pulse rounded-2xl bg-slate-200 sm:h-14 sm:w-14" />
@@ -137,7 +137,7 @@ function ProfileInput({
         className={`flex h-12 items-center gap-3 rounded-2xl border-2 px-4 transition-all ${
           disabled
             ? "border-slate-100 bg-slate-50"
-            : "border-slate-200 bg-white hover:border-slate-300 focus-within:border-blue-400"
+            : "border-slate-200 bg-white hover:border-slate-300 focus-within:border-primary-blue"
         }`}
       >
         <span className="shrink-0 text-slate-400">
@@ -519,11 +519,11 @@ export default function ProfilePage() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
-        <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+        <div className="h-2 bg-gradient-to-r from-primary-blue to-primary-blue-dark" />
 
         <div className="flex items-center gap-4 px-4 py-5 sm:gap-6 sm:px-8 sm:py-7">
           <div className="relative shrink-0">
-            <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-600 shadow-md ring-4 ring-white sm:h-20 sm:w-20">
+            <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-primary-blue shadow-md ring-4 ring-white sm:h-20 sm:w-20">
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
@@ -551,7 +551,7 @@ export default function ProfilePage() {
               disabled={
                 uploadMutation.isPending
               }
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-blue text-white shadow-lg transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               title={t("changePhoto")}
             >
               <Camera size={13} />
@@ -587,7 +587,7 @@ export default function ProfilePage() {
                   (role) => (
                     <span
                       key={role}
-                      className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700"
+                      className="rounded-full bg-primary-blue/5 px-2.5 py-0.5 text-xs font-bold text-primary-blue"
                     >
                       {formatRole(
                         role
@@ -701,7 +701,7 @@ export default function ProfilePage() {
               disabled={
                 isSaveDisabled
               }
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue px-8 font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {updateMutation.isPending ? (
                 <>

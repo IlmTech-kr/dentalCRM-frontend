@@ -81,7 +81,7 @@ const DOCTOR_ACCENTS = [
 ];
 
 // Tanlangan kunni ajratib ko'rsatish uchun alohida rang (kalendar accentlaridan farqli)
-const TODAY_RING_COLOR = "#35a8f5";
+const TODAY_RING_COLOR = "var(--primary-blue)";
 
 // ---------------------------------------------------------------------------
 // Date helpers (no date-fns — loyihaning umumiy uslubiga mos)
@@ -282,7 +282,7 @@ function DayDetailModal({
         {/* Header */}
         <div className="flex items-center justify-between gap-4 border-b border-border-color bg-gradient-to-r from-[#35a8f5]/10 to-violet-500/10 px-4 py-6 sm:px-6 sm:py-7">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#35a8f5] shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary-blue shadow-sm">
               <CalendarRange size={20} />
             </div>
             <div className="min-w-0">
@@ -323,7 +323,7 @@ function DayDetailModal({
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#35a8f5]/10 text-xs font-bold text-[#35a8f5]">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-blue/10 text-xs font-bold text-primary-blue">
                           <Clock size={16} />
                         </div>
                         <div>
@@ -548,13 +548,13 @@ export default function CalendarPage() {
             type="date"
             value={toYMD(anchorDate)}
             onChange={(e) => handleDatePicked(e.target.value)}
-            className="rounded-xl border border-border-color bg-white px-3 py-2 text-sm font-semibold text-dark-navy outline-none focus:border-[#35a8f5]"
+            className="rounded-xl border border-border-color bg-white px-3 py-2 text-sm font-semibold text-dark-navy outline-none focus:border-primary-blue"
           />
 
           {/* Doctor filter — DOCTOR uchun yashirin, faqat o'zi bilan qulflangan */}
           {isDoctorUser ? (
             <div className="flex items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-3 py-2">
-              <Stethoscope size={14} className="text-[#35a8f5]" />
+              <Stethoscope size={14} className="text-primary-blue" />
               <span className="text-sm font-semibold text-dark-navy">
                 {currentUserName || t("youFallback")}
               </span>
@@ -565,7 +565,7 @@ export default function CalendarPage() {
               <select
                 value={doctorFilter}
                 onChange={(e) => setDoctorFilter(e.target.value)}
-                className="rounded-xl border border-border-color bg-white py-2 pl-8 pr-3 text-sm font-semibold text-dark-navy outline-none focus:border-[#35a8f5]"
+                className="rounded-xl border border-border-color bg-white py-2 pl-8 pr-3 text-sm font-semibold text-dark-navy outline-none focus:border-primary-blue"
               >
                 <option value="ALL">{t("allDoctorsOption")}</option>
                 {doctorOptions.map((d: any) => {
@@ -586,7 +586,7 @@ export default function CalendarPage() {
               type="button"
               onClick={() => setView("MONTH")}
               className={`flex items-center gap-1.5 px-3 py-2 transition ${
-                view === "MONTH" ? "bg-[#35a8f5] text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                view === "MONTH" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
               <Grid3x3 size={14} /> {t("viewMonth")}
@@ -595,7 +595,7 @@ export default function CalendarPage() {
               type="button"
               onClick={() => setView("WEEK")}
               className={`flex items-center gap-1.5 px-3 py-2 transition ${
-                view === "WEEK" ? "bg-[#35a8f5] text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                view === "WEEK" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
               <LayoutList size={14} /> {t("viewWeek")}
@@ -607,21 +607,21 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={goPrev}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5]"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               type="button"
               onClick={goToday}
-              className="rounded-xl border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#35a8f5] hover:text-[#35a8f5]"
+              className="rounded-xl border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-primary-blue hover:text-primary-blue"
             >
               {t("today")}
             </button>
             <button
               type="button"
               onClick={goNext}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5]"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue"
             >
               <ChevronRight size={16} />
             </button>
@@ -674,7 +674,7 @@ export default function CalendarPage() {
                       key={idx}
                       type="button"
                       onClick={() => openDay(date)}
-                      className={`relative min-h-[110px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-blue-50/40 sm:min-h-[130px] ${
+                      className={`relative min-h-[110px] border-b border-r border-border-color p-2 text-left transition last:border-r-0 hover:bg-primary-blue/10 sm:min-h-[130px] ${
                         inCurrentMonth ? "bg-white" : "bg-slate-50/60"
                       }`}
                       style={isHighlighted ? { boxShadow: `inset 0 0 0 2px ${TODAY_RING_COLOR}`, zIndex: 10 } : undefined}
@@ -683,7 +683,7 @@ export default function CalendarPage() {
                         <span
                           className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                             isHighlighted
-                              ? "bg-[#35a8f5] text-white"
+                              ? "bg-primary-blue text-white"
                               : inCurrentMonth
                                 ? "text-dark-navy"
                                 : "text-slate-300"
@@ -725,8 +725,8 @@ export default function CalendarPage() {
                       key={date.toISOString()}
                       type="button"
                       onClick={() => openDay(date)}
-                      className={`border-l border-border-color px-2 py-2.5 text-center transition hover:bg-blue-50/40 ${
-                        isHighlighted ? "bg-[#35a8f5]/5" : ""
+                      className={`border-l border-border-color px-2 py-2.5 text-center transition hover:bg-primary-blue/10 ${
+                        isHighlighted ? "bg-primary-blue/5" : ""
                       }`}
                       style={isHighlighted ? { boxShadow: `inset 0 -2px 0 0 ${TODAY_RING_COLOR}` } : undefined}
                     >
@@ -735,7 +735,7 @@ export default function CalendarPage() {
                       </p>
                       <p
                         className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-extrabold ${
-                          isHighlighted ? "bg-[#35a8f5] text-white" : "text-dark-navy"
+                          isHighlighted ? "bg-primary-blue text-white" : "text-dark-navy"
                         }`}
                       >
                         {date.getDate()}
@@ -767,7 +767,7 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={date.toISOString()}
-                      className={`relative border-l border-border-color ${isHighlighted ? "bg-[#35a8f5]/5" : ""}`}
+                      className={`relative border-l border-border-color ${isHighlighted ? "bg-primary-blue/5" : ""}`}
                       style={{
                         height: HOUR_HEIGHT * hours.length,
                         ...(isHighlighted ? { boxShadow: `inset 2px 0 0 0 ${TODAY_RING_COLOR}, inset -2px 0 0 0 ${TODAY_RING_COLOR}` } : {}),

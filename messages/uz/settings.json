@@ -71,6 +71,30 @@
       "profileUpdateFailed": "Profilni yangilashda xatolik yuz berdi"
     }
   },
+  "appearance": {
+    "page": {
+      "title": "Ko'rinish",
+      "subtitle": "Sidebar va tugmalar uchun brend rangini tanlang"
+    },
+    "preview": {
+      "title": "Jonli ko'rinish",
+      "menuItem": "Bosh sahifa",
+      "button": "Asosiy tugma"
+    },
+    "presets": {
+      "title": "Tayyor ranglar",
+      "subtitle": "Birini tanlang — darhol qo'llanadi"
+    },
+    "custom": {
+      "title": "O'zingiz tanlang",
+      "subtitle": "Doiraga bosib istalgan rangni tanlang",
+      "resetButton": "Standartga qaytarish"
+    },
+    "toast": {
+      "applied": "Rang yangilandi",
+      "reset": "Standart rangga qaytarildi"
+    }
+  },
   "plans": {
     "page": {
       "title": "Tarif va to'lovlar",

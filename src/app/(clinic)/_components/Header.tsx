@@ -138,7 +138,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               }
               className="flex h-10 items-center gap-2 rounded-2xl bg-white px-2 transition hover:bg-slate-50 sm:h-11 sm:px-3"
             >
-              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-xs font-bold text-primary-blue">
                 {avatarSrc ? (
                   <img
                     src={avatarSrc}
@@ -162,7 +162,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   {displayName}
                 </p>
 
-                <p className="inline-block rounded-full bg-blue-100 px-3 py-0.5 text-xs font-semibold text-blue-700">
+                <p className="inline-block rounded-full bg-primary-blue/10 px-3 py-0.5 text-xs font-semibold text-primary-blue">
                   {roleDisplay}
                 </p>
               </div>
@@ -179,7 +179,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               <div className="absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-2xl border border-border-color bg-white shadow-lg">
                 <div className="border-b border-border-color p-4">
                   <div className="mb-4 flex items-center gap-3">
-                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-600">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-sm font-bold text-primary-blue">
                       {avatarSrc ? (
                         <img
                           src={avatarSrc}
@@ -220,7 +220,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                       {user.roles.map((role) => (
                         <span
                           key={role}
-                          className="inline-block rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                          className="inline-block rounded-full bg-primary-blue/10 px-3 py-1.5 text-xs font-semibold text-primary-blue"
                         >
                           {formatRole(role)}
                         </span>

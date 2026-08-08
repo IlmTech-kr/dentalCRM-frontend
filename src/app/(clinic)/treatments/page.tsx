@@ -158,7 +158,7 @@ export default function TreatmentsPage() {
     return patientId && appointmentId ? (
       <Link
         href={treatmentHref}
-        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary-blue px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-primary-blue-dark"
       >
         {t("inProgress.open")}
         <ArrowRight size={16} className="shrink-0" />
@@ -179,12 +179,12 @@ export default function TreatmentsPage() {
       <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
         {/* ---------------- Header ---------------- */}
         <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100 blur-3xl" />
+          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-primary-blue/10 blur-3xl" />
           <div className="absolute bottom-0 right-44 h-32 w-32 rounded-full bg-cyan-100 blur-3xl" />
 
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700 ring-1 ring-blue-100">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-blue/5 px-4 py-2 text-sm font-extrabold text-primary-blue ring-1 ring-primary-blue/10">
                 <Activity size={18} className="shrink-0" />
                 {t("inProgress.badge")}
               </div>
@@ -219,7 +219,7 @@ export default function TreatmentsPage() {
               <p className="min-w-0 text-sm font-bold text-slate-500">
                 {t("inProgress.todayLabel")}
               </p>
-              <div className="shrink-0 rounded-2xl bg-blue-50 p-3 text-blue-600">
+              <div className="shrink-0 rounded-2xl bg-primary-blue/5 p-3 text-primary-blue">
                 <CalendarDays size={20} />
               </div>
             </div>
@@ -280,7 +280,7 @@ export default function TreatmentsPage() {
                   onClick={() => setViewMode("CARD")}
                   className={`inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-black transition sm:flex-none sm:px-4 ${
                     viewMode === "CARD"
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-primary-blue text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
                   }`}
                 >
@@ -293,7 +293,7 @@ export default function TreatmentsPage() {
                   onClick={() => setViewMode("LIST")}
                   className={`inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-black transition sm:flex-none sm:px-4 ${
                     viewMode === "LIST"
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-primary-blue text-white shadow-sm"
                       : "text-slate-600 hover:bg-white"
                   }`}
                 >
@@ -313,7 +313,7 @@ export default function TreatmentsPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t("inProgress.searchPlaceholder")}
-                  className="w-full truncate rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                  className="w-full truncate rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5"
                 />
               </div>
             </div>
@@ -370,11 +370,11 @@ export default function TreatmentsPage() {
                   return (
                     <div
                       key={`${appointmentId || patientId}-${index}`}
-                      className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/60"
+                      className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-blue/20 hover:shadow-lg hover:shadow-primary-blue/20"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black text-white shadow-sm">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-blue text-sm font-black text-white shadow-sm">
                             #{index + 1}
                           </div>
 
@@ -384,7 +384,7 @@ export default function TreatmentsPage() {
                             </h3>
 
                             <p className="mt-1 flex items-center gap-2 text-sm font-black text-slate-700">
-                              <Clock3 size={16} className="shrink-0 text-blue-600" />
+                              <Clock3 size={16} className="shrink-0 text-primary-blue" />
                               {formatAppointmentTime(appointment)}
                             </p>
                           </div>
@@ -433,7 +433,7 @@ export default function TreatmentsPage() {
                         {patientId && appointmentId ? (
                           <Link
                             href={treatmentHref}
-                            className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:w-auto"
+                            className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary-blue px-5 py-3 text-sm font-black text-white shadow-lg shadow-primary-blue/20 transition hover:bg-primary-blue-dark sm:w-auto"
                           >
                             {t("inProgress.openTreatment")}
                             <ArrowRight size={18} className="shrink-0" />
@@ -471,11 +471,11 @@ export default function TreatmentsPage() {
                         className="flex flex-col gap-3 p-4"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
+                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-blue text-xs font-black text-white">
                             #{index + 1}
                           </span>
 
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-blue/5 text-primary-blue">
                             <UserRound size={20} />
                           </div>
 
@@ -484,7 +484,7 @@ export default function TreatmentsPage() {
                               {patientName}
                             </p>
                             <p className="mt-0.5 flex items-center gap-1.5 text-xs font-black text-slate-500">
-                              <Clock3 size={14} className="shrink-0 text-blue-600" />
+                              <Clock3 size={14} className="shrink-0 text-primary-blue" />
                               {formatAppointmentTime(appointment)}
                             </p>
                           </div>
@@ -545,24 +545,24 @@ export default function TreatmentsPage() {
                         return (
                           <tr
                             key={`${appointmentId || patientId}-${index}`}
-                            className="transition hover:bg-blue-50/40"
+                            className="transition hover:bg-primary-blue/10"
                           >
                             <td className="px-5 py-4">
-                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
+                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-blue text-xs font-black text-white">
                                 #{index + 1}
                               </span>
                             </td>
 
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-2 whitespace-nowrap text-sm font-black text-slate-900">
-                                <Clock3 size={16} className="shrink-0 text-blue-600" />
+                                <Clock3 size={16} className="shrink-0 text-primary-blue" />
                                 {formatAppointmentTime(appointment)}
                               </div>
                             </td>
 
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-blue/5 text-primary-blue">
                                   <UserRound size={20} />
                                 </div>
 

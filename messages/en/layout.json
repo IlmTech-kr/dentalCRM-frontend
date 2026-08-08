@@ -42,7 +42,8 @@
     "navSettings": "Settings",
     "navProfile": "Profile",
     "navChangePassword": "Change Password",
-    "navPlans": "Plans"
+    "navPlans": "Plans",
+    "navAppearance": "Appearance"
   },
   "footer": {
     "ctaTitle": "Ready to digitize your clinic?",

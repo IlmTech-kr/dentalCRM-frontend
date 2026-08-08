@@ -143,7 +143,7 @@ export default function LoginPage() {
   return (
     <SessionGate ready={!checkingSession} loadingText={t("login.checkingSession")}>
     <main className="min-h-screen bg-light-background lg:grid lg:grid-cols-[48%_52%]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#3498db] px-14 py-12 text-white lg:flex lg:flex-col">
+      <section className="relative hidden min-h-screen overflow-hidden bg-primary-blue px-14 py-12 text-white lg:flex lg:flex-col">
         <div className="absolute -left-28 top-20 h-96 w-96 rounded-full bg-white/10" />
         <div className="absolute -bottom-36 right-10 h-[430px] w-[430px] rounded-full bg-white/10" />
         <div className="relative z-10 flex items-center gap-4">
@@ -253,7 +253,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={tenantMissing || loginMutation.isPending || !form.email.trim() || !form.password}
-              className="h-14 w-full rounded-2xl bg-[#35a8f5] text-lg font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60 sm:h-16"
+              className="h-14 w-full rounded-2xl bg-primary-blue text-lg font-extrabold text-white shadow-lg shadow-primary-blue/30 transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60 sm:h-16"
             >
               {loginMutation.isPending ? t("login.submitting") : t("login.submitButton")}
             </button>

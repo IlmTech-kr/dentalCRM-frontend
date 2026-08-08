@@ -177,13 +177,19 @@ function StorageBar({
 
   const rawPct = (usedBytes / totalBytes) * 100;
 
-  // Rang holatlari — indigo (normal) → amber (75%) → rose (90%)
+  // Rang holatlari — accent (normal) → amber (75%) → rose (90%)
   const tone =
     rawPct > 90
       ? { from: "#f43f5e", to: "#e11d48", track: "#ffe4e6", text: "#e11d48", soft: "#fff1f2" }
       : rawPct > 75
       ? { from: "#f59e0b", to: "#d97706", track: "#fef3c7", text: "#d97706", soft: "#fffbeb" }
-      : { from: "#6366f1", to: "#8b5cf6", track: "#eef2ff", text: "#6366f1", soft: "#f5f3ff" };
+      : {
+          from: "var(--primary-blue)",
+          to: "var(--primary-blue-dark)",
+          track: "color-mix(in srgb, var(--primary-blue) 10%, white)",
+          text: "var(--primary-blue)",
+          soft: "color-mix(in srgb, var(--primary-blue) 8%, white)",
+        };
 
   // 40 ta segment — har biri 2.5%
   const SEGMENTS = 40;
@@ -302,7 +308,6 @@ function CurrentPlanCard({
 }) {
   const t = useTranslations("settings.plans");
   const planType = String(currentPlan.currentPlan || currentPlan.planType || "");
-  const config = getPlanConfig(planType, t);
   const status = getCurrentStatus(currentPlan);
   const monthlyPrice = getCurrentMonthlyPrice(currentPlan);
   const isActive = status === "ACTIVE" || status === "TRIAL";
@@ -315,16 +320,13 @@ function CurrentPlanCard({
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       {/* Top accent bar */}
-      <div className="h-1.5 w-full" style={{ backgroundColor: config.color }} />
+      <div className="h-1.5 w-full bg-primary-blue" />
 
       <div className="p-4 sm:p-7">
         {/* Plan header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white sm:h-14 sm:w-14"
-              style={{ backgroundColor: config.color }}
-            >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-blue text-white sm:h-14 sm:w-14">
               <Zap size={24} />
             </div>
             <div>
@@ -332,10 +334,7 @@ function CurrentPlanCard({
                 <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
                   {planType || "—"}
                 </h2>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-xs font-black"
-                  style={{ backgroundColor: config.bg, color: config.color }}
-                >
+                <span className="rounded-full bg-primary-blue/10 px-2.5 py-0.5 text-xs font-black text-primary-blue">
                   {status}
                 </span>
               </div>
@@ -417,8 +416,7 @@ function CurrentPlanCard({
           <button
             type="button"
             onClick={onChangePlan}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white transition hover:opacity-90"
-            style={{ backgroundColor: config.color }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary-blue py-3 text-sm font-black text-white transition hover:bg-primary-blue-dark"
           >
             <Sparkles size={16} />
             {t("current.changePlanButton")}
@@ -570,10 +568,9 @@ function PlanCard({
                 className={cn(
                   "relative rounded-xl py-2 text-xs font-black transition",
                   durationMonths === opt.months
-                    ? "text-white shadow-sm"
+                    ? "bg-primary-blue text-white shadow-sm"
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 )}
-                style={durationMonths === opt.months ? { backgroundColor: config.color } : {}}
               >
                 {opt.label}
                 {opt.badge && durationMonths !== opt.months && (
@@ -616,8 +613,7 @@ function PlanCard({
               type="button"
               onClick={onActivate}
               disabled={isActivating || totalPrice === null}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ backgroundColor: config.color }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue py-3 text-sm font-black text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isActivating ? <DentalLoaderIcon size={16} /> : <CreditCard size={16} />}
               {t("card.payButton")}
@@ -741,7 +737,7 @@ export default function PlansPage() {
             className={cn(
               "flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition sm:px-5",
               activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
+                ? "bg-primary-blue text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
             )}
           >

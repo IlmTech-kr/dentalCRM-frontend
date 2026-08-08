@@ -162,7 +162,13 @@ function getStatusLabel(status: AppointmentStatus | string | undefined, t: (key:
 
 function Avatar({ name }: { name: string }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-xs font-extrabold text-white shadow-sm">
+    <div
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold text-white shadow-sm"
+      style={{
+        background:
+          "linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%)",
+      }}
+    >
       {getInitials(name)}
     </div>
   );
@@ -208,7 +214,7 @@ function Pagination({
           type="button"
           onClick={() => onChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5] disabled:opacity-30"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
         >
           <ChevronLeft size={15} />
         </button>
@@ -223,8 +229,8 @@ function Pagination({
               onClick={() => onChange(page as number)}
               className={`flex h-9 w-9 items-center justify-center rounded-xl border text-sm font-bold transition ${
                 currentPage === page
-                  ? "border-[#35a8f5] bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
-                  : "border-slate-200 text-slate-500 hover:border-[#35a8f5] hover:text-[#35a8f5]"
+                  ? "border-primary-blue bg-primary-blue text-white shadow-sm shadow-primary-blue/20"
+                  : "border-slate-200 text-slate-500 hover:border-primary-blue hover:text-primary-blue"
               }`}
             >
               {page}
@@ -236,7 +242,7 @@ function Pagination({
           type="button"
           onClick={() => onChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5] disabled:opacity-30"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
         >
           <ChevronRight size={15} />
         </button>
@@ -259,15 +265,15 @@ function DoctorDropdown({ doctors, value, onChange }: { doctors: any[]; value: s
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${selected ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-slate-50 hover:border-blue-300"}`}
+        className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${selected ? "border-primary-blue bg-primary-blue/5" : "border-slate-200 bg-slate-50 hover:border-primary-blue/30"}`}
       >
         {selected ? (
           <>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-blue text-sm font-black text-white">
               {getInitials(getPersonName(selected) || "D")}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black text-blue-900">{getPersonName(selected)}</p>
+              <p className="truncate text-sm font-black text-primary-blue">{getPersonName(selected)}</p>
               {selected.email && <p className="truncate text-xs text-slate-500">{selected.email}</p>}
             </div>
           </>
@@ -306,16 +312,16 @@ function DoctorDropdown({ doctors, value, onChange }: { doctors: any[]; value: s
                 const name = getPersonName(doctor) || t("doctorDropdown.unnamed");
                 const isActive = id === value;
                 return (
-                  <button key={id} type="button" onClick={() => { onChange(id); setOpen(false); }} className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${idx !== 0 ? "border-t border-slate-50" : ""} ${isActive ? "bg-blue-50" : "hover:bg-slate-50"}`}>
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ${isActive ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+                  <button key={id} type="button" onClick={() => { onChange(id); setOpen(false); }} className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${idx !== 0 ? "border-t border-slate-50" : ""} ${isActive ? "bg-primary-blue/5" : "hover:bg-slate-50"}`}>
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ${isActive ? "bg-primary-blue text-white" : "bg-slate-100 text-slate-700"}`}>
                       {getInitials(name)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-black ${isActive ? "text-blue-900" : "text-slate-900"}`}>{name}</p>
+                      <p className={`truncate text-sm font-black ${isActive ? "text-primary-blue" : "text-slate-900"}`}>{name}</p>
                       {doctor.email && <p className="truncate text-xs text-slate-500">{doctor.email}</p>}
                     </div>
                     {isActive && (
-                      <svg className="h-4 w-4 shrink-0 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <svg className="h-4 w-4 shrink-0 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -396,7 +402,13 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div onClick={onClose} className="absolute inset-0 backdrop-blur-md" />
       <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-4 py-6 text-white sm:px-6 sm:py-7">
+        <div
+          className="relative overflow-hidden border-b border-slate-100 px-4 py-6 text-white sm:px-6 sm:py-7"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--primary-blue) 0%, color-mix(in srgb, var(--primary-blue) 70%, var(--primary-blue-dark)) 55%, var(--primary-blue-dark) 100%)",
+          }}
+        >
           <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 left-12 h-44 w-44 rounded-full bg-white/10" />
           <div className="relative flex items-start justify-between gap-4">
@@ -405,7 +417,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
                 <Calendar className="h-6 w-6" />
               </div>
               <h2 className="text-xl font-black sm:text-2xl">{selectedAppointment ? t("modal.editTitle") : t("modal.createTitle")}</h2>
-              <p className="mt-2 text-sm font-medium text-blue-50">{t("modal.subtitle")}</p>
+              <p className="mt-2 text-sm font-medium text-white/70">{t("modal.subtitle")}</p>
             </div>
             <button type="button" onClick={onClose} className="shrink-0 rounded-2xl bg-white/10 p-2 text-white transition hover:bg-white/20">
               <X className="h-6 w-6" />
@@ -415,8 +427,8 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 
         <form onSubmit={onSubmit} className="max-h-[calc(92vh-150px)] space-y-6 overflow-y-auto px-4 py-6 sm:px-6 sm:py-7">
           {selectedAppointment ? (
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-xs font-black uppercase text-blue-600">{t("modal.patientLabel")}</p>
+            <div className="rounded-2xl border border-primary-blue/10 bg-primary-blue/5 p-4">
+              <p className="text-xs font-black uppercase text-primary-blue">{t("modal.patientLabel")}</p>
               <p className="mt-1 text-sm font-black text-slate-900">{selectedPatientName || form.patientId}</p>
               <p className="mt-1 text-xs font-semibold text-slate-500">{t("modal.patientIdLabel", { id: form.patientId })}</p>
             </div>
@@ -425,8 +437,8 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
               <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.findPatientLabel")} <span className="text-red-500">*</span></label>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <input type="tel" value={phoneSearch} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={t("modal.phonePlaceholder")} maxLength={13} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
-                  <button type="button" onClick={handleSearchPatient} disabled={isPatientSearching || phoneDigits.length !== 12} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  <input type="tel" value={phoneSearch} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={t("modal.phonePlaceholder")} maxLength={13} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10" />
+                  <button type="button" onClick={handleSearchPatient} disabled={isPatientSearching || phoneDigits.length !== 12} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-blue px-5 py-3 text-sm font-black text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60">
                     {isPatientSearching ? <DentalLoaderIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     {tCommon("actions.search")}
                   </button>
@@ -457,11 +469,11 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.dateLabel")} <span className="text-red-500">*</span></label>
-              <input type="date" value={normalizeDateForInput(form.appointmentDate)} onChange={(e) => onChange({ ...form, appointmentDate: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+              <input type="date" value={normalizeDateForInput(form.appointmentDate)} onChange={(e) => onChange({ ...form, appointmentDate: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.startTimeLabel")} <span className="text-red-500">*</span></label>
-              <input type="time" value={normalizeTimeForInput(form.startTime)} onChange={(e) => onChange({ ...form, startTime: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+              <input type="time" value={normalizeTimeForInput(form.startTime)} onChange={(e) => onChange({ ...form, startTime: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
             </div>
           </div>
 
@@ -469,7 +481,7 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
             <label className="mb-3 block text-sm font-extrabold text-slate-900">{t("modal.slotDurationLabel")} <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
               {DURATION_OPTIONS.map((duration) => (
-                <button key={duration} type="button" onClick={() => onChange({ ...form, slotDurationMinutes: duration })} className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${form.slotDurationMinutes === duration ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}>
+                <button key={duration} type="button" onClick={() => onChange({ ...form, slotDurationMinutes: duration })} className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${form.slotDurationMinutes === duration ? "border-primary-blue bg-primary-blue text-white shadow-lg shadow-primary-blue/20" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-primary-blue/30 hover:bg-primary-blue/5"}`}>
                   {duration}
                 </button>
               ))}
@@ -478,12 +490,12 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 
           <div>
             <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.notesLabel")}</label>
-            <textarea value={form.notes || ""} onChange={(e) => onChange({ ...form, notes: e.target.value })} rows={4} placeholder={t("modal.notesPlaceholder")} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+            <textarea value={form.notes || ""} onChange={(e) => onChange({ ...form, notes: e.target.value })} rows={4} placeholder={t("modal.notesPlaceholder")} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
           </div>
 
           <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <button type="button" onClick={onClose} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50">{tCommon("actions.cancel")}</button>
-            <button type="submit" disabled={isSubmitting || (!selectedAppointment && !form.patientId)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="submit" disabled={isSubmitting || (!selectedAppointment && !form.patientId)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-blue px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-primary-blue/20 transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting && <DentalLoaderIcon className="h-4 w-4" />}
               {selectedAppointment ? t("modal.saveChanges") : t("modal.createAppointment")}
             </button>
@@ -728,7 +740,7 @@ export default function AppointmentsPage() {
         <button
           type="button"
           onClick={() => openEditModal(appointment)}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary-blue/10 bg-primary-blue/5 text-primary-blue transition hover:bg-primary-blue/10"
         >
           <Edit2 className="h-3.5 w-3.5" />
         </button>
@@ -746,18 +758,24 @@ export default function AppointmentsPage() {
   return (
     <div className="min-h-screen bg-[#F6F8FC]">
       {/* Header */}
-      <div className="relative overflow-hidden border-b border-white/40 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950">
-        <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
+      <div
+        className="relative overflow-hidden border-b border-white/40"
+        style={{
+          background:
+            "linear-gradient(135deg, #020617 0%, color-mix(in srgb, var(--primary-blue) 55%, #020617) 55%, color-mix(in srgb, var(--primary-blue-dark) 70%, #020617) 100%)",
+        }}
+      >
+        <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary-blue/20 blur-3xl" />
+        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-primary-blue-dark/20 blur-3xl" />
         <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-extrabold text-blue-50 backdrop-blur">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-extrabold text-white backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 {t("header.badge")}
               </div>
               <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">{t("header.title")}</h1>
-              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-blue-100">
+              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-white/70">
                 {t("header.subtitle")}
               </p>
             </div>
@@ -765,7 +783,7 @@ export default function AppointmentsPage() {
               <button type="button" onClick={refreshCurrent} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20">
                 <RefreshCcw className="h-4 w-4" /> {t("header.refresh")}
               </button>
-              <button type="button" onClick={openCreateModal} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-blue-950 shadow-xl shadow-blue-950/20 transition hover:bg-blue-50">
+              <button type="button" onClick={openCreateModal} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-primary-blue shadow-xl shadow-primary-blue/20 transition hover:bg-slate-100">
                 <Plus className="h-4 w-4" /> {t("header.addAppointment")}
               </button>
             </div>
@@ -781,7 +799,7 @@ export default function AppointmentsPage() {
               { label: t("stats.cancelled"), value: stats.cancelled },
             ].map((stat) => (
               <div key={stat.label} className="rounded-3xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur sm:p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-100">{stat.label}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-white/60">{stat.label}</p>
                 <p className="mt-2 text-2xl font-black sm:text-3xl">{stat.value}</p>
               </div>
             ))}
@@ -801,12 +819,12 @@ export default function AppointmentsPage() {
                 {t("filters.all")}
               </button>
               {viewMode === "BY_DATE" && (
-                <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
               )}
             </div>
             <div className="relative w-full lg:max-w-md">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("filters.searchPlaceholder")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("filters.searchPlaceholder")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
             </div>
           </div>
         </section>
@@ -834,18 +852,18 @@ export default function AppointmentsPage() {
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-2xl font-black text-red-600">!</div>
               <p className="text-lg font-black text-slate-900">{t("list.errorTitle")}</p>
               <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">{getApiErrorMessage(currentErrorObject, t("list.errorFallback"))}</p>
-              <button type="button" onClick={refreshCurrent} className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700">{t("list.tryAgain")}</button>
+              <button type="button" onClick={refreshCurrent} className="mt-6 rounded-2xl bg-primary-blue px-6 py-3 text-sm font-extrabold text-white transition hover:bg-primary-blue-dark">{t("list.tryAgain")}</button>
             </div>
           ) : filteredAppointments.length === 0 ? (
             <div className="rounded-[2rem] border border-white bg-white px-4 py-20 text-center shadow-sm sm:px-6">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-blue/5 text-primary-blue">
                 <Calendar className="h-8 w-8" />
               </div>
               <p className="text-lg font-black text-slate-900">{t("list.emptyTitle")}</p>
               <p className="mt-2 text-sm font-medium text-slate-500">
                 {viewMode === "BY_DATE" ? t("list.emptyByDate") : t("list.emptyAll")}
               </p>
-              <button type="button" onClick={openCreateModal} className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700">
+              <button type="button" onClick={openCreateModal} className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary-blue px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-primary-blue/20 transition hover:bg-primary-blue-dark">
                 <Plus className="h-4 w-4" /> {t("header.addAppointment")}
               </button>
             </div>
@@ -863,7 +881,7 @@ export default function AppointmentsPage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-black text-slate-950">{(appointment as any).patientName}</p>
                           <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-semibold text-slate-500">
-                            <UserRound className="h-3 w-3 shrink-0 text-blue-600" />
+                            <UserRound className="h-3 w-3 shrink-0 text-primary-blue" />
                             {(appointment as any).doctorName}
                           </p>
                         </div>
@@ -871,11 +889,11 @@ export default function AppointmentsPage() {
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-600">
                         <span className="inline-flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                          <Calendar className="h-3.5 w-3.5 text-primary-blue" />
                           {appointment.appointmentDate}
                         </span>
                         <span className="inline-flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-blue-600" />
+                          <Clock className="h-3.5 w-3.5 text-primary-blue" />
                           {formatTime(appointment.startTime)}
                           {(appointment as any).endTime ? ` - ${formatTime((appointment as any).endTime)}` : ""}
                         </span>
@@ -940,21 +958,21 @@ export default function AppointmentsPage() {
 
                           <td className="px-5 py-4 align-middle">
                             <span className="inline-flex max-w-[160px] items-center gap-1.5 truncate text-sm font-semibold text-slate-600">
-                              <UserRound className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              <UserRound className="h-3.5 w-3.5 shrink-0 text-primary-blue" />
                               <span className="truncate">{(appointment as any).doctorName}</span>
                             </span>
                           </td>
 
                           <td className="px-5 py-4 align-middle">
                             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                              <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              <Calendar className="h-3.5 w-3.5 shrink-0 text-primary-blue" />
                               {appointment.appointmentDate}
                             </span>
                           </td>
 
                           <td className="px-5 py-4 align-middle">
                             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                              <Clock className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                              <Clock className="h-3.5 w-3.5 shrink-0 text-primary-blue" />
                               {formatTime(appointment.startTime)}
                               {(appointment as any).endTime ? ` - ${formatTime((appointment as any).endTime)}` : ""}
                             </span>

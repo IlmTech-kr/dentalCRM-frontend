@@ -193,7 +193,7 @@ function DoctorAvatar({
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold uppercase text-blue-700 ${sizeClassName} ${textClassName}`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-primary-blue/10 font-bold uppercase text-primary-blue ${sizeClassName} ${textClassName}`}
     >
       {initials}
     </div>
@@ -268,7 +268,7 @@ function Dropdown({
         onClick={() => setOpen((previous) => !previous)}
         className={
           buttonClassName ??
-          "flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40 focus:outline-none focus:ring-4 focus:ring-blue-100"
+          "flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-blue/30 hover:bg-primary-blue/10 focus:outline-none focus:ring-4 focus:ring-primary-blue/10"
         }
       >
         <span className="truncate">
@@ -277,7 +277,7 @@ function Dropdown({
 
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
-            open ? "rotate-180 text-blue-500" : ""
+            open ? "rotate-180 text-primary-blue" : ""
           }`}
         />
       </button>
@@ -304,7 +304,7 @@ function Dropdown({
                 }}
                 className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
                   isSelected
-                    ? "bg-blue-50 text-blue-700"
+                    ? "bg-primary-blue/5 text-primary-blue"
                     : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -315,7 +315,7 @@ function Dropdown({
                     <span
                       className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                         isSelected
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-primary-blue/10 text-primary-blue"
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
@@ -325,7 +325,7 @@ function Dropdown({
                 </span>
 
                 {isSelected && (
-                  <Check className="h-4 w-4 shrink-0 text-blue-600" />
+                  <Check className="h-4 w-4 shrink-0 text-primary-blue" />
                 )}
               </button>
             );
@@ -768,7 +768,7 @@ export default function DoctorsPage() {
           <button
             type="button"
             onClick={handleOpenInviteModal}
-            className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 lg:w-auto"
+            className="w-full rounded-xl bg-primary-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-blue-dark lg:w-auto"
           >
             {t("page.addStaff")}
           </button>
@@ -860,7 +860,7 @@ export default function DoctorsPage() {
                   setSearch(event.target.value)
                 }
                 placeholder={t("list.searchPlaceholder")}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
               />
             </div>
           </div>
@@ -875,7 +875,7 @@ export default function DoctorsPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="mt-4 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-4 rounded-xl bg-primary-blue px-5 py-3 text-sm font-semibold text-white hover:bg-primary-blue-dark"
             >
               {t("list.tryAgain")}
             </button>
@@ -1129,7 +1129,7 @@ export default function DoctorsPage() {
                     )
                   }
                   placeholder={t("inviteModal.emailPlaceholder")}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 />
               </div>
 
@@ -1145,7 +1145,7 @@ export default function DoctorsPage() {
                       value as StaffRole
                     )
                   }
-                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-primary-blue focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   options={staffRoleOptions.map(
                     (role) => ({
                       value: role,
@@ -1172,7 +1172,7 @@ export default function DoctorsPage() {
                             value as CompensationType
                           )
                         }
-                        buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                        buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-primary-blue focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                         options={compensationTypeOptions.map(
                           (type) => ({
                             value: type,
@@ -1208,7 +1208,7 @@ export default function DoctorsPage() {
                           )
                         }
                         placeholder={t("inviteModal.commissionPlaceholder")}
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                       />
                     </div>
                   ) : (
@@ -1230,14 +1230,14 @@ export default function DoctorsPage() {
                           )
                         }
                         placeholder={t("inviteModal.salaryPlaceholder")}
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                       />
                     </div>
                   )}
                 </>
               )}
 
-              <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
+              <div className="rounded-xl bg-primary-blue/5 p-4 text-sm text-primary-blue">
                 {t("inviteModal.hint")}
               </div>
 
@@ -1255,7 +1255,7 @@ export default function DoctorsPage() {
                   disabled={
                     inviteDoctorMutation.isPending
                   }
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {inviteDoctorMutation.isPending
                     ? t("inviteModal.sending")
@@ -1333,7 +1333,7 @@ export default function DoctorsPage() {
                         })
                       )
                     }
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
 
@@ -1354,7 +1354,7 @@ export default function DoctorsPage() {
                         })
                       )
                     }
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
               </div>
@@ -1377,7 +1377,7 @@ export default function DoctorsPage() {
                     )
                   }
                   placeholder={t("editModal.phonePlaceholder")}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 />
               </div>
 
@@ -1399,7 +1399,7 @@ export default function DoctorsPage() {
                     )
                   }
                   placeholder={t("editModal.avatarPlaceholder")}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 />
               </div>
 
@@ -1418,7 +1418,7 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-primary-blue focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   options={staffRoleOptions.map(
                     (role) => ({
                       value: role,
@@ -1444,7 +1444,7 @@ export default function DoctorsPage() {
                       })
                     )
                   }
-                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  buttonClassName="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition hover:border-primary-blue focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   options={statusOptions.map(
                     (status) => ({
                       value: status,
@@ -1468,7 +1468,7 @@ export default function DoctorsPage() {
                   disabled={
                     updateDoctorMutation.isPending
                   }
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {updateDoctorMutation.isPending
                     ? t("editModal.saving")

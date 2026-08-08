@@ -387,7 +387,7 @@ const filteredPatients = useMemo(() => {
         <button
           type="button"
           onClick={() => openEditModal(patient)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-primary-blue/20 hover:bg-primary-blue/5 hover:text-primary-blue"
           title={tCommon("actions.edit")}
         >
           <Pencil size={16} />
@@ -419,7 +419,7 @@ const filteredPatients = useMemo(() => {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#35a8f5] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1d8ee8]"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-blue px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-blue-dark"
         >
           <Plus size={18} />
           {t("list.addButton")}
@@ -430,7 +430,7 @@ const filteredPatients = useMemo(() => {
         <div className="flex flex-col gap-4 border-b border-border-color px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-dark-navy">{t("list.sectionTitle")}</h2>
-            <span className="rounded-full bg-[#35a8f5]/10 px-3 py-1 text-sm font-medium text-[#35a8f5]">
+            <span className="rounded-full bg-primary-blue/10 px-3 py-1 text-sm font-medium text-primary-blue">
               {t("list.patientsCount", { count: filteredPatients.length })}
             </span>
           </div>
@@ -442,7 +442,7 @@ const filteredPatients = useMemo(() => {
               value={tableSearch}
               onChange={(e) => handleTableSearchChange(e.target.value)}
               placeholder={t("list.searchPlaceholder")}
-              className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-9 text-sm outline-none focus:border-[#35a8f5] focus:ring-2 focus:ring-[#35a8f5]/20"
+              className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-9 text-sm outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20"
             />
             {tableSearch && (
               <button
@@ -470,7 +470,7 @@ const filteredPatients = useMemo(() => {
                 paginatedPatients.map((patient) => (
                   <div key={patient.id} className="flex flex-col gap-3 px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#35a8f5]/10 font-bold text-[#35a8f5]">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-blue/10 font-bold text-primary-blue">
                         {patient.firstName?.[0]}{patient.lastName?.[0]}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ const filteredPatients = useMemo(() => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#35a8f5]/10 font-bold text-[#35a8f5]">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-blue/10 font-bold text-primary-blue">
                               {patient.firstName?.[0]}{patient.lastName?.[0]}
                             </div>
                             <div>
@@ -589,7 +589,7 @@ const filteredPatients = useMemo(() => {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5] disabled:opacity-30"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
                   >
                     <ChevronLeft size={15} />
                   </button>
@@ -617,8 +617,8 @@ const filteredPatients = useMemo(() => {
                           onClick={() => setCurrentPage(page as number)}
                           className={`flex h-9 w-9 items-center justify-center rounded-xl border text-sm font-bold transition ${
                             currentPage === page
-                              ? "border-[#35a8f5] bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
-                              : "border-border-color text-slate-500 hover:border-[#35a8f5] hover:text-[#35a8f5]"
+                              ? "border-primary-blue bg-primary-blue text-white shadow-sm shadow-primary-blue/20"
+                              : "border-border-color text-slate-500 hover:border-primary-blue hover:text-primary-blue"
                           }`}
                         >
                           {page}
@@ -630,7 +630,7 @@ const filteredPatients = useMemo(() => {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-[#35a8f5] hover:text-[#35a8f5] disabled:opacity-30"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
                   >
                     <ChevronRight size={15} />
                   </button>
@@ -685,7 +685,7 @@ const filteredPatients = useMemo(() => {
                       <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
                         {tCommon("actions.close")}
                       </button>
-                      <button type="button" onClick={() => openAppointmentModal(phoneSearchResult)} className="flex-1 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8]">
+                      <button type="button" onClick={() => openAppointmentModal(phoneSearchResult)} className="flex-1 rounded-xl bg-primary-blue px-4 py-3 font-semibold text-white hover:bg-primary-blue-dark">
                         {t("actions.createAppointment")}
                       </button>
                     </div>
@@ -702,15 +702,15 @@ const filteredPatients = useMemo(() => {
                         onChange={(e) => handlePhoneSearchInput(e.target.value)}
                         placeholder={t("phoneSearchModal.phonePlaceholder")}
                         maxLength={13}
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-10 text-lg font-semibold tracking-wider outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-10 text-lg font-semibold tracking-wider outline-none focus:ring-2 focus:ring-primary-blue"
                       />
                       <Search className="absolute right-3 top-3.5 text-slate-400" size={18} />
                     </div>
-                    <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                    <div className="mt-2 rounded-lg border border-primary-blue/20 bg-primary-blue/5 p-3">
                       <p className="text-xs text-slate-600">
                         {t.rich("phoneSearchModal.phonePreview", {
                           value: phoneSearch || t("phoneSearchModal.phonePlaceholder"),
-                          b: (chunks) => <span className="font-semibold text-[#35a8f5]">{chunks}</span>,
+                          b: (chunks) => <span className="font-semibold text-primary-blue">{chunks}</span>,
                         })}
                       </p>
                     </div>
@@ -725,8 +725,8 @@ const filteredPatients = useMemo(() => {
                   )}
 
                   {phoneSearchAttempted && !phoneSearchResult && !phoneSearchLoading && !phoneSearchError && (
-                    <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                      <AlertCircle className="mt-0.5 flex-shrink-0 text-[#35a8f5]" size={20} />
+                    <div className="flex items-start gap-3 rounded-xl border border-primary-blue/20 bg-primary-blue/5 p-4">
+                      <AlertCircle className="mt-0.5 flex-shrink-0 text-primary-blue" size={20} />
                       <div>
                         <p className="text-sm font-semibold text-dark-navy">{t("phoneSearchModal.notFoundTitle")}</p>
                         <p className="mt-0.5 text-xs text-slate-600">{t("phoneSearchModal.notFoundSubtitle")}</p>
@@ -741,7 +741,7 @@ const filteredPatients = useMemo(() => {
                     <button
                       type="submit"
                       disabled={phoneSearchLoading || phoneDigits.length !== 12}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-blue px-4 py-3 font-semibold text-white hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {phoneSearchLoading ? (
                         <><DentalLoaderIcon size={16} className="text-white" /> {t("phoneSearchModal.searching")}</>
@@ -785,8 +785,8 @@ const filteredPatients = useMemo(() => {
             </div>
 
             <form onSubmit={handleCreateAppointment} className="max-h-[calc(92vh-88px)] space-y-4 overflow-y-auto p-4 sm:p-6">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-                <p className="text-xs font-medium uppercase text-[#35a8f5]">{t("appointmentModal.patientLabel")}</p>
+              <div className="rounded-xl border border-primary-blue/10 bg-primary-blue/5 p-4">
+                <p className="text-xs font-medium uppercase text-primary-blue">{t("appointmentModal.patientLabel")}</p>
                 <p className="mt-1 font-semibold text-dark-navy">{selectedPatient.firstName} {selectedPatient.lastName}</p>
                 <p className="mt-1 text-sm text-text-light">{getPatientPhone(selectedPatient)}</p>
               </div>
@@ -797,7 +797,7 @@ const filteredPatients = useMemo(() => {
                   value={appointmentForm.doctorId}
                   onChange={(e) => setAppointmentForm((prev) => ({ ...prev, doctorId: e.target.value }))}
                   required
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
                 >
                   <option value="">{t("appointmentModal.selectDoctorOption")}</option>
                   {appointmentDoctors.map((doctor: any) => {
@@ -815,7 +815,7 @@ const filteredPatients = useMemo(() => {
                     value={appointmentForm.appointmentDate}
                     onChange={(e) => setAppointmentForm((prev) => ({ ...prev, appointmentDate: e.target.value }))}
                     required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
                   />
                 </div>
                 <div>
@@ -825,7 +825,7 @@ const filteredPatients = useMemo(() => {
                     value={appointmentForm.startTime}
                     onChange={(e) => setAppointmentForm((prev) => ({ ...prev, startTime: e.target.value }))}
                     required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
                   />
                 </div>
               </div>
@@ -835,7 +835,7 @@ const filteredPatients = useMemo(() => {
                 <select
                   value={appointmentForm.slotDurationMinutes}
                   onChange={(e) => setAppointmentForm((prev) => ({ ...prev, slotDurationMinutes: Number(e.target.value) }))}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
                 >
                   <option value={15}>{t("appointmentModal.durationMinutes", { minutes: 15 })}</option>
                   <option value={30}>{t("appointmentModal.durationMinutes", { minutes: 30 })}</option>
@@ -850,7 +850,7 @@ const filteredPatients = useMemo(() => {
                   value={appointmentForm.notes}
                   onChange={(e) => setAppointmentForm((prev) => ({ ...prev, notes: e.target.value }))}
                   placeholder={t("appointmentModal.notesPlaceholder")}
-                  className="min-h-[100px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                  className="min-h-[100px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
                 />
               </div>
 
@@ -861,7 +861,7 @@ const filteredPatients = useMemo(() => {
                 <button
                   type="submit"
                   disabled={createAppointmentMutation.isPending}
-                  className="w-full rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50 sm:w-auto"
+                  className="w-full rounded-xl bg-primary-blue px-5 py-3 font-semibold text-white hover:bg-primary-blue-dark disabled:opacity-50 sm:w-auto"
                 >
                   {createAppointmentMutation.isPending ? t("appointmentModal.creating") : t("actions.createAppointment")}
                 </button>
@@ -886,9 +886,9 @@ const filteredPatients = useMemo(() => {
             </div>
 
             <form onSubmit={handleSubmit} className="grid max-h-[calc(92vh-88px)] grid-cols-1 gap-4 overflow-y-auto p-4 sm:grid-cols-2 sm:p-6">
-              <input name="firstName" value={form.firstName} onChange={handleChange} placeholder={t("form.firstNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
-              <input name="lastName" value={form.lastName} onChange={handleChange} placeholder={t("form.lastNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
-              <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]" />
+              <input name="firstName" value={form.firstName} onChange={handleChange} placeholder={t("form.firstNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
+              <input name="lastName" value={form.lastName} onChange={handleChange} placeholder={t("form.lastNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
+              <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
               <input
                 name="phone"
                 value={form.phone}
@@ -896,13 +896,13 @@ const filteredPatients = useMemo(() => {
                 placeholder={t("phoneSearchModal.phonePlaceholder")}
                 maxLength={13}
                 required
-                className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5]"
+                className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
               />
-              <select name="gender" value={form.gender} onChange={handleChange} className={`rounded-xl border px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-[#35a8f5] ${getGenderBadgeClass(form.gender)}`}>
+              <select name="gender" value={form.gender} onChange={handleChange} className={`rounded-xl border px-4 py-3 font-semibold outline-none focus:ring-2 focus:ring-primary-blue ${getGenderBadgeClass(form.gender)}`}>
                 <option value={Gender.MALE}>{t("gender.male")}</option>
                 <option value={Gender.FEMALE}>{t("gender.female")}</option>
               </select>
-              <textarea name="anamnesis" value={form.anamnesis} onChange={handleChange} placeholder={t("form.anamnesisPlaceholder")} className="min-h-[110px] rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#35a8f5] sm:col-span-2" />
+              <textarea name="anamnesis" value={form.anamnesis} onChange={handleChange} placeholder={t("form.anamnesisPlaceholder")} className="min-h-[110px] rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue sm:col-span-2" />
 
               <div className="flex flex-col-reverse gap-3 border-t border-border-color pt-4 sm:col-span-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={closeModal} className="w-full rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto">
@@ -911,7 +911,7 @@ const filteredPatients = useMemo(() => {
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="w-full rounded-xl bg-[#35a8f5] px-5 py-3 font-semibold text-white hover:bg-[#1d8ee8] disabled:opacity-50 sm:w-auto"
+                  className="w-full rounded-xl bg-primary-blue px-5 py-3 font-semibold text-white hover:bg-primary-blue-dark disabled:opacity-50 sm:w-auto"
                 >
                   {editingPatient ? t("form.saveChangesButton") : t("form.createButton")}
                 </button>
@@ -992,7 +992,7 @@ const filteredPatients = useMemo(() => {
               <button type="button" onClick={() => openAppointmentModal(selectedPatient)} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
                 {t("actions.createAppointment")}
               </button>
-              <button type="button" onClick={() => openEditModal(selectedPatient)} className="flex-1 rounded-xl bg-[#35a8f5] px-4 py-3 font-semibold text-white hover:bg-[#1d8ee8]">
+              <button type="button" onClick={() => openEditModal(selectedPatient)} className="flex-1 rounded-xl bg-primary-blue px-4 py-3 font-semibold text-white hover:bg-primary-blue-dark">
                 {t("actions.editPatient")}
               </button>
             </div>

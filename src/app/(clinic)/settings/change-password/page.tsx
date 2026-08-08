@@ -75,10 +75,10 @@ function PasswordField({
         error
           ? "border-red-300 bg-red-50"
           : value
-            ? "border-blue-300 bg-blue-50/40"
-            : "border-slate-200 bg-slate-50 focus-within:border-blue-400 focus-within:bg-white"
+            ? "border-primary-blue/30 bg-primary-blue/10"
+            : "border-slate-200 bg-slate-50 focus-within:border-primary-blue focus-within:bg-white"
       }`}>
-        <Lock size={16} className={error ? "text-red-400" : value ? "text-blue-400" : "text-slate-400"} />
+        <Lock size={16} className={error ? "text-red-400" : value ? "text-primary-blue" : "text-slate-400"} />
         <input
           type={show ? "text" : "password"}
           value={value}
@@ -158,10 +158,10 @@ export default function ChangePasswordPage() {
     <div className="space-y-5 sm:space-y-6">
       {/* Header card */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
-        <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+        <div className="h-2 bg-gradient-to-r from-primary-blue to-primary-blue-dark" />
 
         <div className="flex items-center gap-4 px-4 py-5 sm:gap-5 sm:px-8 sm:py-6">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 sm:h-14 sm:w-14">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-blue/5 text-primary-blue sm:h-14 sm:w-14">
             <ShieldCheck size={28} />
           </div>
           <div>
@@ -239,7 +239,7 @@ export default function ChangePasswordPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {changePasswordMutation.isPending ? (
                 <>
@@ -255,8 +255,8 @@ export default function ChangePasswordPage() {
       </div>
 
       {/* Security tip */}
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4 sm:px-5">
-        <p className="text-sm text-blue-700">
+      <div className="rounded-2xl border border-primary-blue/10 bg-primary-blue/5 px-4 py-4 sm:px-5">
+        <p className="text-sm text-primary-blue">
           <span className="font-bold">{t("tip.label")}</span> {t("tip.text")}
         </p>
       </div>

@@ -10,9 +10,7 @@ import {
   LayoutDashboard,
   Stethoscope,
   Users,
-  UserRound,
   Settings,
-  FileBarChart,
   Activity,
   ChevronDown,
   ChevronRight,
@@ -20,6 +18,7 @@ import {
   Clock,
   BadgeDollarSign,
   CreditCard,
+  Palette,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -102,6 +101,7 @@ function buildNavItems(
   const settingsChildren: SubLink[] = [
     { href: "/settings/profile", label: t("sidebar.navProfile") },
     { href: "/settings/change-password", label: t("sidebar.navChangePassword") },
+    { href: "/settings/appearance", label: t("sidebar.navAppearance"), icon: Palette },
   ];
 
   if (isStaffAdmin) {

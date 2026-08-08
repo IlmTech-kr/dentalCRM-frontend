@@ -81,7 +81,7 @@ export function LanguageSwitcher({
                 </span>
 
                 {code === locale && (
-                  <Check size={16} className="text-blue-600" />
+                  <Check size={16} className="text-primary-blue" />
                 )}
               </button>
             ))}

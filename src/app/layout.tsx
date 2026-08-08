@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Providers from "./providers";
 
@@ -86,15 +87,71 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * React hydratsiyasidan oldin, HTML parse bosqichida ishlaydi — shu bois
+ * saqlangan accent rang (masalan, sidebar rangi) birinchi paint'dayoq
+ * to'g'ri ko'rinadi, default ko'k rang "yaltirab" ketmaydi (FOUC).
+ * Xato bo'lsa jim o'tkazib yuboriladi — default CSS qiymatlar ishlaydi.
+ */
+const ACCENT_COLOR_INIT_SCRIPT = `
+(function () {
+  try {
+    var hex = localStorage.getItem("accent-color");
+    if (!hex || !/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) return;
+    var clean = hex.replace("#", "");
+    if (clean.length === 3) clean = clean.split("").map(function (c) { return c + c; }).join("");
+    var num = parseInt(clean, 16);
+    var r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+
+    // ensureUsableAccent (src/lib/theme/accentColor.ts) bilan bir xil qoida:
+    // juda och/rangsiz tanlov (masalan oq) matnni oq fonda ko'rinmas qilib
+    // qo'ymasligi uchun xavfsiz darajaga tushiriladi.
+    var rf = r / 255, gf = g / 255, bf = b / 255;
+    var max = Math.max(rf, gf, bf), min = Math.min(rf, gf, bf);
+    var l = (max + min) / 2;
+    var s = 0;
+    if (max !== min) {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    }
+    if (s < 0.12 && l > 0.5) {
+      hex = "#334155";
+      r = 0x33; g = 0x41; b = 0x55;
+    } else if (s >= 0.12 && l > 0.68) {
+      var scale = 0.68 / l;
+      r = Math.round(r * scale);
+      g = Math.round(g * scale);
+      b = Math.round(b * scale);
+      hex = "#" + [r, g, b].map(function (v) {
+        return Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0");
+      }).join("");
+    }
+
+    var factor = 0.86;
+    var dark = "#" + [r, g, b].map(function (v) {
+      return Math.max(0, Math.min(255, Math.round(v * factor))).toString(16).padStart(2, "0");
+    }).join("");
+    var root = document.documentElement;
+    root.style.setProperty("--primary-blue", hex);
+    root.style.setProperty("--primary-blue-dark", dark);
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uz">
+    <html lang="uz" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
+        <Script
+          id="accent-color-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: ACCENT_COLOR_INIT_SCRIPT }}
+        />
       </body>
     </html>
   );

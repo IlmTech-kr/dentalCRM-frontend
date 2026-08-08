@@ -42,7 +42,8 @@
     "navSettings": "Sozlamalar",
     "navProfile": "Profil",
     "navChangePassword": "Parolni o'zgartirish",
-    "navPlans": "Tariflar"
+    "navPlans": "Tariflar",
+    "navAppearance": "Ko'rinish"
   },
   "footer": {
     "ctaTitle": "Klinikangizni raqamlashtirishga tayyormisiz?",

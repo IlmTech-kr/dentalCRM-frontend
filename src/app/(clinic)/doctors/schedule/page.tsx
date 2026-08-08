@@ -233,7 +233,7 @@ function DoctorCard({
         <button
           type="button"
           onClick={onView}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary-blue px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-blue-dark"
         >
           <CalendarDays className="h-3.5 w-3.5" />
           {t("viewSchedule")}
@@ -322,7 +322,7 @@ function WeeklyCalendar({
           <button
             type="button"
             onClick={onEditSchedule}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary-blue px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-blue-dark"
           >
             <Edit2 className="h-4 w-4" />
             {t("editSchedule")}
@@ -375,7 +375,7 @@ function WeeklyCalendar({
                 <div
                   key={d.value}
                   className={`py-3 text-center text-xs font-extrabold uppercase tracking-wider ${
-                    hasSlots ? "text-blue-600" : "text-slate-400"
+                    hasSlots ? "text-primary-blue" : "text-slate-400"
                   }`}
                 >
                   {d.short}
@@ -415,11 +415,11 @@ function WeeklyCalendar({
                           const spanH = endH - startH;
                           return (
                             <div
-                              className="absolute inset-x-1 z-10 overflow-hidden rounded-lg border-l-2 border-blue-400 bg-blue-50"
+                              className="absolute inset-x-1 z-10 overflow-hidden rounded-lg border-l-2 border-primary-blue bg-primary-blue/5"
                               style={{ top: 2, height: spanH * ROW_H - 4 }}
                             >
                               <div className="flex h-full flex-col justify-between p-2">
-                                <p className="text-[10px] font-extrabold text-blue-800">
+                                <p className="text-[10px] font-extrabold text-primary-blue">
                                   {start} – {end}
                                 </p>
                                 <span className="w-fit rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700">
@@ -440,7 +440,7 @@ function WeeklyCalendar({
 
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-blue-400 bg-blue-50" />
+          <span className="h-2.5 w-2.5 rounded-sm border-l-2 border-primary-blue bg-primary-blue/5" />
           {t("workHours")}
         </span>
         <span className="flex items-center gap-1.5">
@@ -525,7 +525,7 @@ function WeekEditorModal({
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
 
       <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-4 py-6 sm:px-6 sm:py-7">
+        <div className="border-b border-slate-100 bg-primary-blue/5 px-4 py-6 sm:px-6 sm:py-7">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h2 className="break-words text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -556,7 +556,7 @@ function WeekEditorModal({
               value={doctorId}
               disabled={isDoctorLocked}
               onChange={(e) => onDoctorChange(e.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+              className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
               <option value="">{t("modal.selectDoctor")}</option>
               {doctors.map((doctor) => {
@@ -585,7 +585,7 @@ function WeekEditorModal({
                   <div
                     key={day.value}
                     className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 p-3 transition ${
-                      row.active ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50"
+                      row.active ? "border-primary-blue/20 bg-primary-blue/10" : "border-slate-100 bg-slate-50"
                     }`}
                   >
                     <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2.5">
@@ -593,7 +593,7 @@ function WeekEditorModal({
                         type="checkbox"
                         checked={row.active}
                         onChange={(e) => updateRow(index, { active: e.target.checked })}
-                        className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="h-5 w-5 rounded border-slate-300 text-primary-blue focus:ring-primary-blue"
                       />
                       <span className="text-sm font-extrabold text-slate-900">{getDayLabel(day.value, t)}</span>
                     </label>
@@ -603,7 +603,7 @@ function WeekEditorModal({
                       value={row.startTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                     <span className="text-xs text-slate-400">—</span>
                     <input
@@ -611,7 +611,7 @@ function WeekEditorModal({
                       value={row.endTime}
                       disabled={!row.active}
                       onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                 );
@@ -625,7 +625,7 @@ function WeekEditorModal({
                   type="button"
                   onClick={() => onCreateModeChange("WEEKLY")}
                   className={`min-w-0 flex-1 break-words px-2 py-3 text-center transition ${
-                    createMode === "WEEKLY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                    createMode === "WEEKLY" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
                   {t("modal.weeklyTab")}
@@ -634,7 +634,7 @@ function WeekEditorModal({
                   type="button"
                   onClick={() => onCreateModeChange("DAILY")}
                   className={`min-w-0 flex-1 break-words px-2 py-3 text-center transition ${
-                    createMode === "DAILY" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
+                    createMode === "DAILY" ? "bg-primary-blue text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                   }`}
                 >
                   {t("modal.dailyTab")}
@@ -656,8 +656,8 @@ function WeekEditorModal({
                           onClick={() => onToggleCreateDay(day.value)}
                           className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold transition ${
                             isSelected
-                              ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                              ? "border-primary-blue bg-primary-blue text-white shadow-lg shadow-primary-blue/20"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-primary-blue/30 hover:bg-primary-blue/5"
                           }`}
                         >
                           {day.short}
@@ -699,7 +699,7 @@ function WeekEditorModal({
                     type="time"
                     value={createStartTime}
                     onChange={(e) => onCreateStartTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
                 <div>
@@ -710,7 +710,7 @@ function WeekEditorModal({
                     type="time"
                     value={createEndTime}
                     onChange={(e) => onCreateEndTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
               </div>
@@ -743,7 +743,7 @@ function WeekEditorModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-blue px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isSubmitting && <DentalLoaderIcon className="h-4 w-4" />}
                 {hasExistingSchedule ? t("modal.saveSchedule") : t("modal.createSchedule")}
@@ -1061,7 +1061,7 @@ export default function DoctorSchedulePage() {
         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-blue text-white shadow-lg">
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
@@ -1084,7 +1084,7 @@ export default function DoctorSchedulePage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-blue px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-primary-blue-dark sm:flex-none"
               >
                 <Plus className="h-4 w-4" />
                 {t("addSchedule")}
@@ -1124,7 +1124,7 @@ export default function DoctorSchedulePage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+              className="mt-6 rounded-xl bg-primary-blue px-6 py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark"
             >
               {t("tryAgain")}
             </button>
@@ -1161,7 +1161,7 @@ export default function DoctorSchedulePage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("searchPlaceholder")}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1170,7 +1170,7 @@ export default function DoctorSchedulePage() {
                     onClick={() => setSelectedDay("ALL")}
                     className={`rounded-xl px-4 py-2 text-sm font-extrabold transition ${
                       selectedDay === "ALL"
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                        ? "bg-primary-blue text-white shadow-lg shadow-primary-blue/20"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
@@ -1183,7 +1183,7 @@ export default function DoctorSchedulePage() {
                       onClick={() => setSelectedDay(day.value)}
                       className={`rounded-xl px-4 py-2 text-sm font-extrabold transition ${
                         selectedDay === day.value
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                          ? "bg-primary-blue text-white shadow-lg shadow-primary-blue/20"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
@@ -1196,7 +1196,7 @@ export default function DoctorSchedulePage() {
 
             {doctorGroups.length === 0 ? (
               <div className="rounded-3xl border border-slate-100 bg-white px-4 py-16 text-center shadow-sm sm:px-6 sm:py-20">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-primary-blue/5 text-primary-blue">
                   <CalendarDays className="h-7 w-7" />
                 </div>
                 <p className="text-lg font-extrabold text-slate-900">{t("emptyTitle")}</p>
@@ -1206,7 +1206,7 @@ export default function DoctorSchedulePage() {
                 <button
                   type="button"
                   onClick={openCreateModal}
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary-blue px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-primary-blue-dark"
                 >
                   <Plus className="h-4 w-4" />
                   {t("addSchedule")}

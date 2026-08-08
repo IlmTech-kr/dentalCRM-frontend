@@ -42,7 +42,8 @@
     "navSettings": "Настройки",
     "navProfile": "Профиль",
     "navChangePassword": "Изменить пароль",
-    "navPlans": "Тарифы"
+    "navPlans": "Тарифы",
+    "navAppearance": "Внешний вид"
   },
   "footer": {
     "ctaTitle": "Готовы перевести клинику в цифровой формат?",

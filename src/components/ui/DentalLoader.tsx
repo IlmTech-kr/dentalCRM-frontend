@@ -98,45 +98,45 @@ export default function DentalLoader({
           <ellipse
             className="dl-glow"
             cx="60" cy="56" rx="50" ry="30"
-            fill="#35a8f5"
+            fill="var(--primary-blue)"
           />
 
           {/* Tooth 1 — molar left */}
           <g className="dl-t1">
             <path
               d="M10 72 C10 72 7 69 7 59 C7 49 11 43 15 41 C17 40 19 41 21 43 C23 41 25 40 27 41 C31 43 35 49 35 59 C35 69 31 72 31 72 Z"
-              fill="white" stroke="#35a8f5" strokeWidth="1.5"
+              fill="white" stroke="var(--primary-blue)" strokeWidth="1.5"
             />
-            <line x1="21" y1="43" x2="21" y2="55" stroke="#35a8f5" strokeWidth="1" opacity="0.4"/>
-            <path className="dl-shine" d="M11 52 Q16 45 22 47" fill="none" stroke="#35a8f5" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="21" y1="43" x2="21" y2="55" stroke="var(--primary-blue)" strokeWidth="1" opacity="0.4"/>
+            <path className="dl-shine" d="M11 52 Q16 45 22 47" fill="none" stroke="var(--primary-blue)" strokeWidth="1.5" strokeLinecap="round"/>
           </g>
 
           {/* Tooth 2 — incisor */}
           <g className="dl-t2">
             <path
               d="M39 72 C39 72 36 68 36 54 C36 43 40 37 44 36 C46 35.5 48 36.5 49 38 C50 36.5 52 35.5 54 36 C58 37 62 43 62 54 C62 68 59 72 59 72 Z"
-              fill="white" stroke="#35a8f5" strokeWidth="1.5"
+              fill="white" stroke="var(--primary-blue)" strokeWidth="1.5"
             />
-            <path className="dl-shine" d="M38 49 Q44 41 51 44" fill="none" stroke="#35a8f5" strokeWidth="1.5" strokeLinecap="round"/>
+            <path className="dl-shine" d="M38 49 Q44 41 51 44" fill="none" stroke="var(--primary-blue)" strokeWidth="1.5" strokeLinecap="round"/>
           </g>
 
           {/* Tooth 3 — canine */}
           <g className="dl-t3">
             <path
               d="M65 72 C65 72 62 68 62 55 C62 45 65 40 68 39 C70 38.5 71.5 40 72 42 C72.5 40 74 38.5 76 39 C79 40 82 45 82 55 C82 68 79 72 79 72 Z"
-              fill="white" stroke="#35a8f5" strokeWidth="1.5"
+              fill="white" stroke="var(--primary-blue)" strokeWidth="1.5"
             />
-            <path className="dl-shine" d="M64 51 Q69 43 75 46" fill="none" stroke="#35a8f5" strokeWidth="1.5" strokeLinecap="round"/>
+            <path className="dl-shine" d="M64 51 Q69 43 75 46" fill="none" stroke="var(--primary-blue)" strokeWidth="1.5" strokeLinecap="round"/>
           </g>
 
           {/* Tooth 4 — molar right */}
           <g className="dl-t4">
             <path
               d="M85 72 C85 72 82 69 82 59 C82 49 85 43 89 41 C91 40 93 41 95 43 C97 41 99 40 101 41 C105 43 109 49 109 59 C109 69 105 72 105 72 Z"
-              fill="white" stroke="#35a8f5" strokeWidth="1.5"
+              fill="white" stroke="var(--primary-blue)" strokeWidth="1.5"
             />
-            <line x1="95" y1="43" x2="95" y2="55" stroke="#35a8f5" strokeWidth="1" opacity="0.4"/>
-            <path className="dl-shine" d="M84 52 Q90 45 96 47" fill="none" stroke="#35a8f5" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="95" y1="43" x2="95" y2="55" stroke="var(--primary-blue)" strokeWidth="1" opacity="0.4"/>
+            <path className="dl-shine" d="M84 52 Q90 45 96 47" fill="none" stroke="var(--primary-blue)" strokeWidth="1.5" strokeLinecap="round"/>
           </g>
 
           {/* Gum line */}
@@ -156,7 +156,7 @@ export default function DentalLoader({
                 width: 7,
                 height: 7,
                 borderRadius: "50%",
-                background: "#35a8f5",
+                background: "var(--primary-blue)",
                 animation: `dl-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
               }}
             />

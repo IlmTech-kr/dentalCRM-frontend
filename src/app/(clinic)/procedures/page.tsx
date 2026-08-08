@@ -416,7 +416,7 @@ export default function ProceduresPage() {
         <button
           type="button"
           onClick={() => openEditModal(procedure)}
-          className="rounded-2xl p-2.5 text-blue-600 transition hover:bg-blue-50"
+          className="rounded-2xl p-2.5 text-primary-blue transition hover:bg-primary-blue/5"
           title={t("actions.edit")}
         >
           <Edit3 size={17} />
@@ -440,12 +440,12 @@ export default function ProceduresPage() {
 
         {/* Header */}
         <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-blue-100 blur-3xl" />
+          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-primary-blue/10 blur-3xl" />
           <div className="absolute bottom-0 right-40 h-32 w-32 rounded-full bg-cyan-100 blur-3xl" />
 
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700 ring-1 ring-blue-100">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-blue/5 px-4 py-2 text-sm font-extrabold text-primary-blue ring-1 ring-primary-blue/10">
                 <BadgeDollarSign size={18} />
                 {t("header.badge")}
               </div>
@@ -462,7 +462,7 @@ export default function ProceduresPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700 lg:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-blue px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-primary-blue/20 transition hover:-translate-y-0.5 hover:bg-primary-blue-dark lg:w-auto"
             >
               <Plus size={18} />
               {t("header.addButton")}
@@ -479,7 +479,7 @@ export default function ProceduresPage() {
                 {t("stats.total")}
               </p>
 
-              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+              <div className="rounded-2xl bg-primary-blue/5 p-3 text-primary-blue">
                 <FileText size={20} />
               </div>
             </div>
@@ -550,7 +550,7 @@ export default function ProceduresPage() {
                   setSearch(e.target.value)
                 }
                 placeholder={t("list.searchPlaceholder")}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50 md:w-[340px]"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5 md:w-[340px]"
               />
             </div>
 
@@ -587,7 +587,7 @@ export default function ProceduresPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-black text-blue-700">
+                      <span className="text-sm font-black text-primary-blue">
                         {formatMoney(procedure.defaultPrice)}
                       </span>
                       <span
@@ -652,7 +652,7 @@ export default function ProceduresPage() {
                             </p>
                           </td>
 
-                          <td className="px-5 py-4 text-sm font-black text-blue-700">
+                          <td className="px-5 py-4 text-sm font-black text-primary-blue">
                             {formatMoney(
                               procedure.defaultPrice
                             )}
@@ -709,11 +709,17 @@ export default function ProceduresPage() {
           <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] border border-white/40 bg-white shadow-2xl shadow-slate-950/20 sm:max-w-2xl sm:rounded-[32px]">
 
             {/* Modal Header */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 px-4 py-6 text-white sm:px-6 sm:py-7">
+            <div
+              className="relative overflow-hidden px-4 py-6 text-white sm:px-6 sm:py-7"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--primary-blue) 0%, color-mix(in srgb, var(--primary-blue) 70%, var(--primary-blue-dark)) 55%, var(--primary-blue-dark) 100%)",
+              }}
+            >
 
               <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
 
-              <div className="absolute -bottom-12 left-20 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
+              <div className="absolute -bottom-12 left-20 h-32 w-32 rounded-full bg-primary-blue-dark/20 blur-2xl" />
 
               <div className="relative flex items-start justify-between gap-4">
 
@@ -733,7 +739,7 @@ export default function ProceduresPage() {
                       : t("modal.createTitle")}
                   </h2>
 
-                  <p className="mt-2 max-w-lg break-words text-sm leading-6 text-blue-50">
+                  <p className="mt-2 max-w-lg break-words text-sm leading-6 text-white/70">
                     {t("modal.subtitle")}
                   </p>
 
@@ -773,14 +779,14 @@ export default function ProceduresPage() {
                       }))
                     }
                     placeholder={t("modal.codePlaceholder")}
-                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5"
                   />
 
                   <button
                     type="button"
                     onClick={handleGenerateCode}
                     disabled={isSaving}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-black text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-primary-blue/20 bg-primary-blue/5 px-4 py-3 text-sm font-black text-primary-blue transition hover:border-primary-blue/30 hover:bg-primary-blue/10 disabled:cursor-not-allowed disabled:opacity-50"
                     title="Generate unique procedure code"
                   >
                     <Sparkles size={17} />
@@ -821,7 +827,7 @@ export default function ProceduresPage() {
                     }));
                   }}
                   placeholder={t("modal.pricePlaceholder")}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5"
                 />
 
               </div>
@@ -842,7 +848,7 @@ export default function ProceduresPage() {
                     }))
                   }
                   placeholder={t("modal.namePlaceholder")}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5"
                 />
 
               </div>
@@ -877,8 +883,8 @@ export default function ProceduresPage() {
                           }
                           className={`rounded-2xl border px-4 py-3 text-sm font-black transition ${
                             active
-                              ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                              ? "border-primary-blue bg-primary-blue text-white shadow-lg shadow-primary-blue/20"
+                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-primary-blue/20 hover:bg-primary-blue/5 hover:text-primary-blue"
                           }`}
                         >
                           {getConditionLabel(
@@ -934,7 +940,7 @@ export default function ProceduresPage() {
                       )}
                     </span>
 
-                    <span className="text-sm font-black text-blue-700">
+                    <span className="text-sm font-black text-primary-blue">
                       {formatMoney(
                         Number(form.defaultPrice)
                       )}
@@ -964,7 +970,7 @@ export default function ProceduresPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSaving}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-blue px-5 py-3 text-sm font-black text-white shadow-lg shadow-primary-blue/20 transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? (
                   <DentalLoaderIcon size={18} />

@@ -71,6 +71,30 @@
       "profileUpdateFailed": "Failed to update profile"
     }
   },
+  "appearance": {
+    "page": {
+      "title": "Appearance",
+      "subtitle": "Choose a brand color for the sidebar and buttons"
+    },
+    "preview": {
+      "title": "Live preview",
+      "menuItem": "Dashboard",
+      "button": "Primary button"
+    },
+    "presets": {
+      "title": "Preset colors",
+      "subtitle": "Pick one — it applies instantly"
+    },
+    "custom": {
+      "title": "Custom color",
+      "subtitle": "Tap the circle to pick any color",
+      "resetButton": "Reset to default"
+    },
+    "toast": {
+      "applied": "Color updated",
+      "reset": "Reset to the default color"
+    }
+  },
   "plans": {
     "page": {
       "title": "Plan & Billing",

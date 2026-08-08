@@ -111,7 +111,7 @@ export default function RegisterPage() {
 
   return (
     <main className="grid min-h-screen grid-cols-1 bg-[#eef7ff] lg:grid-cols-2">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#3498db] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden min-h-screen overflow-hidden bg-primary-blue p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -left-20 top-20 h-80 w-80 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 right-10 h-96 w-96 rounded-full bg-white/10" />
 
@@ -283,7 +283,7 @@ export default function RegisterPage() {
                 !form.subDomain ||
                 !passwordsMatch
               }
-              className="mt-1 h-11 w-full rounded-xl bg-[#35a8f5] text-sm font-bold text-white shadow-lg shadow-blue-300 transition hover:bg-[#1d8ee8] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-1 h-11 w-full rounded-xl bg-primary-blue text-sm font-bold text-white shadow-lg shadow-primary-blue/30 transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
               {registerMutation.isPending ? t("register.submitting") : t("register.submitButton")}
             </button>
