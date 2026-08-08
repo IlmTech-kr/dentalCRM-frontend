@@ -610,7 +610,7 @@ export default function DashboardPage() {
           type="button"
           disabled={
             suspendMutation.isPending ||
-            tenant.status === "SUSPENDED"
+            tenant.subscriptionStatus === "SUSPENDED"
           }
           onClick={(event) => {
             event.stopPropagation();
@@ -719,7 +719,7 @@ export default function DashboardPage() {
                         : "Subdomain mavjud emas"}
                     </p>
                   </div>
-                  <StatusBadge status={tenant.status} />
+                  <StatusBadge status={tenant.subscriptionStatus} />
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
@@ -819,7 +819,7 @@ export default function DashboardPage() {
                       <td className="px-6 py-5">
                         <StatusBadge
                           status={
-                            tenant.status
+                            tenant.subscriptionStatus
                           }
                         />
                       </td>

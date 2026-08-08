@@ -11,7 +11,7 @@ export type TenantStatus =
 export interface TenantSubscription {
   tenantId: string;
   currentPlan: string;
-  status: TenantStatus;
+  subscriptionStatus: TenantStatus;
 
   startDate: string | null;
   endDate: string | null;

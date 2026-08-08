@@ -778,7 +778,12 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Revenue + Today appointments */}
+      {/*
+        Revenue + Today appointments
+        Qator balandligini FAQAT revenue kartasi belgilaydi.
+        Appointments kartasi lg:absolute bilan balandlik hisobidan chiqadi
+        va o'sha balandlikni to'ldiradi — ortiqcha qatorlar scroll bo'ladi.
+      */}
       <div className={`grid gap-5 sm:gap-6 ${isStaffAdmin ? "lg:grid-cols-[1.4fr_1fr]" : ""}`}>
         {/* Revenue */}
         {isStaffAdmin && (
@@ -864,8 +869,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Chart */}
-            <div className="mt-4 flex-1">
+            {/* Chart — flex-1 YO'Q, aks holda grafik ostida bo'sh joy cho'ziladi */}
+            <div className="mt-4">
               {revenueLoading ? (
                 <div className="flex h-44 items-end gap-1.5 pl-11">
                   {Array.from({ length: 12 }).map((_, i) => (
@@ -895,43 +900,45 @@ export default function DashboardPage() {
         )}
 
         {/* Today appointments */}
-        <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
-                <Clock size={17} className="text-violet-600" />
+        <div className="relative min-h-[320px] lg:min-h-0">
+          <div className="flex flex-col rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5 lg:absolute lg:inset-0">
+            <div className="mb-4 flex shrink-0 items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
+                  <Clock size={17} className="text-violet-600" />
+                </span>
+                <h2 className="truncate font-extrabold text-dark-navy">
+                  {t("todayAppointments.title")}
+                </h2>
+              </div>
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                {t("todayAppointments.count", { count: todayCount })}
               </span>
-              <h2 className="truncate font-extrabold text-dark-navy">
-                {t("todayAppointments.title")}
-              </h2>
             </div>
-            <span className="shrink-0 whitespace-nowrap rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-              {t("todayAppointments.count", { count: todayCount })}
-            </span>
-          </div>
 
-          {aptsLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
-              ))}
-            </div>
-          ) : !todayList.length ? (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-12 text-slate-400">
-              <Calendar size={30} className="opacity-30" />
-              <p className="text-sm font-medium">{t("todayAppointments.empty")}</p>
-            </div>
-          ) : (
-            <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 320 }}>
-              {todayList.map((apt: any, index: number) => (
-                <AppointmentRow
-                  key={apt.id ?? `${apt.startTime}-${index}`}
-                  apt={apt}
-                  doctorName={resolveDoctorName(apt)}
-                />
-              ))}
-            </div>
-          )}
+            {aptsLoading ? (
+              <div className="min-h-0 flex-1 space-y-2 overflow-hidden">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+                ))}
+              </div>
+            ) : !todayList.length ? (
+              <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-slate-400">
+                <Calendar size={30} className="opacity-30" />
+                <p className="text-sm font-medium">{t("todayAppointments.empty")}</p>
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                {todayList.map((apt: any, index: number) => (
+                  <AppointmentRow
+                    key={apt.id ?? `${apt.startTime}-${index}`}
+                    apt={apt}
+                    doctorName={resolveDoctorName(apt)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

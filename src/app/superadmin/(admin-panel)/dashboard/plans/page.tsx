@@ -189,7 +189,7 @@ export default function PlansPage() {
                     {" — "}
                     {tenant.currentPlan}
                     {" ("}
-                    {tenant.status}
+                    {tenant.subscriptionStatus}
                     {")"}
                   </option>
                 )
