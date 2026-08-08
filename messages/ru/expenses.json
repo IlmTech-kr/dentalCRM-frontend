@@ -1,0 +1,210 @@
+{
+  "categories": {
+    "page": {
+      "title": "Категории расходов",
+      "subtitle": "Управляйте категориями для группировки расходов",
+      "addButton": "Добавить категорию"
+    },
+    "table": {
+      "name": "Название",
+      "kind": "Тип",
+      "createdAt": "Создано",
+      "updatedAt": "Обновлено",
+      "actions": "Действия",
+      "empty": "Категории не найдены",
+      "loading": "Загрузка..."
+    },
+    "kind": {
+      "TECHNICAL": "Техническое",
+      "SUPPLIES": "Материалы",
+      "OVERHEAD": "Накладные расходы",
+      "OTHER": "Другое"
+    },
+    "actions": {
+      "edit": "Редактировать"
+    },
+    "modal": {
+      "createTitle": "Новая категория",
+      "editTitle": "Редактировать категорию",
+      "nameLabel": "Название",
+      "namePlaceholder": "Например: Акмал Протез Уста",
+      "kindLabel": "Тип",
+      "cancel": "Отмена",
+      "create": "Создать",
+      "update": "Сохранить"
+    },
+    "toast": {
+      "nameRequired": "Введите название",
+      "nameTooShort": "Название должно содержать минимум 2 символа",
+      "created": "Категория создана",
+      "updated": "Категория обновлена",
+      "saveFailed": "Ошибка при сохранении категории",
+      "loadFailed": "Ошибка при загрузке категорий"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "Расходы",
+      "subtitle": "Отслеживайте расходы клиники",
+      "addButton": "Добавить расход",
+      "refresh": "Обновить"
+    },
+    "summary": {
+      "totalAmount": "Общая сумма",
+      "totalCount": "Количество расходов",
+      "loading": "Подсчёт..."
+    },
+    "filters": {
+      "fromDate": "Дата начала",
+      "toDate": "Дата окончания",
+      "category": "Категория",
+      "allCategories": "Все категории",
+      "status": "Статус",
+      "allStatuses": "Все статусы",
+      "currency": "Валюта",
+      "allCurrencies": "Все валюты",
+      "reset": "Сбросить"
+    },
+    "status": {
+      "PENDING": "Ожидает",
+      "PAID": "Оплачено",
+      "VOID": "Отменено",
+      "VOIDED": "Отменено"
+    },
+    "table": {
+      "date": "Дата",
+      "category": "Категория",
+      "payee": "Получатель",
+      "description": "Описание",
+      "reference": "Референс",
+      "amount": "Сумма",
+      "status": "Статус",
+      "actions": "Действия",
+      "empty": "Расходы не найдены",
+      "loading": "Загрузка..."
+    },
+    "actions": {
+      "pay": "Оплатить",
+      "void": "Отменить"
+    },
+    "pagination": {
+      "prev": "Назад",
+      "next": "Далее",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "createModal": {
+      "title": "Новый расход",
+      "categoryLabel": "Категория",
+      "categoryPlaceholder": "Выберите категорию",
+      "amountLabel": "Сумма",
+      "currencyLabel": "Валюта",
+      "dateLabel": "Дата расхода",
+      "payeeLabel": "Кому оплачено",
+      "payeePlaceholder": "Например: Орзу Дентал Техник",
+      "descriptionLabel": "Описание",
+      "descriptionPlaceholder": "Краткое описание расхода",
+      "referenceLabel": "Референс (необязательно)",
+      "referencePlaceholder": "TECH-002",
+      "cancel": "Отмена",
+      "create": "Создать"
+    },
+    "payModal": {
+      "title": "Оплата расхода",
+      "subtitle": "Подтвердите дату оплаты",
+      "dateLabel": "Дата оплаты",
+      "cancel": "Отмена",
+      "confirm": "Отметить как оплачено"
+    },
+    "voidModal": {
+      "title": "Отмена расхода",
+      "subtitle": "Это действие нельзя отменить. Укажите причину.",
+      "reasonLabel": "Причина отмены",
+      "reasonPlaceholder": "Например: Сумма введена неверно, это не реальный расход",
+      "cancel": "Отмена",
+      "confirm": "Отменить расход"
+    },
+    "toast": {
+      "categoryRequired": "Выберите категорию",
+      "amountRequired": "Введите корректную сумму",
+      "payeeRequired": "Укажите получателя",
+      "dateRequired": "Выберите дату",
+      "reasonRequired": "Укажите причину отмены",
+      "created": "Расход создан",
+      "saveFailed": "Ошибка при сохранении расхода",
+      "paid": "Расход отмечен как оплаченный",
+      "payFailed": "Ошибка при отметке оплаты",
+      "voided": "Расход отменён",
+      "voidFailed": "Ошибка при отмене",
+      "loadFailed": "Ошибка при загрузке расходов",
+      "summaryLoadFailed": "Ошибка при загрузке статистики"
+    }
+  },
+
+  "recurring": {
+    "page": {
+      "title": "Регулярные расходы",
+      "subtitle": "Управляйте ежемесячно повторяющимися расходами",
+      "addButton": "Добавить регулярный расход",
+      "activeOnly": "Только активные",
+      "all": "Все"
+    },
+    "table": {
+      "category": "Категория",
+      "payee": "Получатель",
+      "amount": "Сумма",
+      "dayOfMonth": "День месяца",
+      "startDate": "Начало",
+      "endDate": "Окончание",
+      "active": "Статус",
+      "actions": "Действия",
+      "empty": "Регулярные расходы не найдены",
+      "loading": "Загрузка..."
+    },
+    "active": {
+      "yes": "Активен",
+      "no": "Неактивен"
+    },
+    "actions": {
+      "edit": "Редактировать",
+      "deactivate": "Остановить"
+    },
+    "modal": {
+      "createTitle": "Новый регулярный расход",
+      "editTitle": "Редактировать регулярный расход",
+      "categoryLabel": "Категория",
+      "categoryPlaceholder": "Выберите категорию",
+      "amountLabel": "Сумма",
+      "currencyLabel": "Валюта",
+      "payeeLabel": "Кому оплачивается",
+      "payeePlaceholder": "Например: Business Center",
+      "descriptionLabel": "Описание",
+      "descriptionPlaceholder": "Например: Месячная аренда клиники",
+      "referenceLabel": "Референс (необязательно)",
+      "referencePlaceholder": "RENT-2026",
+      "dayOfMonthLabel": "День месяца",
+      "dayOfMonthHint": "Дни 29–31 могут автоматически корректироваться в коротких месяцах",
+      "startDateLabel": "Дата начала",
+      "endDateLabel": "Дата окончания (необязательно)",
+      "endDateHint": "Оставьте пустым — бессрочно",
+      "cancel": "Отмена",
+      "create": "Создать",
+      "update": "Сохранить"
+    },
+    "toast": {
+      "categoryRequired": "Выберите категорию",
+      "amountRequired": "Введите корректную сумму",
+      "payeeRequired": "Укажите получателя",
+      "descriptionRequired": "Укажите описание",
+      "dayOfMonthRequired": "Выберите день месяца",
+      "startDateRequired": "Выберите дату начала",
+      "created": "Регулярный расход создан",
+      "updated": "Регулярный расход обновлён",
+      "saveFailed": "Ошибка при сохранении",
+      "deactivateConfirm": "Остановить регулярный расход «{name}»?",
+      "deactivated": "Регулярный расход остановлен",
+      "deactivateFailed": "Ошибка при остановке",
+      "loadFailed": "Ошибка при загрузке регулярных расходов"
+    }
+  }
+}

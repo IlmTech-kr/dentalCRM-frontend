@@ -21,6 +21,7 @@ import uzAppointments from "../../../messages/uz/appointments.json";
 import uzTreatments from "../../../messages/uz/treatments.json";
 import uzDoctors from "../../../messages/uz/doctors.json";
 import uzProcedures from "../../../messages/uz/procedures.json";
+import uzExpenses from "../../../messages/uz/expenses.json";
 import uzSettings from "../../../messages/uz/settings.json";
 import uzSuperadmin from "../../../messages/uz/superadmin.json";
 import uzMarketing from "../../../messages/uz/marketing.json";
@@ -36,6 +37,7 @@ import ruAppointments from "../../../messages/ru/appointments.json";
 import ruTreatments from "../../../messages/ru/treatments.json";
 import ruDoctors from "../../../messages/ru/doctors.json";
 import ruProcedures from "../../../messages/ru/procedures.json";
+import ruExpenses from "../../../messages/ru/expenses.json";
 import ruSettings from "../../../messages/ru/settings.json";
 import ruSuperadmin from "../../../messages/ru/superadmin.json";
 import ruMarketing from "../../../messages/ru/marketing.json";
@@ -51,6 +53,7 @@ import enAppointments from "../../../messages/en/appointments.json";
 import enTreatments from "../../../messages/en/treatments.json";
 import enDoctors from "../../../messages/en/doctors.json";
 import enProcedures from "../../../messages/en/procedures.json";
+import enExpenses from "../../../messages/en/expenses.json";
 import enSettings from "../../../messages/en/settings.json";
 import enSuperadmin from "../../../messages/en/superadmin.json";
 import enMarketing from "../../../messages/en/marketing.json";
@@ -70,6 +73,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     treatments: uzTreatments,
     doctors: uzDoctors,
     procedures: uzProcedures,
+    expenses: uzExpenses,
     settings: uzSettings,
     superadmin: uzSuperadmin,
     marketing: uzMarketing,
@@ -86,6 +90,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     treatments: ruTreatments,
     doctors: ruDoctors,
     procedures: ruProcedures,
+    expenses: ruExpenses,
     settings: ruSettings,
     superadmin: ruSuperadmin,
     marketing: ruMarketing,
@@ -102,6 +107,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     treatments: enTreatments,
     doctors: enDoctors,
     procedures: enProcedures,
+    expenses: enExpenses,
     settings: enSettings,
     superadmin: enSuperadmin,
     marketing: enMarketing,

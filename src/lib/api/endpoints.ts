@@ -224,6 +224,73 @@ export const ENDPOINTS = {
     },
   },
 
+  expenseCategories: {
+    // GET/POST /api/dental/expense-categories
+    list: "/api/dental/expense-categories",
+    create: "/api/dental/expense-categories",
+    // PUT /api/dental/expense-categories/{id}
+    update: (id: string) => `/api/dental/expense-categories/${id}`,
+  },
+
+  expenses: {
+    create: "/api/dental/expenses",
+
+    /**
+     * GET /api/dental/expenses?page=0&limit=20&categoryId=&fromDate=&toDate=&status=&currency=
+     */
+    list: (params: {
+      page?: number;
+      limit?: number;
+      categoryId?: string;
+      fromDate?: string;
+      toDate?: string;
+      status?: string;
+      currency?: string;
+    }) => {
+      const q = new URLSearchParams();
+      q.set("page", String(params.page ?? 0));
+      q.set("limit", String(params.limit ?? 20));
+      if (params.categoryId) q.set("categoryId", params.categoryId);
+      if (params.fromDate) q.set("fromDate", params.fromDate);
+      if (params.toDate) q.set("toDate", params.toDate);
+      if (params.status) q.set("status", params.status);
+      if (params.currency) q.set("currency", params.currency);
+      return `/api/dental/expenses?${q.toString()}`;
+    },
+
+    /**
+     * GET /api/dental/expenses/summary?fromDate=&toDate=&currency=&status=
+     */
+    summary: (params: {
+      fromDate?: string;
+      toDate?: string;
+      currency?: string;
+      status?: string;
+    }) => {
+      const q = new URLSearchParams();
+      if (params.fromDate) q.set("fromDate", params.fromDate);
+      if (params.toDate) q.set("toDate", params.toDate);
+      if (params.currency) q.set("currency", params.currency);
+      if (params.status) q.set("status", params.status);
+      return `/api/dental/expenses/summary?${q.toString()}`;
+    },
+
+    // POST /api/dental/expenses/{id}/pay
+    pay: (id: string) => `/api/dental/expenses/${id}/pay`,
+    // POST /api/dental/expenses/{id}/void
+    void: (id: string) => `/api/dental/expenses/${id}/void`,
+  },
+
+  recurringExpenses: {
+    // GET/POST /api/dental/recurring-expenses
+    list: "/api/dental/recurring-expenses",
+    create: "/api/dental/recurring-expenses",
+    // PUT /api/dental/recurring-expenses/{id}
+    update: (id: string) => `/api/dental/recurring-expenses/${id}`,
+    // POST /api/dental/recurring-expenses/{id}/deactivate
+    deactivate: (id: string) => `/api/dental/recurring-expenses/${id}/deactivate`,
+  },
+
   storage: {
     upload: "/api/storage/upload",
     uploadBatch: "/api/storage/upload/batch",

@@ -19,9 +19,13 @@ import {
   BadgeDollarSign,
   CreditCard,
   Palette,
+  Receipt,
+  Repeat,
   ShieldCheck,
   Sparkles,
+  Tags,
   User,
+  Wallet,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -40,6 +44,7 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   children?: SubLink[];
+  isNew?: boolean;
 };
 
 type RoleFlags = {
@@ -100,6 +105,18 @@ function buildNavItems(
 
   if (isStaffAdmin) {
     items.push({ href: "/procedures", label: t("sidebar.navProcedures"), icon: BadgeDollarSign });
+
+    items.push({
+      href: "/expenses",
+      label: t("sidebar.navExpenses"),
+      icon: Wallet,
+      isNew: true,
+      children: [
+        { href: "/expenses/categories", label: t("sidebar.navExpenseCategories"), icon: Tags },
+        { href: "/expenses", label: t("sidebar.navExpenseList"), icon: Receipt },
+        { href: "/expenses/recurring", label: t("sidebar.navExpenseRecurring"), icon: Repeat },
+      ],
+    });
   }
 
   const settingsChildren: SubLink[] = [
@@ -246,6 +263,12 @@ export default function Sidebar({
                     <span className="flex items-center gap-3">
                       <Icon size={20} />
                       {item.label}
+                      {item.isNew && (
+                        <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                          <Sparkles size={9} />
+                          {t("sidebar.newBadge")}
+                        </span>
+                      )}
                     </span>
                     {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   </button>

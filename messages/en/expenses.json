@@ -1,0 +1,210 @@
+{
+  "categories": {
+    "page": {
+      "title": "Expense categories",
+      "subtitle": "Manage categories used to group expenses",
+      "addButton": "Add category"
+    },
+    "table": {
+      "name": "Name",
+      "kind": "Kind",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "actions": "Actions",
+      "empty": "No categories found",
+      "loading": "Loading..."
+    },
+    "kind": {
+      "TECHNICAL": "Technical",
+      "SUPPLIES": "Supplies",
+      "OVERHEAD": "Overhead",
+      "OTHER": "Other"
+    },
+    "actions": {
+      "edit": "Edit"
+    },
+    "modal": {
+      "createTitle": "New category",
+      "editTitle": "Edit category",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Akmal Protez Usta",
+      "kindLabel": "Kind",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Save"
+    },
+    "toast": {
+      "nameRequired": "Enter a name",
+      "nameTooShort": "Name must be at least 2 characters",
+      "created": "Category created",
+      "updated": "Category updated",
+      "saveFailed": "Failed to save category",
+      "loadFailed": "Failed to load categories"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "Expenses",
+      "subtitle": "Track your clinic's expenses",
+      "addButton": "Add expense",
+      "refresh": "Refresh"
+    },
+    "summary": {
+      "totalAmount": "Total amount",
+      "totalCount": "Expense count",
+      "loading": "Calculating..."
+    },
+    "filters": {
+      "fromDate": "From date",
+      "toDate": "To date",
+      "category": "Category",
+      "allCategories": "All categories",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "currency": "Currency",
+      "allCurrencies": "All currencies",
+      "reset": "Reset"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "VOID": "Voided",
+      "VOIDED": "Voided"
+    },
+    "table": {
+      "date": "Date",
+      "category": "Category",
+      "payee": "Payee",
+      "description": "Description",
+      "reference": "Reference",
+      "amount": "Amount",
+      "status": "Status",
+      "actions": "Actions",
+      "empty": "No expenses found",
+      "loading": "Loading..."
+    },
+    "actions": {
+      "pay": "Pay",
+      "void": "Void"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "createModal": {
+      "title": "New expense",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "amountLabel": "Amount",
+      "currencyLabel": "Currency",
+      "dateLabel": "Expense date",
+      "payeeLabel": "Paid to",
+      "payeePlaceholder": "e.g. Orzu Dental Technician",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Brief description of the expense",
+      "referenceLabel": "Reference (optional)",
+      "referencePlaceholder": "TECH-002",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "payModal": {
+      "title": "Pay expense",
+      "subtitle": "Confirm the payment date",
+      "dateLabel": "Payment date",
+      "cancel": "Cancel",
+      "confirm": "Mark as paid"
+    },
+    "voidModal": {
+      "title": "Void expense",
+      "subtitle": "This action cannot be undone. Enter a reason.",
+      "reasonLabel": "Reason for voiding",
+      "reasonPlaceholder": "e.g. Amount entered incorrectly, not a real expense",
+      "cancel": "Cancel",
+      "confirm": "Void expense"
+    },
+    "toast": {
+      "categoryRequired": "Select a category",
+      "amountRequired": "Enter a valid amount",
+      "payeeRequired": "Enter who was paid",
+      "dateRequired": "Select a date",
+      "reasonRequired": "Enter a reason for voiding",
+      "created": "Expense created",
+      "saveFailed": "Failed to save expense",
+      "paid": "Expense marked as paid",
+      "payFailed": "Failed to mark as paid",
+      "voided": "Expense voided",
+      "voidFailed": "Failed to void expense",
+      "loadFailed": "Failed to load expenses",
+      "summaryLoadFailed": "Failed to load summary"
+    }
+  },
+
+  "recurring": {
+    "page": {
+      "title": "Recurring expenses",
+      "subtitle": "Manage expenses that repeat every month",
+      "addButton": "Add recurring expense",
+      "activeOnly": "Active only",
+      "all": "All"
+    },
+    "table": {
+      "category": "Category",
+      "payee": "Payee",
+      "amount": "Amount",
+      "dayOfMonth": "Day of month",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "active": "Status",
+      "actions": "Actions",
+      "empty": "No recurring expenses found",
+      "loading": "Loading..."
+    },
+    "active": {
+      "yes": "Active",
+      "no": "Inactive"
+    },
+    "actions": {
+      "edit": "Edit",
+      "deactivate": "Deactivate"
+    },
+    "modal": {
+      "createTitle": "New recurring expense",
+      "editTitle": "Edit recurring expense",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "amountLabel": "Amount",
+      "currencyLabel": "Currency",
+      "payeeLabel": "Paid to",
+      "payeePlaceholder": "e.g. Business Center",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "e.g. Monthly clinic rent",
+      "referenceLabel": "Reference (optional)",
+      "referencePlaceholder": "RENT-2026",
+      "dayOfMonthLabel": "Day of month",
+      "dayOfMonthHint": "Days 29-31 may be adjusted automatically in shorter months",
+      "startDateLabel": "Start date",
+      "endDateLabel": "End date (optional)",
+      "endDateHint": "Leave empty for no end date",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Save"
+    },
+    "toast": {
+      "categoryRequired": "Select a category",
+      "amountRequired": "Enter a valid amount",
+      "payeeRequired": "Enter who gets paid",
+      "descriptionRequired": "Enter a description",
+      "dayOfMonthRequired": "Select a day of month",
+      "startDateRequired": "Select a start date",
+      "created": "Recurring expense created",
+      "updated": "Recurring expense updated",
+      "saveFailed": "Failed to save",
+      "deactivateConfirm": "Deactivate the recurring expense \"{name}\"?",
+      "deactivated": "Recurring expense deactivated",
+      "deactivateFailed": "Failed to deactivate",
+      "loadFailed": "Failed to load recurring expenses"
+    }
+  }
+}

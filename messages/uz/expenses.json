@@ -1,0 +1,210 @@
+{
+  "categories": {
+    "page": {
+      "title": "Xarajat kategoriyalari",
+      "subtitle": "Xarajatlarni guruhlash uchun kategoriyalarni boshqaring",
+      "addButton": "Kategoriya qo'shish"
+    },
+    "table": {
+      "name": "Nomi",
+      "kind": "Turi",
+      "createdAt": "Yaratilgan",
+      "updatedAt": "Yangilangan",
+      "actions": "Amallar",
+      "empty": "Kategoriya topilmadi",
+      "loading": "Yuklanmoqda..."
+    },
+    "kind": {
+      "TECHNICAL": "Texnik",
+      "SUPPLIES": "Materiallar",
+      "OVERHEAD": "Umumiy xarajat",
+      "OTHER": "Boshqa"
+    },
+    "actions": {
+      "edit": "Tahrirlash"
+    },
+    "modal": {
+      "createTitle": "Yangi kategoriya",
+      "editTitle": "Kategoriyani tahrirlash",
+      "nameLabel": "Nomi",
+      "namePlaceholder": "Masalan: Akmal Protez Usta",
+      "kindLabel": "Turi",
+      "cancel": "Bekor qilish",
+      "create": "Yaratish",
+      "update": "Saqlash"
+    },
+    "toast": {
+      "nameRequired": "Nomini kiriting",
+      "nameTooShort": "Nomi kamida 2 belgidan iborat bo'lishi kerak",
+      "created": "Kategoriya yaratildi",
+      "updated": "Kategoriya yangilandi",
+      "saveFailed": "Kategoriyani saqlashda xatolik",
+      "loadFailed": "Kategoriyalarni yuklashda xatolik"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "Xarajatlar",
+      "subtitle": "Klinika xarajatlarini kuzatib boring",
+      "addButton": "Xarajat qo'shish",
+      "refresh": "Yangilash"
+    },
+    "summary": {
+      "totalAmount": "Jami summa",
+      "totalCount": "Xarajatlar soni",
+      "loading": "Hisoblanmoqda..."
+    },
+    "filters": {
+      "fromDate": "Boshlanish sanasi",
+      "toDate": "Tugash sanasi",
+      "category": "Kategoriya",
+      "allCategories": "Barcha kategoriyalar",
+      "status": "Status",
+      "allStatuses": "Barcha statuslar",
+      "currency": "Valyuta",
+      "allCurrencies": "Barcha valyutalar",
+      "reset": "Tozalash"
+    },
+    "status": {
+      "PENDING": "Kutilmoqda",
+      "PAID": "To'langan",
+      "VOID": "Bekor qilingan",
+      "VOIDED": "Bekor qilingan"
+    },
+    "table": {
+      "date": "Sana",
+      "category": "Kategoriya",
+      "payee": "Kimga",
+      "description": "Izoh",
+      "reference": "Referens",
+      "amount": "Summa",
+      "status": "Status",
+      "actions": "Amallar",
+      "empty": "Xarajat topilmadi",
+      "loading": "Yuklanmoqda..."
+    },
+    "actions": {
+      "pay": "To'lash",
+      "void": "Bekor qilish"
+    },
+    "pagination": {
+      "prev": "Oldingi",
+      "next": "Keyingi",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "createModal": {
+      "title": "Yangi xarajat",
+      "categoryLabel": "Kategoriya",
+      "categoryPlaceholder": "Kategoriyani tanlang",
+      "amountLabel": "Summa",
+      "currencyLabel": "Valyuta",
+      "dateLabel": "Xarajat sanasi",
+      "payeeLabel": "Kimga to'landi",
+      "payeePlaceholder": "Masalan: Orzu Dental Texnik",
+      "descriptionLabel": "Izoh",
+      "descriptionPlaceholder": "Xarajat haqida qisqacha",
+      "referenceLabel": "Referens (ixtiyoriy)",
+      "referencePlaceholder": "TECH-002",
+      "cancel": "Bekor qilish",
+      "create": "Yaratish"
+    },
+    "payModal": {
+      "title": "Xarajatni to'lash",
+      "subtitle": "To'lov sanasini tasdiqlang",
+      "dateLabel": "To'lov sanasi",
+      "cancel": "Bekor qilish",
+      "confirm": "To'landi deb belgilash"
+    },
+    "voidModal": {
+      "title": "Xarajatni bekor qilish",
+      "subtitle": "Bu amalni ortga qaytarib bo'lmaydi. Sababini kiriting.",
+      "reasonLabel": "Bekor qilish sababi",
+      "reasonPlaceholder": "Masalan: Summa xato kiritilgan, haqiqiy xarajat emas",
+      "cancel": "Bekor qilish",
+      "confirm": "Xarajatni bekor qilish"
+    },
+    "toast": {
+      "categoryRequired": "Kategoriyani tanlang",
+      "amountRequired": "Summani to'g'ri kiriting",
+      "payeeRequired": "Kimga to'langanini kiriting",
+      "dateRequired": "Sanani tanlang",
+      "reasonRequired": "Bekor qilish sababini kiriting",
+      "created": "Xarajat yaratildi",
+      "saveFailed": "Xarajatni saqlashda xatolik",
+      "paid": "Xarajat to'landi deb belgilandi",
+      "payFailed": "To'lovni belgilashda xatolik",
+      "voided": "Xarajat bekor qilindi",
+      "voidFailed": "Bekor qilishda xatolik",
+      "loadFailed": "Xarajatlarni yuklashda xatolik",
+      "summaryLoadFailed": "Statistikani yuklashda xatolik"
+    }
+  },
+
+  "recurring": {
+    "page": {
+      "title": "Doimiy xarajatlar",
+      "subtitle": "Har oy takrorlanadigan xarajatlarni boshqaring",
+      "addButton": "Doimiy xarajat qo'shish",
+      "activeOnly": "Faqat faol",
+      "all": "Barchasi"
+    },
+    "table": {
+      "category": "Kategoriya",
+      "payee": "Kimga",
+      "amount": "Summa",
+      "dayOfMonth": "Oyning kuni",
+      "startDate": "Boshlanish",
+      "endDate": "Tugash",
+      "active": "Holati",
+      "actions": "Amallar",
+      "empty": "Doimiy xarajat topilmadi",
+      "loading": "Yuklanmoqda..."
+    },
+    "active": {
+      "yes": "Faol",
+      "no": "Faol emas"
+    },
+    "actions": {
+      "edit": "Tahrirlash",
+      "deactivate": "To'xtatish"
+    },
+    "modal": {
+      "createTitle": "Yangi doimiy xarajat",
+      "editTitle": "Doimiy xarajatni tahrirlash",
+      "categoryLabel": "Kategoriya",
+      "categoryPlaceholder": "Kategoriyani tanlang",
+      "amountLabel": "Summa",
+      "currencyLabel": "Valyuta",
+      "payeeLabel": "Kimga to'lanadi",
+      "payeePlaceholder": "Masalan: Business Center",
+      "descriptionLabel": "Izoh",
+      "descriptionPlaceholder": "Masalan: Klinika oylik arendasi",
+      "referenceLabel": "Referens (ixtiyoriy)",
+      "referencePlaceholder": "RENT-2026",
+      "dayOfMonthLabel": "Oyning kuni",
+      "dayOfMonthHint": "29–31-kunlar qisqa oylarda avtomatik moslashtirilishi mumkin",
+      "startDateLabel": "Boshlanish sanasi",
+      "endDateLabel": "Tugash sanasi (ixtiyoriy)",
+      "endDateHint": "Bo'sh qoldirilsa — muddatsiz",
+      "cancel": "Bekor qilish",
+      "create": "Yaratish",
+      "update": "Saqlash"
+    },
+    "toast": {
+      "categoryRequired": "Kategoriyani tanlang",
+      "amountRequired": "Summani to'g'ri kiriting",
+      "payeeRequired": "Kimga to'lanishini kiriting",
+      "descriptionRequired": "Izohni kiriting",
+      "dayOfMonthRequired": "Oyning kunini tanlang",
+      "startDateRequired": "Boshlanish sanasini tanlang",
+      "created": "Doimiy xarajat yaratildi",
+      "updated": "Doimiy xarajat yangilandi",
+      "saveFailed": "Saqlashda xatolik",
+      "deactivateConfirm": "\"{name}\" doimiy xarajatini to'xtatasizmi?",
+      "deactivated": "Doimiy xarajat to'xtatildi",
+      "deactivateFailed": "To'xtatishda xatolik",
+      "loadFailed": "Doimiy xarajatlarni yuklashda xatolik"
+    }
+  }
+}
