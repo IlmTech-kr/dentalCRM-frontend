@@ -43,7 +43,8 @@
     "navProfile": "Profil",
     "navChangePassword": "Parolni o'zgartirish",
     "navPlans": "Tariflar",
-    "navAppearance": "Ko'rinish"
+    "navAppearance": "Ko'rinish",
+    "newBadge": "Yangi"
   },
   "footer": {
     "ctaTitle": "Klinikangizni raqamlashtirishga tayyormisiz?",

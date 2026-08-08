@@ -19,6 +19,9 @@ import {
   BadgeDollarSign,
   CreditCard,
   Palette,
+  ShieldCheck,
+  Sparkles,
+  User,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -29,6 +32,7 @@ type SubLink = {
   href: string;
   label: string;
   icon?: LucideIcon;
+  isNew?: boolean;
 };
 
 type NavItem = {
@@ -99,9 +103,9 @@ function buildNavItems(
   }
 
   const settingsChildren: SubLink[] = [
-    { href: "/settings/profile", label: t("sidebar.navProfile") },
-    { href: "/settings/change-password", label: t("sidebar.navChangePassword") },
-    { href: "/settings/appearance", label: t("sidebar.navAppearance"), icon: Palette },
+    { href: "/settings/profile", label: t("sidebar.navProfile"), icon: User },
+    { href: "/settings/change-password", label: t("sidebar.navChangePassword"), icon: ShieldCheck },
+    { href: "/settings/appearance", label: t("sidebar.navAppearance"), icon: Palette, isNew: true },
   ];
 
   if (isStaffAdmin) {
@@ -188,7 +192,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-72 flex-col overflow-y-auto bg-primary-blue px-4 py-6 text-white transition-transform duration-300 ease-in-out lg:z-30 lg:w-64 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-72 flex-col overflow-y-auto bg-primary-blue px-4 py-6 text-white transition-transform duration-300 ease-in-out lg:z-30 lg:w-72 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -263,7 +267,13 @@ export default function Sidebar({
                             }`}
                           >
                             {ChildIcon && <ChildIcon size={16} />}
-                            {child.label}
+                            <span className="flex-1">{child.label}</span>
+                            {child.isNew && (
+                              <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                                <Sparkles size={9} />
+                                {t("sidebar.newBadge")}
+                              </span>
+                            )}
                           </Link>
                         );
                       })}
