@@ -7,7 +7,7 @@ import {
   Menu,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useLogout } from "@/src/features/auth/hooks/useAuth";
@@ -23,6 +23,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const logoutMutation = useLogout();
 
@@ -44,6 +45,19 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     avatarPath,
     STORAGE_BUCKET
   );
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (!dropdownRef.current?.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
 
   async function handleLogout() {
     try {
@@ -85,7 +99,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     !avatarSrc;
 
   return (
-    <>
       <header className="fixed inset-x-0 top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white/80 px-4 backdrop-blur sm:h-20 sm:px-8 lg:sticky lg:inset-x-auto">
         <div className="flex min-w-0 items-center gap-3">
           <button
@@ -117,7 +130,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             <Bell size={19} />
           </button>
 
-          <div className="relative z-30">
+          <div ref={dropdownRef} className="relative z-30">
             <button
               type="button"
               onClick={() =>
@@ -257,14 +270,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </div>
         </div>
       </header>
-
-      {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-20 cursor-default bg-transparent"
-          onClick={() => setDropdownOpen(false)}
-        />
-      )}
-    </>
   );
 }
 
