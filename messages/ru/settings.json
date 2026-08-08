@@ -104,7 +104,12 @@
       "storageLabel": "Хранилище",
       "storageUsed": "Использовано {used} ГБ",
       "changePlanButton": "Изменить тариф",
-      "cancelButton": "Отменить тариф"
+      "cancelButton": "Отменить тариф",
+      "storageTotal": "Всего {size}",
+      "storageUsedShort": "занято",
+      "storageFreeShort": "свободно",
+      "storageAlmostFull": "Хранилище заканчивается",
+      "storageNoData": "Нет данных"
     },
     "card": {
       "popularBadge": "Популярный",
@@ -133,6 +138,7 @@
       "startDate": "Дата начала",
       "endDate": "Дата окончания",
       "includedSms": "Включённые SMS",
+      "storageFree": "Свободно",
       "monthsValue": "{months} мес.",
       "paymeInfoTitle": "💳 Оплата через Payme",
       "paymeInfoText": "При активации тарифа вы будете перенаправлены на страницу оплаты Payme. Оплата безопасна и быстра."

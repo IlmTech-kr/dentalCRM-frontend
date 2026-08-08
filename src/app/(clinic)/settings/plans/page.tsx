@@ -66,9 +66,33 @@ function formatDateTime(value?: string | null): string {
   return `${d}.${m}.${y}`;
 }
 
+/**
+ * Baytlarni o'qiladigan ko'rinishga o'giradi: B / KB / MB / GB / TB.
+ *
+ * MUHIM: avvalgi `bytesToGb` 1 MB dan kichik qiymatlarni 0 ga aylantirib
+ * yuborardi (312793 B → "0 GB"). Bu funksiya birlikni avtomatik tanlaydi.
+ *
+ * `forceDecimals` — "10.0 GB jami" va "10.0 GB bo'sh" bir xil ko'rinmasligi
+ * uchun qolgan hajmga qo'shimcha aniqlik berish imkonini beradi.
+ */
+function formatBytes(bytes?: number | null, forceDecimals?: number): string {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value <= 0) return "0 B";
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  const scaled = value / Math.pow(1024, i);
+
+  const decimals =
+    forceDecimals !== undefined ? forceDecimals : i <= 1 ? 0 : scaled >= 100 ? 0 : 1;
+
+  return `${scaled.toFixed(decimals)} ${units[i]}`;
+}
+
+/** Tariflar ro'yxatida GB darajasidagi qiymatlar uchun (PlanCard) */
 function bytesToGb(bytes?: number | null): number {
   if (!bytes) return 0;
-  return Math.round((bytes / (1024 ** 3)) * 10) / 10;
+  return Math.round((bytes / 1024 ** 3) * 10) / 10;
 }
 
 function limitLabel(value?: number | null): string {
@@ -77,7 +101,9 @@ function limitLabel(value?: number | null): string {
 }
 
 function getPlanType(plan?: SubscriptionPlan | null): PlanType | null {
-  const raw = String(plan?.planType || plan?.type || plan?.name || plan?.title || "").trim().toUpperCase();
+  const raw = String(plan?.planType || plan?.type || plan?.name || plan?.title || "")
+    .trim()
+    .toUpperCase();
   if (raw.includes("START")) return "START";
   if (raw.includes("PRO")) return "PRO";
   if (raw.includes("ENTERPRISE")) return "ENTERPRISE";
@@ -109,6 +135,16 @@ function getCurrentMonthlyPrice(sub?: CurrentSubscription | null): number | null
   return null;
 }
 
+/** Qolgan hajm — backend maydonini ustuvor oladi, bo'lmasa hisoblab chiqadi */
+function getRemainingStorage(sub?: CurrentSubscription | null): number {
+  const explicit = Number(sub?.remainingStorageBytes);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+
+  const total = Number(sub?.storageLimitBytes) || 0;
+  const used = Number(sub?.currentStorageBytes) || 0;
+  return Math.max(total - used, 0);
+}
+
 // ---------------------------------------------------------------------------
 // Plan tier config
 // ---------------------------------------------------------------------------
@@ -122,23 +158,130 @@ function getPlanConfig(planType: string | null | undefined, t: ReturnType<typeof
 }
 
 // ---------------------------------------------------------------------------
-// Storage bar
+// Storage bar — segmentli, indigo/violet palitra
 // ---------------------------------------------------------------------------
-function StorageBar({ used, total, usedLabel }: { used: number; total: number; usedLabel: string }) {
-  const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
-  const color = pct > 85 ? "#ef4444" : pct > 60 ? "#f59e0b" : "#10b981";
+function StorageBar({
+  usedBytes,
+  totalBytes,
+  remainingBytes,
+}: {
+  usedBytes: number;
+  totalBytes: number;
+  remainingBytes: number;
+}) {
+  const t = useTranslations("settings.plans");
+
+  if (totalBytes <= 0) {
+    return <p className="text-xs font-bold text-slate-400">{t("current.storageNoData")}</p>;
+  }
+
+  const rawPct = (usedBytes / totalBytes) * 100;
+
+  // Rang holatlari — indigo (normal) → amber (75%) → rose (90%)
+  const tone =
+    rawPct > 90
+      ? { from: "#f43f5e", to: "#e11d48", track: "#ffe4e6", text: "#e11d48", soft: "#fff1f2" }
+      : rawPct > 75
+      ? { from: "#f59e0b", to: "#d97706", track: "#fef3c7", text: "#d97706", soft: "#fffbeb" }
+      : { from: "#6366f1", to: "#8b5cf6", track: "#eef2ff", text: "#6366f1", soft: "#f5f3ff" };
+
+  // 40 ta segment — har biri 2.5%
+  const SEGMENTS = 40;
+  const filledSegments = usedBytes > 0 ? Math.max(1, Math.round((rawPct / 100) * SEGMENTS)) : 0;
+
+  const percentLabel =
+    rawPct === 0
+      ? "0"
+      : rawPct < 0.1
+      ? "0.1"
+      : rawPct >= 10
+      ? rawPct.toFixed(0)
+      : rawPct.toFixed(1);
+
   return (
     <div>
-      <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
-        <span>{usedLabel}</span>
-        <span>{total} GB</span>
+      {/* Yuqori qator: katta foiz + umumiy hajm */}
+      <div className="mb-3.5 flex items-end justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span
+            className="text-3xl font-black leading-none tracking-tight"
+            style={{ color: tone.text }}
+          >
+            {percentLabel}
+            <span className="text-lg">%</span>
+          </span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            {t("current.storageUsedShort")}
+          </span>
+        </div>
+
+        <span
+          className="shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-black"
+          style={{ backgroundColor: tone.soft, color: tone.text }}
+        >
+          {t("current.storageTotal", { size: formatBytes(totalBytes) })}
+        </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
+
+      {/* Segmentli bar */}
+      <div
+        className="flex gap-[3px]"
+        role="progressbar"
+        aria-valuenow={Math.round(rawPct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        {Array.from({ length: SEGMENTS }).map((_, i) => {
+          const isFilled = i < filledSegments;
+          return (
+            <div
+              key={i}
+              className="h-2.5 flex-1 rounded-full transition-all duration-500"
+              style={{
+                background: isFilled
+                  ? `linear-gradient(180deg, ${tone.from}, ${tone.to})`
+                  : tone.track,
+                transitionDelay: isFilled ? `${i * 12}ms` : "0ms",
+              }}
+            />
+          );
+        })}
       </div>
+
+      {/* Pastki qator: ishlatilgan / qolgan */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ background: `linear-gradient(180deg, ${tone.from}, ${tone.to})` }}
+          />
+          <span className="text-sm font-black text-slate-800">{formatBytes(usedBytes)}</span>
+          <span className="truncate text-[11px] font-medium text-slate-400">
+            {t("current.storageUsedShort")}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: tone.track }}
+          />
+          <span className="text-sm font-black text-slate-800">
+            {formatBytes(remainingBytes, rawPct < 1 ? 2 : 1)}
+          </span>
+          <span className="truncate text-[11px] font-medium text-slate-400">
+            {t("current.storageFreeShort")}
+          </span>
+        </div>
+      </div>
+
+      {rawPct > 90 && (
+        <div className="mt-3 rounded-xl px-3 py-2" style={{ backgroundColor: tone.soft }}>
+          <span className="text-[11px] font-black" style={{ color: tone.text }}>
+            {t("current.storageAlmostFull")}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -162,9 +305,12 @@ function CurrentPlanCard({
   const config = getPlanConfig(planType, t);
   const status = getCurrentStatus(currentPlan);
   const monthlyPrice = getCurrentMonthlyPrice(currentPlan);
-  const storageLimitGb = bytesToGb(currentPlan.storageLimitBytes);
-  const storageUsedGb = bytesToGb(currentPlan.currentStorageBytes);
   const isActive = status === "ACTIVE" || status === "TRIAL";
+
+  // Storage — barcha maydonlar undefined bo'lishi mumkin
+  const storageTotal = Number(currentPlan.storageLimitBytes) || 0;
+  const storageUsed = Number(currentPlan.currentStorageBytes) || 0;
+  const storageRemaining = getRemainingStorage(currentPlan);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -183,7 +329,9 @@ function CurrentPlanCard({
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{planType || "—"}</h2>
+                <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
+                  {planType || "—"}
+                </h2>
                 <span
                   className="rounded-full px-2.5 py-0.5 text-xs font-black"
                   style={{ backgroundColor: config.bg, color: config.color }}
@@ -192,14 +340,16 @@ function CurrentPlanCard({
                 </span>
               </div>
               <p className="mt-0.5 text-sm text-slate-500">
-                {currentPlan.planDurationMonths ? t("current.monthlyPlanLabel", { months: currentPlan.planDurationMonths }) : t("current.currentPlanFallback")}
+                {currentPlan.planDurationMonths
+                  ? t("current.monthlyPlanLabel", { months: currentPlan.planDurationMonths })
+                  : t("current.currentPlanFallback")}
               </p>
             </div>
           </div>
 
           {/* Price */}
           <div className="shrink-0 sm:text-right">
-            <p className="text-2xl font-black text-slate-900 leading-none sm:text-3xl">
+            <p className="text-2xl font-black leading-none text-slate-900 sm:text-3xl">
               {formatMoney(monthlyPrice)}
             </p>
             <p className="mt-1 text-xs font-bold text-slate-400">{t("current.perMonth")}</p>
@@ -212,29 +362,53 @@ function CurrentPlanCard({
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { icon: <UserRound size={15} />, label: t("current.statDoctors"), value: limitLabel(currentPlan.maxDoctors) },
-            { icon: <Users size={15} />, label: t("current.statStaff"), value: limitLabel(currentPlan.maxStaff) },
-            { icon: <MessageCircle size={15} />, label: t("current.statSmsBalance"), value: String(currentPlan.smsBalance ?? 0) },
-            { icon: <CalendarDays size={15} />, label: t("current.statExpiresAt"), value: formatDateTime(currentPlan.endDate || currentPlan.trialEndDate) },
+            {
+              icon: <UserRound size={15} />,
+              label: t("current.statDoctors"),
+              value: limitLabel(currentPlan.maxDoctors),
+            },
+            {
+              icon: <Users size={15} />,
+              label: t("current.statStaff"),
+              value: limitLabel(currentPlan.maxStaff),
+            },
+            {
+              icon: <MessageCircle size={15} />,
+              label: t("current.statSmsBalance"),
+              value: String(currentPlan.smsBalance ?? 0),
+            },
+            {
+              icon: <CalendarDays size={15} />,
+              label: t("current.statExpiresAt"),
+              value: formatDateTime(currentPlan.endDate || currentPlan.trialEndDate),
+            },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl bg-slate-50 p-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-1.5">
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-400">
                 {item.icon}
                 {item.label}
               </div>
-              <p className="text-lg font-black text-slate-900 leading-none">{item.value}</p>
+              <p className="text-lg font-black leading-none text-slate-900">{item.value}</p>
             </div>
           ))}
         </div>
 
         {/* Storage */}
-        {currentPlan.storageLimitBytes ? (
-          <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3">
-              <HardDrive size={15} />
-              {t("current.storageLabel")}
+        {storageTotal > 0 ? (
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4 sm:p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50">
+                <HardDrive size={14} className="text-indigo-500" />
+              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                {t("current.storageLabel")}
+              </span>
             </div>
-            <StorageBar used={storageUsedGb} total={storageLimitGb} usedLabel={t("current.storageUsed", { used: storageUsedGb })} />
+            <StorageBar
+              usedBytes={storageUsed}
+              totalBytes={storageTotal}
+              remainingBytes={storageRemaining}
+            />
           </div>
         ) : null}
 
@@ -296,10 +470,23 @@ function PlanCard({
   const durationOptions = getDurationOptions(t);
 
   const features = [
-    { icon: <UserRound size={14} />, text: t("card.doctorsFeature", { count: limitLabel(plan.maxDoctors ?? plan.doctorLimit) }) },
+    {
+      icon: <UserRound size={14} />,
+      text: t("card.doctorsFeature", { count: limitLabel(plan.maxDoctors ?? plan.doctorLimit) }),
+    },
     { icon: <Users size={14} />, text: t("card.staffFeature", { count: limitLabel(plan.maxStaff) }) },
-    { icon: <HardDrive size={14} />, text: t("card.storageFeature", { count: bytesToGb(plan.storageLimitBytes) || plan.maxStorageGb || "∞" }) },
-    { icon: <MessageCircle size={14} />, text: plan.includedSmsCount ? t("card.smsFeature", { count: plan.includedSmsCount }) : t("card.smsSeparate") },
+    {
+      icon: <HardDrive size={14} />,
+      text: t("card.storageFeature", {
+        count: bytesToGb(plan.storageLimitBytes) || plan.maxStorageGb || "∞",
+      }),
+    },
+    {
+      icon: <MessageCircle size={14} />,
+      text: plan.includedSmsCount
+        ? t("card.smsFeature", { count: plan.includedSmsCount })
+        : t("card.smsSeparate"),
+    },
     ...(plan.features || []).map((f) => ({ icon: <Check size={14} />, text: f })),
   ];
 
@@ -311,9 +498,7 @@ function PlanCard({
       )}
       style={{
         border: `2px solid ${isPopular || isCurrentPlan ? config.color : "#e2e8f0"}`,
-        boxShadow: isPopular
-          ? `0 20px 40px -12px ${config.color}40`
-          : undefined,
+        boxShadow: isPopular ? `0 20px 40px -12px ${config.color}40` : undefined,
       }}
     >
       {/* Popular badge */}
@@ -356,7 +541,10 @@ function PlanCard({
         {/* Price display */}
         <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: config.bg }}>
           <div className="flex items-end gap-1">
-            <span className="text-3xl font-black leading-none sm:text-4xl" style={{ color: config.color }}>
+            <span
+              className="text-3xl font-black leading-none sm:text-4xl"
+              style={{ color: config.color }}
+            >
               {formatMoney(monthlyPrice)}
             </span>
             <span className="mb-1 text-sm font-bold text-slate-500">{t("card.perMonth")}</span>
@@ -370,7 +558,9 @@ function PlanCard({
 
         {/* Duration picker */}
         <div className="mt-5">
-          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">{t("card.durationLabel")}</p>
+          <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">
+            {t("card.durationLabel")}
+          </p>
           <div className="grid grid-cols-4 gap-1.5">
             {durationOptions.map((opt) => (
               <button
@@ -387,7 +577,7 @@ function PlanCard({
               >
                 {opt.label}
                 {opt.badge && durationMonths !== opt.months && (
-                  <span className="absolute -top-1.5 -right-1 rounded-full bg-emerald-500 px-1 text-[9px] font-black text-white">
+                  <span className="absolute -right-1 -top-1.5 rounded-full bg-emerald-500 px-1 text-[9px] font-black text-white">
                     {opt.badge}
                   </span>
                 )}
@@ -429,11 +619,7 @@ function PlanCard({
               className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ backgroundColor: config.color }}
             >
-              {isActivating ? (
-                <DentalLoaderIcon size={16} />
-              ) : (
-                <CreditCard size={16} />
-              )}
+              {isActivating ? <DentalLoaderIcon size={16} /> : <CreditCard size={16} />}
               {t("card.payButton")}
             </button>
           )}
@@ -453,17 +639,21 @@ export default function PlansPage() {
   const [activeTab, setActiveTab] = useState<TabType>("current");
   const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({});
 
-  const { data: currentPlan, isLoading: isCurrentLoading, refetch: refetchCurrent } = useGetCurrentPlan();
+  const {
+    data: currentPlan,
+    isLoading: isCurrentLoading,
+    refetch: refetchCurrent,
+  } = useGetCurrentPlan();
   const { data: plans = [], isLoading: isPlansLoading, refetch: refetchPlans } = useGetPlans();
 
   const cancelMutation = useCancelPlan();
   const paymentMutation = useActivatePlanPayment();
 
-  const currentPlanType = String(currentPlan?.currentPlan || currentPlan?.planType || "");
-
   const sortedPlans = useMemo(() => {
     const order: Record<string, number> = { START: 1, PRO: 2, ENTERPRISE: 3 };
-    return [...plans].sort((a, b) => (order[getPlanType(a) || ""] || 99) - (order[getPlanType(b) || ""] || 99));
+    return [...plans].sort(
+      (a, b) => (order[getPlanType(a) || ""] || 99) - (order[getPlanType(b) || ""] || 99)
+    );
   }, [plans]);
 
   function getDuration(planKey: string): number {
@@ -472,30 +662,45 @@ export default function PlansPage() {
 
   function handleActivatePlan(plan: SubscriptionPlan, planKey: string) {
     const planType = getPlanType(plan);
-    if (!planType) { toast.error(t("toast.planTypeNotFound")); return; }
+    if (!planType) {
+      toast.error(t("toast.planTypeNotFound"));
+      return;
+    }
 
     const durationMonths = getDuration(planKey);
     const amountSom = getPlanMonthlyPrice(plan);
-    if (!amountSom) { toast.error(t("toast.priceNotFound")); return; }
+    if (!amountSom) {
+      toast.error(t("toast.priceNotFound"));
+      return;
+    }
 
     /**
      * Payme tiyin da ishlaydi: 1 so'm = 100 tiyin
-     * 500,000 so'm * 1 oy * 100 = 50,000,000 tiyin ✓ (Payme response da price: 50000000)
+     * 500,000 so'm * 1 oy * 100 = 50,000,000 tiyin ✓
      */
     const amountTiyin = Math.round(amountSom * durationMonths * 100);
     const payload: CreatePaymentOrderDto = { planType, durationMonths, amountTiyin };
 
     paymentMutation.mutate(payload, {
-      onSuccess: (url) => { window.location.href = url; },
-      onError: (err) => { toast.error(err.message || t("toast.paymentFailed")); },
+      onSuccess: (url) => {
+        window.location.href = url;
+      },
+      onError: (err) => {
+        toast.error(err.message || t("toast.paymentFailed"));
+      },
     });
   }
 
   function handleCancelPlan() {
     if (!window.confirm(t("toast.cancelConfirm"))) return;
     cancelMutation.mutate(undefined, {
-      onSuccess: () => { toast.success(t("toast.planCancelled")); refetchCurrent(); },
-      onError: (err: any) => { toast.error(err?.message || t("toast.genericError")); },
+      onSuccess: () => {
+        toast.success(t("toast.planCancelled"));
+        refetchCurrent();
+      },
+      onError: (err: any) => {
+        toast.error(err?.message || t("toast.genericError"));
+      },
     });
   }
 
@@ -509,10 +714,16 @@ export default function PlansPage() {
         </div>
         <button
           type="button"
-          onClick={() => { refetchCurrent(); refetchPlans(); }}
+          onClick={() => {
+            refetchCurrent();
+            refetchPlans();
+          }}
           className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 sm:w-fit"
         >
-          <RefreshCcw size={15} className={isCurrentLoading || isPlansLoading ? "animate-spin" : ""} />
+          <RefreshCcw
+            size={15}
+            className={isCurrentLoading || isPlansLoading ? "animate-spin" : ""}
+          />
           {t("page.refresh")}
         </button>
       </div>
@@ -559,8 +770,12 @@ export default function PlansPage() {
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100">
                 <CreditCard size={28} className="text-slate-400" />
               </div>
-              <h2 className="text-xl font-black text-slate-900">{t("empty.noActivePlanTitle")}</h2>
-              <p className="mt-2 max-w-xs text-sm text-slate-500">{t("empty.noActivePlanSubtitle")}</p>
+              <h2 className="text-xl font-black text-slate-900">
+                {t("empty.noActivePlanTitle")}
+              </h2>
+              <p className="mt-2 max-w-xs text-sm text-slate-500">
+                {t("empty.noActivePlanSubtitle")}
+              </p>
               <button
                 type="button"
                 onClick={() => setActiveTab("available")}
@@ -574,16 +789,36 @@ export default function PlansPage() {
           {/* Billing sidebar */}
           <div className="space-y-4">
             <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">{t("sidebar.billingInfoTitle")}</h3>
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">
+                {t("sidebar.billingInfoTitle")}
+              </h3>
               <div className="mt-4 space-y-3">
                 {[
                   { label: t("sidebar.status"), value: getCurrentStatus(currentPlan) },
-                  { label: t("sidebar.planDuration"), value: currentPlan?.planDurationMonths ? t("sidebar.monthsValue", { months: currentPlan.planDurationMonths }) : "—" },
+                  {
+                    label: t("sidebar.planDuration"),
+                    value: currentPlan?.planDurationMonths
+                      ? t("sidebar.monthsValue", { months: currentPlan.planDurationMonths })
+                      : "—",
+                  },
                   { label: t("sidebar.startDate"), value: formatDateTime(currentPlan?.startDate) },
-                  { label: t("sidebar.endDate"), value: formatDateTime(currentPlan?.endDate || currentPlan?.trialEndDate) },
-                  { label: t("sidebar.includedSms"), value: String(currentPlan?.includedSmsCount ?? 0) },
+                  {
+                    label: t("sidebar.endDate"),
+                    value: formatDateTime(currentPlan?.endDate || currentPlan?.trialEndDate),
+                  },
+                  {
+                    label: t("sidebar.includedSms"),
+                    value: String(currentPlan?.includedSmsCount ?? 0),
+                  },
+                  {
+                    label: t("sidebar.storageFree"),
+                    value: formatBytes(getRemainingStorage(currentPlan)),
+                  },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3 last:border-0 last:pb-0"
+                  >
                     <span className="text-xs font-bold text-slate-400">{item.label}</span>
                     <span className="text-sm font-black text-slate-900">{item.value}</span>
                   </div>
@@ -592,8 +827,10 @@ export default function PlansPage() {
             </div>
 
             <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
-              <p className="text-xs font-black text-blue-700 mb-1">{t("sidebar.paymeInfoTitle")}</p>
-              <p className="text-xs text-blue-600 leading-relaxed">{t("sidebar.paymeInfoText")}</p>
+              <p className="mb-1 text-xs font-black text-blue-700">
+                {t("sidebar.paymeInfoTitle")}
+              </p>
+              <p className="text-xs leading-relaxed text-blue-600">{t("sidebar.paymeInfoText")}</p>
             </div>
           </div>
         </div>
@@ -613,14 +850,12 @@ export default function PlansPage() {
             </div>
           ) : (
             <>
-              <p className="text-sm text-slate-500">
-                {t("helperText")}
-              </p>
+              <p className="text-sm text-slate-500">{t("helperText")}</p>
               <div className="mt-2 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {sortedPlans.map((plan, index) => {
                   const planKey = getPlanKey(plan, index);
-                  const planType = getPlanType(plan);
-                  // "Joriy tarif" hech qachon ko'rsatilmaydi — foydalanuvchi har doim yangi tarif sotib olishi mumkin
+                  // "Joriy tarif" hech qachon ko'rsatilmaydi — foydalanuvchi
+                  // har doim yangi tarif sotib olishi mumkin
                   const isCurrentPlan = false;
                   return (
                     <PlanCard
@@ -629,7 +864,9 @@ export default function PlansPage() {
                       planKey={planKey}
                       isCurrentPlan={isCurrentPlan}
                       durationMonths={getDuration(planKey)}
-                      onDurationChange={(months) => setSelectedDurations((prev) => ({ ...prev, [planKey]: months }))}
+                      onDurationChange={(months) =>
+                        setSelectedDurations((prev) => ({ ...prev, [planKey]: months }))
+                      }
                       onActivate={() => handleActivatePlan(plan, planKey)}
                       isActivating={paymentMutation.isPending}
                     />

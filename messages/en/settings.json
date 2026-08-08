@@ -104,7 +104,12 @@
       "storageLabel": "Storage",
       "storageUsed": "{used} GB used",
       "changePlanButton": "Change plan",
-      "cancelButton": "Cancel plan"
+      "cancelButton": "Cancel plan",
+      "storageTotal": "{size} total",
+      "storageUsedShort": "used",
+      "storageFreeShort": "free",
+      "storageAlmostFull": "Storage almost full",
+      "storageNoData": "No data"
     },
     "card": {
       "popularBadge": "Popular",
@@ -133,6 +138,7 @@
       "startDate": "Start date",
       "endDate": "End date",
       "includedSms": "Included SMS",
+      "storageFree": "Free space",
       "monthsValue": "{months} months",
       "paymeInfoTitle": "💳 Payment via Payme",
       "paymeInfoText": "You'll be redirected to the Payme checkout page when you activate a plan. Payment is safe and fast."

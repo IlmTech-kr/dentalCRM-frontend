@@ -104,7 +104,12 @@
       "storageLabel": "Saqlash joyi",
       "storageUsed": "{used} GB ishlatilgan",
       "changePlanButton": "Tarifni o'zgartirish",
-      "cancelButton": "Bekor qilish"
+      "cancelButton": "Bekor qilish",
+      "storageTotal": "Jami {size}",
+      "storageUsedShort": "ishlatilgan",
+      "storageFreeShort": "bo'sh",
+      "storageAlmostFull": "Saqlash joyi tugayapti",
+      "storageNoData": "Ma'lumot yo'q"
     },
     "card": {
       "popularBadge": "Mashhur",
@@ -133,6 +138,7 @@
       "startDate": "Boshlanish sanasi",
       "endDate": "Tugash sanasi",
       "includedSms": "SMS kiruvchi",
+      "storageFree": "Bo'sh joy",
       "monthsValue": "{months} oy",
       "paymeInfoTitle": "💳 Payme orqali to'lov",
       "paymeInfoText": "Tarif aktivlashtirilganda Payme checkout sahifasiga yo'naltirilasiz. To'lov xavfsiz va tezkor."
