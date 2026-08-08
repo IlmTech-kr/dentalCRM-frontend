@@ -18,7 +18,10 @@ import {
   useDoctorRevenueStatistics,
   usePayrollSummary,
 } from "@/src/features/statistics/hooks/useStatistics";
-import type { RevenueFilterType } from "@/src/features/statistics/services/statistics.service";
+import type {
+  RevenueFilterType,
+  RevenueResponse,
+} from "@/src/features/statistics/services/statistics.service";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
 // ---------------------------------------------------------------------------
@@ -104,6 +107,14 @@ function formatPeriodLabel(period: string, filter: RevenueFilterType, months: st
   }
   const [, m, d] = parts;
   return `${months[(m ?? 1) - 1]?.slice(0, 3) ?? ""} ${d}`;
+}
+
+/**
+ * Backend valyuta bo'yicha ajratib qaytaradi (`currencies: [...]`) — UI
+ * hozircha bitta ("asosiy") valyutani ko'rsatadi.
+ */
+function primaryRevenue(data?: RevenueResponse) {
+  return data?.currencies?.[0];
 }
 
 function getDoctorId(doctor: any) {
@@ -695,9 +706,9 @@ export default function DashboardPage() {
 
   // --------------------------- Derived ---------------------------
 
-  const revenueList = revenueData?.points ?? [];
-  const totalRevenue = revenueData?.totalRevenue ?? 0;
-  const totalTxCount = revenueData?.totalTransactionCount ?? 0;
+  const revenueList = primaryRevenue(revenueData)?.points ?? [];
+  const totalRevenue = primaryRevenue(revenueData)?.totalRevenue ?? 0;
+  const totalTxCount = primaryRevenue(revenueData)?.totalTransactionCount ?? 0;
 
   /**
    * Backend javob shakli har xil bo'lishi mumkin:
@@ -824,8 +835,8 @@ export default function DashboardPage() {
               <RevenuePeriodCard
                 label={t("revenue.cardToday")}
                 hint={t("revenue.cardTodayHint")}
-                amount={daySummary.data?.totalRevenue ?? 0}
-                txCount={daySummary.data?.totalTransactionCount ?? 0}
+                amount={primaryRevenue(daySummary.data)?.totalRevenue ?? 0}
+                txCount={primaryRevenue(daySummary.data)?.totalTransactionCount ?? 0}
                 active={!isCustomRange && revenueFilter === "DAY"}
                 loading={daySummary.isLoading}
                 accent="#35a8f5"
@@ -834,8 +845,8 @@ export default function DashboardPage() {
               <RevenuePeriodCard
                 label={t("revenue.cardMonth")}
                 hint={t("revenue.cardMonthHint")}
-                amount={monthSummary.data?.totalRevenue ?? 0}
-                txCount={monthSummary.data?.totalTransactionCount ?? 0}
+                amount={primaryRevenue(monthSummary.data)?.totalRevenue ?? 0}
+                txCount={primaryRevenue(monthSummary.data)?.totalTransactionCount ?? 0}
                 active={!isCustomRange && revenueFilter === "MONTH"}
                 loading={monthSummary.isLoading}
                 accent="#8b5cf6"
@@ -844,8 +855,8 @@ export default function DashboardPage() {
               <RevenuePeriodCard
                 label={t("revenue.cardYear")}
                 hint={t("revenue.cardYearHint")}
-                amount={yearSummary.data?.totalRevenue ?? 0}
-                txCount={yearSummary.data?.totalTransactionCount ?? 0}
+                amount={primaryRevenue(yearSummary.data)?.totalRevenue ?? 0}
+                txCount={primaryRevenue(yearSummary.data)?.totalTransactionCount ?? 0}
                 active={!isCustomRange && revenueFilter === "YEAR"}
                 loading={yearSummary.isLoading}
                 accent="#10b981"

@@ -12,13 +12,23 @@ export interface RevenuePoint {
   transactionCount: number;
 }
 
+/**
+ * Backend valyuta bo'yicha ajratib qaytaradi (masalan bir nechta valyutada
+ * to'lov qabul qilingan bo'lsa). Amaliyotda klinikalar bitta valyutada
+ * ishlaydi — UI birinchi elementni ("asosiy" valyuta) ko'rsatadi.
+ */
+export interface RevenueCurrencyBucket {
+  currency: string;
+  totalRevenue: number;
+  totalTransactionCount: number;
+  points: RevenuePoint[];
+}
+
 export interface RevenueResponse {
   filter: RevenueFilterType;
   fromDate: string;
   toDate: string;
-  totalRevenue: number;
-  totalTransactionCount: number;
-  points: RevenuePoint[];
+  currencies: RevenueCurrencyBucket[];
 }
 
 export interface RevenueByClinicItem {
