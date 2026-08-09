@@ -3,8 +3,10 @@
 import { X } from "lucide-react";
 
 /**
- * Categories/Expenses/Recurring'dagi barcha modallar (create/edit/pay/void)
- * uchun umumiy qobiq — fon, panel, sarlavha. Ikki ko'rinish bor:
+ * Modal (create/edit/pay/void) uchun umumiy qobiq — fon, panel, sarlavha.
+ * Dastlab Expenses moduli uchun qurilgan, endi Treatment Payments ham
+ * ishlatadi — shu sabab route-local emas, `src/components/ui/`da.
+ * Ikki ko'rinish bor:
  * - forma modallari: X yopish tugmasi bilan (showCloseButton default true)
  * - tasdiqlash modallari (Pay/Void): subtitle bilan, X tugmasisiz —
  *   yopish faqat fon bosish yoki footer'dagi Cancel orqali.

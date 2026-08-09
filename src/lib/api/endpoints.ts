@@ -92,6 +92,66 @@ export const ENDPOINTS = {
       complete: (courseId: string) => `/api/dental/treatment-courses/${courseId}/complete`,
       getById: (courseId: string) => `/api/dental/treatment-courses/${courseId}`,
       listByPatient: (patientId: string) => `/api/dental/treatment-courses/patient/${patientId}`,
+
+      payments: {
+        // POST /api/dental/treatment-courses/{courseId}/payments
+        create: (courseId: string) => `/api/dental/treatment-courses/${courseId}/payments`,
+        // GET /api/dental/treatment-courses/{courseId}/payments — balance + payments[] in one call
+        list: (courseId: string) => `/api/dental/treatment-courses/${courseId}/payments`,
+        // POST /api/dental/treatment-courses/{courseId}/payments/{paymentId}/void
+        void: (courseId: string, paymentId: string) =>
+          `/api/dental/treatment-courses/${courseId}/payments/${paymentId}/void`,
+      },
+    },
+
+    invoices: {
+      // GET /api/dental/invoices/by-treatment-course/{courseId}
+      byTreatmentCourse: (courseId: string) =>
+        `/api/dental/invoices/by-treatment-course/${courseId}`,
+      // GET /api/dental/invoices/{invoiceId}
+      getById: (invoiceId: string) => `/api/dental/invoices/${invoiceId}`,
+      // GET /api/dental/invoices/{invoiceId}/pdf
+      pdf: (invoiceId: string) => `/api/dental/invoices/${invoiceId}/pdf`,
+    },
+  },
+
+  /**
+   * Klinika bo'yicha umumiy to'lovlar (barcha treatment course'lar
+   * kesimida) — treatmentCourses.payments'dan farqli, bitta course bilan
+   * cheklanmagan.
+   */
+  treatmentPayments: {
+    /**
+     * GET /api/dental/treatment-payments?page=0&limit=20&fromDate=&toDate=&voided=&sortBy=paidAt&sortDirection=DESC
+     */
+    list: (params: {
+      page?: number;
+      limit?: number;
+      fromDate?: string;
+      toDate?: string;
+      voided?: boolean;
+      sortBy?: string;
+      sortDirection?: "ASC" | "DESC";
+    }) => {
+      const q = new URLSearchParams();
+      q.set("page", String(params.page ?? 0));
+      q.set("limit", String(params.limit ?? 20));
+      if (params.fromDate) q.set("fromDate", params.fromDate);
+      if (params.toDate) q.set("toDate", params.toDate);
+      if (params.voided !== undefined) q.set("voided", String(params.voided));
+      if (params.sortBy) q.set("sortBy", params.sortBy);
+      if (params.sortDirection) q.set("sortDirection", params.sortDirection);
+      return `/api/dental/treatment-payments?${q.toString()}`;
+    },
+
+    /**
+     * GET /api/dental/treatment-payments/summary?fromDate=&toDate=
+     */
+    summary: (params: { fromDate?: string; toDate?: string }) => {
+      const q = new URLSearchParams();
+      if (params.fromDate) q.set("fromDate", params.fromDate);
+      if (params.toDate) q.set("toDate", params.toDate);
+      return `/api/dental/treatment-payments/summary?${q.toString()}`;
     },
   },
 

@@ -37,8 +37,11 @@
   "patientDetail": {
     "header": {
       "fallbackName": "Пациент",
+      "birthDateLabel": "Дата рождения",
       "ageLabel": "Возраст",
-      "statusLabel": "Статус"
+      "statusLabel": "Статус",
+      "active": "Активен",
+      "inactive": "Неактивен"
     },
     "tabs": {
       "chart": "Карта зубов",
@@ -67,6 +70,8 @@
     },
     "course": {
       "title": "Курсы лечения",
+      "listHeading": "Список курсов",
+      "newCourseButton": "Новый курс",
       "active": "Активные",
       "completed": "Завершённые",
       "noCourses": "Нет курсов",
@@ -77,7 +82,9 @@
       "addVisit": "+ Добавить визит",
       "complete": "✓ Завершить",
       "completedBadge": "Курс завершён",
-      "confirmComplete": "Завершить курс лечения?"
+      "confirmComplete": "Завершить курс лечения?",
+      "noCourseSelectedTitle": "Курс лечения не выбран",
+      "noCourseSelectedSubtitle": "Выберите курс слева или создайте новый."
     },
     "visitHistory": {
       "title": "История визитов",
@@ -88,7 +95,11 @@
       "itemTooth": "Зуб {tooth}",
       "xrayTitle": "Рентген-снимки",
       "xrayCount": "{count, plural, one {# снимок} few {# снимка} many {# снимков} other {# снимка}}",
-      "xrayFailed": "Не удалось открыть снимок"
+      "xrayFailed": "Не удалось открыть снимок",
+      "checkOriginalUrl": "Проверить исходный URL",
+      "xrayFallbackName": "Снимок {number}",
+      "procedureFallback": "Процедура",
+      "itemCompleted": "Выполнено"
     },
     "createCourseModal": {
       "title": "Открытие курса лечения",
@@ -97,6 +108,9 @@
       "autoFill": "Заполнить автоматически",
       "mainDiagnosisLabel": "Основной диагноз",
       "mainDiagnosisPlaceholder": "Например: лечение кариеса зубов 11 и 21",
+      "currencyLabel": "Валюта",
+      "defaultDiagnosisSuffix": "лечение",
+      "noTeethMarked": "Сначала отметьте состояние зубов в разделе «Карта зубов».",
       "cancel": "Отмена",
       "create": "Создать курс",
       "creating": "Создание..."
@@ -135,7 +149,9 @@
       "noProceduresFound": "Процедуры не найдены",
       "addProcedureFirst": "Сначала добавьте процедуру.",
       "proceduresPage": "Страница процедур",
-      "add": "+ Добавить"
+      "add": "+ Добавить",
+      "resetPriceTitle": "Сбросить цену",
+      "procedureFallback": "Процедура"
     }
   },
   "toothConditions": {
@@ -227,6 +243,11 @@
     "visitSaved": "Визит сохранён",
     "treatmentStartedAppointmentCreated": "Лечение начато, приём создан автоматически",
     "visitSaveError": "Ошибка при сохранении визита",
-    "courseCompleted": "Курс завершён"
+    "courseCompleted": "Курс завершён",
+    "chartSaveFailed": "Не удалось сохранить карту",
+    "courseCreateFailed": "Не удалось создать курс лечения",
+    "courseCompleteFailed": "Не удалось завершить курс",
+    "visitCreatedButAppointmentMissing": "Визит создан, но appointmentId не найден. Backend должен вернуть appointmentId в ответе addVisit.",
+    "visitCreatedButFollowupFailed": "Визит создан, но следующий шаг не выполнен: {message}"
   }
 }

@@ -16,10 +16,10 @@ import type {
 } from "@/src/features/expenses/types";
 import { formatDisplayDate } from "@/src/features/expenses/dates";
 import { CATEGORY_KIND_OPTIONS, getCategoryKindConfig } from "@/src/features/expenses/categoryKind";
-import { ModalShell } from "../_components/ModalShell";
-import { ModalFormActions } from "../_components/ModalFormActions";
-import { EmptyState, LoadingState } from "../_components/EmptyState";
-import { fieldClassName, fieldLabelClassName } from "../_components/formFieldStyles";
+import { ModalShell } from "@/src/components/ui/ModalShell";
+import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
+import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
+import { fieldClassName, fieldLabelClassName } from "@/src/components/ui/formFieldStyles";
 
 // ---------------------------------------------------------------------------
 // Category modal (create/edit)
@@ -172,7 +172,7 @@ export default function ExpenseCategoriesPage() {
                   <th className="px-6 py-3">#</th>
                   <th className="px-6 py-3">{t("table.name")}</th>
                   <th className="px-6 py-3">{t("table.kind")}</th>
-                  <th className="px-6 py-3">{t("table.updatedAt")}</th>
+                  {/* <th className="px-6 py-3">{t("table.updatedAt")}</th> */}
                   <th className="px-6 py-3 text-right">{t("table.actions")}</th>
                 </tr>
               </thead>
@@ -191,9 +191,9 @@ export default function ExpenseCategoriesPage() {
                           {t(`kind.${category.kind}`)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500">
+                      {/* <td className="px-6 py-4 text-slate-500">
                         {formatDisplayDate(category.updatedAt || category.createdAt)}
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 text-right">
                         <button
                           type="button"

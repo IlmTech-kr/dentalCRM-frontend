@@ -1,0 +1,166 @@
+{
+  "course": {
+    "tab": {
+      "visits": "Визиты",
+      "payments": "Платежи"
+    },
+    "balance": {
+      "total": "Общая стоимость",
+      "paid": "Оплачено",
+      "remaining": "Остаток долга"
+    },
+    "table": {
+      "date": "Дата",
+      "method": "Способ",
+      "amount": "Сумма",
+      "reference": "Референс",
+      "note": "Заметка",
+      "status": "Статус",
+      "actions": "Действия",
+      "empty": "Платежи не найдены",
+      "loading": "Загрузка..."
+    },
+    "status": {
+      "paid": "Оплачено",
+      "voided": "Отменено"
+    },
+    "method": {
+      "CARD": "Карта",
+      "CASH": "Наличные"
+    },
+    "actions": {
+      "void": "Отменить"
+    },
+    "voidedInfo": {
+      "reason": "Причина",
+      "voidedAt": "Дата отмены"
+    },
+    "addButton": "Добавить платёж",
+    "fullyPaid": "Оплачено полностью",
+    "createModal": {
+      "title": "Новый платёж",
+      "amountLabel": "Сумма",
+      "currencyLabel": "Валюта",
+      "methodLabel": "Способ оплаты",
+      "paidAtLabel": "Дата и время оплаты",
+      "referenceLabel": "Референс (необязательно)",
+      "referencePlaceholder": "Чек терминала UZCARD 45821",
+      "noteLabel": "Заметка (необязательно)",
+      "notePlaceholder": "Первоначальный платёж",
+      "overpayWarning": "Введённая сумма больше остатка долга — это будет считаться переплатой.",
+      "cancel": "Отмена",
+      "create": "Создать"
+    },
+    "voidModal": {
+      "title": "Отмена платежа",
+      "subtitle": "Это действие нельзя отменить. Укажите причину.",
+      "reasonLabel": "Причина отмены",
+      "reasonPlaceholder": "Например: Сумма введена неверно",
+      "cancel": "Отмена",
+      "confirm": "Отменить платёж"
+    },
+    "toast": {
+      "amountRequired": "Введите корректную сумму",
+      "paidAtRequired": "Выберите дату и время",
+      "reasonRequired": "Укажите причину отмены",
+      "created": "Платёж добавлен",
+      "saveFailed": "Ошибка при сохранении платежа",
+      "voided": "Платёж отменён",
+      "voidFailed": "Ошибка при отмене",
+      "loadFailed": "Ошибка при загрузке платежей",
+      "invoiceLoadFailed": "Ошибка при загрузке счёта",
+      "invoiceDownloadFailed": "Ошибка при скачивании PDF"
+    },
+    "invoice": {
+      "button": "Счёт",
+      "modalTitle": "Счёт {number}",
+      "issuedAt": "Дата выставления",
+      "patient": "Пациент",
+      "diagnosis": "Диагноз",
+      "linesTitle": "Процедуры",
+      "table": {
+        "date": "Дата",
+        "procedure": "Процедура",
+        "tooth": "Зуб",
+        "unitPrice": "Цена",
+        "lineTotal": "Итого"
+      },
+      "paymentsTitle": "Платежи на момент выставления",
+      "totals": {
+        "totalAmount": "Общая сумма",
+        "paidAtIssue": "Оплачено на момент выставления",
+        "balanceAtIssue": "Остаток на момент выставления",
+        "currentPaid": "Оплачено сейчас",
+        "currentBalance": "Остаток сейчас"
+      },
+      "downloadPdf": "Скачать PDF",
+      "downloading": "Загрузка...",
+      "pdfUnavailable": "PDF пока недоступен",
+      "close": "Закрыть"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "Платежи",
+      "subtitle": "Все платежи по курсам лечения",
+      "refresh": "Обновить"
+    },
+    "summary": {
+      "received": "Получено",
+      "count": "Количество платежей",
+      "empty": "Платежи за этот период не найдены"
+    },
+    "filters": {
+      "fromDate": "Дата начала",
+      "toDate": "Дата окончания",
+      "showVoided": "Показать отменённые",
+      "sortDirectionAsc": "От старых к новым",
+      "sortDirectionDesc": "От новых к старым",
+      "reset": "Сбросить"
+    },
+    "status": {
+      "paid": "Оплачено",
+      "voided": "Отменено"
+    },
+    "method": {
+      "CARD": "Карта",
+      "CASH": "Наличные"
+    },
+    "table": {
+      "date": "Дата",
+      "patient": "Пациент",
+      "diagnosis": "Диагноз",
+      "method": "Способ",
+      "amount": "Сумма",
+      "reference": "Референс",
+      "status": "Статус",
+      "actions": "Действия",
+      "empty": "Платежи не найдены",
+      "loading": "Загрузка..."
+    },
+    "actions": {
+      "void": "Отменить"
+    },
+    "pagination": {
+      "prev": "Назад",
+      "next": "Далее",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "voidModal": {
+      "title": "Отмена платежа",
+      "subtitle": "Это действие нельзя отменить. Укажите причину.",
+      "reasonLabel": "Причина отмены",
+      "reasonPlaceholder": "Например: Сумма введена неверно",
+      "cancel": "Отмена",
+      "confirm": "Отменить платёж"
+    },
+    "toast": {
+      "reasonRequired": "Укажите причину отмены",
+      "voided": "Платёж отменён",
+      "voidFailed": "Ошибка при отмене",
+      "loadFailed": "Ошибка при загрузке платежей",
+      "summaryLoadFailed": "Ошибка при загрузке статистики"
+    }
+  }
+}

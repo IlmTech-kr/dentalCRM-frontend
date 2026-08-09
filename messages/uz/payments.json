@@ -1,0 +1,166 @@
+{
+  "course": {
+    "tab": {
+      "visits": "Vizitlar",
+      "payments": "To'lovlar"
+    },
+    "balance": {
+      "total": "Umumiy narx",
+      "paid": "To'langan",
+      "remaining": "Qolgan qarz"
+    },
+    "table": {
+      "date": "Sana",
+      "method": "Usul",
+      "amount": "Summa",
+      "reference": "Referens",
+      "note": "Izoh",
+      "status": "Status",
+      "actions": "Amallar",
+      "empty": "To'lov topilmadi",
+      "loading": "Yuklanmoqda..."
+    },
+    "status": {
+      "paid": "To'langan",
+      "voided": "Bekor qilingan"
+    },
+    "method": {
+      "CARD": "Karta",
+      "CASH": "Naqd"
+    },
+    "actions": {
+      "void": "Bekor qilish"
+    },
+    "voidedInfo": {
+      "reason": "Sabab",
+      "voidedAt": "Bekor qilingan sana"
+    },
+    "addButton": "To'lov qo'shish",
+    "fullyPaid": "To'liq to'langan",
+    "createModal": {
+      "title": "Yangi to'lov",
+      "amountLabel": "Summa",
+      "currencyLabel": "Valyuta",
+      "methodLabel": "To'lov usuli",
+      "paidAtLabel": "To'lov sanasi va vaqti",
+      "referenceLabel": "Referens (ixtiyoriy)",
+      "referencePlaceholder": "UZCARD terminal chek 45821",
+      "noteLabel": "Izoh (ixtiyoriy)",
+      "notePlaceholder": "Boshlang'ich to'lov",
+      "overpayWarning": "Kiritilgan summa qolgan qarzdan katta — bu ortiqcha to'lov hisoblanadi.",
+      "cancel": "Bekor qilish",
+      "create": "Yaratish"
+    },
+    "voidModal": {
+      "title": "To'lovni bekor qilish",
+      "subtitle": "Bu amalni ortga qaytarib bo'lmaydi. Sababini kiriting.",
+      "reasonLabel": "Bekor qilish sababi",
+      "reasonPlaceholder": "Masalan: Summa xato kiritilgan",
+      "cancel": "Bekor qilish",
+      "confirm": "To'lovni bekor qilish"
+    },
+    "toast": {
+      "amountRequired": "Summani to'g'ri kiriting",
+      "paidAtRequired": "Sana va vaqtni tanlang",
+      "reasonRequired": "Bekor qilish sababini kiriting",
+      "created": "To'lov qo'shildi",
+      "saveFailed": "To'lovni saqlashda xatolik",
+      "voided": "To'lov bekor qilindi",
+      "voidFailed": "Bekor qilishda xatolik",
+      "loadFailed": "To'lovlarni yuklashda xatolik",
+      "invoiceLoadFailed": "Invoysni yuklashda xatolik",
+      "invoiceDownloadFailed": "PDF yuklab olishda xatolik"
+    },
+    "invoice": {
+      "button": "Invoys",
+      "modalTitle": "Invoys {number}",
+      "issuedAt": "Berilgan sana",
+      "patient": "Bemor",
+      "diagnosis": "Tashxis",
+      "linesTitle": "Muolajalar",
+      "table": {
+        "date": "Sana",
+        "procedure": "Muolaja",
+        "tooth": "Tish",
+        "unitPrice": "Narx",
+        "lineTotal": "Jami"
+      },
+      "paymentsTitle": "Berilgan paytdagi to'lovlar",
+      "totals": {
+        "totalAmount": "Umumiy summa",
+        "paidAtIssue": "Berilgan paytda to'langan",
+        "balanceAtIssue": "Berilgan paytda qolgan qarz",
+        "currentPaid": "Hozir to'langan",
+        "currentBalance": "Hozir qolgan qarz"
+      },
+      "downloadPdf": "PDF yuklab olish",
+      "downloading": "Yuklanmoqda...",
+      "pdfUnavailable": "PDF hali mavjud emas",
+      "close": "Yopish"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "To'lovlar",
+      "subtitle": "Barcha davolash kurslari bo'yicha qabul qilingan to'lovlar",
+      "refresh": "Yangilash"
+    },
+    "summary": {
+      "received": "Tushgan summa",
+      "count": "To'lovlar soni",
+      "empty": "Bu davr uchun to'lov topilmadi"
+    },
+    "filters": {
+      "fromDate": "Boshlanish sanasi",
+      "toDate": "Tugash sanasi",
+      "showVoided": "Bekor qilinganlarni ko'rsatish",
+      "sortDirectionAsc": "Eskidan yangiga",
+      "sortDirectionDesc": "Yangidan eskiga",
+      "reset": "Tozalash"
+    },
+    "status": {
+      "paid": "To'langan",
+      "voided": "Bekor qilingan"
+    },
+    "method": {
+      "CARD": "Karta",
+      "CASH": "Naqd"
+    },
+    "table": {
+      "date": "Sana",
+      "patient": "Bemor",
+      "diagnosis": "Tashxis",
+      "method": "Usul",
+      "amount": "Summa",
+      "reference": "Referens",
+      "status": "Status",
+      "actions": "Amallar",
+      "empty": "To'lov topilmadi",
+      "loading": "Yuklanmoqda..."
+    },
+    "actions": {
+      "void": "Bekor qilish"
+    },
+    "pagination": {
+      "prev": "Oldingi",
+      "next": "Keyingi",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "voidModal": {
+      "title": "To'lovni bekor qilish",
+      "subtitle": "Bu amalni ortga qaytarib bo'lmaydi. Sababini kiriting.",
+      "reasonLabel": "Bekor qilish sababi",
+      "reasonPlaceholder": "Masalan: Summa xato kiritilgan",
+      "cancel": "Bekor qilish",
+      "confirm": "To'lovni bekor qilish"
+    },
+    "toast": {
+      "reasonRequired": "Bekor qilish sababini kiriting",
+      "voided": "To'lov bekor qilindi",
+      "voidFailed": "Bekor qilishda xatolik",
+      "loadFailed": "To'lovlarni yuklashda xatolik",
+      "summaryLoadFailed": "Statistikani yuklashda xatolik"
+    }
+  }
+}

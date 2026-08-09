@@ -1,0 +1,166 @@
+{
+  "course": {
+    "tab": {
+      "visits": "Visits",
+      "payments": "Payments"
+    },
+    "balance": {
+      "total": "Total price",
+      "paid": "Paid",
+      "remaining": "Remaining balance"
+    },
+    "table": {
+      "date": "Date",
+      "method": "Method",
+      "amount": "Amount",
+      "reference": "Reference",
+      "note": "Note",
+      "status": "Status",
+      "actions": "Actions",
+      "empty": "No payments found",
+      "loading": "Loading..."
+    },
+    "status": {
+      "paid": "Paid",
+      "voided": "Voided"
+    },
+    "method": {
+      "CARD": "Card",
+      "CASH": "Cash"
+    },
+    "actions": {
+      "void": "Void"
+    },
+    "voidedInfo": {
+      "reason": "Reason",
+      "voidedAt": "Voided at"
+    },
+    "addButton": "Add payment",
+    "fullyPaid": "Fully paid",
+    "createModal": {
+      "title": "New payment",
+      "amountLabel": "Amount",
+      "currencyLabel": "Currency",
+      "methodLabel": "Payment method",
+      "paidAtLabel": "Payment date & time",
+      "referenceLabel": "Reference (optional)",
+      "referencePlaceholder": "UZCARD terminal receipt 45821",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "Initial payment",
+      "overpayWarning": "The entered amount exceeds the remaining balance — this will be recorded as an overpayment.",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "voidModal": {
+      "title": "Void payment",
+      "subtitle": "This action cannot be undone. Enter a reason.",
+      "reasonLabel": "Reason for voiding",
+      "reasonPlaceholder": "e.g. Amount entered incorrectly",
+      "cancel": "Cancel",
+      "confirm": "Void payment"
+    },
+    "toast": {
+      "amountRequired": "Enter a valid amount",
+      "paidAtRequired": "Select a date and time",
+      "reasonRequired": "Enter a reason for voiding",
+      "created": "Payment added",
+      "saveFailed": "Failed to save payment",
+      "voided": "Payment voided",
+      "voidFailed": "Failed to void payment",
+      "loadFailed": "Failed to load payments",
+      "invoiceLoadFailed": "Failed to load invoice",
+      "invoiceDownloadFailed": "Failed to download PDF"
+    },
+    "invoice": {
+      "button": "Invoice",
+      "modalTitle": "Invoice {number}",
+      "issuedAt": "Issued",
+      "patient": "Patient",
+      "diagnosis": "Diagnosis",
+      "linesTitle": "Procedures",
+      "table": {
+        "date": "Date",
+        "procedure": "Procedure",
+        "tooth": "Tooth",
+        "unitPrice": "Unit price",
+        "lineTotal": "Total"
+      },
+      "paymentsTitle": "Payments at issue",
+      "totals": {
+        "totalAmount": "Total amount",
+        "paidAtIssue": "Paid at issue",
+        "balanceAtIssue": "Balance at issue",
+        "currentPaid": "Currently paid",
+        "currentBalance": "Currently remaining"
+      },
+      "downloadPdf": "Download PDF",
+      "downloading": "Downloading...",
+      "pdfUnavailable": "PDF not available yet",
+      "close": "Close"
+    }
+  },
+
+  "list": {
+    "page": {
+      "title": "Payments",
+      "subtitle": "All payments received across treatment courses",
+      "refresh": "Refresh"
+    },
+    "summary": {
+      "received": "Received",
+      "count": "Payment count",
+      "empty": "No payments found for this period"
+    },
+    "filters": {
+      "fromDate": "From date",
+      "toDate": "To date",
+      "showVoided": "Show voided",
+      "sortDirectionAsc": "Oldest first",
+      "sortDirectionDesc": "Newest first",
+      "reset": "Reset"
+    },
+    "status": {
+      "paid": "Paid",
+      "voided": "Voided"
+    },
+    "method": {
+      "CARD": "Card",
+      "CASH": "Cash"
+    },
+    "table": {
+      "date": "Date",
+      "patient": "Patient",
+      "diagnosis": "Diagnosis",
+      "method": "Method",
+      "amount": "Amount",
+      "reference": "Reference",
+      "status": "Status",
+      "actions": "Actions",
+      "empty": "No payments found",
+      "loading": "Loading..."
+    },
+    "actions": {
+      "void": "Void"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "{page} / {totalPages}"
+    },
+    "voidModal": {
+      "title": "Void payment",
+      "subtitle": "This action cannot be undone. Enter a reason.",
+      "reasonLabel": "Reason for voiding",
+      "reasonPlaceholder": "e.g. Amount entered incorrectly",
+      "cancel": "Cancel",
+      "confirm": "Void payment"
+    },
+    "toast": {
+      "reasonRequired": "Enter a reason for voiding",
+      "voided": "Payment voided",
+      "voidFailed": "Failed to void payment",
+      "loadFailed": "Failed to load payments",
+      "summaryLoadFailed": "Failed to load summary"
+    }
+  }
+}

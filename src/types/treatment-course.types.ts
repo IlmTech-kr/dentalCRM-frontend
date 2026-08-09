@@ -86,6 +86,7 @@ export interface TreatmentCourse {
   patientId: string;
 
   mainDiagnosis: string;
+  currency?: string;
 
   startDate?: string;
   endDate?: string | null;
@@ -105,6 +106,7 @@ export interface TreatmentCourse {
 export interface CreateTreatmentCourseDto {
   patientId: string;
   mainDiagnosis: string;
+  currency: string;
 }
 
 /**

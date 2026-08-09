@@ -16,10 +16,11 @@ import type { Currency, RecurringExpense } from "@/src/features/expenses/types";
 import { formatExpenseMoney } from "@/src/features/expenses/format";
 import { formatDisplayDate, normalizeDateForInput, todayYMD } from "@/src/features/expenses/dates";
 import { CURRENCIES, DAYS_OF_MONTH } from "@/src/features/expenses/constants";
-import { ModalShell } from "../_components/ModalShell";
-import { ModalFormActions } from "../_components/ModalFormActions";
-import { EmptyState, LoadingState } from "../_components/EmptyState";
-import { fieldClassName, fieldLabelClassName } from "../_components/formFieldStyles";
+import { ModalShell } from "@/src/components/ui/ModalShell";
+import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
+import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
+import { MoneyInput } from "@/src/components/ui/MoneyInput";
+import { fieldClassName, fieldLabelClassName } from "@/src/components/ui/formFieldStyles";
 
 // ---------------------------------------------------------------------------
 // Create/edit modal
@@ -42,7 +43,7 @@ function RecurringExpenseModal({
   const updateMutation = useUpdateRecurringExpense();
 
   const [categoryId, setCategoryId] = useState(recurring?.categoryId ?? "");
-  const [amount, setAmount] = useState(recurring ? String(recurring.amount) : "");
+  const [amount, setAmount] = useState(recurring?.amount ?? 0);
   const [currency, setCurrency] = useState<Currency>(recurring?.currency ?? "UZS");
   const [payeeName, setPayeeName] = useState(recurring?.payeeName ?? "");
   const [description, setDescription] = useState(recurring?.description ?? "");
@@ -57,8 +58,7 @@ function RecurringExpenseModal({
     e.preventDefault();
 
     if (!categoryId) return toast.error(t("toast.categoryRequired"));
-    const amountNumber = Number(amount);
-    if (!amountNumber || amountNumber <= 0) return toast.error(t("toast.amountRequired"));
+    if (!amount || amount <= 0) return toast.error(t("toast.amountRequired"));
     if (!payeeName.trim()) return toast.error(t("toast.payeeRequired"));
     if (!description.trim()) return toast.error(t("toast.descriptionRequired"));
     if (!dayOfMonth || dayOfMonth < 1 || dayOfMonth > 31) return toast.error(t("toast.dayOfMonthRequired"));
@@ -66,7 +66,7 @@ function RecurringExpenseModal({
 
     const payload = {
       categoryId,
-      amount: amountNumber,
+      amount,
       currency,
       payeeName: payeeName.trim(),
       description: description.trim(),
@@ -121,12 +121,10 @@ function RecurringExpenseModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={fieldLabelClassName}>{t("modal.amountLabel")}</label>
-            <input
-              type="number"
-              min={1}
+            <MoneyInput
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="3000000"
+              onChange={setAmount}
+              placeholder="3.000.000"
               className={fieldClassName}
             />
           </div>

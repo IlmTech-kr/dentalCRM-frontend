@@ -11,6 +11,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -19,11 +20,13 @@ import {
   Calendar,
   CheckCircle2,
   ClipboardList,
+  Coins,
   Edit3,
   ExternalLink,
   ImageIcon,
   Lock,
   Plus,
+  RotateCcw,
   Save,
   Search,
   Sparkles,
@@ -36,9 +39,17 @@ import {
 } from "lucide-react";
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { MoneyInput } from "@/src/components/ui/MoneyInput";
 
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { Dental3DChart } from "@/src/features/treatments/components/Dental3DChart";
+import {
+  CoursePaymentsPanel,
+  AddPaymentModal,
+} from "@/src/features/treatments/components/CoursePaymentsPanel";
+import { CURRENCIES } from "@/src/features/treatment-payments/constants";
+import type { Currency } from "@/src/features/treatment-payments/types";
+import { useGetCoursePayments } from "@/src/features/treatment-payments/hooks/useTreatmentPayments";
 import { useDentalChart } from "@/src/features/treatments/hooks/useDentalChart";
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useTreatmentCourses } from "@/src/features/treatments/hooks/useTreatmentCourses";
@@ -80,12 +91,19 @@ type PatientInfo = {
 
 type TreatmentTab = "CHART" | "COURSE";
 type CourseStatusFilter = "ACTIVE" | "COMPLETED";
+type CourseDetailTab = "VISITS" | "PAYMENTS";
 
 type SelectedXray = {
   id: string;
   file: File;
   previewUrl: string;
 };
+
+/**
+ * defaultPrice — procedure qo'shilganda snapshot qilingan narx,
+ * "Narxni tiklash" tugmasi shu qiymatga qaytaradi. Backend'ga yuborilmaydi.
+ */
+type DraftVisitItem = TreatmentVisitItem & { defaultPrice: number };
 
 type VisitImage = {
   id?: string;
@@ -138,19 +156,19 @@ const STATE_OPTIONS: ToothCondition[] = [
   ToothCondition.ROOT_CANAL,
 ];
 
-const CONDITION_LABELS: Record<ToothCondition, string> = {
-  [ToothCondition.HEALTHY]: "Sog'lom",
-  [ToothCondition.CARIES]: "Karies",
-  [ToothCondition.EXTRACTED]: "Sug'urilgan",
-  [ToothCondition.PULPITIS]: "Pulpit",
-  [ToothCondition.FILLING]: "Plomba",
-  [ToothCondition.CROWN]: "Koronka",
-  [ToothCondition.IMPLANT]: "Implant",
-  [ToothCondition.MISSING]: "Yo'q",
-  [ToothCondition.CRACK]: "Yoriq",
-  [ToothCondition.BRIDGE]: "Ko'prik",
-  [ToothCondition.ROOT_CANAL]: "Kanal davolangan",
-  [ToothCondition.GINGIVITIS]: "Gingivit",
+const CONDITION_KEYS: Record<ToothCondition, string> = {
+  [ToothCondition.HEALTHY]: "healthy",
+  [ToothCondition.CARIES]: "caries",
+  [ToothCondition.EXTRACTED]: "extracted",
+  [ToothCondition.PULPITIS]: "pulpitis",
+  [ToothCondition.FILLING]: "filling",
+  [ToothCondition.CROWN]: "crown",
+  [ToothCondition.IMPLANT]: "implant",
+  [ToothCondition.MISSING]: "missing",
+  [ToothCondition.CRACK]: "crack",
+  [ToothCondition.BRIDGE]: "bridge",
+  [ToothCondition.ROOT_CANAL]: "rootCanal",
+  [ToothCondition.GINGIVITIS]: "gingivitis",
 };
 
 // -----------------------------------------------------------------------------
@@ -716,7 +734,7 @@ function TabButton({
       onClick={onClick}
       className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold transition ${
         active
-          ? "bg-[#35a8f5] text-white shadow-md shadow-blue-200"
+          ? "bg-primary-blue text-white shadow-md shadow-blue-200"
           : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       }`}
     >
@@ -745,6 +763,8 @@ function PatientInfoCard({
   patient?: PatientInfo;
   isLoading: boolean;
 }) {
+  const t = useTranslations("treatments");
+
   if (isLoading) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -768,17 +788,17 @@ function PatientInfoCard({
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#35a8f5]/[0.06]" />
+      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-primary-blue/[0.06]" />
 
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#35a8f5] to-[#1d8ee8] text-lg font-black text-white shadow-md shadow-blue-200">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-blue to-primary-blue-dark text-lg font-black text-white shadow-md shadow-blue-200">
             {name ? getInitials(name) : <UserRound size={26} />}
           </div>
 
           <div>
             <h1 className="text-xl font-extrabold leading-tight text-slate-950">
-              {name || "Noma'lum bemor"}
+              {name || t("patientDetail.header.fallbackName")}
             </h1>
 
             <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -790,7 +810,7 @@ function PatientInfoCard({
         <div className="flex flex-wrap gap-2.5">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Tug'ilgan sana
+              {t("patientDetail.header.birthDateLabel")}
             </p>
             <p className="mt-0.5 text-sm font-extrabold text-slate-950">
               {formatBirthDate(birthDate)}
@@ -799,7 +819,7 @@ function PatientInfoCard({
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Yoshi
+              {t("patientDetail.header.ageLabel")}
             </p>
             <p className="mt-0.5 text-sm font-extrabold text-slate-950">
               {formatPatientAge(birthDate)}
@@ -808,7 +828,7 @@ function PatientInfoCard({
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center">
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-              Holat
+              {t("patientDetail.header.statusLabel")}
             </p>
             <p
               className={`mt-0.5 inline-flex items-center gap-1 text-sm font-extrabold ${
@@ -820,7 +840,9 @@ function PatientInfoCard({
                   isActive ? "bg-emerald-500" : "bg-slate-300"
                 }`}
               />
-              {isActive ? "Active" : "Inactive"}
+              {isActive
+                ? t("patientDetail.header.active")
+                : t("patientDetail.header.inactive")}
             </p>
           </div>
         </div>
@@ -836,6 +858,7 @@ function VisitXrayImage({
   image: VisitImage;
   index: number;
 }) {
+  const t = useTranslations("treatments");
   const rawSource = String(image.s3Url || "").trim();
   const source = normalizeImageSource(rawSource);
   const direct = isDirectImageUrl(source);
@@ -883,7 +906,7 @@ function VisitXrayImage({
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex aspect-video items-center justify-center bg-slate-100">
-          <DentalLoaderIcon size={24} className="text-[#35a8f5]" />
+          <DentalLoaderIcon size={24} className="text-primary-blue" />
         </div>
 
         <div className="p-3">
@@ -900,7 +923,7 @@ function VisitXrayImage({
           <ImageIcon size={25} className="text-red-400" />
 
           <p className="text-xs font-bold text-red-600">
-            Rentgen rasmini ochib bo'lmadi
+            {t("patientDetail.visitHistory.xrayFailed")}
           </p>
 
           {source ? (
@@ -910,14 +933,17 @@ function VisitXrayImage({
               rel="noreferrer"
               className="text-xs font-bold text-blue-600 underline"
             >
-              Original URL'ni tekshirish
+              {t("patientDetail.visitHistory.checkOriginalUrl")}
             </a>
           ) : null}
         </div>
 
         <div className="space-y-1 p-3">
           <p className="truncate text-xs font-bold text-slate-700">
-            {image.fileName || `Rentgen ${index + 1}`}
+            {image.fileName ||
+              t("patientDetail.visitHistory.xrayFallbackName", {
+                number: index + 1,
+              })}
           </p>
 
           {storagePath ? (
@@ -943,7 +969,12 @@ function VisitXrayImage({
       >
         <img
           src={imageUrl}
-          alt={image.fileName || `Rentgen ${index + 1}`}
+          alt={
+            image.fileName ||
+            t("patientDetail.visitHistory.xrayFallbackName", {
+              number: index + 1,
+            })
+          }
           loading="lazy"
           onError={() => {
             /**
@@ -972,7 +1003,10 @@ function VisitXrayImage({
       <div className="space-y-1.5 p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate text-xs font-black text-slate-950">
-            {image.fileName || `Rentgen ${index + 1}`}
+            {image.fileName ||
+              t("patientDetail.visitHistory.xrayFallbackName", {
+                number: index + 1,
+              })}
           </p>
 
           <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
@@ -981,8 +1015,10 @@ function VisitXrayImage({
         </div>
 
         {image.toothNumber ? (
-          <p className="text-xs font-semibold text-[#35a8f5]">
-            {image.toothNumber}-tish
+          <p className="text-xs font-semibold text-primary-blue">
+            {t("patientDetail.visitHistory.itemTooth", {
+              tooth: image.toothNumber,
+            })}
           </p>
         ) : null}
 
@@ -1005,17 +1041,19 @@ function VisitXrayImage({
 }
 
 function VisitXrayGallery({ images }: { images: VisitImage[] }) {
+  const t = useTranslations("treatments");
+
   if (!images.length) return null;
 
   return (
     <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
       <div className="mb-3 flex items-center gap-2">
-        <ImageIcon size={15} className="text-[#35a8f5]" />
+        <ImageIcon size={15} className="text-primary-blue" />
         <p className="text-xs font-black uppercase tracking-wide text-blue-700">
-          Rentgenlar
+          {t("patientDetail.visitHistory.xrayTitle")}
         </p>
         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">
-          {images.length} ta
+          {t("patientDetail.visitHistory.xrayCount", { count: images.length })}
         </span>
       </div>
 
@@ -1055,8 +1093,10 @@ type VisitFormProps = {
   selectedTooth: string;
   onToothChange: (value: string) => void;
   treatmentTeeth: string[];
-  visitItems: TreatmentVisitItem[];
+  visitItems: DraftVisitItem[];
   onRemoveVisitItem: (index: number) => void;
+  onUpdateVisitItemPrice: (index: number, price: number) => void;
+  onResetVisitItemPrice: (index: number) => void;
   procedures: DentalProcedure[];
   proceduresLoading: boolean;
   procedureSearch: string;
@@ -1090,6 +1130,8 @@ function VisitForm({
   treatmentTeeth,
   visitItems,
   onRemoveVisitItem,
+  onUpdateVisitItemPrice,
+  onResetVisitItemPrice,
   procedures,
   proceduresLoading,
   procedureSearch,
@@ -1101,23 +1143,27 @@ function VisitForm({
   isCompleted,
   isNewAppointment,
 }: VisitFormProps) {
+  const t = useTranslations("treatments");
   const totalPrice = visitItems.reduce(
     (sum, item) => sum + Number(item.price || 0),
     0
   );
+  const selectedCourseCurrency =
+    activeCourses.find((course) => getId(course) === selectedCourseId)
+      ?.currency || "UZS";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
       <div className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <SectionLabel>Davolash kursi</SectionLabel>
+            <SectionLabel>{t("patientDetail.addVisitModal.courseLabel")}</SectionLabel>
             <select
               value={selectedCourseId}
               onChange={(event) => onCourseChange(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
             >
-              <option value="">Kurs tanlang</option>
+              <option value="">{t("patientDetail.addVisitModal.selectCourse")}</option>
               {activeCourses.map((course) => (
                 <option key={getId(course)} value={getId(course)}>
                   {course.mainDiagnosis}
@@ -1127,32 +1173,32 @@ function VisitForm({
           </div>
 
           <div>
-            <SectionLabel>Shifokor</SectionLabel>
+            <SectionLabel>{t("patientDetail.addVisitModal.doctorLabel")}</SectionLabel>
 
             {doctorLocked ? (
               <div className="flex h-[46px] items-center gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-4">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#35a8f5]/10 text-[#35a8f5]">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-blue/10 text-primary-blue">
                   <Stethoscope size={14} />
                 </div>
                 <span className="truncate text-sm font-bold text-slate-950">
-                  {lockedDoctorName || "Siz"}
+                  {lockedDoctorName || t("patientDetail.addVisitModal.you")}
                 </span>
                 <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
-                  SIZ
+                  {t("patientDetail.addVisitModal.youBadge")}
                 </span>
               </div>
             ) : (
               <select
                 value={doctorId}
                 onChange={(event) => onDoctorChange(event.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
               >
-                <option value="">Shifokor tanlang</option>
+                <option value="">{t("patientDetail.addVisitModal.selectDoctor")}</option>
                 {doctors.map((doctor) => {
                   const id = getId(doctor);
                   return (
                     <option key={id} value={id}>
-                      {getFullName(doctor) || "Doctor"}
+                      {getFullName(doctor) || t("patientDetail.addVisitModal.doctorFallback")}
                     </option>
                   );
                 })}
@@ -1162,48 +1208,48 @@ function VisitForm({
         </div>
 
         <div>
-          <SectionLabel>Tashrif sanasi</SectionLabel>
+          <SectionLabel>{t("patientDetail.addVisitModal.visitDateLabel")}</SectionLabel>
           <input
             type="datetime-local"
             value={visitDate}
             onChange={(event) => onVisitDateChange(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
           />
         </div>
 
         <div>
-          <SectionLabel>Shifokor izohi</SectionLabel>
+          <SectionLabel>{t("patientDetail.addVisitModal.doctorNotesLabel")}</SectionLabel>
           <textarea
             value={doctorNotes}
             onChange={(event) => onDoctorNotesChange(event.target.value)}
-            placeholder="Kanal doimiy material bilan to'ldirildi..."
+            placeholder={t("patientDetail.addVisitModal.doctorNotesPlaceholder")}
             rows={3}
-            className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
           />
         </div>
 
         <div>
-          <SectionLabel>Rentgen rasmlari</SectionLabel>
+          <SectionLabel>{t("patientDetail.addVisitModal.xrayLabel")}</SectionLabel>
 
           <label
             htmlFor="visit-xray-input"
             className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 py-6 text-center transition ${
               isSaving
                 ? "cursor-not-allowed border-slate-200 bg-slate-50"
-                : "cursor-pointer border-blue-200 bg-blue-50/50 hover:border-[#35a8f5] hover:bg-blue-50"
+                : "cursor-pointer border-blue-200 bg-blue-50/50 hover:border-primary-blue hover:bg-blue-50"
             }`}
           >
             {isSaving ? (
-              <DentalLoaderIcon size={24} className="text-[#35a8f5]" />
+              <DentalLoaderIcon size={24} className="text-primary-blue" />
             ) : (
-              <Upload size={24} className="text-[#35a8f5]" />
+              <Upload size={24} className="text-primary-blue" />
             )}
 
             <p className="mt-2 text-sm font-black text-slate-950">
-              Rentgen yuklash
+              {t("patientDetail.addVisitModal.xrayUpload")}
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              JPG, PNG yoki WEBP · maksimal 10 MB · 10 tagacha
+              {t("patientDetail.addVisitModal.xrayHint")}
             </p>
 
             <input
@@ -1230,7 +1276,9 @@ function VisitForm({
                 >
                   <img
                     src={xray.previewUrl}
-                    alt={`Tanlangan rentgen ${index + 1}`}
+                    alt={t("patientDetail.addVisitModal.xraySelectedAlt", {
+                      number: index + 1,
+                    })}
                     className="aspect-video h-full w-full object-contain"
                   />
 
@@ -1252,8 +1300,7 @@ function VisitForm({
             </div>
           ) : (
             <p className="mt-2 text-xs font-semibold text-slate-500">
-              Rentgen ixtiyoriy. Yuklangan rasm visit yaratilgandan keyin
-              alohida image record sifatida saqlanadi.
+              {t("patientDetail.addVisitModal.xrayOptionalHint")}
             </p>
           )}
         </div>
@@ -1261,9 +1308,9 @@ function VisitForm({
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-              Davolanadigan tish
+              {t("patientDetail.addVisitModal.treatmentTooth")}
             </p>
-            <span className="rounded-full bg-[#35a8f5] px-2.5 py-1 text-xs font-black text-white">
+            <span className="rounded-full bg-primary-blue px-2.5 py-1 text-xs font-black text-white">
               #{selectedTooth}
             </span>
           </div>
@@ -1273,9 +1320,9 @@ function VisitForm({
               <button
                 type="button"
                 onClick={onGoToChart}
-                className="rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#35a8f5] ring-1 ring-inset ring-slate-200 transition hover:bg-blue-50"
+                className="rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-primary-blue ring-1 ring-inset ring-slate-200 transition hover:bg-blue-50"
               >
-                Chartdan tish tanlash →
+                {t("patientDetail.addVisitModal.goToChart")}
               </button>
             ) : (
               treatmentTeeth.map((toothNumber) => (
@@ -1285,7 +1332,7 @@ function VisitForm({
                   onClick={() => onToothChange(toothNumber)}
                   className={`h-9 min-w-[38px] rounded-xl px-2.5 text-sm font-black transition ${
                     selectedTooth === toothNumber
-                      ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
+                      ? "bg-primary-blue text-white shadow-sm shadow-blue-200"
                       : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-blue-50"
                   }`}
                 >
@@ -1299,31 +1346,62 @@ function VisitForm({
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-              Tanlangan muolajalar
+              {t("patientDetail.addVisitModal.selectedProcedures")}
             </p>
-            <p className="text-sm font-black text-[#35a8f5]">
+            <p className="text-sm font-black text-primary-blue">
               {formatMoney(totalPrice)}
             </p>
           </div>
 
           {visitItems.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-400">
-              Hali muolaja tanlanmadi
+              {t("patientDetail.addVisitModal.noProceduresSelected")}
             </p>
           ) : (
             <div className="space-y-2">
               {visitItems.map((item, index) => (
                 <div
                   key={`${item.toothNumber}-${item.procedureId}-${index}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
+                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-slate-950">
-                      {item.toothNumber}-tish · {item.note || "Muolaja"}
+                      {t("patientDetail.addVisitModal.itemLine", {
+                        tooth: item.toothNumber,
+                        note:
+                          item.note ||
+                          t("patientDetail.addVisitModal.procedureFallback"),
+                      })}
                     </p>
-                    <p className="text-xs font-bold text-[#35a8f5]">
-                      {formatMoney(item.price)}
-                    </p>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="relative max-w-[190px] flex-1">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-primary-blue">
+                          <Coins size={14} />
+                        </span>
+                        <MoneyInput
+                          value={item.price}
+                          onChange={(price) => onUpdateVisitItemPrice(index, price)}
+                          allowDecimal
+                          placeholder="0"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-12 text-sm font-black text-slate-950 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10"
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                          {selectedCourseCurrency}
+                        </span>
+                      </div>
+
+                      {item.price !== item.defaultPrice && (
+                        <button
+                          type="button"
+                          onClick={() => onResetVisitItemPrice(index)}
+                          title={t("patientDetail.addVisitModal.resetPriceTitle")}
+                          className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 transition hover:border-primary-blue hover:bg-blue-50 hover:text-primary-blue"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -1345,9 +1423,7 @@ function VisitForm({
               className="mt-0.5 shrink-0 text-blue-500"
             />
             <p className="text-sm font-semibold text-blue-700">
-              Appointment URL'da yo'q. Visit saqlanganda backend yangi
-              appointment yaratishi va response ichida appointmentId qaytarishi
-              kerak.
+              {t("patientDetail.addVisitModal.newAppointmentInfo")}
             </p>
           </div>
         )}
@@ -1356,7 +1432,7 @@ function VisitForm({
           <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
             <Lock size={18} className="text-amber-600" />
             <p className="text-sm font-bold text-amber-800">
-              Yakunlangan kursga visit qo'shib bo'lmaydi.
+              {t("patientDetail.addVisitModal.courseCompletedLock")}
             </p>
           </div>
         ) : (
@@ -1364,22 +1440,26 @@ function VisitForm({
             type="button"
             onClick={onSave}
             disabled={isSaving}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-black text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue px-5 py-3.5 text-sm font-black text-white shadow-lg transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? (
               <DentalLoaderIcon size={18} />
             ) : (
               <Save size={18} />
             )}
-            {isSaving ? "Saqlanmoqda..." : "Visitni saqlash"}
+            {isSaving
+              ? t("patientDetail.addVisitModal.saving")
+              : t("patientDetail.addVisitModal.saveVisit")}
           </button>
         )}
       </div>
 
-      <div className="flex flex-col">
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col lg:max-h-[calc(92vh-150px)] lg:overflow-y-auto lg:pr-1">
+        <div className="sticky top-0 z-10 mb-3 flex flex-col gap-3 bg-white pb-1 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-            Muolajalar · <span className="text-[#35a8f5]">{selectedTooth}-tish</span>
+            {t("patientDetail.addVisitModal.proceduresFor", {
+              tooth: selectedTooth,
+            })}
           </p>
 
           <div className="relative">
@@ -1392,36 +1472,41 @@ function VisitForm({
               onChange={(event) =>
                 onProcedureSearchChange(event.target.value)
               }
-              placeholder="Qidirish..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-sm outline-none transition focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10 sm:w-56"
+              placeholder={t("patientDetail.addVisitModal.searchPlaceholder")}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-sm outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 sm:w-56"
             />
           </div>
         </div>
 
         {proceduresLoading ? (
-          <DentalLoader fullScreen={false} text="Muolajalar yuklanmoqda..." />
+          <DentalLoader
+            fullScreen={false}
+            text={t("patientDetail.addVisitModal.proceduresLoading")}
+          />
         ) : procedures.length === 0 ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="font-bold text-amber-800">Muolaja topilmadi</p>
+            <p className="font-bold text-amber-800">
+              {t("patientDetail.addVisitModal.noProceduresFound")}
+            </p>
             <p className="mt-1 text-sm text-amber-700">
-              Avval muolaja qo'shing.
+              {t("patientDetail.addVisitModal.addProcedureFirst")}
             </p>
             <Link
               href="/procedures"
               className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
             >
               <Plus size={14} />
-              Muolajalar sahifasi
+              {t("patientDetail.addVisitModal.proceduresPage")}
             </Link>
           </div>
         ) : (
-          <div className="grid max-h-[50vh] auto-rows-min gap-2 overflow-y-auto pr-1 sm:max-h-[680px] sm:grid-cols-2">
+          <div className="grid auto-rows-min gap-2 sm:grid-cols-2">
             {procedures.map((procedure) => (
               <button
                 key={getId(procedure)}
                 type="button"
                 onClick={() => onAddProcedure(procedure)}
-                className="group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#35a8f5]/40 hover:shadow-md hover:shadow-blue-100"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-primary-blue/40 hover:shadow-md hover:shadow-blue-100"
               >
                 <p className="font-bold leading-snug text-slate-950">
                   {procedure.name}
@@ -1430,11 +1515,11 @@ function VisitForm({
                   {procedure.code}
                 </p>
                 <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-black text-[#35a8f5]">
+                  <p className="text-sm font-black text-primary-blue">
                     {formatMoney(procedure.defaultPrice)}
                   </p>
                   <span className="text-xs font-bold text-emerald-600 opacity-0 transition group-hover:opacity-100">
-                    + Qo'shish
+                    {t("patientDetail.addVisitModal.add")}
                   </span>
                 </div>
               </button>
@@ -1451,6 +1536,8 @@ function VisitForm({
 // -----------------------------------------------------------------------------
 
 export default function TreatmentPatientPage() {
+  const t = useTranslations("treatments");
+  const tPayments = useTranslations("payments.course");
   const params = useParams<{ patientId: string }>();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -1494,6 +1581,9 @@ export default function TreatmentPatientPage() {
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] =
     useState(false);
   const [isAddVisitModalOpen, setIsAddVisitModalOpen] = useState(false);
+  const [courseDetailTab, setCourseDetailTab] =
+    useState<CourseDetailTab>("VISITS");
+  const [isVisitPaymentModalOpen, setIsVisitPaymentModalOpen] = useState(false);
 
   const {
     chart,
@@ -1523,13 +1613,23 @@ export default function TreatmentPatientPage() {
   const [localToothMap, setLocalToothMap] = useState<ToothMap>({});
 
   const [mainDiagnosis, setMainDiagnosis] = useState("");
+  const [courseCurrency, setCourseCurrency] = useState<Currency>("UZS");
   const [selectedCourseTeeth, setSelectedCourseTeeth] = useState<string[]>([]);
 
   const [selectedCourseId, setSelectedCourseId] = useState("");
+  const { data: visitCoursePayments } = useGetCoursePayments(
+    selectedCourseId || undefined
+  );
+
+  // Boshqa kursga o'tilganda "Payments" sub-tab ochiq qolib ketmasin.
+  useEffect(() => {
+    setCourseDetailTab("VISITS");
+  }, [selectedCourseId]);
+
   const [doctorId, setDoctorId] = useState("");
   const [doctorNotes, setDoctorNotes] = useState("");
   const [visitDate, setVisitDate] = useState(nowLocalIso);
-  const [visitItems, setVisitItems] = useState<TreatmentVisitItem[]>([]);
+  const [visitItems, setVisitItems] = useState<DraftVisitItem[]>([]);
 
   const uploadXraysMutation = useUploadFiles();
   const [selectedXrays, setSelectedXrays] = useState<SelectedXray[]>([]);
@@ -1628,7 +1728,9 @@ export default function TreatmentPatientPage() {
     if (!teeth.length) return "";
 
     const teethText = teeth
-      .map((toothNumber) => `${toothNumber}-tish`)
+      .map((toothNumber) =>
+        t("patientDetail.visitHistory.itemTooth", { tooth: toothNumber })
+      )
       .join(", ");
     const diagnoses = [
       ...new Set(
@@ -1640,11 +1742,13 @@ export default function TreatmentPatientPage() {
     const diagnosisText = diagnoses
       .map(
         (diagnosis) =>
-          CONDITION_LABELS[diagnosis as ToothCondition] || diagnosis
+          conditionLabel(diagnosis as ToothCondition) || diagnosis
       )
       .join(", ");
 
-    return `${teethText} ${diagnosisText || "davolanishi"}`;
+    return `${teethText} ${
+      diagnosisText || t("patientDetail.createCourseModal.defaultDiagnosisSuffix")
+    }`;
   }
 
   function handleToggleCourseTooth(toothNumber: string) {
@@ -1698,7 +1802,7 @@ export default function TreatmentPatientPage() {
 
   async function handleSaveChart() {
     if (!Object.keys(toothMap).length) {
-      toast.warning("Kamida bitta tish tanlang");
+      toast.warning(t("toasts.selectAtLeastOneTooth"));
       return;
     }
 
@@ -1715,15 +1819,15 @@ export default function TreatmentPatientPage() {
       }
 
       setLocalToothMap({});
-      toast.success("Dental chart saqlandi");
+      toast.success(t("toasts.chartSaved"));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Chartni saqlab bo'lmadi"));
+      toast.error(getApiErrorMessage(error, t("toasts.chartSaveFailed")));
     }
   }
 
   async function handleCreateCourse() {
     if (!selectedCourseTeeth.length) {
-      toast.warning("Davolanadigan tishlarni tanlang");
+      toast.warning(t("toasts.selectTeethToTreat"));
       return;
     }
 
@@ -1731,7 +1835,7 @@ export default function TreatmentPatientPage() {
       mainDiagnosis.trim() || buildDiagnosis(selectedCourseTeeth);
 
     if (!diagnosis) {
-      toast.warning("Diagnosis kiriting");
+      toast.warning(t("toasts.enterDiagnosis"));
       return;
     }
 
@@ -1739,16 +1843,18 @@ export default function TreatmentPatientPage() {
       const created = await createCourse({
         patientId,
         mainDiagnosis: diagnosis,
+        currency: courseCurrency,
       });
 
       setMainDiagnosis("");
+      setCourseCurrency("UZS");
       setSelectedCourseId(getId(created));
       setIsCreateCourseModalOpen(false);
       setActiveTab("COURSE");
-      toast.success("Davolash kursi yaratildi");
+      toast.success(t("toasts.courseCreated"));
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error, "Davolash kursini yaratib bo'lmadi")
+        getApiErrorMessage(error, t("toasts.courseCreateFailed"))
       );
     }
   }
@@ -1757,7 +1863,7 @@ export default function TreatmentPatientPage() {
     const procedureId = getId(procedure);
 
     if (!procedureId) {
-      toast.error("Procedure ID topilmadi");
+      toast.error(t("toasts.procedureIdNotFound"));
       return;
     }
 
@@ -1768,16 +1874,19 @@ export default function TreatmentPatientPage() {
     );
 
     if (alreadyAdded) {
-      toast.warning("Bu muolaja allaqachon qo'shilgan");
+      toast.warning(t("toasts.procedureAlreadyAdded"));
       return;
     }
+
+    const defaultPrice = Number(procedure.defaultPrice || 0);
 
     setVisitItems((previous) => [
       ...previous,
       {
         toothNumber: selectedTooth,
         procedureId,
-        price: Number(procedure.defaultPrice || 0),
+        price: defaultPrice,
+        defaultPrice,
         completed: true,
         note: procedure.name,
       },
@@ -1810,12 +1919,12 @@ export default function TreatmentPatientPage() {
 
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) {
-        toast.warning(`${file.name} rasm fayli emas`);
+        toast.warning(t("toasts.notImageFile", { file: file.name }));
         return;
       }
 
       if (file.size > MAX_XRAY_FILE_SIZE) {
-        toast.warning(`${file.name} hajmi 10 MB dan katta`);
+        toast.warning(t("toasts.fileTooLarge", { file: file.name }));
         return;
       }
 
@@ -1827,7 +1936,7 @@ export default function TreatmentPatientPage() {
 
       if (availableCount <= 0) {
         toast.warning(
-          `Maksimal ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`
+          t("toasts.maxXrayFiles", { count: MAX_XRAY_FILES })
         );
         return previous;
       }
@@ -1836,7 +1945,7 @@ export default function TreatmentPatientPage() {
 
       if (acceptedFiles.length < validFiles.length) {
         toast.warning(
-          `Faqat ${MAX_XRAY_FILES} ta rentgen yuklash mumkin`
+          t("toasts.onlyXrayFilesAllowed", { count: MAX_XRAY_FILES })
         );
       }
 
@@ -1925,27 +2034,27 @@ export default function TreatmentPatientPage() {
 
   async function handleAddVisit() {
     if (!selectedCourseId) {
-      toast.warning("Treatment course tanlang");
+      toast.warning(t("toasts.selectTreatmentCourse"));
       return;
     }
 
     if (isSelectedCourseCompleted) {
-      toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
+      toast.warning(t("toasts.courseCompletedCannotAddVisit"));
       return;
     }
 
     if (!doctorId) {
-      toast.warning("Doctor tanlang");
+      toast.warning(t("toasts.selectDoctor"));
       return;
     }
 
     if (!doctorNotes.trim()) {
-      toast.warning("Shifokor izohi kiriting");
+      toast.warning(t("toasts.enterDoctorNotes"));
       return;
     }
 
     if (!visitItems.length) {
-      toast.warning("Kamida bitta muolaja tanlang");
+      toast.warning(t("toasts.selectAtLeastOneProcedure"));
       return;
     }
 
@@ -1975,7 +2084,13 @@ export default function TreatmentPatientPage() {
           visitDate,
           doctorId,
           doctorNotes: doctorNotes.trim(),
-          items: visitItems,
+          items: visitItems.map((item) => ({
+            toothNumber: item.toothNumber,
+            procedureId: item.procedureId,
+            price: item.price,
+            completed: item.completed,
+            note: item.note,
+          })),
         },
       });
 
@@ -1988,9 +2103,7 @@ export default function TreatmentPatientPage() {
       // 4. Har bir rasm uchun POST /api/dental/images.
       if (uploadedXrays.length > 0) {
         if (!resolvedAppointmentId) {
-          throw new Error(
-            "Visit yaratildi, lekin appointmentId topilmadi. Backend addVisit response ichida appointmentId qaytarishi kerak."
-          );
+          throw new Error(t("toasts.visitCreatedButAppointmentMissing"));
         }
 
         const createdImages = await Promise.all(
@@ -2053,22 +2166,22 @@ export default function TreatmentPatientPage() {
 
       toast.success(
         uploadedXrays.length > 0
-          ? "Visit va rentgen rasmlari saqlandi"
+          ? t("toasts.visitAndXraysSaved")
           : appointmentId
-            ? "Visit saqlandi"
-            : "Muolaja boshlandi, appointment avtomatik yaratildi"
+            ? t("toasts.visitSaved")
+            : t("toasts.treatmentStartedAppointmentCreated")
       );
     } catch (error) {
       console.error("Visit/Image save failed:", error);
 
       const message = getApiErrorMessage(
         error,
-        "Visit yoki rentgenni saqlashda xatolik yuz berdi"
+        t("toasts.visitSaveError")
       );
 
       if (visitCreated) {
         toast.error(
-          `Visit yaratildi, lekin keyingi bosqich bajarilmadi: ${message}`
+          t("toasts.visitCreatedButFollowupFailed", { message })
         );
       } else {
         toast.error(message);
@@ -2077,7 +2190,7 @@ export default function TreatmentPatientPage() {
   }
 
   async function handleCompleteCourse(courseId: string) {
-    if (!window.confirm("Davolanish kursini yakunlaysizmi?")) return;
+    if (!window.confirm(t("patientDetail.course.confirmComplete"))) return;
 
     try {
       await completeCourse(courseId);
@@ -2088,9 +2201,9 @@ export default function TreatmentPatientPage() {
       }
 
       setCourseStatusFilter("COMPLETED");
-      toast.success("Kurs yakunlandi");
+      toast.success(t("toasts.courseCompleted"));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Kursni yakunlab bo'lmadi"));
+      toast.error(getApiErrorMessage(error, t("toasts.courseCompleteFailed")));
     }
   }
 
@@ -2098,7 +2211,7 @@ export default function TreatmentPatientPage() {
     const course = courses.find((item) => getId(item) === courseId);
 
     if (course?.status === "COMPLETED") {
-      toast.warning("Bu kurs yakunlangan — visit qo'sha olmaysiz");
+      toast.warning(t("toasts.courseCompletedCannotAddVisit"));
       return;
     }
 
@@ -2112,6 +2225,11 @@ export default function TreatmentPatientPage() {
     );
     setIsAddVisitModalOpen(true);
   }
+
+  const conditionLabel = (condition: ToothCondition) =>
+    CONDITION_KEYS[condition]
+      ? t(`toothConditions.${CONDITION_KEYS[condition]}` as any)
+      : condition;
 
   const isVisitSaving =
     isAddingVisit ||
@@ -2130,14 +2248,14 @@ export default function TreatmentPatientPage() {
         <TabButton
           active={activeTab === "CHART"}
           icon={<Activity size={16} />}
-          label="Dental Chart"
+          label={t("patientDetail.tabs.chart")}
           badge={chartProblemTeeth.length || undefined}
           onClick={() => setActiveTab("CHART")}
         />
         <TabButton
           active={activeTab === "COURSE"}
           icon={<ClipboardList size={16} />}
-          label="Davolash kursi"
+          label={t("patientDetail.tabs.course")}
           badge={activeCourses.length || undefined}
           onClick={() => setActiveTab("COURSE")}
         />
@@ -2167,10 +2285,10 @@ export default function TreatmentPatientPage() {
 
               setIsCreateCourseModalOpen(true);
             }}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-2xl bg-primary-blue px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-blue-dark"
           >
             <Plus size={16} />
-            Kurs ochish
+            {t("patientDetail.tabs.openCourse")}
           </button>
         )}
       </div>
@@ -2182,7 +2300,7 @@ export default function TreatmentPatientPage() {
               <div className="rounded-3xl border border-slate-200 bg-white">
                 <DentalLoader
                   fullScreen={false}
-                  text="Chart yuklanmoqda..."
+                  text={t("patientDetail.chart.loading")}
                 />
               </div>
             ) : (
@@ -2191,16 +2309,16 @@ export default function TreatmentPatientPage() {
                   <div className="flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3.5">
                     <p className="flex items-center gap-2 text-sm font-semibold text-blue-800">
                       <Sparkles size={15} className="text-blue-500" />
-                      Avvalgi chart topildi
+                      {t("patientDetail.chart.previousChartFound")}
                     </p>
                     <button
                       type="button"
                       onClick={() =>
                         setLocalToothMap(chart.toothMap || {})
                       }
-                      className="rounded-xl bg-[#35a8f5] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
+                      className="rounded-xl bg-primary-blue px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-primary-blue-dark"
                     >
-                      Yuklash
+                      {t("patientDetail.chart.load")}
                     </button>
                   </div>
                 )}
@@ -2208,21 +2326,23 @@ export default function TreatmentPatientPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
                     {
-                      label: "Chart holati",
-                      value: chart ? "Mavjud" : "Yangi",
+                      label: t("patientDetail.chart.chartStatus"),
+                      value: chart
+                        ? t("patientDetail.chart.chartExists")
+                        : t("patientDetail.chart.chartNew"),
                       className: chart
                         ? "text-emerald-600"
-                        : "text-[#35a8f5]",
+                        : "text-primary-blue",
                     },
                     {
-                      label: "Belgilangan tishlar",
+                      label: t("patientDetail.chart.markedTeeth"),
                       value: chartProblemTeeth.length,
                       className: "text-slate-950",
                     },
                     {
-                      label: "Tanlangan",
+                      label: t("patientDetail.chart.selected"),
                       value: `#${selectedTooth}`,
-                      className: "text-[#35a8f5]",
+                      className: "text-primary-blue",
                     },
                   ].map((item) => (
                     <div
@@ -2270,20 +2390,22 @@ export default function TreatmentPatientPage() {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                  Tanlangan tish
+                  {t("patientDetail.chart.selectedToothCaption")}
                 </p>
                 <h2 className="text-lg font-extrabold text-slate-950">
-                  Tish #{selectedTooth}
+                  {t("patientDetail.chart.toothHeading", {
+                    number: selectedTooth,
+                  })}
                 </h2>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#35a8f5]/10 text-[#35a8f5]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-blue/10 text-primary-blue">
                 <Edit3 size={18} />
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <SectionLabel>Diagnoz</SectionLabel>
+                <SectionLabel>{t("patientDetail.chart.diagnosis")}</SectionLabel>
                 <select
                   value={selectedToothData.diagnoses?.[0] || ""}
                   onChange={(event) =>
@@ -2293,19 +2415,19 @@ export default function TreatmentPatientPage() {
                         : [],
                     })
                   }
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 >
-                  <option value="">Diagnoz tanlang</option>
+                  <option value="">{t("patientDetail.chart.select")}</option>
                   {DIAGNOSIS_OPTIONS.map((condition) => (
                     <option key={condition} value={condition}>
-                      {CONDITION_LABELS[condition]}
+                      {conditionLabel(condition)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <SectionLabel>Holat</SectionLabel>
+                <SectionLabel>{t("patientDetail.chart.state")}</SectionLabel>
                 <select
                   value={selectedToothData.states?.[0] || ""}
                   onChange={(event) =>
@@ -2315,27 +2437,27 @@ export default function TreatmentPatientPage() {
                         : [],
                     })
                   }
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 >
-                  <option value="">Holat tanlang</option>
+                  <option value="">{t("patientDetail.chart.select")}</option>
                   {STATE_OPTIONS.map((condition) => (
                     <option key={condition} value={condition}>
-                      {CONDITION_LABELS[condition]}
+                      {conditionLabel(condition)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <SectionLabel>Izoh</SectionLabel>
+                <SectionLabel>{t("patientDetail.chart.note")}</SectionLabel>
                 <textarea
                   value={selectedToothData.note || ""}
                   onChange={(event) =>
                     updateSelectedTooth({ note: event.target.value })
                   }
                   rows={4}
-                  placeholder="Tish bo'yicha izoh..."
-                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#35a8f5] focus:ring-4 focus:ring-[#35a8f5]/10"
+                  placeholder={t("patientDetail.chart.notePlaceholder")}
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                 />
               </div>
 
@@ -2346,21 +2468,21 @@ export default function TreatmentPatientPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
                 >
                   <Trash2 size={16} />
-                  Tozalash
+                  {t("patientDetail.chart.clear")}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleSaveChart}
                   disabled={isCreating || isUpdating}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#35a8f5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-blue px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-blue-dark disabled:opacity-60"
                 >
                   {isCreating || isUpdating ? (
                     <DentalLoaderIcon size={16} />
                   ) : (
                     <Save size={16} />
                   )}
-                  Saqlash
+                  {t("patientDetail.chart.save")}
                 </button>
               </div>
             </div>
@@ -2374,10 +2496,10 @@ export default function TreatmentPatientPage() {
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                  Davolash kurslari
+                  {t("patientDetail.course.title")}
                 </p>
                 <h2 className="text-lg font-extrabold text-slate-950">
-                  Kurslar ro'yxati
+                  {t("patientDetail.course.listHeading")}
                 </h2>
               </div>
 
@@ -2393,10 +2515,10 @@ export default function TreatmentPatientPage() {
                   setIsCreateCourseModalOpen(true);
                 }}
                 disabled={chartProblemTeeth.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-primary-blue px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Plus size={14} />
-                Yangi kurs
+                {t("patientDetail.course.newCourseButton")}
               </button>
             </div>
 
@@ -2406,11 +2528,11 @@ export default function TreatmentPatientPage() {
                 onClick={() => setCourseStatusFilter("ACTIVE")}
                 className={`rounded-xl px-3 py-2 text-xs font-black transition ${
                   courseStatusFilter === "ACTIVE"
-                    ? "bg-white text-[#35a8f5] shadow-sm"
+                    ? "bg-white text-primary-blue shadow-sm"
                     : "text-slate-500"
                 }`}
               >
-                Aktiv ({activeCourses.length})
+                {t("patientDetail.course.statusActive")} ({activeCourses.length})
               </button>
               <button
                 type="button"
@@ -2421,12 +2543,15 @@ export default function TreatmentPatientPage() {
                     : "text-slate-500"
                 }`}
               >
-                Yakunlangan ({completedCourses.length})
+                {t("patientDetail.course.statusCompleted")} ({completedCourses.length})
               </button>
             </div>
 
             {coursesLoading ? (
-              <DentalLoader fullScreen={false} text="Kurslar yuklanmoqda..." />
+              <DentalLoader
+                fullScreen={false}
+                text={t("patientDetail.course.loading")}
+              />
             ) : visibleCourses.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                 <ClipboardList
@@ -2434,7 +2559,7 @@ export default function TreatmentPatientPage() {
                   className="mx-auto text-slate-300"
                 />
                 <p className="mt-2 text-sm font-semibold text-slate-400">
-                  Kurs yo'q
+                  {t("patientDetail.course.noCourses")}
                 </p>
               </div>
             ) : (
@@ -2451,8 +2576,8 @@ export default function TreatmentPatientPage() {
                       key={courseId}
                       className={`overflow-hidden rounded-2xl border transition ${
                         selected
-                          ? "border-[#35a8f5] bg-blue-50/60 ring-1 ring-[#35a8f5]/20"
-                          : "border-slate-200 bg-white hover:border-[#35a8f5]/30"
+                          ? "border-primary-blue bg-blue-50/60 ring-1 ring-primary-blue/20"
+                          : "border-slate-200 bg-white hover:border-primary-blue/30"
                       }`}
                     >
                       <button
@@ -2471,16 +2596,20 @@ export default function TreatmentPatientPage() {
                                 : "bg-amber-50 text-amber-700"
                             }`}
                           >
-                            {completed ? "Yakunlangan" : "Aktiv"}
+                            {completed
+                              ? t("patientDetail.course.statusCompleted")
+                              : t("patientDetail.course.statusActive")}
                           </span>
                         </div>
 
                         <div className="mt-2 flex items-center gap-3 text-xs font-semibold text-slate-500">
                           <span className="flex items-center gap-1">
                             <ClipboardList size={13} />
-                            {course.visits?.length || 0} visit
+                            {t("patientDetail.course.visitCount", {
+                              count: course.visits?.length || 0,
+                            })}
                           </span>
-                          <span className="flex items-center gap-1 text-[#35a8f5]">
+                          <span className="flex items-center gap-1 text-primary-blue">
                             <Wallet size={13} />
                             {formatMoney(course.totalCoursePrice)}
                           </span>
@@ -2492,9 +2621,9 @@ export default function TreatmentPatientPage() {
                           <button
                             type="button"
                             onClick={() => openAddVisitModal(courseId)}
-                            className="flex-1 rounded-xl bg-[#35a8f5] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#1d8ee8]"
+                            className="flex-1 rounded-xl bg-primary-blue px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-blue-dark"
                           >
-                            + Visit
+                            {t("patientDetail.course.addVisit")}
                           </button>
                           <button
                             type="button"
@@ -2503,7 +2632,7 @@ export default function TreatmentPatientPage() {
                             className="inline-flex items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
                           >
                             <CheckCircle2 size={14} />
-                            Yakunlash
+                            {t("patientDetail.course.complete")}
                           </button>
                         </div>
                       )}
@@ -2521,10 +2650,10 @@ export default function TreatmentPatientPage() {
                   <ClipboardList size={28} />
                 </div>
                 <h3 className="mt-4 text-lg font-black text-slate-950">
-                  Davolash kursi tanlanmagan
+                  {t("patientDetail.course.noCourseSelectedTitle")}
                 </h3>
                 <p className="mt-2 max-w-sm text-sm text-slate-500">
-                  Chap tomondan kurs tanlang yoki yangi kurs yarating.
+                  {t("patientDetail.course.noCourseSelectedSubtitle")}
                 </p>
               </div>
             ) : (
@@ -2532,7 +2661,7 @@ export default function TreatmentPatientPage() {
                 <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                      Asosiy tashxis
+                      {t("patientDetail.createCourseModal.mainDiagnosisLabel")}
                     </p>
                     <h2 className="mt-1 text-xl font-black text-slate-950">
                       {selectedHistoryCourse.mainDiagnosis}
@@ -2544,7 +2673,7 @@ export default function TreatmentPatientPage() {
                           selectedHistoryCourse.startDate
                         )}
                       </span>
-                      <span className="flex items-center gap-1 text-[#35a8f5]">
+                      <span className="flex items-center gap-1 text-primary-blue">
                         <Wallet size={13} />
                         {formatMoney(
                           selectedHistoryCourse.totalCoursePrice
@@ -2559,19 +2688,48 @@ export default function TreatmentPatientPage() {
                       onClick={() =>
                         openAddVisitModal(getId(selectedHistoryCourse))
                       }
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-blue px-4 py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark"
                     >
                       <Plus size={16} />
-                      Visit qo'shish
+                      {t("patientDetail.addVisitModal.title")}
                     </button>
                   )}
                 </div>
 
-                {selectedHistoryVisits.length === 0 ? (
+                <div className="mt-4 flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setCourseDetailTab("VISITS")}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                      courseDetailTab === "VISITS"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {tPayments("tab.visits")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCourseDetailTab("PAYMENTS")}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                      courseDetailTab === "PAYMENTS"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {tPayments("tab.payments")}
+                  </button>
+                </div>
+
+                {courseDetailTab === "PAYMENTS" ? (
+                  <div className="mt-4">
+                    <CoursePaymentsPanel courseId={getId(selectedHistoryCourse)} />
+                  </div>
+                ) : selectedHistoryVisits.length === 0 ? (
                   <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                     <Calendar size={28} className="text-slate-300" />
                     <p className="mt-3 text-sm font-bold text-slate-500">
-                      Hali visit mavjud emas
+                      {t("patientDetail.visitHistory.noVisits")}
                     </p>
                   </div>
                 ) : (
@@ -2601,7 +2759,7 @@ export default function TreatmentPatientPage() {
                                 <p className="flex items-center gap-2 text-sm font-black text-slate-950">
                                   <Calendar
                                     size={16}
-                                    className="text-[#35a8f5]"
+                                    className="text-primary-blue"
                                   />
                                   {formatVisitDateTime(visit.visitDate)}
                                 </p>
@@ -2611,15 +2769,25 @@ export default function TreatmentPatientPage() {
                                 </p>
                               </div>
 
-                              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-[#35a8f5] ring-1 ring-slate-200">
-                                {formatMoney(getVisitTotal(visit))}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-primary-blue ring-1 ring-slate-200">
+                                  {formatMoney(getVisitTotal(visit))}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsVisitPaymentModalOpen(true)}
+                                  className="inline-flex items-center gap-1 rounded-full border border-primary-blue/30 bg-primary-blue/10 px-3 py-1.5 text-xs font-black text-primary-blue transition hover:bg-primary-blue/20"
+                                >
+                                  <Plus size={12} />
+                                  {tPayments("addButton")}
+                                </button>
+                              </div>
                             </div>
 
                             {visit.doctorNotes && (
                               <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
                                 <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                                  Shifokor izohi
+                                  {t("patientDetail.addVisitModal.doctorNotesLabel")}
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-slate-700">
                                   {visit.doctorNotes}
@@ -2638,18 +2806,23 @@ export default function TreatmentPatientPage() {
                                       >
                                         <div className="min-w-0">
                                           <p className="truncate text-sm font-bold text-slate-950">
-                                            {item.toothNumber}-tish ·{" "}
-                                            {item.procedureNameSnapshot ||
-                                              item.note ||
-                                              "Muolaja"}
+                                            {t("patientDetail.addVisitModal.itemLine", {
+                                              tooth: item.toothNumber,
+                                              note:
+                                                item.procedureNameSnapshot ||
+                                                item.note ||
+                                                t(
+                                                  "patientDetail.visitHistory.procedureFallback"
+                                                ),
+                                            })}
                                           </p>
                                           {item.completed && (
                                             <p className="mt-0.5 text-xs font-bold text-emerald-600">
-                                              Bajarildi
+                                              {t("patientDetail.visitHistory.itemCompleted")}
                                             </p>
                                           )}
                                         </div>
-                                        <p className="shrink-0 text-sm font-black text-[#35a8f5]">
+                                        <p className="shrink-0 text-sm font-black text-primary-blue">
                                           {formatMoney(getItemPrice(item))}
                                         </p>
                                       </div>
@@ -2683,10 +2856,10 @@ export default function TreatmentPatientPage() {
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-6 sm:px-6 sm:py-7">
                 <div className="min-w-0">
                   <h2 className="text-xl font-extrabold text-slate-950 sm:text-2xl">
-                    Davolash kursi yaratish
+                    {t("patientDetail.createCourseModal.title")}
                   </h2>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    Davolanadigan tishlarni tanlang
+                    {t("patientDetail.createCourseModal.subtitle")}
                   </p>
                 </div>
                 <button
@@ -2702,7 +2875,9 @@ export default function TreatmentPatientPage() {
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-blue-900">
-                      Davolanadigan tishlar ({selectedCourseTeeth.length} ta)
+                      {t("patientDetail.createCourseModal.teethSelected", {
+                        count: selectedCourseTeeth.length,
+                      })}
                     </p>
                     <button
                       type="button"
@@ -2712,15 +2887,15 @@ export default function TreatmentPatientPage() {
                         )
                       }
                       disabled={!selectedCourseTeeth.length}
-                      className="rounded-xl bg-[#35a8f5] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#1d8ee8] disabled:opacity-40"
+                      className="rounded-xl bg-primary-blue px-3 py-1.5 text-xs font-bold text-white transition hover:bg-primary-blue-dark disabled:opacity-40"
                     >
-                      Auto to'ldirish
+                      {t("patientDetail.createCourseModal.autoFill")}
                     </button>
                   </div>
 
                   {chartProblemTeeth.length === 0 ? (
                     <p className="rounded-xl bg-white p-4 text-sm font-semibold text-slate-500">
-                      Avval Dental Chart bo'limida tish holatini belgilang.
+                      {t("patientDetail.createCourseModal.noTeethMarked")}
                     </p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
@@ -2738,7 +2913,7 @@ export default function TreatmentPatientPage() {
                             }
                             className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
                               active
-                                ? "bg-[#35a8f5] text-white shadow-sm shadow-blue-200"
+                                ? "bg-primary-blue text-white shadow-sm shadow-blue-200"
                                 : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-blue-50"
                             }`}
                           >
@@ -2746,9 +2921,9 @@ export default function TreatmentPatientPage() {
                               #{item.toothNumber}
                             </span>
                             <span className="block text-xs opacity-80">
-                              {CONDITION_LABELS[
+                              {conditionLabel(
                                 item.diagnosis as ToothCondition
-                              ] ||
+                              ) ||
                                 item.diagnosis ||
                                 "—"}
                             </span>
@@ -2760,16 +2935,35 @@ export default function TreatmentPatientPage() {
                 </div>
 
                 <div>
-                  <SectionLabel>Asosiy tashxis</SectionLabel>
+                  <SectionLabel>{t("patientDetail.createCourseModal.mainDiagnosisLabel")}</SectionLabel>
                   <textarea
                     value={mainDiagnosis}
                     onChange={(event) =>
                       setMainDiagnosis(event.target.value)
                     }
-                    placeholder="Masalan: 11 va 21-tish karies davolanishi"
+                    placeholder={t(
+                      "patientDetail.createCourseModal.mainDiagnosisPlaceholder"
+                    )}
                     rows={3}
-                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-[#35a8f5] focus:bg-white"
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-primary-blue focus:bg-white"
                   />
+                </div>
+
+                <div>
+                  <SectionLabel>{t("patientDetail.createCourseModal.currencyLabel")}</SectionLabel>
+                  <select
+                    value={courseCurrency}
+                    onChange={(event) =>
+                      setCourseCurrency(event.target.value as Currency)
+                    }
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-primary-blue focus:bg-white"
+                  >
+                    {CURRENCIES.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -2779,7 +2973,7 @@ export default function TreatmentPatientPage() {
                   onClick={() => setIsCreateCourseModalOpen(false)}
                   className="w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:flex-1"
                 >
-                  Bekor qilish
+                  {t("patientDetail.createCourseModal.cancel")}
                 </button>
                 <button
                   type="button"
@@ -2787,11 +2981,11 @@ export default function TreatmentPatientPage() {
                   disabled={
                     isCreatingCourse || !selectedCourseTeeth.length
                   }
-                  className="w-full rounded-2xl bg-slate-950 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60 sm:w-auto sm:flex-1"
+                  className="w-full rounded-2xl bg-primary-blue py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-blue-dark disabled:opacity-60 sm:w-auto sm:flex-1"
                 >
                   {isCreatingCourse
-                    ? "Yaratilmoqda..."
-                    : "Kurs yaratish"}
+                    ? t("patientDetail.createCourseModal.creating")
+                    : t("patientDetail.createCourseModal.create")}
                 </button>
               </div>
             </div>
@@ -2811,11 +3005,11 @@ export default function TreatmentPatientPage() {
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-6 sm:px-6 sm:py-7">
                 <div className="min-w-0">
                   <h2 className="text-xl font-extrabold text-slate-950 sm:text-2xl">
-                    Visit qo'shish
+                    {t("patientDetail.addVisitModal.title")}
                   </h2>
                   {selectedCourse && (
                     <p className="mt-0.5 truncate text-sm text-slate-500">
-                      Kurs:{" "}
+                      {t("patientDetail.addVisitModal.courseLabel")}:{" "}
                       <span className="font-semibold text-slate-950">
                         {selectedCourse.mainDiagnosis}
                       </span>
@@ -2858,6 +3052,24 @@ export default function TreatmentPatientPage() {
                       previous.filter((_, itemIndex) => itemIndex !== index)
                     )
                   }
+                  onUpdateVisitItemPrice={(index, price) =>
+                    setVisitItems((previous) =>
+                      previous.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, price: Number.isNaN(price) ? 0 : price }
+                          : item
+                      )
+                    )
+                  }
+                  onResetVisitItemPrice={(index) =>
+                    setVisitItems((previous) =>
+                      previous.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, price: item.defaultPrice }
+                          : item
+                      )
+                    )
+                  }
                   procedures={procedures}
                   proceduresLoading={proceduresLoading}
                   procedureSearch={procedureSearch}
@@ -2875,6 +3087,20 @@ export default function TreatmentPatientPage() {
               </div>
             </div>
           </div>,
+          document.body
+        )}
+
+      {isVisitPaymentModalOpen &&
+        selectedCourseId &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <AddPaymentModal
+            courseId={selectedCourseId}
+            defaultCurrency={visitCoursePayments?.currency ?? "UZS"}
+            remainingBalance={visitCoursePayments?.remainingBalance ?? 0}
+            onClose={() => setIsVisitPaymentModalOpen(false)}
+            onCreated={() => setIsVisitPaymentModalOpen(false)}
+          />,
           document.body
         )}
     </div>

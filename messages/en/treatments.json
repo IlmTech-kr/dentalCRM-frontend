@@ -37,8 +37,11 @@
   "patientDetail": {
     "header": {
       "fallbackName": "Patient",
+      "birthDateLabel": "Date of birth",
       "ageLabel": "Age",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "tabs": {
       "chart": "Dental Chart",
@@ -67,6 +70,8 @@
     },
     "course": {
       "title": "Treatment courses",
+      "listHeading": "Course list",
+      "newCourseButton": "New course",
       "active": "Active",
       "completed": "Completed",
       "noCourses": "No courses",
@@ -77,7 +82,9 @@
       "addVisit": "+ Add visit",
       "complete": "✓ Complete",
       "completedBadge": "Course completed",
-      "confirmComplete": "Complete this treatment course?"
+      "confirmComplete": "Complete this treatment course?",
+      "noCourseSelectedTitle": "No treatment course selected",
+      "noCourseSelectedSubtitle": "Select a course on the left or create a new one."
     },
     "visitHistory": {
       "title": "Visit history",
@@ -88,7 +95,11 @@
       "itemTooth": "Tooth {tooth}",
       "xrayTitle": "X-rays",
       "xrayCount": "{count, plural, one {# photo} other {# photos}}",
-      "xrayFailed": "Could not open X-ray"
+      "xrayFailed": "Could not open X-ray",
+      "checkOriginalUrl": "Check original URL",
+      "xrayFallbackName": "X-ray {number}",
+      "procedureFallback": "Procedure",
+      "itemCompleted": "Completed"
     },
     "createCourseModal": {
       "title": "Open treatment course",
@@ -97,6 +108,9 @@
       "autoFill": "Auto-fill",
       "mainDiagnosisLabel": "Main diagnosis",
       "mainDiagnosisPlaceholder": "E.g.: caries treatment for teeth 11 and 21",
+      "currencyLabel": "Currency",
+      "defaultDiagnosisSuffix": "treatment",
+      "noTeethMarked": "First mark the tooth condition in the Dental Chart section.",
       "cancel": "Cancel",
       "create": "Create course",
       "creating": "Creating..."
@@ -135,7 +149,9 @@
       "noProceduresFound": "No procedures found",
       "addProcedureFirst": "Add a procedure first.",
       "proceduresPage": "Procedures page",
-      "add": "+ Add"
+      "add": "+ Add",
+      "resetPriceTitle": "Reset price",
+      "procedureFallback": "Procedure"
     }
   },
   "toothConditions": {
@@ -227,6 +243,11 @@
     "visitSaved": "Visit saved",
     "treatmentStartedAppointmentCreated": "Treatment started, appointment created automatically",
     "visitSaveError": "Failed to save the visit",
-    "courseCompleted": "Course completed"
+    "courseCompleted": "Course completed",
+    "chartSaveFailed": "Couldn't save the chart",
+    "courseCreateFailed": "Couldn't create the treatment course",
+    "courseCompleteFailed": "Couldn't complete the course",
+    "visitCreatedButAppointmentMissing": "The visit was created, but no appointmentId was found. The backend should return appointmentId in the addVisit response.",
+    "visitCreatedButFollowupFailed": "The visit was created, but the next step failed: {message}"
   }
 }

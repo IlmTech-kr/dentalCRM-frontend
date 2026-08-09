@@ -37,8 +37,11 @@
   "patientDetail": {
     "header": {
       "fallbackName": "Bemor",
+      "birthDateLabel": "Tug'ilgan sana",
       "ageLabel": "Yoshi",
-      "statusLabel": "Holat"
+      "statusLabel": "Holat",
+      "active": "Faol",
+      "inactive": "Nofaol"
     },
     "tabs": {
       "chart": "Tish kartasi",
@@ -67,6 +70,8 @@
     },
     "course": {
       "title": "Davolash kurslari",
+      "listHeading": "Kurslar ro'yxati",
+      "newCourseButton": "Yangi kurs",
       "active": "Aktiv",
       "completed": "Tugallangan",
       "noCourses": "Kurs yo'q",
@@ -77,7 +82,9 @@
       "addVisit": "+ Visit qo'shish",
       "complete": "✓ Yakunlash",
       "completedBadge": "Kurs yakunlangan",
-      "confirmComplete": "Davolanish kursini yakunlaysizmi?"
+      "confirmComplete": "Davolanish kursini yakunlaysizmi?",
+      "noCourseSelectedTitle": "Davolash kursi tanlanmagan",
+      "noCourseSelectedSubtitle": "Chap tomondan kurs tanlang yoki yangi kurs yarating."
     },
     "visitHistory": {
       "title": "Visit tarixi",
@@ -88,7 +95,11 @@
       "itemTooth": "{tooth}-tish",
       "xrayTitle": "Rentgenlar",
       "xrayCount": "{count} ta",
-      "xrayFailed": "Rentgen ochilmadi"
+      "xrayFailed": "Rentgen ochilmadi",
+      "checkOriginalUrl": "Original URL'ni tekshirish",
+      "xrayFallbackName": "Rentgen {number}",
+      "procedureFallback": "Muolaja",
+      "itemCompleted": "Bajarildi"
     },
     "createCourseModal": {
       "title": "Davolash kursi ochish",
@@ -97,6 +108,9 @@
       "autoFill": "Auto to'ldirish",
       "mainDiagnosisLabel": "Asosiy tashxis",
       "mainDiagnosisPlaceholder": "Masalan: 11 va 21-tish karies davolanishi",
+      "currencyLabel": "Valyuta",
+      "defaultDiagnosisSuffix": "davolanishi",
+      "noTeethMarked": "Avval Dental Chart bo'limida tish holatini belgilang.",
       "cancel": "Bekor qilish",
       "create": "Kurs yaratish",
       "creating": "Yaratilmoqda..."
@@ -135,7 +149,9 @@
       "noProceduresFound": "Muolaja topilmadi",
       "addProcedureFirst": "Avval muolaja qo'shing.",
       "proceduresPage": "Muolajalar sahifasi",
-      "add": "+ Qo'shish"
+      "add": "+ Qo'shish",
+      "resetPriceTitle": "Narxni tiklash",
+      "procedureFallback": "Muolaja"
     }
   },
   "toothConditions": {
@@ -227,6 +243,11 @@
     "visitSaved": "Visit saqlandi",
     "treatmentStartedAppointmentCreated": "Muolaja boshlandi, appointment avtomatik yaratildi",
     "visitSaveError": "Visitni saqlashda xatolik yuz berdi",
-    "courseCompleted": "Kurs yakunlandi"
+    "courseCompleted": "Kurs yakunlandi",
+    "chartSaveFailed": "Chartni saqlab bo'lmadi",
+    "courseCreateFailed": "Davolash kursini yaratib bo'lmadi",
+    "courseCompleteFailed": "Kursni yakunlab bo'lmadi",
+    "visitCreatedButAppointmentMissing": "Visit yaratildi, lekin appointmentId topilmadi. Backend addVisit response ichida appointmentId qaytarishi kerak.",
+    "visitCreatedButFollowupFailed": "Visit yaratildi, lekin keyingi bosqich bajarilmadi: {message}"
   }
 }

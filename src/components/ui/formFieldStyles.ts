@@ -1,4 +1,4 @@
-/** Categories/Expenses/Recurring — barcha modal formalarda ishlatiladi. */
+/** Modal formalarda ishlatiladigan umumiy input/select/textarea stillari. */
 export const fieldLabelClassName = "mb-1.5 block text-sm font-bold text-slate-700";
 
 export const fieldClassName =

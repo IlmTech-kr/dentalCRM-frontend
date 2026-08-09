@@ -32,15 +32,16 @@ import { formatExpenseMoney } from "@/src/features/expenses/format";
 import { normalizeDateForInput, startOfMonthYMD, todayYMD } from "@/src/features/expenses/dates";
 import { CURRENCIES, DEFAULT_PAGE_SIZE, EXPENSE_STATUSES } from "@/src/features/expenses/constants";
 import { getStatusLabel, getStatusStyle, isVoided } from "@/src/features/expenses/status";
-import { ModalShell } from "./_components/ModalShell";
-import { ModalFormActions } from "./_components/ModalFormActions";
-import { EmptyState, LoadingState } from "./_components/EmptyState";
+import { ModalShell } from "@/src/components/ui/ModalShell";
+import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
+import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
+import { MoneyInput } from "@/src/components/ui/MoneyInput";
 import {
   dangerFieldClassName,
   fieldClassName,
   fieldLabelClassName,
   filterFieldClassName,
-} from "./_components/formFieldStyles";
+} from "@/src/components/ui/formFieldStyles";
 
 // ---------------------------------------------------------------------------
 // Create expense modal
@@ -60,7 +61,7 @@ function CreateExpenseModal({
   const createMutation = useCreateExpense();
 
   const [categoryId, setCategoryId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState<Currency>("UZS");
   const [expenseDate, setExpenseDate] = useState(todayYMD());
   const [payeeName, setPayeeName] = useState("");
@@ -71,15 +72,14 @@ function CreateExpenseModal({
     e.preventDefault();
 
     if (!categoryId) return toast.error(t("toast.categoryRequired"));
-    const amountNumber = Number(amount);
-    if (!amountNumber || amountNumber <= 0) return toast.error(t("toast.amountRequired"));
+    if (!amount || amount <= 0) return toast.error(t("toast.amountRequired"));
     if (!payeeName.trim()) return toast.error(t("toast.payeeRequired"));
     if (!expenseDate) return toast.error(t("toast.dateRequired"));
 
     createMutation.mutate(
       {
         categoryId,
-        amount: amountNumber,
+        amount,
         currency,
         expenseDate,
         status: "PENDING",
@@ -115,12 +115,10 @@ function CreateExpenseModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={fieldLabelClassName}>{t("createModal.amountLabel")}</label>
-            <input
-              type="number"
-              min={1}
+            <MoneyInput
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="500000"
+              onChange={setAmount}
+              placeholder="500.000"
               className={fieldClassName}
             />
           </div>
