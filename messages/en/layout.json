@@ -48,8 +48,10 @@
     "navProfile": "Profile",
     "navChangePassword": "Change Password",
     "navPlans": "Plans",
-    "navAppearance": "Appearance",
-    "newBadge": "New"
+    "navAppearance": "Theme",
+    "newBadge": "New",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "footer": {
     "ctaTitle": "Ready to digitize your clinic?",

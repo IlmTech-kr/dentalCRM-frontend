@@ -6,6 +6,7 @@ function isBrowser(): boolean {
 
 const KEYS = {
   accentColor: "accent-color",
+  sidebarCollapsed: "sidebar-collapsed",
 } as const;
 
 export function getStoredAccentColor(): string {
@@ -18,4 +19,14 @@ export function saveAccentColor(color: string): void {
   if (!isBrowser()) return;
   if (!isValidHexColor(color)) return;
   localStorage.setItem(KEYS.accentColor, color);
+}
+
+export function getStoredSidebarCollapsed(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(KEYS.sidebarCollapsed) === "1";
+}
+
+export function saveSidebarCollapsed(collapsed: boolean): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(KEYS.sidebarCollapsed, collapsed ? "1" : "0");
 }

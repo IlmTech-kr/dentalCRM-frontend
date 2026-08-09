@@ -13,19 +13,28 @@ import {
   ensureUsableAccent,
   isValidHexColor,
 } from "@/src/lib/theme/accentColor";
-import { getStoredAccentColor, saveAccentColor } from "@/src/lib/theme/storage";
+import {
+  getStoredAccentColor,
+  getStoredSidebarCollapsed,
+  saveAccentColor,
+  saveSidebarCollapsed,
+} from "@/src/lib/theme/storage";
 import { applyAccentColor } from "@/src/lib/theme/applyAccentColor";
 
 interface UiState {
   accentColor: string;
+  sidebarCollapsed: boolean;
   isHydrated: boolean;
 
   setAccentColor: (color: string) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebarCollapsed: () => void;
   hydrateFromStorage: () => void;
 }
 
-export const useUiStore = create<UiState>((set) => ({
+export const useUiStore = create<UiState>((set, get) => ({
   accentColor: DEFAULT_ACCENT_COLOR,
+  sidebarCollapsed: false,
   isHydrated: false,
 
   // ensureUsableAccent — tanlangan rang oq/och bo'lsa, text-primary-blue
@@ -40,11 +49,26 @@ export const useUiStore = create<UiState>((set) => ({
     set({ accentColor: safe });
   },
 
+  setSidebarCollapsed: (collapsed) => {
+    saveSidebarCollapsed(collapsed);
+    set({ sidebarCollapsed: collapsed });
+  },
+
+  toggleSidebarCollapsed: () => {
+    const next = !get().sidebarCollapsed;
+    saveSidebarCollapsed(next);
+    set({ sidebarCollapsed: next });
+  },
+
   hydrateFromStorage: () => {
     const stored = getStoredAccentColor();
     const safe = ensureUsableAccent(stored);
     if (safe !== stored) saveAccentColor(safe);
     applyAccentColor(safe);
-    set({ accentColor: safe, isHydrated: true });
+    set({
+      accentColor: safe,
+      sidebarCollapsed: getStoredSidebarCollapsed(),
+      isHydrated: true,
+    });
   },
 }));

@@ -19,6 +19,7 @@ import {
   BadgeDollarSign,
   CreditCard,
   HandCoins,
+  PanelLeftOpen,
   Palette,
   Receipt,
   Repeat,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import { LogoMark } from "@/src/components/shared/BrandLogo";
 import { useAuthStore } from "@/src/store/auth.store";
+import { useUiStore } from "@/src/store/ui.store";
 
 type SubLink = {
   href: string;
@@ -173,6 +175,17 @@ export default function Sidebar({
 
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
 
+  const collapsed = useUiStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useUiStore((s) => s.setSidebarCollapsed);
+  const toggleSidebarCollapsed = useUiStore((s) => s.toggleSidebarCollapsed);
+
+  // max-width + opacity (0 dan 0 pixelgacha) — "display: none" (lg:hidden)
+  // o'rniga, chunki u animatsiyalanmaydi va matn sidebar kengligi silliq
+  // torayotganda birdan g'oyib bo'lib "sakrab" ketardi.
+  const labelClass = collapsed
+    ? "lg:max-w-0 lg:opacity-0"
+    : "lg:max-w-[180px] lg:opacity-100";
+
   useEffect(() => {
     setOpenMenus((prev) => {
       const next = new Set(prev);
@@ -186,6 +199,13 @@ export default function Sidebar({
   }, [pathname, NAV_ITEMS]);
 
   function toggleMenu(href: string) {
+    // Yig'ilgan holatda ichki menyuni ko'rsatishga joy yo'q — avval kengaytiramiz.
+    if (collapsed) {
+      setSidebarCollapsed(false);
+      setOpenMenus((prev) => new Set(prev).add(href));
+      return;
+    }
+
     setOpenMenus((prev) => {
       const next = new Set(prev);
       if (next.has(href)) next.delete(href);
@@ -211,17 +231,25 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-72 flex-col overflow-y-auto bg-primary-blue px-4 py-6 text-white transition-transform duration-300 ease-in-out lg:z-30 lg:w-72 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-72 flex-col overflow-y-auto overflow-x-hidden bg-primary-blue px-4 py-6 text-white transition-[transform,width] duration-300 ease-in-out lg:z-30 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${collapsed ? "lg:w-20" : "lg:w-72"}`}
       >
         {/* Logo */}
-        <div className="mb-8 flex items-center justify-between px-2">
-          <Link href="/dashboard" className="flex min-w-0 items-center gap-3" onClick={onClose}>
+        <div
+          className={`mb-8 flex items-center justify-between px-2 ${
+            collapsed ? "lg:justify-center" : "lg:justify-between"
+          }`}
+        >
+          <Link
+            href="/dashboard"
+            className="flex min-w-0 items-center gap-3"
+            onClick={onClose}
+          >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 border border-white/30">
               <LogoMark small />
             </div>
-            <div className="min-w-0">
+            <div className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
               <h1 className="truncate text-[15px] font-bold leading-tight text-white">
                 Dental{" "}
                 <span className="bg-gradient-to-r from-sky-300 via-violet-300 to-rose-300 bg-clip-text text-transparent">
@@ -243,12 +271,16 @@ export default function Sidebar({
           </button>
         </div>
 
-        <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">{t("sidebar.mainMenu")}</p>
+        <p
+          className={`mb-3 min-w-0 overflow-hidden whitespace-nowrap px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40 transition-all duration-300 ${labelClass}`}
+        >
+          {t("sidebar.mainMenu")}
+        </p>
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
-            const isOpen = openMenus.has(item.href);
+            const isOpen = openMenus.has(item.href) && !collapsed;
 
             if (item.children) {
               return (
@@ -256,23 +288,36 @@ export default function Sidebar({
                   <button
                     type="button"
                     onClick={() => toggleMenu(item.href)}
-                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
-                      active
-                        ? "bg-white text-primary-blue"
-                        : "text-white/90 hover:bg-white/15"
-                    }`}
+                    title={collapsed ? item.label : undefined}
+                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
+                      collapsed ? "lg:justify-center lg:px-0" : "lg:justify-between"
+                    } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
                   >
-                    <span className="flex items-center gap-3">
-                      <Icon size={20} />
-                      {item.label}
+                    <span
+                      className={`flex items-center gap-3 transition-all duration-300 ${
+                        collapsed ? "lg:gap-0" : "lg:gap-3"
+                      }`}
+                    >
+                      <Icon size={20} className="shrink-0" />
+                      <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
+                        {item.label}
+                      </span>
                       {item.isNew && (
-                        <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-                          <Sparkles size={9} />
-                          {t("sidebar.newBadge")}
+                        <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
+                          <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                            <Sparkles size={9} className="shrink-0" />
+                            {t("sidebar.newBadge")}
+                          </span>
                         </span>
                       )}
                     </span>
-                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                    <span
+                      className={`min-w-0 overflow-hidden transition-all duration-300 ${
+                        collapsed ? "lg:max-w-0 lg:opacity-0" : "lg:max-w-[24px] lg:opacity-100"
+                      }`}
+                    >
+                      {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                    </span>
                   </button>
 
                   {isOpen && (
@@ -313,18 +358,33 @@ export default function Sidebar({
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition ${
-                  active
-                    ? "bg-white text-primary-blue"
-                    : "text-white/90 hover:bg-white/15"
-                }`}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
+                  collapsed ? "lg:justify-center lg:gap-0 lg:px-0" : ""
+                } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
               >
-                <Icon size={20} />
-                {item.label}
+                <Icon size={20} className="shrink-0" />
+                <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
         </nav>
+
+        <button
+          type="button"
+          onClick={toggleSidebarCollapsed}
+          title={collapsed ? t("sidebar.expandSidebar") : t("sidebar.collapseSidebar")}
+          className={`mt-auto hidden shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white/80 transition-all duration-300 hover:bg-white/15 hover:text-white lg:flex ${
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          }`}
+        >
+          <PanelLeftOpen size={20} className={`shrink-0 transition-transform duration-300 ${collapsed ? "rotate-0" : "rotate-180"}`} />
+          <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
+            {t("sidebar.collapseSidebar")}
+          </span>
+        </button>
       </aside>
     </>
   );
