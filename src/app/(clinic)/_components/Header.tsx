@@ -99,18 +99,25 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     !avatarSrc;
 
   return (
-      <header className="fixed inset-x-0 top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border-color bg-white/80 px-4 backdrop-blur sm:h-20 sm:px-8 lg:sticky lg:inset-x-auto">
-        <div className="flex min-w-0 items-center gap-3">
+      <header className="fixed inset-x-0 top-0 z-20 flex h-16 items-center justify-between gap-3 rounded-b-[20px] border-b border-primary-blue/10 bg-gradient-to-r from-primary-blue/15 via-white/70 to-white/70 px-4 shadow-sm shadow-primary-blue/5 backdrop-blur-2xl sm:h-20 sm:px-8 lg:sticky lg:inset-x-auto">
+        {/* Decorative glow layer — clipped separately so it never covers the dropdown menus below. */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-[20px]">
+          <div className="absolute -left-10 -top-16 h-48 w-48 rounded-full bg-primary-blue/20 blur-3xl" />
+          <div className="absolute -right-16 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-primary-blue/15 blur-3xl" />
+        </div>
+        <div className="pointer-events-none absolute inset-x-5 bottom-0 h-[2px] rounded-full bg-gradient-to-r from-primary-blue via-primary-blue-dark to-primary-blue opacity-70" />
+
+        <div className="relative flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={onMenuClick}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border-color text-slate-600 transition hover:bg-slate-50 lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary-blue/20 text-primary-blue backdrop-blur-sm transition hover:scale-105 hover:bg-primary-blue/10 active:scale-95 lg:hidden"
           >
             <Menu size={20} />
           </button>
 
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-extrabold text-dark-navy sm:text-2xl">
+            <h2 className="truncate bg-gradient-to-r from-dark-navy to-primary-blue bg-clip-text text-lg font-extrabold tracking-tight text-transparent sm:text-2xl">
               {t("header.dashboardTitle")}
             </h2>
 
@@ -120,15 +127,17 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          <LanguageSwitcher />
+        <div className="relative flex items-center gap-2 sm:gap-4">
+          <LanguageSwitcher tone="accent" />
 
           <button
             type="button"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border-color bg-white transition hover:bg-slate-50 sm:h-11 sm:w-11"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary-blue/20 bg-primary-blue/10 text-primary-blue backdrop-blur-sm transition hover:scale-105 hover:bg-primary-blue/20 active:scale-95 sm:h-11 sm:w-11"
           >
             <Bell size={19} />
           </button>
+
+          <div className="hidden h-8 w-px bg-primary-blue/15 sm:block" />
 
           <div ref={dropdownRef} className="relative z-30">
             <button
@@ -136,9 +145,9 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               onClick={() =>
                 setDropdownOpen((previous) => !previous)
               }
-              className="flex h-10 items-center gap-2 rounded-2xl bg-white px-2 transition hover:bg-slate-50 sm:h-11 sm:px-3"
+              className="flex h-10 items-center gap-2 rounded-2xl bg-white px-2 backdrop-blur-sm transition hover:bg-primary-blue/10 sm:h-11 sm:px-3"
             >
-              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-xs font-bold text-primary-blue">
+              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-xs font-bold text-primary-blue ring-2 ring-primary-blue/15">
                 {avatarSrc ? (
                   <img
                     src={avatarSrc}
@@ -176,10 +185,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-2xl border border-border-color bg-white shadow-lg">
+              <div className="absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-2xl border border-primary-blue/15 bg-white shadow-xl shadow-primary-blue/10">
+                <div className="h-1 bg-gradient-to-r from-primary-blue via-primary-blue-dark to-primary-blue" />
                 <div className="border-b border-border-color p-4">
                   <div className="mb-4 flex items-center gap-3">
-                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-sm font-bold text-primary-blue">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-blue/10 text-sm font-bold text-primary-blue ring-2 ring-primary-blue/15">
                       {avatarSrc ? (
                         <img
                           src={avatarSrc}

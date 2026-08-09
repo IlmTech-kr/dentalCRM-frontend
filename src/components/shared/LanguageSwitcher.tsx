@@ -14,10 +14,13 @@ const LOCALE_LABELS: Record<Locale, { short: string; full: string; flag: string 
 
 interface LanguageSwitcherProps {
   variant?: "default" | "compact";
+  /** "accent" — colored pill matching the primary-blue theme, used on the clinic header. */
+  tone?: "default" | "accent";
 }
 
 export function LanguageSwitcher({
   variant = "default",
+  tone = "default",
 }: LanguageSwitcherProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,24 +45,34 @@ export function LanguageSwitcher({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  const isAccent = tone === "accent";
+
   return (
     <div ref={containerRef} className="relative z-30">
       <button
         type="button"
         onClick={() => setOpen((previous) => !previous)}
-        className="flex h-11 items-center gap-2 rounded-2xl border border-border-color bg-white px-3 transition hover:bg-slate-50"
+        className={
+          isAccent
+            ? "flex h-10 items-center gap-2 rounded-2xl border border-primary-blue/20 bg-primary-blue/10 px-3 backdrop-blur-sm transition hover:scale-105 hover:bg-primary-blue/20 active:scale-95 sm:h-11"
+            : "flex h-11 items-center gap-2 rounded-2xl border border-border-color bg-white px-3 transition hover:bg-slate-50"
+        }
       >
         <span className="text-base leading-none">{LOCALE_LABELS[locale].flag}</span>
 
         {variant === "default" && (
-          <span className="text-sm font-semibold text-slate-700">
+          <span
+            className={`text-sm font-semibold ${
+              isAccent ? "text-primary-blue" : "text-slate-700"
+            }`}
+          >
             {LOCALE_LABELS[locale].short}
           </span>
         )}
 
         <ChevronDown
           size={14}
-          className={`text-slate-400 transition ${
+          className={`transition ${isAccent ? "text-primary-blue/60" : "text-slate-400"} ${
             open ? "rotate-180" : ""
           }`}
         />
