@@ -384,6 +384,12 @@ export default function Sidebar({
           <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
             {t("sidebar.collapseSidebar")}
           </span>
+          <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
+            <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+              <Sparkles size={9} className="shrink-0" />
+              {t("sidebar.newBadge")}
+            </span>
+          </span>
         </button>
       </aside>
     </>

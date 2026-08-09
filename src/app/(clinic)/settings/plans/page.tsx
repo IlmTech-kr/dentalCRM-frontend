@@ -100,14 +100,18 @@ function limitLabel(value?: number | null): string {
   return String(value);
 }
 
-function getPlanType(plan?: SubscriptionPlan | null): PlanType | null {
-  const raw = String(plan?.planType || plan?.type || plan?.name || plan?.title || "")
-    .trim()
-    .toUpperCase();
-  if (raw.includes("START")) return "START";
-  if (raw.includes("PRO")) return "PRO";
-  if (raw.includes("ENTERPRISE")) return "ENTERPRISE";
+function matchPlanType(raw: string): PlanType | null {
+  const normalized = raw.trim().toUpperCase();
+  if (normalized.includes("START")) return "START";
+  if (normalized.includes("PRO")) return "PRO";
+  if (normalized.includes("ENTERPRISE")) return "ENTERPRISE";
   return null;
+}
+
+function getPlanType(plan?: SubscriptionPlan | null): PlanType | null {
+  return matchPlanType(
+    String(plan?.planType || plan?.type || plan?.name || plan?.title || "")
+  );
 }
 
 function getPlanKey(plan: SubscriptionPlan, index: number): string {
@@ -396,8 +400,8 @@ function CurrentPlanCard({
         {storageTotal > 0 ? (
           <div className="mt-4 rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4 sm:p-5">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50">
-                <HardDrive size={14} className="text-indigo-500" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-blue/10">
+                <HardDrive size={14} className="text-primary-blue" />
               </span>
               <span className="text-xs font-black uppercase tracking-wider text-slate-400">
                 {t("current.storageLabel")}
@@ -568,9 +572,10 @@ function PlanCard({
                 className={cn(
                   "relative rounded-xl py-2 text-xs font-black transition",
                   durationMonths === opt.months
-                    ? "bg-primary-blue text-white shadow-sm"
+                    ? "text-white shadow-sm"
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 )}
+                style={durationMonths === opt.months ? { backgroundColor: config.color } : undefined}
               >
                 {opt.label}
                 {opt.badge && durationMonths !== opt.months && (
@@ -613,7 +618,8 @@ function PlanCard({
               type="button"
               onClick={onActivate}
               disabled={isActivating || totalPrice === null}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-blue py-3 text-sm font-black text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: config.color }}
             >
               {isActivating ? <DentalLoaderIcon size={16} /> : <CreditCard size={16} />}
               {t("card.payButton")}
