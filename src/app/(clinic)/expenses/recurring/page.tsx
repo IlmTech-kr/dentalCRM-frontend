@@ -307,6 +307,7 @@ export default function RecurringExpensesPage() {
             <table className="w-full min-w-[840px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs font-black uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">{t("table.category")}</th>
                   <th className="px-4 py-3">{t("table.payee")}</th>
                   <th className="px-4 py-3 text-right">{t("table.amount")}</th>
@@ -318,8 +319,9 @@ export default function RecurringExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleItems.map((item) => (
+                {visibleItems.map((item, index) => (
                   <tr key={item.id} className="border-b border-slate-50 last:border-0">
+                    <td className="px-4 py-3 text-slate-400">{index + 1}</td>
                     <td className="px-4 py-3 font-semibold text-slate-800">
                       {item.category?.name ||
                         categories.find((c) => c.id === item.categoryId)?.name ||

@@ -169,6 +169,7 @@ export default function ExpenseCategoriesPage() {
             <table className="w-full min-w-[560px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs font-black uppercase tracking-wider text-slate-400">
+                  <th className="px-6 py-3">#</th>
                   <th className="px-6 py-3">{t("table.name")}</th>
                   <th className="px-6 py-3">{t("table.kind")}</th>
                   <th className="px-6 py-3">{t("table.updatedAt")}</th>
@@ -176,10 +177,11 @@ export default function ExpenseCategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((category) => {
+                {categories.map((category, index) => {
                   const config = getCategoryKindConfig(category.kind);
                   return (
                     <tr key={category.id} className="border-b border-slate-50 last:border-0">
+                      <td className="px-6 py-4 text-slate-400">{index + 1}</td>
                       <td className="px-6 py-4 font-bold text-slate-900">{category.name}</td>
                       <td className="px-6 py-4">
                         <span

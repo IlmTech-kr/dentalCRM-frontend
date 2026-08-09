@@ -562,6 +562,7 @@ export default function ExpensesPage() {
             <table className="w-full min-w-[840px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs font-black uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">{t("table.date")}</th>
                   <th className="px-4 py-3">{t("table.category")}</th>
                   <th className="px-4 py-3">{t("table.payee")}</th>
@@ -572,13 +573,14 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((expense) => {
+                {items.map((expense, index) => {
                   const statusStyle = getStatusStyle(expense.status);
                   const canPay = expense.status === "PENDING";
                   const canVoid = !isVoided(expense.status);
 
                   return (
                     <tr key={expense.id} className="border-b border-slate-50 last:border-0">
+                      <td className="px-4 py-3 text-slate-400">{page * DEFAULT_PAGE_SIZE + index + 1}</td>
                       <td className="px-4 py-3 text-slate-600">{expense.expenseDate}</td>
                       <td className="px-4 py-3 font-semibold text-slate-800">
                         {expense.category?.name || categoryNameById.get(expense.categoryId) || "—"}

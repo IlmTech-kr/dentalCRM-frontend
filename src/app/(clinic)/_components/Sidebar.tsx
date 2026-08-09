@@ -106,17 +106,17 @@ function buildNavItems(
   if (isStaffAdmin) {
     items.push({ href: "/procedures", label: t("sidebar.navProcedures"), icon: BadgeDollarSign });
 
-    items.push({
-      href: "/expenses",
-      label: t("sidebar.navExpenses"),
-      icon: Wallet,
-      isNew: true,
-      children: [
-        { href: "/expenses/categories", label: t("sidebar.navExpenseCategories"), icon: Tags },
-        { href: "/expenses", label: t("sidebar.navExpenseList"), icon: Receipt },
-        { href: "/expenses/recurring", label: t("sidebar.navExpenseRecurring"), icon: Repeat },
-      ],
-    });
+    // items.push({
+    //   href: "/expenses",
+    //   label: t("sidebar.navExpenses"),
+    //   icon: Wallet,
+    //   isNew: true,
+    //   children: [
+    //     { href: "/expenses/categories", label: t("sidebar.navExpenseCategories"), icon: Tags },
+    //     { href: "/expenses", label: t("sidebar.navExpenseList"), icon: Receipt },
+    //     { href: "/expenses/recurring", label: t("sidebar.navExpenseRecurring"), icon: Repeat },
+    //   ],
+    // });
   }
 
   const settingsChildren: SubLink[] = [
