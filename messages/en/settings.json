@@ -170,7 +170,7 @@
     "helperText": "Choose a plan and set the duration — the total amount is calculated automatically.",
     "lock": {
       "title": "Your plan has expired",
-      "subtitle": "The system is temporarily locked because your clinic's plan has expired. Pay for your plan to continue — access unlocks immediately after payment.",
+      "subtitle": "Your clinic’s subscription has expired, so the system has been temporarily blocked. Please make a payment to continue using the system. The system will be reactivated immediately after payment.",
       "expiredOn": "Expired on: {date}",
       "cta": "Pay for plan"
     },

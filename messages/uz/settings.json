@@ -170,7 +170,7 @@
     "helperText": "Tarifni tanlang va muddat belgilang — jami summa avtomatik hisoblanadi.",
     "lock": {
       "title": "Tarif muddati tugagan",
-      "subtitle": "Klinikangiz tarifi muddati tugagani uchun tizim vaqtincha bloklandi. Davom etish uchun tarifni to'lang — to'lovdan so'ng darhol qayta faollashadi.",
+      "subtitle": "Klinikangiz tarifi muddati tugagani sababli tizim vaqtincha bloklandi. Tizimdan foydalanishni davom ettirish uchun to‘lovni amalga oshiring. To‘lov amalga oshirilgach, tizim darhol qayta faollashadi.",
       "expiredOn": "Tugash sanasi: {date}",
       "cta": "Tarifni to'lash"
     },
