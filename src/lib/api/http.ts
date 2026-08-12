@@ -112,9 +112,12 @@ export function getApiErrorMessage(
   return normalizeApiError(error).message || fallback;
 }
 
-function redirectToLogin(): void {
+function redirectToLogin(reason: string): void {
   if (!isBrowser()) return;
   if (window.location.pathname !== "/login") {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`[Auth] redirecting to /login — reason: ${reason}`);
+    }
     clearAuthStorage();
     window.location.href = "/login";
   }
@@ -144,7 +147,17 @@ async function tryRefreshToken(baseURL: string): Promise<boolean> {
       { withCredentials: true }
     );
     return true;
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      const kind =
+        status !== undefined
+          ? `HTTP ${status}`
+          : axios.isAxiosError(error) && !error.response
+            ? "no response (network/CORS — cookie may not have been sent)"
+            : "unknown error";
+      console.warn(`[Auth] refresh request to ${baseURL} failed — ${kind}`);
+    }
     return false;
   }
 }
@@ -180,17 +193,22 @@ function attachTenantInterceptors(instance: AxiosInstance, baseURL: string): voi
     async (error: AxiosError<any>) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & {
         _retry?: boolean;
+        _tenantRetry?: boolean;
       };
-
-      const errorData = error.response?.data as any;
 
       // 401 — access token muddati tugagan, refresh urinish
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            `[Auth] 401 on ${originalRequest.method?.toUpperCase()} ${originalRequest.url} — attempting refresh`
+          );
+        }
+
         // Refresh endpointining o'zi 401 bersa — cheksiz loop bo'lmasin
         if (originalRequest.url?.includes(ENDPOINTS.auth.refresh)) {
-          redirectToLogin();
+          redirectToLogin(`refresh endpoint itself returned 401 (${originalRequest.url})`);
           return Promise.reject(normalizeApiError(error));
         }
 
@@ -215,22 +233,63 @@ function attachTenantInterceptors(instance: AxiosInstance, baseURL: string): voi
         notifyRefreshSubscribers(refreshed);
 
         if (refreshed) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn(`[Auth] refresh succeeded, retrying ${originalRequest.url}`);
+          }
           // Yangi cookie o'rnatildi — asl requestni qayta yuboramiz
           return instance(originalRequest);
         } else {
           // Refresh ham muvaffaqiyatsiz — logout
-          redirectToLogin();
+          redirectToLogin(`refresh failed after 401 on ${originalRequest.url}`);
           return Promise.reject(normalizeApiError(error));
         }
       }
 
-      // 403 AUTH_TENANT_MISMATCH
+      // 403 — ruxsat yo'q (masalan rol payroll/revenue ko'rish huquqiga ega
+      // emas). AVVAL bu yerda AUTH_TENANT_MISMATCH kodi bo'yicha avtomatik
+      // /login'ga chiqarilardi, lekin production'da backend shu XUDDI SHU
+      // kodni oddiy rol-ruxsat tekshiruvlarida ham qaytarayotgani aniqlandi
+      // (masalan /statistics/revenue, /subscriptions/current, /admin/users) —
+      // bu haqiqiy tenant mos kelmasligi bo'lmasa ham, foydalanuvchini har
+      // safar shu widget'lardan biri yuklanganda sessiyadan chiqarib
+      // yuborardi. 403 endi boshqa xatolar kabi oddiy tarzda reject
+      // qilinadi — har bir hook o'zining mavjud xato-ko'rsatish (toast/
+      // console.warn) orqali "ruxsat yo'q" holatini ko'rsatadi, butun
+      // sessiya emas. Haqiqiy sessiya yaroqsizligi 401 orqali (yuqorida)
+      // to'g'ri ushlanadi.
+
+      // AUTH_TENANT_MISMATCH — client-side navigatsiyada (masalan login'dan
+      // keyin darhol Patients'ga o'tishda) ba'zan qisqa muddatli/tranzient
+      // bo'ladi: birinchi so'rov 403 qaytaradi, xuddi shu so'rov darhol
+      // qayta yuborilsa 200 bilan muvaffaqiyatli bo'ladi (backendning token/
+      // tenant kontekstini sinxronlashtirish kechikishi). Shu sabab — faqat
+      // shu aniq kod uchun — bir marta darhol qayta urinib ko'ramiz, sikl
+      // bo'lmasin uchun _tenantRetry bilan.
+      const errorCode = (error.response?.data as { code?: string } | undefined)?.code;
+
       if (
         error.response?.status === 403 &&
-        errorData?.code === "AUTH_TENANT_MISMATCH"
+        errorCode === "AUTH_TENANT_MISMATCH" &&
+        !originalRequest._tenantRetry
       ) {
-        redirectToLogin();
-        return Promise.reject(normalizeApiError(error));
+        originalRequest._tenantRetry = true;
+
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            `[Auth] 403 AUTH_TENANT_MISMATCH on ${originalRequest.url} — retrying once`
+          );
+        }
+
+        try {
+          return await instance(originalRequest);
+        } catch (retryError) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              `[Auth] retry after AUTH_TENANT_MISMATCH also failed for ${originalRequest.url}`
+            );
+          }
+          return Promise.reject(normalizeApiError(retryError));
+        }
       }
 
       return Promise.reject(normalizeApiError(error));

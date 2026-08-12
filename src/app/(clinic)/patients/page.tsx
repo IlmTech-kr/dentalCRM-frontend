@@ -34,6 +34,7 @@ import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { Tooltip } from "@/src/components/ui/Tooltip";
 
 const PAGE_SIZE = 10;
 
@@ -360,47 +361,57 @@ const filteredPatients = useMemo(() => {
   function renderPatientActionButtons(patient: Patient) {
     return (
       <>
-        <button
-          type="button"
-          onClick={() => { setSelectedPatient(patient); setModalState("view"); }}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
-          title={tCommon("actions.view")}
-        >
-          <Eye size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => goToTreatment(patient)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-          title={t("actions.startTreatment")}
-        >
-          <Play size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => openAppointmentModal(patient)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
-          title={t("actions.createAppointment")}
-        >
-          <Plus size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => openEditModal(patient)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-primary-blue/20 hover:bg-primary-blue/5 hover:text-primary-blue"
-          title={tCommon("actions.edit")}
-        >
-          <Pencil size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleDelete(patient.id)}
-          disabled={deleteMutation.isPending}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
-          title={tCommon("actions.delete")}
-        >
-          <Trash2 size={16} />
-        </button>
+        <Tooltip label={tCommon("actions.view")}>
+          <button
+            type="button"
+            onClick={() => { setSelectedPatient(patient); setModalState("view"); }}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
+            aria-label={tCommon("actions.view")}
+          >
+            <Eye size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip label={t("actions.startTreatment")}>
+          <button
+            type="button"
+            onClick={() => goToTreatment(patient)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+            aria-label={t("actions.startTreatment")}
+          >
+            <Play size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip label={t("actions.createAppointment")}>
+          <button
+            type="button"
+            onClick={() => openAppointmentModal(patient)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+            aria-label={t("actions.createAppointment")}
+          >
+            <Plus size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip label={tCommon("actions.edit")}>
+          <button
+            type="button"
+            onClick={() => openEditModal(patient)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-primary-blue/20 hover:bg-primary-blue/5 hover:text-primary-blue"
+            aria-label={tCommon("actions.edit")}
+          >
+            <Pencil size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip label={tCommon("actions.delete")}>
+          <button
+            type="button"
+            onClick={() => handleDelete(patient.id)}
+            disabled={deleteMutation.isPending}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+            aria-label={tCommon("actions.delete")}
+          >
+            <Trash2 size={16} />
+          </button>
+        </Tooltip>
       </>
     );
   }
@@ -585,14 +596,17 @@ const filteredPatients = useMemo(() => {
 
                 {/* Right: pagination */}
                 <div className="flex flex-wrap items-center justify-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
-                  >
-                    <ChevronLeft size={15} />
-                  </button>
+                  <Tooltip label={tCommon("actions.previous")}>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      aria-label={tCommon("actions.previous")}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
+                    >
+                      <ChevronLeft size={15} />
+                    </button>
+                  </Tooltip>
 
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter((page) =>
@@ -626,14 +640,17 @@ const filteredPatients = useMemo(() => {
                       )
                     )}
 
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
-                  >
-                    <ChevronRight size={15} />
-                  </button>
+                  <Tooltip label={tCommon("actions.next")}>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      aria-label={tCommon("actions.next")}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-color text-slate-500 transition hover:border-primary-blue hover:text-primary-blue disabled:opacity-30"
+                    >
+                      <ChevronRight size={15} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             )}

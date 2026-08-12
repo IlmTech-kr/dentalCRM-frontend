@@ -27,6 +27,11 @@ export default function RoleGuard({ children, allowedRoles }: Readonly<RoleGuard
     if (!mounted) return;
 
     if (!isAuthenticated) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "[Auth] RoleGuard redirecting to /login — isAuthenticated is false after hydration"
+        );
+      }
       router.replace("/login");
       return;
     }

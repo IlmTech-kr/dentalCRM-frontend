@@ -12,10 +12,16 @@
  * tenant qiymati qolib ketib, to'g'ri tenant uchun ham noto'g'ri
  * "boshqa clinic" deb topilishiga (yoki aksincha) olib kelardi.
  *
- * Haqiqiy tenant/token mos kelish tekshiruvi backendda amalga oshadi:
- * har bir so'rovda cookie (token) va Host header (subdomain) solishtiriladi,
- * mos kelmasa backend 403 AUTH_TENANT_MISMATCH qaytaradi va
- * http.ts interceptori buni ushlab avtomatik /login ga yo'naltiradi.
+ * Tenant/token mosligi backendda tekshiriladi: har bir so'rovda cookie
+ * (token) va Host header (subdomain) solishtiriladi. Mos kelmasa backend
+ * 403 AUTH_TENANT_MISMATCH qaytaradi — LEKIN http.ts interceptori bu
+ * kodni ko'rib avtomatik /login'ga ENDI YO'NALTIRMAYDI, chunki backend
+ * shu xuddi shu kodni oddiy rol-ruxsat tekshiruvlarida ham qaytarib,
+ * ruxsati yo'q foydalanuvchilarni har safar sessiyadan chiqarib
+ * yuborayotgani aniqlandi (masalan /statistics/revenue, /subscriptions/
+ * current, /admin/users). 403 endi shunchaki oddiy xato sifatida har bir
+ * hook'ning o'z xato-ko'rsatishiga tushadi — butun sessiyani yiqitmaydi.
+ * Haqiqiy sessiya yaroqsizligi 401 orqali to'g'ri ushlanadi.
  *
  * Bu layout (clinic) ichidagi route'lar orasida qayta mount BO'LMAYDI —
  * shuning uchun rol tekshiruvi pathname o'zgarganda alohida effekt sifatida
@@ -66,11 +72,10 @@ export default function ClinicLayout({
       return;
     }
 
-    // Hammasi to'g'ri.
-    // Tenant/token mosligi keyingi API so'rovlarida backend tomonidan
-    // tekshiriladi (cookie vs Host header). Mos kelmasa, http.ts
-    // interceptori 403 AUTH_TENANT_MISMATCH ni ushlab /login ga
-    // avtomatik yo'naltiradi — shu yerda qo'shimcha tekshiruv shart emas.
+    // Hammasi to'g'ri. Tenant/token mosligi (401) keyingi API
+    // so'rovlarida http.ts interceptori orqali tekshiriladi — shu yerda
+    // qo'shimcha tekshiruv shart emas. (403 endi avtomatik logout
+    // qilmaydi, sabab uchun http.ts'dagi izohga qarang.)
     useAuthStore.getState().setAuthData({
       user: savedUser as any,
       isAuthenticated: true,
