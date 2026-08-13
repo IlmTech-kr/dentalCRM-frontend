@@ -6,6 +6,7 @@
  */
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -14,6 +15,9 @@ import { useGetCurrentPlan } from "@/src/features/subscriptions/hooks/useSubscri
 import { useUiStore } from "@/src/store/ui.store";
 
 const LOCKED_STATUSES = new Set(["EXPIRED", "SUSPENDED", "CANCELED"]);
+const AiDrawer = dynamic(() => import("@/src/features/ai/components/AiDrawer"), {
+  ssr: false,
+});
 
 export default function DashboardLayout({
   children,
@@ -24,6 +28,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { data: subscription } = useGetCurrentPlan();
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
+  const aiDrawerOpen = useUiStore((s) => s.aiDrawerOpen);
 
   // To'lov sahifasida bloklamaymiz — aks holda foydalanuvchi to'lay olmaydi.
   const isBillingPage = pathname?.startsWith("/settings/plans") ?? false;
@@ -47,6 +52,7 @@ export default function DashboardLayout({
       </div>
 
       {isLocked && <PlanExpiredOverlay endDate={subscription?.endDate} />}
+      {aiDrawerOpen && !isLocked ? <AiDrawer /> : null}
     </div>
   );
 }

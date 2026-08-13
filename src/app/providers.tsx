@@ -10,6 +10,12 @@ import DentalLoader from "../components/ui/DentalLoader";
 import { useLocaleStore } from "../store/locale.store";
 import { useUiStore } from "../store/ui.store";
 import { MESSAGES } from "../lib/i18n/messages";
+import dynamic from "next/dynamic";
+import TenantRealtimeProvider from "@/src/features/realtime/TenantRealtimeProvider";
+
+const AiActionOrchestrator = dynamic(
+  () => import("@/src/features/ai/components/AiActionOrchestrator")
+);
 
 export default function Providers({
   children,
@@ -41,7 +47,9 @@ export default function Providers({
   return (
     <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]}>
       <QueryClientProvider client={queryClient}>
+        <TenantRealtimeProvider />
         {children}
+        <AiActionOrchestrator />
         <ReactQueryDevtools initialIsOpen={false} />
         <ToastContainer />
       </QueryClientProvider>

@@ -180,7 +180,7 @@ export default function ExpenseCategoriesPage() {
                 {categories.map((category, index) => {
                   const config = getCategoryKindConfig(category.kind);
                   return (
-                    <tr key={category.id} className="border-b border-slate-50 last:border-0">
+                    <tr key={category.id} data-entity-id={category.id} className="border-b border-slate-50 last:border-0">
                       <td className="px-6 py-4 text-slate-400">{index + 1}</td>
                       <td className="px-6 py-4 font-bold text-slate-900">{category.name}</td>
                       <td className="px-6 py-4">

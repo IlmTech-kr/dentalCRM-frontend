@@ -24,17 +24,20 @@ import { applyAccentColor } from "@/src/lib/theme/applyAccentColor";
 interface UiState {
   accentColor: string;
   sidebarCollapsed: boolean;
+  aiDrawerOpen: boolean;
   isHydrated: boolean;
 
   setAccentColor: (color: string) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapsed: () => void;
+  setAiDrawerOpen: (open: boolean) => void;
   hydrateFromStorage: () => void;
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
   accentColor: DEFAULT_ACCENT_COLOR,
   sidebarCollapsed: false,
+  aiDrawerOpen: false,
   isHydrated: false,
 
   // ensureUsableAccent — tanlangan rang oq/och bo'lsa, text-primary-blue
@@ -59,6 +62,8 @@ export const useUiStore = create<UiState>((set, get) => ({
     saveSidebarCollapsed(next);
     set({ sidebarCollapsed: next });
   },
+
+  setAiDrawerOpen: (open) => set({ aiDrawerOpen: open }),
 
   hydrateFromStorage: () => {
     const stored = getStoredAccentColor();

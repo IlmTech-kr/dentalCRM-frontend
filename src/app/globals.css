@@ -12,6 +12,25 @@ body {
   min-height: 100vh;
 }
 
+@keyframes ai-drawer-in {
+  from { transform: translateX(100%); opacity: 0.7; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes ai-action-drawer-in {
+  from { transform: translateX(-100%); opacity: 0.7; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 
 :root {
   --background: #eef7ff;

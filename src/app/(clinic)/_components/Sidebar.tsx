@@ -65,6 +65,7 @@ function buildNavItems(
 
   const items: NavItem[] = [
     { href: "/dashboard", label: t("sidebar.navDashboard"), icon: LayoutDashboard },
+    { href: "/ai", label: "Dental Copilot", icon: Sparkles, isNew: true },
   ];
 
   if (!isDoctor) {

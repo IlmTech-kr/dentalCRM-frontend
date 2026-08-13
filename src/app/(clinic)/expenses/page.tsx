@@ -577,7 +577,7 @@ export default function ExpensesPage() {
                   const canVoid = !isVoided(expense.status);
 
                   return (
-                    <tr key={expense.id} className="border-b border-slate-50 last:border-0">
+                    <tr key={expense.id} data-entity-id={expense.id} className="border-b border-slate-50 last:border-0">
                       <td className="px-4 py-3 text-slate-400">{page * DEFAULT_PAGE_SIZE + index + 1}</td>
                       <td className="px-4 py-3 text-slate-600">{expense.expenseDate}</td>
                       <td className="px-4 py-3 font-semibold text-slate-800">

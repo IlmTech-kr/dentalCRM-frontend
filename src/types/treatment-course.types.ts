@@ -1,6 +1,9 @@
 import { AppointmentStatus } from "../lib/enums/enums.types";
 
 export interface TreatmentVisitItem {
+  itemId?: string;
+  revision?: number;
+  provenanceVersion?: number;
   toothNumber: string;
   procedureId: string;
 
@@ -45,6 +48,9 @@ export interface TreatmentVisitImage {
 }
 
 export interface TreatmentVisit {
+  visitId?: string;
+  revision?: number;
+  provenanceVersion?: number;
   appointmentId?: string;
   visitDate: string;
   doctorId: string;
@@ -95,6 +101,7 @@ export interface TreatmentCourse {
 
   totalCoursePrice?: number;
   invoiceGenerated?: boolean;
+  version?: number;
 
   visits: TreatmentVisit[];
 

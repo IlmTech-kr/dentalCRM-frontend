@@ -2574,6 +2574,7 @@ export default function TreatmentPatientPage() {
                   return (
                     <div
                       key={courseId}
+                      data-entity-id={courseId}
                       className={`overflow-hidden rounded-2xl border transition ${
                         selected
                           ? "border-primary-blue bg-blue-50/60 ring-1 ring-primary-blue/20"

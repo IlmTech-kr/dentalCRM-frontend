@@ -16,6 +16,8 @@ export interface DentalProcedure {
   name: string;
   defaultPrice: number;
   resultingCondition: ResultingCondition;
+  active?: boolean;
+  version?: number;
   _class?: string;
 }
 

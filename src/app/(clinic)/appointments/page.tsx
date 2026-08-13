@@ -944,7 +944,7 @@ export default function AppointmentsPage() {
                       const globalIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
 
                       return (
-                        <tr key={appointmentId || index} className="transition hover:bg-slate-50/60">
+                        <tr key={appointmentId || index} data-entity-id={appointmentId || undefined} className="transition hover:bg-slate-50/60">
                           <td className="px-5 py-4 align-middle text-sm font-bold text-slate-400">{globalIndex}</td>
 
                           <td className="px-5 py-4 align-middle">

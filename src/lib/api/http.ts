@@ -332,6 +332,44 @@ export function clearTenantHttpCache(): void {
   tenantHttpCache.clear();
 }
 
+let fetchRefreshPromise: Promise<boolean> | null = null;
+
+/** Fetch variant for streaming endpoints; preserves the same cookie/refresh policy as tenantHttp. */
+export async function tenantFetch(
+  path: string,
+  init: RequestInit = {},
+  retryAfterRefresh = true
+): Promise<Response> {
+  const baseURL = buildTenantBaseUrl(getTenantSubDomainForBaseUrl());
+  const headers = new Headers(init.headers);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (!headers.has("Accept-Language")) {
+    headers.set("Accept-Language", isBrowser() ? document.documentElement.lang || "uz" : "uz");
+  }
+  headers.delete("Authorization");
+  headers.delete("X-Tenant-ID");
+
+  const response = await fetch(`${baseURL}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+
+  if (response.status !== 401 || !retryAfterRefresh) return response;
+
+  fetchRefreshPromise ??= tryRefreshToken(baseURL).finally(() => {
+    fetchRefreshPromise = null;
+  });
+  const refreshed = await fetchRefreshPromise;
+  if (!refreshed) {
+    redirectToLogin(`stream refresh failed after 401 on ${path}`);
+    return response;
+  }
+  return tenantFetch(path, init, false);
+}
+
 // ---------------------------------------------------------------------------
 // Public instances
 // ---------------------------------------------------------------------------

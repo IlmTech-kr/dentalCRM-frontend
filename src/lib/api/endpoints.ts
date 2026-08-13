@@ -13,6 +13,25 @@ export const ENDPOINTS = {
     changePassword: "/api/v1/users/me/change-password",
   },
 
+  ai: {
+    sessions: "/api/dental/ai/chat/sessions",
+    history: (sessionId: string) =>
+      `/api/dental/ai/chat/sessions/${sessionId}/messages`,
+    stream: (sessionId: string) =>
+      `/api/dental/ai/chat/sessions/${sessionId}/messages/stream`,
+    confirmAction: (actionId: string) =>
+      `/api/dental/ai/actions/${actionId}/confirm`,
+    cancelAction: (actionId: string) =>
+      `/api/dental/ai/actions/${actionId}/cancel`,
+    action: (actionId: string) => `/api/dental/ai/actions/${actionId}`,
+    redraftAction: (actionId: string) =>
+      `/api/dental/ai/actions/${actionId}/redraft`,
+  },
+
+  realtime: {
+    stream: "/api/dental/events/stream",
+  },
+
   patients: {
     list: "/api/dental/patients",
     byId: (id: string) => `/api/dental/patients/${id}`,

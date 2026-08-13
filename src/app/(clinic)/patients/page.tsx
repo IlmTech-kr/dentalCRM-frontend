@@ -533,7 +533,7 @@ const filteredPatients = useMemo(() => {
                 <tbody className="divide-y divide-slate-100">
                   {paginatedPatients.length > 0 ? (
                     paginatedPatients.map((patient, idx) => (
-                      <tr key={patient.id} className="transition hover:bg-slate-50">
+                      <tr key={patient.id} data-entity-id={patient.id} className="transition hover:bg-slate-50">
                         <td className="px-6 py-4 text-sm font-semibold text-slate-400">
                           {(currentPage - 1) * PAGE_SIZE + idx + 1}
                         </td>
