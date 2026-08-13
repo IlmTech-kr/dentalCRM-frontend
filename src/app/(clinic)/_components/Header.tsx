@@ -5,6 +5,7 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +17,7 @@ import { STORAGE_BUCKET } from "@/src/types/storage.types";
 import { useAuthStore } from "@/src/store/auth.store";
 import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { useUiStore } from "@/src/store/ui.store";
 
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const t = useTranslations("layout");
@@ -29,6 +31,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const setAiDrawerOpen = useUiStore((state) => state.setAiDrawerOpen);
 
   const avatarPath = user?.avatarUrl?.trim() || "";
 
@@ -128,6 +131,16 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         <div className="relative flex items-center gap-2 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => setAiDrawerOpen(true)}
+            className="flex h-10 items-center gap-2 rounded-xl border border-cyan-700/15 bg-white/80 px-3 text-xs font-semibold text-cyan-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-700/30 hover:bg-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 sm:h-11"
+            aria-label="AI Copilotni ochish"
+          >
+            <Sparkles size={16} />
+            <span className="hidden md:inline">Copilot</span>
+          </button>
+
           <LanguageSwitcher tone="accent" />
 
           <button
