@@ -318,7 +318,7 @@ export default function RecurringExpensesPage() {
               </thead>
               <tbody>
                 {visibleItems.map((item, index) => (
-                  <tr key={item.id} className="border-b border-slate-50 last:border-0">
+                  <tr key={item.id} data-entity-id={item.id} className="border-b border-slate-50 last:border-0">
                     <td className="px-4 py-3 text-slate-400">{index + 1}</td>
                     <td className="px-4 py-3 font-semibold text-slate-800">
                       {item.category?.name ||

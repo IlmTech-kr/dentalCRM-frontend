@@ -1,10 +1,12 @@
 "use client";
 
-import { Check, Clock3, Loader2, ShieldCheck, X } from "lucide-react";
+import { Check, Clock3, ExternalLink, Loader2, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 import { cancelAiAction, confirmAiAction } from "@/src/features/ai/ai.service";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import type { AiPendingAction } from "@/src/types/ai.types";
+import { useAiActionStore } from "@/src/store/ai-action.store";
+import { useRouter } from "next/navigation";
 
 export function AiActionCard({
   action,
@@ -13,11 +15,15 @@ export function AiActionCard({
   action: AiPendingAction;
   onChange: (action: AiPendingAction) => void;
 }) {
+  const router = useRouter();
+  const updated = useAiActionStore((state) => state.updates[action.id]);
+  const openAction = useAiActionStore((state) => state.openAction);
+  const currentAction = updated || action;
   const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
   const [voidReason, setVoidReason] = useState("");
   const [error, setError] = useState("");
-  const needsReason = action.type.includes("VOID");
-  const pending = action.status === "PENDING";
+  const needsReason = currentAction.type.includes("VOID");
+  const pending = currentAction.status === "PENDING";
 
   async function confirm() {
     if (needsReason && !voidReason.trim()) {
@@ -27,7 +33,7 @@ export function AiActionCard({
     setBusy("confirm");
     setError("");
     try {
-      onChange(await confirmAiAction(action.id, voidReason));
+      onChange(await confirmAiAction(currentAction.id, voidReason));
     } catch (cause) {
       setError(getApiErrorMessage(cause, "Action tasdiqlanmadi."));
     } finally {
@@ -39,7 +45,7 @@ export function AiActionCard({
     setBusy("cancel");
     setError("");
     try {
-      onChange(await cancelAiAction(action.id));
+      onChange(await cancelAiAction(currentAction.id));
     } catch (cause) {
       setError(getApiErrorMessage(cause, "Action bekor qilinmadi."));
     } finally {
@@ -56,16 +62,16 @@ export function AiActionCard({
           </span>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-amber-950">Tasdiqlash talab qilinadi</p>
-            <p className="truncate text-[11px] text-amber-700">{action.type.replaceAll("_", " ").toLowerCase()}</p>
+            <p className="truncate text-[11px] text-amber-700">{currentAction.type.replaceAll("_", " ").toLowerCase()}</p>
           </div>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-amber-700">
-          <Clock3 size={12} /> {action.status}
+          <Clock3 size={12} /> {currentAction.status}
         </span>
       </div>
 
       <div className="px-4 py-3">
-        <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{action.preview}</p>
+        <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{currentAction.preview}</p>
         {pending && needsReason ? (
           <label className="mt-3 block">
             <span className="mb-1.5 block text-xs font-medium text-slate-700">Void sababi</span>
@@ -83,7 +89,18 @@ export function AiActionCard({
       </div>
 
       {pending ? (
-        <div className="flex justify-end gap-2 border-t border-amber-200/70 px-4 py-3">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-amber-200/70 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => {
+              openAction(currentAction);
+              router.push(currentAction.targetRoute);
+            }}
+            disabled={busy !== null}
+            className="mr-auto inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-cyan-800 transition hover:bg-white active:scale-[.98] disabled:opacity-50"
+          >
+            <ExternalLink size={14} /> Formada ko‘rish
+          </button>
           <button type="button" onClick={cancel} disabled={busy !== null} className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-slate-600 transition hover:bg-white active:scale-[.98] disabled:opacity-50">
             {busy === "cancel" ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />} Bekor qilish
           </button>

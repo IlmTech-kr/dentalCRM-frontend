@@ -637,6 +637,7 @@ export default function ProceduresPage() {
                       (procedure: DentalProcedure) => (
                         <tr
                           key={getId(procedure)}
+                          data-entity-id={getId(procedure)}
                           className="transition hover:bg-slate-50"
                         >
 

@@ -290,7 +290,7 @@ export default function TreatmentPaymentsPage() {
               </thead>
               <tbody>
                 {payments.map((payment, index) => (
-                  <tr key={payment.id} className="border-b border-slate-50 last:border-0">
+                  <tr key={payment.id} data-entity-id={payment.id} className="border-b border-slate-50 last:border-0">
                     <td className="px-4 py-3 text-slate-400">{page * DEFAULT_PAGE_SIZE + index + 1}</td>
                     <td className="px-4 py-3 text-slate-600">{formatDateTimeDisplay(payment.paidAt)}</td>
                     <td className="px-4 py-3 font-bold text-slate-900">

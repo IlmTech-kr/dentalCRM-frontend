@@ -23,6 +23,13 @@ export const ENDPOINTS = {
       `/api/dental/ai/actions/${actionId}/confirm`,
     cancelAction: (actionId: string) =>
       `/api/dental/ai/actions/${actionId}/cancel`,
+    action: (actionId: string) => `/api/dental/ai/actions/${actionId}`,
+    redraftAction: (actionId: string) =>
+      `/api/dental/ai/actions/${actionId}/redraft`,
+  },
+
+  realtime: {
+    stream: "/api/dental/events/stream",
   },
 
   patients: {

@@ -5,6 +5,7 @@ export type AiActionStatus =
   | "CONFIRMING"
   | "CONFIRMED"
   | "CANCELLED"
+  | "SUPERSEDED"
   | "EXPIRED"
   | "FAILED";
 
@@ -22,7 +23,29 @@ export interface AiPendingAction {
   preview: string;
   expiresAt: string;
   confirmedAt: string | null;
-  resultJson: string | null;
+  editablePayload: Record<string, unknown>;
+  formKind: AiFormKind;
+  targetRoute: string;
+  entityVersion: number | null;
+  supersededByActionId: string | null;
+  result: unknown | null;
+}
+
+export type AiFormKind =
+  | "PATIENT"
+  | "APPOINTMENT"
+  | "PAYMENT"
+  | "EXPENSE"
+  | "RECURRING_EXPENSE"
+  | "EXPENSE_CATEGORY"
+  | "PROCEDURE"
+  | "TREATMENT";
+
+export interface AiUiCommand {
+  type: "NAVIGATE_AND_PREFILL";
+  actionId: string;
+  targetRoute: string;
+  formKind: AiFormKind;
 }
 
 export interface AiChatMessage {
@@ -68,6 +91,8 @@ export interface AiStreamError {
 
 export interface AiStreamCallbacks {
   onToken: (content: string) => void;
+  onActionPreview: (action: AiPendingAction) => void;
+  onUiCommand: (command: AiUiCommand) => void;
   onDone: (reply: AiChatReply) => void;
   onError: (error: AiStreamError) => void;
 }

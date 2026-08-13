@@ -47,6 +47,24 @@ export async function cancelAiAction(actionId: string): Promise<AiPendingAction>
   return data;
 }
 
+export async function getAiAction(actionId: string): Promise<AiPendingAction> {
+  const { data } = await tenantHttp().get<AiPendingAction>(
+    ENDPOINTS.ai.action(actionId)
+  );
+  return data;
+}
+
+export async function redraftAiAction(
+  actionId: string,
+  payload: Record<string, unknown>
+): Promise<AiPendingAction> {
+  const { data } = await tenantHttp().post<AiPendingAction>(
+    ENDPOINTS.ai.redraftAction(actionId),
+    { payload }
+  );
+  return data;
+}
+
 export async function streamAiMessage(
   sessionId: string,
   content: string,
@@ -106,6 +124,10 @@ function dispatchEventBlock(block: string, callbacks: AiStreamCallbacks): void {
       callbacks.onToken((payload as { content?: string }).content || "");
     } else if (eventName === "done") {
       callbacks.onDone(payload as AiChatReply);
+    } else if (eventName === "action_preview") {
+      callbacks.onActionPreview(payload as AiPendingAction);
+    } else if (eventName === "ui_command") {
+      callbacks.onUiCommand(payload as import("@/src/types/ai.types").AiUiCommand);
     } else if (eventName === "error") {
       callbacks.onError(payload as AiStreamError);
     }

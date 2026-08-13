@@ -12,6 +12,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AiMessageItem } from "@/src/features/ai/components/AiMessageItem";
 import {
@@ -28,6 +29,18 @@ import type {
   AiPendingAction,
   AiStreamError,
 } from "@/src/types/ai.types";
+import { useAiActionStore } from "@/src/store/ai-action.store";
+
+const AI_TARGET_ROUTES = new Set([
+  "/patients",
+  "/appointments",
+  "/expenses/payments",
+  "/expenses",
+  "/expenses/recurring",
+  "/expenses/categories",
+  "/procedures",
+  "/treatments",
+]);
 
 const SUGGESTIONS = [
   "Bugungi appointmentlar va bemorlarni ko‘rsat",
@@ -49,6 +62,8 @@ function temporaryMessage(id: string, role: "USER" | "ASSISTANT", content: strin
 }
 
 export function AiWorkspace({ compact = false }: { compact?: boolean }) {
+  const router = useRouter();
+  const openAction = useAiActionStore((state) => state.openAction);
   const locale = useLocaleStore((state) => state.locale);
   const [sessions, setSessions] = useState<AiChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -177,6 +192,29 @@ export function AiWorkspace({ compact = false }: { compact?: boolean }) {
                 : session
             ).toSorted((left, right) => right.lastMessageAt.localeCompare(left.lastMessageAt)));
           },
+          onActionPreview: (action) => {
+            openAction(action);
+            setMessages((previous) => previous.map((message) =>
+              message.id === assistantTempId
+                ? {
+                    ...message,
+                    pendingActions: message.pendingActions.some(
+                      (item) => item.id === action.id
+                    )
+                      ? message.pendingActions
+                      : [...message.pendingActions, action],
+                  }
+                : message
+            ));
+          },
+          onUiCommand: (command) => {
+            if (
+              command.type === "NAVIGATE_AND_PREFILL" &&
+              AI_TARGET_ROUTES.has(command.targetRoute)
+            ) {
+              router.push(command.targetRoute);
+            }
+          },
           onError: (streamError) => handleStreamError(streamError, assistantTempId),
         },
         controller.signal
@@ -219,6 +257,7 @@ export function AiWorkspace({ compact = false }: { compact?: boolean }) {
   }
 
   function updateAction(action: AiPendingAction) {
+    useAiActionStore.getState().recordAction(action);
     setMessages((previous) => previous.map((message) => ({
       ...message,
       pendingActions: message.pendingActions.map((item) => item.id === action.id ? action : item),
