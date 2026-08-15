@@ -38,7 +38,7 @@ export const ENDPOINTS = {
   },
 
   doctors: {
-    list: "/api/v1/admin/users",
+    list: "/api/dental/doctors",
     byId: (id: string) => `/api/v1/admin/users/${id}`,
   },
 

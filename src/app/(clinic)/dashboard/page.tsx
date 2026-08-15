@@ -637,7 +637,7 @@ export default function DashboardPage() {
   const { data: doctors, isLoading: doctorsLoading } = useQuery({
     queryKey: ["doctors-count"],
     queryFn: async () => {
-      const res = await tenantHttp().get(`${ENDPOINTS.doctors.list}?size=1`);
+      const res = await tenantHttp().get(`${ENDPOINTS.doctors.list}?limit=1`);
       return res.data;
     },
     retry: false,

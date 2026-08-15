@@ -44,6 +44,7 @@ export interface UpdateDoctorDto {
 
 export interface DoctorListResponse {
   data?: Doctor[];
+  doctors?: Doctor[];
   users?: Doctor[];
   content?: Doctor[];
   items?: Doctor[];

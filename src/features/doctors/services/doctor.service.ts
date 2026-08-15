@@ -28,6 +28,7 @@ function normalizeDoctor(user: any): Doctor {
 function extractUsers(result: DoctorListResponse | Doctor[] | any): any[] {
   if (Array.isArray(result)) return result;
   if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.doctors)) return result.doctors;
   if (Array.isArray(result?.users)) return result.users;
   if (Array.isArray(result?.content)) return result.content;
   if (Array.isArray(result?.items)) return result.items;
@@ -41,14 +42,15 @@ function isStaffUser(user: Doctor): boolean {
 }
 
 /**
- * GET /api/v1/admin/users?page=0&limit=100
+ * GET /api/dental/doctors?page=0&limit=100
  *
- * Faqat DOCTOR, RECEPTIONIST, ASSISTANT roleli userlar qaytariladi.
+ * Barcha autentifikatsiyadan o'tgan rollar uchun klinikadagi
+ * faqat ACTIVE DOCTOR, RECEPTIONIST va ASSISTANTlar qaytariladi.
  */
 export async function getDoctors(): Promise<Doctor[]> {
   try {
     const response = await tenantHttp().get<DoctorListResponse | Doctor[]>(
-      "/api/v1/admin/users?page=0&limit=100"
+      "/api/dental/doctors?page=0&limit=100"
     );
 
     const users = extractUsers(response.data);
