@@ -59,21 +59,22 @@ type RoleFlags = {
 
 function buildNavItems(
   t: (key: string) => string,
-  { isStaffAdmin, isDoctor, isReceptionist, isAssistant }: RoleFlags
+  { isStaffAdmin, isDoctor }: RoleFlags
 ): NavItem[] {
-  const canSeeDoctorsSection = isStaffAdmin || isReceptionist || isAssistant;
+  const canSeeDoctorsSection = isStaffAdmin;
 
   const items: NavItem[] = [
     { href: "/dashboard", label: t("sidebar.navDashboard"), icon: LayoutDashboard },
     { href: "/ai", label: "Dental Copilot", icon: Sparkles, isNew: true },
   ];
 
-  if (!isDoctor) {
-    items.push({ href: "/patients", label: t("sidebar.navPatients"), icon: Users });
-  }
 
   // Calendar — hammaga ochiq (Doctor, Receptionist, Assistant, Admin)
   items.push({ href: "/calendar", label: t("sidebar.navCalendar"), icon: CalendarRange });
+
+  if (!isDoctor) {
+    items.push({ href: "/patients", label: t("sidebar.navPatients"), icon: Users });
+  }
 
   if (canSeeDoctorsSection) {
     const children: SubLink[] = [

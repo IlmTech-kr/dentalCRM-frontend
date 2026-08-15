@@ -365,7 +365,7 @@ const filteredPatients = useMemo(() => {
           <button
             type="button"
             onClick={() => { setSelectedPatient(patient); setModalState("view"); }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-medical-cyan/40 hover:bg-medical-cyan/10 hover:text-medical-cyan"
             aria-label={tCommon("actions.view")}
           >
             <Eye size={16} />
@@ -385,7 +385,7 @@ const filteredPatients = useMemo(() => {
           <button
             type="button"
             onClick={() => openAppointmentModal(patient)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
             aria-label={t("actions.createAppointment")}
           >
             <Plus size={16} />

@@ -11,7 +11,11 @@
     "totalPatients": "Total patients",
     "todayAppointments": "Today's appointments",
     "completedCancelled": "Completed / Cancelled",
-    "doctors": "Doctors"
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "doctors": "Doctors",
+    "overviewTitle": "Overview",
+    "overviewTotal": "Total"
   },
   "revenue": {
     "title": "Revenue statistics",

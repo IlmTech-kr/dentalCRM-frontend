@@ -23,14 +23,14 @@ export function Tooltip({
       {children}
       <span
         role="tooltip"
-        className={`pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-bold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100 ${
+        className={`pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-dark-navy px-2.5 py-1.5 text-xs font-bold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100 ${
           isTop ? "bottom-full mb-2" : "top-full mt-2"
         }`}
       >
         {label}
         <span
           className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
-            isTop ? "top-full border-t-slate-900" : "bottom-full border-b-slate-900"
+            isTop ? "top-full border-t-dark-navy" : "bottom-full border-b-dark-navy"
           }`}
         />
       </span>

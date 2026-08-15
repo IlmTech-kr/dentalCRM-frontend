@@ -11,7 +11,11 @@
     "totalPatients": "Jami bemorlar",
     "todayAppointments": "Bugungi qabullar",
     "completedCancelled": "Yakunlangan / Bekor qilingan",
-    "doctors": "Shifokorlar"
+    "completed": "Yakunlangan",
+    "cancelled": "Bekor qilingan",
+    "doctors": "Shifokorlar",
+    "overviewTitle": "Umumiy ko'rinish",
+    "overviewTotal": "Jami"
   },
   "revenue": {
     "title": "Daromad statistikasi",

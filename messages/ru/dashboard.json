@@ -11,7 +11,11 @@
     "totalPatients": "Всего пациентов",
     "todayAppointments": "Приёмы сегодня",
     "completedCancelled": "Завершено / Отменено",
-    "doctors": "Врачи"
+    "completed": "Завершено",
+    "cancelled": "Отменено",
+    "doctors": "Врачи",
+    "overviewTitle": "Обзор",
+    "overviewTotal": "Всего"
   },
   "revenue": {
     "title": "Статистика выручки",

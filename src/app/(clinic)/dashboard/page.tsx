@@ -5,8 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   Users, Calendar, Stethoscope,
-  CheckCircle2, Clock, BarChart3,
-  Wallet, TrendingUp, Percent,
+  CheckCircle2, XCircle,
+  Clock, BarChart3,
+  Wallet, TrendingUp, Percent, PieChart,
+  type LucideIcon,
 } from "lucide-react";
 
 import { tenantHttp } from "@/src/lib/api/http";
@@ -130,35 +132,169 @@ function getDoctorFullName(doctor: any) {
 }
 
 // ---------------------------------------------------------------------------
-// Stat card
+// Stats donut chart
 // ---------------------------------------------------------------------------
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
+type DonutSegment = {
+  key: string;
+  label: string;
+  value: number;
+  color: string;
+  icon: LucideIcon;
+};
+
+const DONUT_SIZE = 200;
+const DONUT_STROKE = 24;
+const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE * 2) / 2;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+
+function StatsDonutChart({
+  segments,
   loading,
 }: {
-  icon: any;
-  label: string;
-  value: string | number;
-  color: string;
+  segments: DonutSegment[];
   loading?: boolean;
 }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  let cumulative = 0;
+
   return (
-    <div className="group rounded-2xl border border-border-color bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5">
-      <div
-        className={`flex h-11 w-11 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105 ${color}`}
-      >
-        <Icon size={22} className="text-white" />
+    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex items-center gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+          <PieChart size={17} className="text-primary-blue" />
+        </span>
+        <h2 className="font-extrabold text-dark-navy">{t("stats.overviewTitle")}</h2>
       </div>
+
       {loading ? (
-        <div className="mt-3 h-7 w-24 animate-pulse rounded-lg bg-slate-100" />
+        <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-around">
+          <div className="h-[200px] w-[200px] shrink-0 animate-pulse rounded-full bg-slate-100" />
+          <div className="grid w-full grid-cols-2 gap-2.5 sm:w-auto sm:min-w-[260px]">
+            {segments.map((s) => (
+              <div key={s.key} className="h-[86px] animate-pulse rounded-xl bg-slate-100" />
+            ))}
+          </div>
+        </div>
+      ) : total === 0 ? (
+        <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-slate-400">
+          <PieChart size={30} className="opacity-30" />
+          <p className="text-sm font-medium">{tCommon("feedback.noData")}</p>
+        </div>
       ) : (
-        <p className="mt-3 text-xl font-extrabold text-dark-navy sm:text-2xl">{value}</p>
+        <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:justify-around">
+          {/* Donut */}
+          <div className="relative shrink-0" style={{ width: DONUT_SIZE, height: DONUT_SIZE }}>
+            <svg
+              width={DONUT_SIZE}
+              height={DONUT_SIZE}
+              viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+              className="-rotate-90 overflow-visible"
+            >
+              <circle
+                cx={DONUT_SIZE / 2}
+                cy={DONUT_SIZE / 2}
+                r={DONUT_RADIUS}
+                fill="none"
+                stroke="#eef2f6"
+                strokeWidth={DONUT_STROKE}
+              />
+              {segments.map((s) => {
+                if (s.value <= 0) return null;
+                const fraction = s.value / total;
+                const gap = segments.filter((x) => x.value > 0).length > 1 ? 3 : 0;
+                const dash = Math.max(fraction * DONUT_CIRCUMFERENCE - gap, 0);
+                const dashOffset = -cumulative;
+                cumulative += fraction * DONUT_CIRCUMFERENCE;
+                const isHovered = hoveredKey === s.key;
+                const isDimmed = hoveredKey !== null && !isHovered;
+
+                return (
+                  <circle
+                    key={s.key}
+                    cx={DONUT_SIZE / 2}
+                    cy={DONUT_SIZE / 2}
+                    r={DONUT_RADIUS}
+                    fill="none"
+                    stroke={s.color}
+                    strokeWidth={isHovered ? DONUT_STROKE + 6 : DONUT_STROKE}
+                    strokeDasharray={`${dash} ${DONUT_CIRCUMFERENCE - dash}`}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    className="cursor-pointer transition-all duration-200"
+                    style={{ opacity: isDimmed ? 0.35 : 1 }}
+                    onMouseEnter={() => setHoveredKey(s.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                  />
+                );
+              })}
+            </svg>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <p className="text-2xl font-extrabold text-dark-navy">
+                {(hoveredKey
+                  ? segments.find((s) => s.key === hoveredKey)?.value ?? total
+                  : total
+                ).toLocaleString()}
+              </p>
+              <p className="max-w-[110px] truncate text-[11px] font-semibold text-text-light">
+                {hoveredKey
+                  ? segments.find((s) => s.key === hoveredKey)?.label
+                  : t("stats.overviewTotal")}
+              </p>
+            </div>
+          </div>
+
+          {/* Cards */}
+          <div className="grid w-full grid-cols-2 gap-2.5 sm:w-auto sm:min-w-[260px]">
+            {segments.map((s) => {
+              const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+              const isHovered = hoveredKey === s.key;
+              const Icon = s.icon;
+
+              return (
+                <button
+                  type="button"
+                  key={s.key}
+                  onMouseEnter={() => setHoveredKey(s.key)}
+                  onMouseLeave={() => setHoveredKey(null)}
+                  className={`flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all duration-200 ${
+                    isHovered
+                      ? "-translate-y-0.5 border-transparent shadow-md"
+                      : "border-border-color shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+                  }`}
+                  style={
+                    isHovered ? { boxShadow: `0 10px 20px -8px ${s.color}66` } : undefined
+                  }
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style={{ backgroundColor: `${s.color}1a` }}
+                    >
+                      <Icon size={16} style={{ color: s.color }} />
+                    </span>
+                    <span className="text-[11px] font-bold" style={{ color: s.color }}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-lg font-extrabold leading-tight text-dark-navy">
+                      {s.value.toLocaleString()}
+                    </p>
+                    <p className="truncate text-[11px] font-semibold text-text-light">
+                      {s.label}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
-      <p className="mt-1 text-sm text-text-light">{label}</p>
     </div>
   );
 }
@@ -755,39 +891,19 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard
-          icon={Users}
-          label={t("stats.totalPatients")}
-          value={patientsTotal.toLocaleString()}
-          color="bg-[#35a8f5]"
-          loading={patientsLoading}
-        />
-        <StatCard
-          icon={Calendar}
-          label={t("stats.todayAppointments")}
-          value={todayCount}
-          color="bg-violet-500"
-          loading={aptsLoading}
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label={t("stats.completedCancelled")}
-          value={`${completedCount} / ${cancelledCount}`}
-          color="bg-emerald-500"
-          loading={aptsLoading}
-        />
-        {isStaffAdmin && (
-          <StatCard
-            icon={Stethoscope}
-            label={t("stats.doctors")}
-            value={doctorsTotal}
-            color="bg-amber-500"
-            loading={doctorsLoading}
-          />
-        )}
-      </div>
+      {/* Stats overview donut */}
+      <StatsDonutChart
+        loading={patientsLoading || aptsLoading || (isStaffAdmin && doctorsLoading)}
+        segments={[
+          { key: "patients", label: t("stats.totalPatients"), value: patientsTotal, color: "#35a8f5", icon: Users },
+          { key: "appointments", label: t("stats.todayAppointments"), value: todayCount, color: "#8b5cf6", icon: Calendar },
+          { key: "completed", label: t("stats.completed"), value: completedCount, color: "#10b981", icon: CheckCircle2 },
+          { key: "cancelled", label: t("stats.cancelled"), value: cancelledCount, color: "#ef4444", icon: XCircle },
+          ...(isStaffAdmin
+            ? [{ key: "doctors", label: t("stats.doctors"), value: doctorsTotal, color: "#f59e0b", icon: Stethoscope }]
+            : []),
+        ]}
+      />
 
       {/*
         Revenue + Today appointments
@@ -911,8 +1027,12 @@ export default function DashboardPage() {
         )}
 
         {/* Today appointments */}
-        <div className="relative min-h-[320px] lg:min-h-0">
-          <div className="flex flex-col rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5 lg:absolute lg:inset-0">
+        <div className={`relative min-h-[320px] ${isStaffAdmin ? "lg:min-h-0" : ""}`}>
+          <div
+            className={`flex flex-col rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5 ${
+              isStaffAdmin ? "lg:absolute lg:inset-0" : ""
+            }`}
+          >
             <div className="mb-4 flex shrink-0 items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
