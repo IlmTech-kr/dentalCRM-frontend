@@ -147,3 +147,13 @@ export interface CreateRecurringExpenseDto {
 export interface UpdateRecurringExpenseDto extends CreateRecurringExpenseDto {
   id: string;
 }
+
+export interface RecurringExpenseTotalByCurrency {
+  currency: Currency;
+  totalAmount: number;
+}
+
+export interface RecurringExpensesResult {
+  items: RecurringExpense[];
+  totalAmountsByCurrency: RecurringExpenseTotalByCurrency[];
+}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { Ban, Edit3, Plus, Repeat } from "lucide-react";
+import { Ban, Edit3, Plus, Repeat, Wallet } from "lucide-react";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { useGetExpenseCategories } from "@/src/features/expenses/hooks/useExpenseCategories";
@@ -233,7 +233,9 @@ export default function RecurringExpensesPage() {
   const toast = useToast();
 
   const { data: categories = [] } = useGetExpenseCategories();
-  const { data: recurringExpenses = [], isLoading } = useGetRecurringExpenses();
+  const { data, isLoading } = useGetRecurringExpenses();
+  const recurringExpenses = data?.items ?? [];
+  const totalAmountsByCurrency = data?.totalAmountsByCurrency ?? [];
   const deactivateMutation = useDeactivateRecurringExpense();
 
   const [activeOnly, setActiveOnly] = useState(false);
@@ -273,6 +275,25 @@ export default function RecurringExpensesPage() {
           {t("page.addButton")}
         </button>
       </div>
+
+      {totalAmountsByCurrency.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {totalAmountsByCurrency.map((total) => (
+            <div
+              key={total.currency}
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+            >
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-400">
+                <Wallet size={14} className="text-primary-blue" />
+                {t("summary.total", { currency: total.currency })}
+              </div>
+              <p className="mt-2 text-2xl font-black text-slate-900">
+                {formatExpenseMoney(total.totalAmount, total.currency)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
         <button

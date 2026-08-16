@@ -2,6 +2,8 @@ import { tenantHttp, getApiErrorMessage } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
 import type {
   RecurringExpense,
+  RecurringExpensesResult,
+  RecurringExpenseTotalByCurrency,
   CreateRecurringExpenseDto,
   UpdateRecurringExpenseDto,
 } from "../types";
@@ -11,22 +13,28 @@ import type {
  * to'liq ro'yxat sifatida qaraladi (getPlans/getDoctors kabi). Javob
  * shakli tasdiqlanmagan, shu sabab bir nechta variant sinaladi.
  */
-function normalizeRecurringExpensesResponse(responseData: unknown): RecurringExpense[] {
-  if (Array.isArray(responseData)) return responseData;
+function normalizeRecurringExpensesResponse(responseData: unknown): RecurringExpensesResult {
+  if (Array.isArray(responseData)) return { items: responseData, totalAmountsByCurrency: [] };
 
   const data = responseData as Record<string, unknown> | null | undefined;
-  if (Array.isArray(data?.data)) return data.data as RecurringExpense[];
-  if (Array.isArray(data?.content)) return data.content as RecurringExpense[];
-  if (Array.isArray(data?.items)) return data.items as RecurringExpense[];
-  if (Array.isArray(data?.recurringExpenses)) return data.recurringExpenses as RecurringExpense[];
+  const totalAmountsByCurrency = Array.isArray(data?.totalAmountsByCurrency)
+    ? (data.totalAmountsByCurrency as RecurringExpenseTotalByCurrency[])
+    : [];
 
-  return [];
+  if (Array.isArray(data?.recurringExpenses)) {
+    return { items: data.recurringExpenses as RecurringExpense[], totalAmountsByCurrency };
+  }
+  if (Array.isArray(data?.data)) return { items: data.data as RecurringExpense[], totalAmountsByCurrency };
+  if (Array.isArray(data?.content)) return { items: data.content as RecurringExpense[], totalAmountsByCurrency };
+  if (Array.isArray(data?.items)) return { items: data.items as RecurringExpense[], totalAmountsByCurrency };
+
+  return { items: [], totalAmountsByCurrency };
 }
 
 /**
  * GET /api/dental/recurring-expenses
  */
-export async function getRecurringExpenses(): Promise<RecurringExpense[]> {
+export async function getRecurringExpenses(): Promise<RecurringExpensesResult> {
   try {
     const http = tenantHttp();
     const response = await http.get(ENDPOINTS.recurringExpenses.list);

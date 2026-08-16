@@ -149,6 +149,9 @@
       "activeOnly": "Active only",
       "all": "All"
     },
+    "summary": {
+      "total": "Total ({currency})"
+    },
     "table": {
       "category": "Category",
       "payee": "Payee",

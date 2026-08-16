@@ -149,6 +149,9 @@
       "activeOnly": "Faqat faol",
       "all": "Barchasi"
     },
+    "summary": {
+      "total": "Jami summa ({currency})"
+    },
     "table": {
       "category": "Kategoriya",
       "payee": "Kimga",

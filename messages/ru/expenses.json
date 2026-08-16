@@ -149,6 +149,9 @@
       "activeOnly": "Только активные",
       "all": "Все"
     },
+    "summary": {
+      "total": "Общая сумма ({currency})"
+    },
     "table": {
       "category": "Категория",
       "payee": "Получатель",

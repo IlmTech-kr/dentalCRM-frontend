@@ -189,8 +189,8 @@ export default function Sidebar({
     : "lg:max-w-[180px] lg:opacity-100";
 
   useEffect(() => {
-    setOpenMenus((prev) => {
-      const next = new Set(prev);
+    setOpenMenus(() => {
+      const next = new Set<string>();
       NAV_ITEMS.forEach((item) => {
         if (item.children && pathname.startsWith(item.href)) {
           next.add(item.href);
@@ -204,15 +204,14 @@ export default function Sidebar({
     // Yig'ilgan holatda ichki menyuni ko'rsatishga joy yo'q — avval kengaytiramiz.
     if (collapsed) {
       setSidebarCollapsed(false);
-      setOpenMenus((prev) => new Set(prev).add(href));
+      setOpenMenus(new Set([href]));
       return;
     }
 
     setOpenMenus((prev) => {
-      const next = new Set(prev);
-      if (next.has(href)) next.delete(href);
-      else next.add(href);
-      return next;
+      // Accordion: bir vaqtda faqat bitta bo'lim ochiq bo'ladi.
+      if (prev.has(href)) return new Set();
+      return new Set([href]);
     });
   }
 
@@ -322,35 +321,41 @@ export default function Sidebar({
                     </span>
                   </button>
 
-                  {isOpen && (
-                    <div className="ml-8 mt-2 space-y-2">
-                      {item.children.map((child) => {
-                        const ChildIcon = child.icon;
-                        const childActive = pathname === child.href;
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            onClick={onClose}
-                            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
-                              childActive
-                                ? "bg-white text-primary-blue"
-                                : "text-white/80 hover:bg-white/15"
-                            }`}
-                          >
-                            {ChildIcon && <ChildIcon size={16} />}
-                            <span className="flex-1">{child.label}</span>
-                            {child.isNew && (
-                              <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-                                <Sparkles size={9} />
-                                {t("sidebar.newBadge")}
-                              </span>
-                            )}
-                          </Link>
-                        );
-                      })}
+                  <div
+                    className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
+                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <div className="ml-8 mt-2 space-y-2">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          const childActive = pathname === child.href;
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={onClose}
+                              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                                childActive
+                                  ? "bg-white text-primary-blue"
+                                  : "text-white/80 hover:bg-white/15"
+                              }`}
+                            >
+                              {ChildIcon && <ChildIcon size={16} />}
+                              <span className="flex-1">{child.label}</span>
+                              {child.isNew && (
+                                <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                                  <Sparkles size={9} />
+                                  {t("sidebar.newBadge")}
+                                </span>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             }
@@ -369,6 +374,14 @@ export default function Sidebar({
                 <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
                   {item.label}
                 </span>
+                {item.isNew && (
+                  <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
+                    <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                      <Sparkles size={9} className="shrink-0" />
+                      {t("sidebar.newBadge")}
+                    </span>
+                  </span>
+                )}
               </Link>
             );
           })}
