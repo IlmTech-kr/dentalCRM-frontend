@@ -16,6 +16,7 @@ export const CLINIC_ACCESS_RULES: AccessRule[] = [
   { prefix: "/ai", roles: [Role.CLINIC_ADMIN, Role.RECEPTIONIST, Role.DOCTOR, Role.ASSISTANT] },
   { prefix: "/patients", roles: [Role.SUPER_ADMIN, Role.CLINIC_ADMIN, Role.RECEPTIONIST, Role.ASSISTANT] },
   { prefix: "/appointments", roles: [Role.SUPER_ADMIN, Role.CLINIC_ADMIN, Role.RECEPTIONIST, Role.ASSISTANT] },
+  { prefix: "/treatments", roles: [Role.SUPER_ADMIN, Role.CLINIC_ADMIN, Role.DOCTOR, Role.ASSISTANT] },
 ];
 
 export const SUPERADMIN_ACCESS_RULES: AccessRule[] = [];

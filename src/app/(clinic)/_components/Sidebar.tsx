@@ -61,7 +61,7 @@ type RoleFlags = {
 
 function buildNavItems(
   t: (key: string) => string,
-  { isStaffAdmin, isDoctor }: RoleFlags
+  { isStaffAdmin, isDoctor, isReceptionist }: RoleFlags
 ): NavItem[] {
   const canSeeDoctorsSection = isStaffAdmin;
 
@@ -108,7 +108,9 @@ function buildNavItems(
   if (!isDoctor) {
     items.push({ href: "/appointments", label: t("sidebar.navAppointments"), icon: CalendarDays });
   }
-  items.push({ href: "/treatments", label: t("sidebar.navTreatments"), icon: Activity });
+  if (!isReceptionist) {
+    items.push({ href: "/treatments", label: t("sidebar.navTreatments"), icon: Activity });
+  }
 
   if (isStaffAdmin) {
     items.push({ href: "/procedures", label: t("sidebar.navProcedures"), icon: BadgeDollarSign });
