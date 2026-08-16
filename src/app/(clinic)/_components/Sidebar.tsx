@@ -32,6 +32,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/src/components/shared/BrandLogo";
+import CollapsedTooltip from "@/src/components/layout/CollapsedTooltip";
 import { useAuthStore } from "@/src/store/auth.store";
 import { useUiStore } from "@/src/store/ui.store";
 
@@ -239,12 +240,12 @@ export default function Sidebar({
         {/* Logo */}
         <div
           className={`mb-8 flex items-center justify-between px-2 ${
-            collapsed ? "lg:justify-center" : "lg:justify-between"
+            collapsed ? "lg:justify-center lg:px-0" : "lg:justify-between"
           }`}
         >
           <Link
             href="/dashboard"
-            className="flex min-w-0 items-center gap-3"
+            className={`flex min-w-0 items-center gap-3 ${collapsed ? "lg:hidden" : ""}`}
             onClick={onClose}
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 border border-white/30">
@@ -270,14 +271,33 @@ export default function Sidebar({
           >
             <X size={20} />
           </button>
+
+          <button
+            type="button"
+            onClick={toggleSidebarCollapsed}
+            title={collapsed ? t("sidebar.expandSidebar") : t("sidebar.collapseSidebar")}
+            className="hidden shrink-0 rounded-lg p-2 text-white/70 transition hover:bg-white/15 hover:text-white lg:flex"
+          >
+            <PanelLeftOpen
+              size={20}
+              className={`transition-transform duration-300 ${collapsed ? "rotate-0" : "rotate-180"}`}
+            />
+          </button>
         </div>
 
         <p
-          className={`mb-3 min-w-0 overflow-hidden whitespace-nowrap px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40 transition-all duration-300 ${labelClass}`}
+          className={`mb-3 min-w-0 overflow-hidden whitespace-nowrap px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40 transition-all duration-300 ${labelClass} ${
+            collapsed ? "lg:hidden" : ""
+          }`}
         >
           {t("sidebar.mainMenu")}
         </p>
-        <nav className="space-y-1">
+        {collapsed && (
+          <div className="mb-3 hidden justify-center lg:flex">
+            <span className="h-1 w-1 rounded-full bg-white/30" />
+          </div>
+        )}
+        <nav className="mb-auto space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
@@ -285,127 +305,108 @@ export default function Sidebar({
 
             if (item.children) {
               return (
-                <div key={item.href}>
-                  <button
-                    type="button"
-                    onClick={() => toggleMenu(item.href)}
-                    title={collapsed ? item.label : undefined}
-                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
-                      collapsed ? "lg:justify-center lg:px-0" : "lg:justify-between"
-                    } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
-                  >
-                    <span
-                      className={`flex items-center gap-3 transition-all duration-300 ${
-                        collapsed ? "lg:gap-0" : "lg:gap-3"
-                      }`}
+                <CollapsedTooltip key={item.href} label={item.label} disabled={!collapsed}>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => toggleMenu(item.href)}
+                      className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
+                        collapsed ? "lg:justify-center lg:px-0" : "lg:justify-between"
+                      } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
                     >
-                      <Icon size={20} className="shrink-0" />
-                      <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
-                        {item.label}
-                      </span>
-                      {item.isNew && (
-                        <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
-                          <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-                            <Sparkles size={9} className="shrink-0" />
-                            {t("sidebar.newBadge")}
-                          </span>
+                      <span
+                        className={`flex items-center gap-3 transition-all duration-300 ${
+                          collapsed ? "lg:gap-0" : "lg:gap-3"
+                        }`}
+                      >
+                        <Icon size={20} className="shrink-0" />
+                        <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
+                          {item.label}
                         </span>
-                      )}
-                    </span>
-                    <span
-                      className={`min-w-0 overflow-hidden transition-all duration-300 ${
-                        collapsed ? "lg:max-w-0 lg:opacity-0" : "lg:max-w-[24px] lg:opacity-100"
+                        {item.isNew && (
+                          <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
+                            <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                              <Sparkles size={9} className="shrink-0" />
+                              {t("sidebar.newBadge")}
+                            </span>
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={`min-w-0 overflow-hidden transition-all duration-300 ${
+                          collapsed ? "lg:max-w-0 lg:opacity-0" : "lg:max-w-[24px] lg:opacity-100"
+                        }`}
+                      >
+                        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                      </span>
+                    </button>
+
+                    <div
+                      className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
+                        isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                       }`}
                     >
-                      {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                    </span>
-                  </button>
-
-                  <div
-                    className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
-                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                    }`}
-                  >
-                    <div className="min-h-0 overflow-hidden">
-                      <div className="ml-8 mt-2 space-y-2">
-                        {item.children.map((child) => {
-                          const ChildIcon = child.icon;
-                          const childActive = pathname === child.href;
-                          return (
-                            <Link
-                              key={child.href}
-                              href={child.href}
-                              onClick={onClose}
-                              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
-                                childActive
-                                  ? "bg-white text-primary-blue"
-                                  : "text-white/80 hover:bg-white/15"
-                              }`}
-                            >
-                              {ChildIcon && <ChildIcon size={16} />}
-                              <span className="flex-1">{child.label}</span>
-                              {child.isNew && (
-                                <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-                                  <Sparkles size={9} />
-                                  {t("sidebar.newBadge")}
-                                </span>
-                              )}
-                            </Link>
-                          );
-                        })}
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="ml-8 mt-2 space-y-2">
+                          {item.children.map((child) => {
+                            const ChildIcon = child.icon;
+                            const childActive = pathname === child.href;
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={onClose}
+                                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                                  childActive
+                                    ? "bg-white text-primary-blue"
+                                    : "text-white/80 hover:bg-white/15"
+                                }`}
+                              >
+                                {ChildIcon && <ChildIcon size={16} />}
+                                <span className="flex-1">{child.label}</span>
+                                {child.isNew && (
+                                  <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                                    <Sparkles size={9} />
+                                    {t("sidebar.newBadge")}
+                                  </span>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </CollapsedTooltip>
               );
             }
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                title={collapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
-                  collapsed ? "lg:justify-center lg:gap-0 lg:px-0" : ""
-                } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
-              >
-                <Icon size={20} className="shrink-0" />
-                <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
-                  {item.label}
-                </span>
-                {item.isNew && (
-                  <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
-                    <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-                      <Sparkles size={9} className="shrink-0" />
-                      {t("sidebar.newBadge")}
-                    </span>
+              <CollapsedTooltip key={item.href} label={item.label} disabled={!collapsed}>
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-300 ${
+                    collapsed ? "lg:justify-center lg:gap-0 lg:px-0" : ""
+                  } ${active ? "bg-white text-primary-blue" : "text-white/90 hover:bg-white/15"}`}
+                >
+                  <Icon size={20} className="shrink-0" />
+                  <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
+                    {item.label}
                   </span>
-                )}
-              </Link>
+                  {item.isNew && (
+                    <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
+                      <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                        <Sparkles size={9} className="shrink-0" />
+                        {t("sidebar.newBadge")}
+                      </span>
+                    </span>
+                  )}
+                </Link>
+              </CollapsedTooltip>
             );
           })}
         </nav>
-
-        <button
-          type="button"
-          onClick={toggleSidebarCollapsed}
-          title={collapsed ? t("sidebar.expandSidebar") : t("sidebar.collapseSidebar")}
-          className={`mt-auto hidden shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white/80 transition-all duration-300 hover:bg-white/15 hover:text-white lg:flex ${
-            collapsed ? "lg:justify-center lg:px-0" : ""
-          }`}
-        >
-          <PanelLeftOpen size={20} className={`shrink-0 transition-transform duration-300 ${collapsed ? "rotate-0" : "rotate-180"}`} />
-          <span className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${labelClass}`}>
-            {t("sidebar.collapseSidebar")}
-          </span>
-          <span className={`min-w-0 overflow-hidden transition-all duration-300 ${labelClass}`}>
-            <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border border-white/25 bg-primary-blue-dark px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
-              <Sparkles size={9} className="shrink-0" />
-              {t("sidebar.newBadge")}
-            </span>
-          </span>
-        </button>
       </aside>
     </>
   );
