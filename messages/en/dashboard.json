@@ -51,7 +51,8 @@
       "countSummaryTitle": "Course count summary",
       "totalCoursePrice": "Total course price",
       "paidAmount": "Paid amount",
-      "unpaidAmount": "Unpaid amount"
+      "unpaidAmount": "Unpaid amount",
+      "periodHint": "Same period as Revenue: {period}"
     }
   },
   "revenue": {

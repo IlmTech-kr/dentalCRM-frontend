@@ -51,7 +51,8 @@
       "countSummaryTitle": "Kurslar soni xulosasi",
       "totalCoursePrice": "Jami kurs narxi",
       "paidAmount": "To'langan summa",
-      "unpaidAmount": "To'lanmagan summa"
+      "unpaidAmount": "To'lanmagan summa",
+      "periodHint": "Daromad bilan bir xil davr: {period}"
     }
   },
   "revenue": {

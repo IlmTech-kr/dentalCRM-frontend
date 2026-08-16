@@ -182,5 +182,40 @@
       "planCancelled": "Plan cancelled",
       "genericError": "An error occurred"
     }
+  },
+  "socials": {
+    "page": {
+      "title": "Socials",
+      "subtitle": "Manage the social links shown on your public page"
+    },
+    "testNotice": "Frontend-only preview for now — links are saved in this browser only, no backend yet.",
+    "form": {
+      "title": "Add a link",
+      "platformLabel": "Platform",
+      "urlLabel": "URL",
+      "urlPlaceholder": "https://...",
+      "labelLabel": "Label (optional)",
+      "labelPlaceholder": "Custom name shown instead of the platform name",
+      "addButton": "Add link"
+    },
+    "list": {
+      "title": "Your links",
+      "empty": "No links yet — add your first one above.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "delete": "Delete"
+    },
+    "display": {
+      "title": "Public page style",
+      "subtitle": "Choose how links appear on your public page",
+      "list": "List",
+      "circle": "Circle",
+      "openPublicPage": "Open public page"
+    },
+    "toast": {
+      "added": "Link added",
+      "removed": "Link removed",
+      "invalidUrl": "Enter a valid URL"
+    }
   }
 }

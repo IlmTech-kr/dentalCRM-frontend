@@ -51,7 +51,8 @@
       "countSummaryTitle": "Сводка по количеству курсов",
       "totalCoursePrice": "Общая стоимость курсов",
       "paidAmount": "Оплаченная сумма",
-      "unpaidAmount": "Неоплаченная сумма"
+      "unpaidAmount": "Неоплаченная сумма",
+      "periodHint": "Тот же период, что и выручка: {period}"
     }
   },
   "revenue": {

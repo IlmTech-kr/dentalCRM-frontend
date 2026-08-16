@@ -182,5 +182,40 @@
       "planCancelled": "Tarif bekor qilindi",
       "genericError": "Xatolik yuz berdi"
     }
+  },
+  "socials": {
+    "page": {
+      "title": "Ijtimoiy tarmoqlar",
+      "subtitle": "Ommaviy sahifangizda ko'rsatiladigan havolalarni boshqaring"
+    },
+    "testNotice": "Hozircha faqat frontend ko'rinishi — havolalar shu brauzerda saqlanadi, backend hali yo'q.",
+    "form": {
+      "title": "Havola qo'shish",
+      "platformLabel": "Platforma",
+      "urlLabel": "URL",
+      "urlPlaceholder": "https://...",
+      "labelLabel": "Nom (ixtiyoriy)",
+      "labelPlaceholder": "Platforma nomi o'rniga ko'rsatiladigan nom",
+      "addButton": "Havola qo'shish"
+    },
+    "list": {
+      "title": "Havolalaringiz",
+      "empty": "Hali havolalar yo'q — yuqoridan birinchisini qo'shing.",
+      "moveUp": "Yuqoriga",
+      "moveDown": "Pastga",
+      "delete": "O'chirish"
+    },
+    "display": {
+      "title": "Ommaviy sahifa ko'rinishi",
+      "subtitle": "Havolalar ommaviy sahifada qanday ko'rinishini tanlang",
+      "list": "Ro'yxat",
+      "circle": "Doira",
+      "openPublicPage": "Ommaviy sahifani ochish"
+    },
+    "toast": {
+      "added": "Havola qo'shildi",
+      "removed": "Havola o'chirildi",
+      "invalidUrl": "To'g'ri URL kiriting"
+    }
   }
 }

@@ -28,6 +28,7 @@ import type {
   RevenueResponse,
 } from "@/src/features/statistics/services/statistics.service";
 import DentalLoader from "@/src/components/ui/DentalLoader";
+import SegmentedControl from "@/src/components/ui/SegmentedControl";
 
 // ---------------------------------------------------------------------------
 // Date helpers (no date-fns)
@@ -165,34 +166,17 @@ function TimeRangeControl({
 }) {
   const t = useTranslations("dashboard");
 
-  const options: { key: OverviewRange; label: string }[] = [
-    { key: "today", label: t("stats.rangeToday") },
-    { key: "week", label: t("stats.rangeWeek") },
-    { key: "month", label: t("stats.rangeMonth") },
-  ];
-
   return (
-    <div
-      role="group"
-      aria-label={t("stats.rangeLabel")}
-      className="inline-flex items-center gap-0.5 rounded-xl border border-border-color bg-slate-50 p-1"
-    >
-      {options.map((opt) => (
-        <button
-          key={opt.key}
-          type="button"
-          aria-pressed={value === opt.key}
-          onClick={() => onChange(opt.key)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
-            value === opt.key
-              ? "bg-white text-primary-blue-dark shadow-sm"
-              : "text-text-light hover:text-dark-navy"
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      value={value}
+      onChange={onChange}
+      ariaLabel={t("stats.rangeLabel")}
+      options={[
+        { key: "today", label: t("stats.rangeToday") },
+        { key: "week", label: t("stats.rangeWeek") },
+        { key: "month", label: t("stats.rangeMonth") },
+      ]}
+    />
   );
 }
 
@@ -1013,8 +997,7 @@ function CoursePaymentCard({ summary }: { summary: CoursePaymentSummary }) {
   );
 }
 
-const COURSE_PAYMENT_TABS = ["USD", "UZS"] as const;
-type CoursePaymentCurrency = (typeof COURSE_PAYMENT_TABS)[number];
+type CoursePaymentCurrency = "USD" | "UZS";
 
 /**
  * USD va UZS tablari doim ko'rinadi (ikkalasi ham "asosiy" valyutalar
@@ -1022,16 +1005,22 @@ type CoursePaymentCurrency = (typeof COURSE_PAYMENT_TABS)[number];
  * shartli ko'rsatilmaydi, aks holda foydalanuvchi tab borligini bilmaydi.
  * Tanlangan valyutada ma'lumot yo'q bo'lsa, o'sha tab ichida (butun
  * bo'lim emas) "no data" holati ko'rsatiladi — soxta/bo'sh chart chizilmaydi.
+ *
+ * Range (Day/Week/Month/Year) — bo'lim endi Revenue kartasidan MUSTAQIL,
+ * o'z sana oralig'i va so'rovi bilan ishlaydi (DashboardPage'da alohida
+ * useRevenue chaqiruvi).
  */
 function CoursePaymentsSection({
   usd,
   uzs,
+  periodLabel,
   loading,
   error,
   onRetry,
 }: {
   usd?: CoursePaymentSummary;
   uzs?: CoursePaymentSummary;
+  periodLabel?: string;
   loading?: boolean;
   error?: boolean;
   onRetry?: () => void;
@@ -1044,10 +1033,6 @@ function CoursePaymentsSection({
     USD: usd,
     UZS: uzs,
   };
-  const tabLabel: Record<CoursePaymentCurrency, string> = {
-    USD: t("stats.coursePayments.usdTitle"),
-    UZS: t("stats.coursePayments.uzsTitle"),
-  };
   const activeSummary = summaryByCurrency[activeTab];
 
   return (
@@ -1057,30 +1042,25 @@ function CoursePaymentsSection({
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
             <PieChart size={17} className="text-primary-blue" aria-hidden="true" />
           </span>
-          <h2 className="font-extrabold text-dark-navy">{t("stats.coursePayments.title")}</h2>
+          <div>
+            <h2 className="font-extrabold text-dark-navy">{t("stats.coursePayments.title")}</h2>
+            {periodLabel && (
+              <p className="text-[11px] font-medium text-text-light">
+                {t("stats.coursePayments.periodHint", { period: periodLabel })}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div
-          role="group"
-          aria-label={t("stats.coursePayments.title")}
-          className="inline-flex items-center gap-0.5 rounded-xl border border-border-color bg-slate-50 p-1"
-        >
-          {COURSE_PAYMENT_TABS.map((currency) => (
-            <button
-              key={currency}
-              type="button"
-              aria-pressed={activeTab === currency}
-              onClick={() => setActiveTab(currency)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
-                activeTab === currency
-                  ? "bg-white text-primary-blue-dark shadow-sm"
-                  : "text-text-light hover:text-dark-navy"
-              }`}
-            >
-              {tabLabel[currency]}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={activeTab}
+          onChange={setActiveTab}
+          ariaLabel={t("stats.coursePayments.title")}
+          options={[
+            { key: "USD", label: t("stats.coursePayments.usdTitle") },
+            { key: "UZS", label: t("stats.coursePayments.uzsTitle") },
+          ]}
+        />
       </div>
 
       {loading ? (
@@ -1435,9 +1415,7 @@ export default function DashboardPage() {
     refetch: refetchRecurringExpenses,
   } = useGetRecurringExpenses({ enabled: isStaffAdmin });
 
-  // Grafik uchun — tanlangan davr. includeCourseDetails=true — Course
-  // Payments (USD/UZS) bo'limi shu javobdagi coursePaymentSummaries'dan
-  // o'qiydi, alohida so'rov yubormaydi (bir xil sana oralig'i/filtr).
+  // Grafik uchun — tanlangan davr
   const {
     data: revenueData,
     isLoading: revenueLoading,
@@ -1450,6 +1428,10 @@ export default function DashboardPage() {
     filter: revenueFilter,
     sort: "PERIOD",
     direction: "ASC",
+    // Course payments (USD/UZS) bo'limi shu javobdagi coursePaymentSummaries'dan
+    // o'qiydi — Revenue kartasi bilan BIR XIL fromDate/toDate/filter (alohida
+    // so'rov/holat shart emas: `filter` backendda faqat grafik nuqtalarini
+    // guruhlash uchun, DAY/MONTH/YEAR'dan tashqari qiymat qabul qilmaydi).
     includeCourseDetails: true,
     enabled: isStaffAdmin && Boolean(fromDate && toDate),
   });
@@ -1577,6 +1559,12 @@ export default function DashboardPage() {
       ? t("revenue.cardMonth")
       : t("revenue.cardYear");
 
+  // Course Payments — Revenue kartasi bilan bir xil oraliq/filtrni ko'rsatadi
+  // (chunki xuddi shu so'rovdan o'qiydi).
+  const coursePaymentsPeriodLabel = isCustomRange
+    ? `${fromDate} — ${toDate}`
+    : activePeriodLabel;
+
   // --------------------------- Render ---------------------------
 
   return (
@@ -1616,6 +1604,7 @@ export default function DashboardPage() {
         <CoursePaymentsSection
           usd={usdCoursePayments}
           uzs={uzsCoursePayments}
+          periodLabel={coursePaymentsPeriodLabel}
           loading={revenueLoading}
           error={revenueIsError}
           onRetry={refetchRevenue}
