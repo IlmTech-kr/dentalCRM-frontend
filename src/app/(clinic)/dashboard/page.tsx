@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -8,6 +9,7 @@ import {
   CheckCircle2, XCircle,
   Clock, BarChart3,
   Wallet, TrendingUp, Percent, PieChart,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +54,26 @@ function startOfYearYMD() {
   const d = new Date();
   d.setMonth(0, 1);
   return toYMD(d);
+}
+
+function startOfWeekYMD() {
+  const d = new Date();
+  const dow = d.getDay(); // 0 (Sun) .. 6 (Sat)
+  const diffToMonday = dow === 0 ? 6 : dow - 1;
+  d.setDate(d.getDate() - diffToMonday);
+  return toYMD(d);
+}
+
+/** `from`..`to` (inklyuziv) oralig'idagi har bir kunni YYYY-MM-DD shaklida qaytaradi. */
+function enumerateDatesYMD(fromYMD: string, toYMDStr: string): string[] {
+  const dates: string[] = [];
+  const cur = new Date(`${fromYMD}T00:00:00`);
+  const end = new Date(`${toYMDStr}T00:00:00`);
+  while (cur <= end) {
+    dates.push(toYMD(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
 }
 
 /** Filtr turiga mos default sana oralig'ini qaytaradi. */
@@ -132,99 +154,272 @@ function getDoctorFullName(doctor: any) {
 }
 
 // ---------------------------------------------------------------------------
-// Stats donut chart
+// Overview KPI row
 // ---------------------------------------------------------------------------
 
-type DonutSegment = {
+type OverviewRange = "today" | "week" | "month";
+
+type StatHint = {
+  text: string;
+  href?: string;
+  actionLabel?: string;
+};
+
+type StatTileData = {
   key: string;
   label: string;
   value: number;
   color: string;
   icon: LucideIcon;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+  hint?: StatHint;
 };
 
-const DONUT_SIZE = 200;
-const DONUT_STROKE = 24;
-const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE * 2) / 2;
-const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+function StatTile({ label, value, color, icon: Icon, loading, error, onRetry, hint }: Omit<StatTileData, "key">) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
 
-function StatsDonutChart({
-  segments,
-  loading,
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border border-border-color bg-white p-4 sm:p-5">
+        <div className="h-9 w-9 animate-pulse rounded-lg bg-slate-100" />
+        <div className="space-y-1.5">
+          <div className="h-6 w-14 animate-pulse rounded bg-slate-100" />
+          <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border-color bg-white p-4 sm:p-5">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        style={{ backgroundColor: `${color}1a` }}
+      >
+        <Icon size={17} style={{ color }} aria-hidden="true" />
+      </span>
+
+      {error ? (
+        <div>
+          <p className="text-xs font-semibold text-danger-color">{tCommon("feedback.error")}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary-blue hover:underline"
+          >
+            <RefreshCw size={12} aria-hidden="true" />
+            {t("stats.retry")}
+          </button>
+        </div>
+      ) : (
+        <div>
+          <p className="text-2xl font-extrabold leading-tight tabular-nums text-dark-navy">
+            {value.toLocaleString()}
+          </p>
+          <p className="mt-0.5 text-xs font-semibold text-text-light">{label}</p>
+          {value === 0 && hint && (
+            <p className="mt-1.5 text-[11px] leading-snug text-text-light">
+              {hint.text}
+              {hint.href && hint.actionLabel && (
+                <>
+                  {" "}
+                  <Link href={hint.href} className="font-bold text-primary-blue hover:underline">
+                    {hint.actionLabel}
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TimeRangeControl({
+  value,
+  onChange,
 }: {
-  segments: DonutSegment[];
+  value: OverviewRange;
+  onChange: (v: OverviewRange) => void;
+}) {
+  const t = useTranslations("dashboard");
+
+  const options: { key: OverviewRange; label: string }[] = [
+    { key: "today", label: t("stats.rangeToday") },
+    { key: "week", label: t("stats.rangeWeek") },
+    { key: "month", label: t("stats.rangeMonth") },
+  ];
+
+  return (
+    <div
+      role="group"
+      aria-label={t("stats.rangeLabel")}
+      className="inline-flex items-center gap-0.5 rounded-xl border border-border-color bg-slate-50 p-1"
+    >
+      {options.map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          aria-pressed={value === opt.key}
+          onClick={() => onChange(opt.key)}
+          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
+            value === opt.key
+              ? "bg-white text-primary-blue-dark shadow-sm"
+              : "text-text-light hover:text-dark-navy"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const STATUS_DONUT_CONFIG: { key: string; color: string }[] = [
+  { key: "SCHEDULED", color: "#3b82f6" },
+  { key: "IN_PROGRESS", color: "#f59e0b" },
+  { key: "COMPLETED", color: "#10b981" },
+  { key: "CANCELLED", color: "#ef4444" },
+  { key: "NO_SHOW", color: "#94a3b8" },
+];
+
+const STATUS_DONUT_SIZE = 132;
+const STATUS_DONUT_STROKE = 18;
+const STATUS_DONUT_RADIUS = (STATUS_DONUT_SIZE - STATUS_DONUT_STROKE) / 2;
+const STATUS_DONUT_CIRCUMFERENCE = 2 * Math.PI * STATUS_DONUT_RADIUS;
+
+/**
+ * Har bir segment uchun SVG dash/dashOffset'ni hisoblaydi. Alohida modul
+ * darajasidagi funksiya sifatida — komponent render tanasi ichida `let`
+ * o'zgaruvchini `.map()` callback'i orqali mutatsiya qilish
+ * react-hooks/immutability qoidasini buzadi (eski donutdagi bug shu edi).
+ */
+function computeDonutSegments<T extends { value: number }>(
+  segments: T[],
+  total: number,
+  circumference: number
+): (T & { dash: number; dashOffset: number })[] {
+  const positiveCount = segments.filter((s) => s.value > 0).length;
+  let cumulative = 0;
+  return segments.map((s) => {
+    const fraction = total > 0 ? s.value / total : 0;
+    const gap = positiveCount > 1 && s.value > 0 ? 2 : 0;
+    const dash = Math.max(fraction * circumference - gap, 0);
+    const dashOffset = -cumulative;
+    cumulative += fraction * circumference;
+    return { ...s, dash, dashOffset };
+  });
+}
+
+/**
+ * Tanlangan vaqt oralig'idagi appointments'ni status bo'yicha taqsimlaydi —
+ * eski donutdan farqli, bu yerda haqiqatan ham bir nechta segment bo'ladi
+ * (avvalgisi doim "20 Total" uchun bitta to'liq segment chizardi).
+ */
+type AppointmentLike = { status?: string };
+
+function AppointmentStatusDonut({
+  list,
+  loading,
+  error,
+  onRetry,
+}: {
+  list: AppointmentLike[];
   loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-  const total = segments.reduce((sum, s) => sum + s.value, 0);
-  let cumulative = 0;
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("appointmentStatus.scheduled"),
+    IN_PROGRESS: t("appointmentStatus.inProgress"),
+    COMPLETED: t("appointmentStatus.completed"),
+    CANCELLED: t("appointmentStatus.cancelled"),
+    NO_SHOW: t("appointmentStatus.noShow"),
+  };
+
+  const rawSegments = STATUS_DONUT_CONFIG.map((s) => ({
+    ...s,
+    label: statusLabels[s.key],
+    value: list.filter((a) => a.status === s.key).length,
+  }));
+
+  const total = rawSegments.reduce((sum, s) => sum + s.value, 0);
+  const segments = computeDonutSegments(rawSegments, total, STATUS_DONUT_CIRCUMFERENCE);
 
   return (
-    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
-          <PieChart size={17} className="text-primary-blue" />
-        </span>
-        <h2 className="font-extrabold text-dark-navy">{t("stats.overviewTitle")}</h2>
-      </div>
+    <div className="rounded-xl border border-border-color bg-white p-4 sm:p-5">
+      <p className="text-sm font-bold text-dark-navy">{t("stats.statusBreakdownTitle")}</p>
 
       {loading ? (
-        <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-around">
-          <div className="h-[200px] w-[200px] shrink-0 animate-pulse rounded-full bg-slate-100" />
-          <div className="grid w-full grid-cols-2 gap-2.5 sm:w-auto sm:min-w-[260px]">
-            {segments.map((s) => (
-              <div key={s.key} className="h-[86px] animate-pulse rounded-xl bg-slate-100" />
+        <div className="mt-4 flex items-center gap-5">
+          <div
+            className="shrink-0 animate-pulse rounded-full bg-slate-100"
+            style={{ width: STATUS_DONUT_SIZE, height: STATUS_DONUT_SIZE }}
+          />
+          <div className="flex-1 space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-3 w-full max-w-[140px] animate-pulse rounded bg-slate-100" />
             ))}
           </div>
         </div>
+      ) : error ? (
+        <div className="mt-4 flex min-h-[132px] flex-col items-center justify-center gap-2 text-slate-400">
+          <p className="text-xs font-semibold text-danger-color">{tCommon("feedback.error")}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex items-center gap-1 text-xs font-bold text-primary-blue hover:underline"
+          >
+            <RefreshCw size={12} aria-hidden="true" />
+            {t("stats.retry")}
+          </button>
+        </div>
       ) : total === 0 ? (
-        <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-slate-400">
-          <PieChart size={30} className="opacity-30" />
-          <p className="text-sm font-medium">{tCommon("feedback.noData")}</p>
+        <div className="mt-4 flex min-h-[132px] flex-col items-center justify-center gap-2 text-slate-400">
+          <PieChart size={26} className="opacity-30" aria-hidden="true" />
+          <p className="text-xs font-medium">{tCommon("feedback.noData")}</p>
         </div>
       ) : (
-        <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:justify-around">
-          {/* Donut */}
-          <div className="relative shrink-0" style={{ width: DONUT_SIZE, height: DONUT_SIZE }}>
+        <div className="mt-4 flex items-center gap-5">
+          <div className="relative shrink-0" style={{ width: STATUS_DONUT_SIZE, height: STATUS_DONUT_SIZE }}>
             <svg
-              width={DONUT_SIZE}
-              height={DONUT_SIZE}
-              viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+              width={STATUS_DONUT_SIZE}
+              height={STATUS_DONUT_SIZE}
+              viewBox={`0 0 ${STATUS_DONUT_SIZE} ${STATUS_DONUT_SIZE}`}
               className="-rotate-90 overflow-visible"
             >
               <circle
-                cx={DONUT_SIZE / 2}
-                cy={DONUT_SIZE / 2}
-                r={DONUT_RADIUS}
+                cx={STATUS_DONUT_SIZE / 2}
+                cy={STATUS_DONUT_SIZE / 2}
+                r={STATUS_DONUT_RADIUS}
                 fill="none"
                 stroke="#eef2f6"
-                strokeWidth={DONUT_STROKE}
+                strokeWidth={STATUS_DONUT_STROKE}
               />
               {segments.map((s) => {
                 if (s.value <= 0) return null;
-                const fraction = s.value / total;
-                const gap = segments.filter((x) => x.value > 0).length > 1 ? 3 : 0;
-                const dash = Math.max(fraction * DONUT_CIRCUMFERENCE - gap, 0);
-                const dashOffset = -cumulative;
-                cumulative += fraction * DONUT_CIRCUMFERENCE;
                 const isHovered = hoveredKey === s.key;
                 const isDimmed = hoveredKey !== null && !isHovered;
 
                 return (
                   <circle
                     key={s.key}
-                    cx={DONUT_SIZE / 2}
-                    cy={DONUT_SIZE / 2}
-                    r={DONUT_RADIUS}
+                    cx={STATUS_DONUT_SIZE / 2}
+                    cy={STATUS_DONUT_SIZE / 2}
+                    r={STATUS_DONUT_RADIUS}
                     fill="none"
                     stroke={s.color}
-                    strokeWidth={isHovered ? DONUT_STROKE + 6 : DONUT_STROKE}
-                    strokeDasharray={`${dash} ${DONUT_CIRCUMFERENCE - dash}`}
-                    strokeDashoffset={dashOffset}
-                    strokeLinecap="round"
+                    strokeWidth={isHovered ? STATUS_DONUT_STROKE + 4 : STATUS_DONUT_STROKE}
+                    strokeDasharray={`${s.dash} ${STATUS_DONUT_CIRCUMFERENCE - s.dash}`}
+                    strokeDashoffset={s.dashOffset}
                     className="cursor-pointer transition-all duration-200"
                     style={{ opacity: isDimmed ? 0.35 : 1 }}
                     onMouseEnter={() => setHoveredKey(s.key)}
@@ -234,67 +429,105 @@ function StatsDonutChart({
               })}
             </svg>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-2xl font-extrabold text-dark-navy">
-                {(hoveredKey
-                  ? segments.find((s) => s.key === hoveredKey)?.value ?? total
-                  : total
-                ).toLocaleString()}
+              <p className="text-lg font-extrabold tabular-nums text-dark-navy">
+                {total.toLocaleString()}
               </p>
-              <p className="max-w-[110px] truncate text-[11px] font-semibold text-text-light">
-                {hoveredKey
-                  ? segments.find((s) => s.key === hoveredKey)?.label
-                  : t("stats.overviewTotal")}
-              </p>
+              <p className="text-[10px] font-semibold text-text-light">{t("stats.appointments")}</p>
             </div>
           </div>
 
-          {/* Cards */}
-          <div className="grid w-full grid-cols-2 gap-2.5 sm:w-auto sm:min-w-[260px]">
-            {segments.map((s) => {
-              const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
-              const isHovered = hoveredKey === s.key;
-              const Icon = s.icon;
-
-              return (
-                <button
-                  type="button"
-                  key={s.key}
-                  onMouseEnter={() => setHoveredKey(s.key)}
-                  onMouseLeave={() => setHoveredKey(null)}
-                  className={`flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all duration-200 ${
-                    isHovered
-                      ? "-translate-y-0.5 border-transparent shadow-md"
-                      : "border-border-color shadow-sm hover:-translate-y-0.5 hover:shadow-md"
-                  }`}
-                  style={
-                    isHovered ? { boxShadow: `0 10px 20px -8px ${s.color}66` } : undefined
-                  }
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: `${s.color}1a` }}
-                    >
-                      <Icon size={16} style={{ color: s.color }} />
-                    </span>
-                    <span className="text-[11px] font-bold" style={{ color: s.color }}>
-                      {pct}%
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-lg font-extrabold leading-tight text-dark-navy">
-                      {s.value.toLocaleString()}
-                    </p>
-                    <p className="truncate text-[11px] font-semibold text-text-light">
-                      {s.label}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <ul className="min-w-0 flex-1 space-y-1.5">
+            {segments.map((s) => (
+              <li
+                key={s.key}
+                onMouseEnter={() => setHoveredKey(s.key)}
+                onMouseLeave={() => setHoveredKey(null)}
+                className={`flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-xs transition-colors duration-150 ${
+                  hoveredKey === s.key ? "bg-slate-50" : ""
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate font-medium text-text-light">{s.label}</span>
+                </span>
+                <span className="shrink-0 font-bold tabular-nums text-dark-navy">{s.value}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * 14 kunlik trend grafigi uchun tarixiy appointments API hali yo'q —
+ * shuning uchun aniq belgilangan placeholder. Kerakli API shakli README/PR
+ * izohida ko'rsatilgan.
+ */
+function TrendPlaceholder() {
+  const t = useTranslations("dashboard");
+
+  return (
+    <div className="mt-5 flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center text-slate-400">
+      <BarChart3 size={26} className="opacity-30" aria-hidden="true" />
+      <p className="text-sm font-bold text-slate-500">{t("stats.trendTitle")}</p>
+      <p className="max-w-sm text-xs">{t("stats.trendPlaceholder")}</p>
+    </div>
+  );
+}
+
+function OverviewCard({
+  tiles,
+  range,
+  onRangeChange,
+  statusList,
+  statusLoading,
+  statusError,
+  onStatusRetry,
+}: {
+  tiles: StatTileData[];
+  range: OverviewRange;
+  onRangeChange: (r: OverviewRange) => void;
+  statusList: AppointmentLike[];
+  statusLoading?: boolean;
+  statusError?: boolean;
+  onStatusRetry?: () => void;
+}) {
+  const t = useTranslations("dashboard");
+
+  return (
+    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+            <PieChart size={17} className="text-primary-blue" aria-hidden="true" />
+          </span>
+          <h2 className="font-extrabold text-dark-navy">{t("stats.overviewTitle")}</h2>
+        </div>
+
+        <TimeRangeControl value={range} onChange={onRangeChange} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
+        {tiles.map(({ key, ...tile }) => (
+          <StatTile key={key} {...tile} />
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <AppointmentStatusDonut
+          list={statusList}
+          loading={statusLoading}
+          error={statusError}
+          onRetry={onStatusRetry}
+        />
+        <TrendPlaceholder />
+      </div>
     </div>
   );
 }
@@ -715,6 +948,9 @@ export default function DashboardPage() {
   const [statsFromDate, setStatsFromDate] = useState<string>(startOfMonthYMD());
   const [statsToDate, setStatsToDate] = useState<string>(today);
 
+  // Overview KPI qatori uchun vaqt oralig'i — "This week" default
+  const [overviewRange, setOverviewRange] = useState<OverviewRange>("week");
+
   function handleFilterChange(filter: RevenueFilterType) {
     const range = defaultRangeFor(filter);
     setRevenueFilter(filter);
@@ -752,7 +988,12 @@ export default function DashboardPage() {
 
   // --------------------------- Queries ---------------------------
 
-  const { data: patients, isLoading: patientsLoading } = useQuery({
+  const {
+    data: patients,
+    isLoading: patientsLoading,
+    isError: patientsIsError,
+    refetch: refetchPatients,
+  } = useQuery({
     queryKey: ["patients-count"],
     queryFn: async () => {
       const res = await tenantHttp().get(`${ENDPOINTS.patients.list}?size=1`);
@@ -761,7 +1002,12 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const { data: todayApts, isLoading: aptsLoading } = useQuery({
+  const {
+    data: todayApts,
+    isLoading: aptsLoading,
+    isError: aptsIsError,
+    refetch: refetchTodayApts,
+  } = useQuery({
     queryKey: ["appointments-today", today],
     queryFn: async () => {
       const res = await tenantHttp().get(`${ENDPOINTS.appointments.byDate}?date=${today}`);
@@ -770,7 +1016,12 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const { data: doctors, isLoading: doctorsLoading } = useQuery({
+  const {
+    data: doctors,
+    isLoading: doctorsLoading,
+    isError: doctorsIsError,
+    refetch: refetchDoctors,
+  } = useQuery({
     queryKey: ["doctors-count"],
     queryFn: async () => {
       const res = await tenantHttp().get(`${ENDPOINTS.doctors.list}?limit=1`);
@@ -778,6 +1029,42 @@ export default function DashboardPage() {
     },
     retry: false,
     enabled: isStaffAdmin,
+  });
+
+  /**
+   * Overview KPI qatori uchun "This week" / "This month" — backendda
+   * appointments uchun sana-oralig'i endpointi yo'q (faqat /by-date, bitta
+   * kun). calendar/page.tsx dagi kabi har bir kun uchun alohida so'rov
+   * yuboramiz. "Today" holatida yuqoridagi todayApts qayta ishlatiladi —
+   * qo'shimcha so'rov yubormaslik uchun.
+   */
+  const overviewRangeDates = useMemo(() => {
+    if (overviewRange === "today") return [today];
+    if (overviewRange === "week") return enumerateDatesYMD(startOfWeekYMD(), today);
+    return enumerateDatesYMD(startOfMonthYMD(), today);
+  }, [overviewRange, today]);
+
+  const {
+    data: rangeApts,
+    isLoading: rangeAptsLoading,
+    isError: rangeAptsIsError,
+    refetch: refetchRangeApts,
+  } = useQuery({
+    queryKey: ["appointments-range", overviewRangeDates.join(",")],
+    queryFn: async () => {
+      const perDay = await Promise.all(
+        overviewRangeDates.map((date) =>
+          tenantHttp()
+            .get(`${ENDPOINTS.appointments.byDate}?date=${date}`)
+            .then((res) => res.data)
+        )
+      );
+      return perDay.flatMap(
+        (d: any) => (Array.isArray(d) && d) || d?.appointments || d?.content || d?.data || []
+      );
+    },
+    enabled: overviewRange !== "today",
+    retry: false,
   });
 
   // Grafik uchun — tanlangan davr
@@ -858,12 +1145,104 @@ export default function DashboardPage() {
     [];
 
   const todayCount = todayList.length;
-  const completedCount = todayList.filter((a: any) => a.status === "COMPLETED").length;
-  const cancelledCount = todayList.filter((a: any) => a.status === "CANCELLED").length;
   const patientsTotal =
     patients?.totalCount ?? patients?.totalElements ?? patients?.total ?? 0;
   const doctorsTotal =
     doctors?.totalCount ?? doctors?.totalElements ?? doctors?.total ?? 0;
+
+  // Overview KPI qatori — tanlangan vaqt oralig'iga mos ro'yxat
+  const overviewList = overviewRange === "today" ? todayList : rangeApts ?? [];
+  const overviewLoading = overviewRange === "today" ? aptsLoading : rangeAptsLoading;
+  const overviewIsError = overviewRange === "today" ? aptsIsError : rangeAptsIsError;
+  const overviewAppointmentsCount = overviewList.length;
+  const overviewCompletedCount = overviewList.filter((a: any) => a.status === "COMPLETED").length;
+  const overviewCancelledCount = overviewList.filter((a: any) => a.status === "CANCELLED").length;
+
+  function handleRetryOverviewAppointments() {
+    if (overviewRange === "today") refetchTodayApts();
+    else refetchRangeApts();
+  }
+
+  const overviewTiles: StatTileData[] = [
+    {
+      key: "patients",
+      label: t("stats.totalPatients"),
+      value: patientsTotal,
+      color: "#35a8f5",
+      icon: Users,
+      loading: patientsLoading,
+      error: patientsIsError,
+      onRetry: refetchPatients,
+      hint:
+        patientsTotal === 0
+          ? {
+              text: t("stats.noPatientsHint"),
+              href: "/patients",
+              actionLabel: t("stats.addFirstPatient"),
+            }
+          : undefined,
+    },
+    {
+      key: "appointments",
+      label: t("stats.appointments"),
+      value: overviewAppointmentsCount,
+      color: "#8b5cf6",
+      icon: Calendar,
+      loading: overviewLoading,
+      error: overviewIsError,
+      onRetry: handleRetryOverviewAppointments,
+      hint:
+        overviewAppointmentsCount === 0
+          ? {
+              text: t("stats.noAppointmentsHint"),
+              href: "/appointments",
+              actionLabel: t("stats.scheduleOne"),
+            }
+          : undefined,
+    },
+    {
+      key: "completed",
+      label: t("stats.completed"),
+      value: overviewCompletedCount,
+      color: "#10b981",
+      icon: CheckCircle2,
+      loading: overviewLoading,
+      error: overviewIsError,
+      onRetry: handleRetryOverviewAppointments,
+    },
+    {
+      key: "cancelled",
+      label: t("stats.cancelled"),
+      value: overviewCancelledCount,
+      color: "#ef4444",
+      icon: XCircle,
+      loading: overviewLoading,
+      error: overviewIsError,
+      onRetry: handleRetryOverviewAppointments,
+    },
+    ...(isStaffAdmin
+      ? [
+          {
+            key: "doctors",
+            label: t("stats.doctors"),
+            value: doctorsTotal,
+            color: "#f59e0b",
+            icon: Stethoscope,
+            loading: doctorsLoading,
+            error: doctorsIsError,
+            onRetry: refetchDoctors,
+            hint:
+              doctorsTotal === 0
+                ? {
+                    text: t("stats.noDoctorsHint"),
+                    href: "/doctors",
+                    actionLabel: t("stats.addFirstDoctor"),
+                  }
+                : undefined,
+          } satisfies StatTileData,
+        ]
+      : []),
+  ];
 
   const doctorRevenueList = doctorRevenueData ?? [];
 
@@ -891,18 +1270,15 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats overview donut */}
-      <StatsDonutChart
-        loading={patientsLoading || aptsLoading || (isStaffAdmin && doctorsLoading)}
-        segments={[
-          { key: "patients", label: t("stats.totalPatients"), value: patientsTotal, color: "#35a8f5", icon: Users },
-          { key: "appointments", label: t("stats.todayAppointments"), value: todayCount, color: "#8b5cf6", icon: Calendar },
-          { key: "completed", label: t("stats.completed"), value: completedCount, color: "#10b981", icon: CheckCircle2 },
-          { key: "cancelled", label: t("stats.cancelled"), value: cancelledCount, color: "#ef4444", icon: XCircle },
-          ...(isStaffAdmin
-            ? [{ key: "doctors", label: t("stats.doctors"), value: doctorsTotal, color: "#f59e0b", icon: Stethoscope }]
-            : []),
-        ]}
+      {/* Overview KPI qatori */}
+      <OverviewCard
+        tiles={overviewTiles}
+        range={overviewRange}
+        onRangeChange={setOverviewRange}
+        statusList={overviewList}
+        statusLoading={overviewLoading}
+        statusError={overviewIsError}
+        onStatusRetry={handleRetryOverviewAppointments}
       />
 
       {/*
