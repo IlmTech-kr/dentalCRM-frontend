@@ -28,6 +28,7 @@ import {
 
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { useCreateAppointment } from "@/src/features/appointments/hooks/useAppointments";
+import { useAuthStore } from "@/src/store/auth.store";
 import { Gender, Role } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
@@ -112,6 +113,7 @@ export default function PatientsPage() {
   const tCommon = useTranslations("common");
   const toast = useToast();
   const router = useRouter();
+  const isReceptionist = useAuthStore((state) => state.isReceptionist());
 
   const { data: patients = [], isLoading, error: patientsError } = useGetPatients();
   const { data: doctors = [] } = useGetDoctors();
@@ -309,9 +311,15 @@ const filteredPatients = useMemo(() => {
 
       const createdPatient = await createMutation.mutateAsync(payload);
       toast.success(t("toast.patientCreated"));
-
-      // Yangi patient yaratilgandan keyin — modal ichida so'raymiz
       setForm(emptyForm);
+
+      // Yangi patient yaratilgandan keyin — modal ichida so'raymiz.
+      // Receptionist davolashni boshlay olmaydi, shuning uchun bu modal
+      // unga ko'rsatilmaydi — shunchaki yopiladi.
+      if (isReceptionist) {
+        closeModal();
+        return;
+      }
       setPendingNewPatient(createdPatient);
       setModalState("start-confirm");
     } catch (error) {
@@ -371,16 +379,18 @@ const filteredPatients = useMemo(() => {
             <Eye size={16} />
           </button>
         </Tooltip>
-        <Tooltip label={t("actions.startTreatment")}>
-          <button
-            type="button"
-            onClick={() => goToTreatment(patient)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-            aria-label={t("actions.startTreatment")}
-          >
-            <Play size={16} />
-          </button>
-        </Tooltip>
+        {!isReceptionist && (
+          <Tooltip label={t("actions.startTreatment")}>
+            <button
+              type="button"
+              onClick={() => goToTreatment(patient)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+              aria-label={t("actions.startTreatment")}
+            >
+              <Play size={16} />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip label={t("actions.createAppointment")}>
           <button
             type="button"
@@ -688,16 +698,18 @@ const filteredPatients = useMemo(() => {
                     <Info label={t("info.anamnesis")} value={phoneSearchResult.anamnesis || "-"} />
                   </div>
                   <div className="flex flex-col gap-3 border-t border-border-color pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeModal();
-                        goToTreatment(phoneSearchResult);
-                      }}
-                      className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
-                    >
-                      {t("actions.startTreatment")}
-                    </button>
+                    {!isReceptionist && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeModal();
+                          goToTreatment(phoneSearchResult);
+                        }}
+                        className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
+                      >
+                        {t("actions.startTreatment")}
+                      </button>
+                    )}
                     <div className="flex gap-3">
                       <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
                         {tCommon("actions.close")}
@@ -1003,9 +1015,11 @@ const filteredPatients = useMemo(() => {
               <button type="button" onClick={closeModal} className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50">
                 {tCommon("actions.close")}
               </button>
-              <button type="button" onClick={() => goToTreatment(selectedPatient)} className="flex-1 rounded-xl bg-cyan-600 px-4 py-3 font-semibold text-white hover:bg-cyan-700">
-                {t("actions.startTreatment")}
-              </button>
+              {!isReceptionist && (
+                <button type="button" onClick={() => goToTreatment(selectedPatient)} className="flex-1 rounded-xl bg-cyan-600 px-4 py-3 font-semibold text-white hover:bg-cyan-700">
+                  {t("actions.startTreatment")}
+                </button>
+              )}
               <button type="button" onClick={() => openAppointmentModal(selectedPatient)} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
                 {t("actions.createAppointment")}
               </button>
