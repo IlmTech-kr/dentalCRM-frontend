@@ -246,6 +246,7 @@ export const ENDPOINTS = {
       filter?: "DAY" | "MONTH" | "YEAR";
       sort?: "PERIOD" | "REVENUE" | "CLINIC";
       direction?: "ASC" | "DESC";
+      includeCourseDetails?: boolean;
     }) => {
       const q = new URLSearchParams({
         fromDate: params.fromDate,
@@ -254,6 +255,9 @@ export const ENDPOINTS = {
         sort: params.sort ?? "REVENUE",
         direction: params.direction ?? "DESC",
       });
+      if (params.includeCourseDetails !== undefined) {
+        q.set("includeCourseDetails", String(params.includeCourseDetails));
+      }
       return `/api/dental/statistics/revenue?${q.toString()}`;
     },
 

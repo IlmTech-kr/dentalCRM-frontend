@@ -15,13 +15,13 @@ export const recurringExpenseKeys = {
   lists: () => [...recurringExpenseKeys.all, "list"] as const,
 };
 
-export function useGetRecurringExpenses() {
+export function useGetRecurringExpenses(options?: { enabled?: boolean }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: recurringExpenseKeys.lists(),
     queryFn: getRecurringExpenses,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
     retry: false,

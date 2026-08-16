@@ -39,13 +39,13 @@ export function useGetExpenses(params: ExpenseListParams) {
   });
 }
 
-export function useGetExpenseSummary(params: ExpenseSummaryParams) {
+export function useGetExpenseSummary(params: ExpenseSummaryParams, options?: { enabled?: boolean }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: expenseKeys.summary(params),
     queryFn: () => getExpenseSummary(params),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && (options?.enabled ?? true),
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
     retry: false,

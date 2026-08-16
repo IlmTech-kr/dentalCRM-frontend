@@ -30,7 +30,29 @@
     "scheduleOne": "Schedule one",
     "trendTitle": "Appointments — last 14 days",
     "trendPlaceholder": "Trend chart placeholder — this needs a historical appointments API (see PR notes).",
-    "statusBreakdownTitle": "Appointment status breakdown"
+    "statusBreakdownTitle": "Appointment status breakdown",
+    "assistants": "Assistants",
+    "receptionists": "Receptionists",
+    "compositionTitle": "Patients & staff",
+    "expensesTitle": "Expenses",
+    "expensesPaid": "Paid",
+    "expensesPending": "Pending",
+    "recurringExpensesLabel": "Recurring (active templates)",
+    "coursePayments": {
+      "title": "Course payments",
+      "usdTitle": "USD payments",
+      "uzsTitle": "UZS payments",
+      "statusDonutTitle": "Payment status",
+      "totalCourses": "Total courses",
+      "paid": "Paid",
+      "partiallyPaid": "Partially paid",
+      "unpaid": "Unpaid",
+      "financialSummaryTitle": "Course financial summary",
+      "countSummaryTitle": "Course count summary",
+      "totalCoursePrice": "Total course price",
+      "paidAmount": "Paid amount",
+      "unpaidAmount": "Unpaid amount"
+    }
   },
   "revenue": {
     "title": "Revenue statistics",

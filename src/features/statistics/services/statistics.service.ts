@@ -24,11 +24,27 @@ export interface RevenueCurrencyBucket {
   points: RevenuePoint[];
 }
 
+/**
+ * `includeCourseDetails=true` bo'lsa backend qo'shadi — valyuta bo'yicha
+ * kurs (treatment course) to'lovlari holati taqsimoti.
+ */
+export interface CoursePaymentSummary {
+  currency: string;
+  totalCoursePrice: number;
+  paidAmount: number;
+  unpaidAmount: number;
+  courseCount: number;
+  paidCourseCount: number;
+  partiallyPaidCourseCount: number;
+  unpaidCourseCount: number;
+}
+
 export interface RevenueResponse {
   filter: RevenueFilterType;
   fromDate: string;
   toDate: string;
   currencies: RevenueCurrencyBucket[];
+  coursePaymentSummaries?: CoursePaymentSummary[];
 }
 
 export interface RevenueByClinicItem {
@@ -45,6 +61,7 @@ export interface RevenueParams {
   filter?: RevenueFilterType;
   sort?: RevenueSortBy;
   direction?: SortDirection;
+  includeCourseDetails?: boolean;
 }
 
 /**

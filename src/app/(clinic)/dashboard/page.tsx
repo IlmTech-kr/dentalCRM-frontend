@@ -1,28 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
-  Users, Calendar, Stethoscope,
-  CheckCircle2, XCircle,
+  Calendar,
   Clock, BarChart3,
   Wallet, TrendingUp, Percent, PieChart,
   RefreshCw,
-  type LucideIcon,
 } from "lucide-react";
 
 import { tenantHttp } from "@/src/lib/api/http";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
+import { Role } from "@/src/lib/enums/enums.types";
 import { useAuthStore } from "@/src/store/auth.store";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
+import { useGetExpenseSummary } from "@/src/features/expenses/hooks/useExpenses";
+import { useGetRecurringExpenses } from "@/src/features/expenses/hooks/useRecurringExpenses";
 import {
   useRevenue,
   useDoctorRevenueStatistics,
   usePayrollSummary,
 } from "@/src/features/statistics/hooks/useStatistics";
 import type {
+  CoursePaymentSummary,
   RevenueFilterType,
   RevenueResponse,
 } from "@/src/features/statistics/services/statistics.service";
@@ -83,10 +84,6 @@ function defaultRangeFor(filter: RevenueFilterType) {
   if (filter === "DAY") return { from: today, to: today };
   if (filter === "MONTH") return { from: startOfMonthYMD(), to: today };
   return { from: startOfYearYMD(), to: today };
-}
-
-function formatDisplayDate(d: Date, months: string[]) {
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 /**
@@ -159,86 +156,6 @@ function getDoctorFullName(doctor: any) {
 
 type OverviewRange = "today" | "week" | "month";
 
-type StatHint = {
-  text: string;
-  href?: string;
-  actionLabel?: string;
-};
-
-type StatTileData = {
-  key: string;
-  label: string;
-  value: number;
-  color: string;
-  icon: LucideIcon;
-  loading?: boolean;
-  error?: boolean;
-  onRetry?: () => void;
-  hint?: StatHint;
-};
-
-function StatTile({ label, value, color, icon: Icon, loading, error, onRetry, hint }: Omit<StatTileData, "key">) {
-  const t = useTranslations("dashboard");
-  const tCommon = useTranslations("common");
-
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-border-color bg-white p-4 sm:p-5">
-        <div className="h-9 w-9 animate-pulse rounded-lg bg-slate-100" />
-        <div className="space-y-1.5">
-          <div className="h-6 w-14 animate-pulse rounded bg-slate-100" />
-          <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border-color bg-white p-4 sm:p-5">
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `${color}1a` }}
-      >
-        <Icon size={17} style={{ color }} aria-hidden="true" />
-      </span>
-
-      {error ? (
-        <div>
-          <p className="text-xs font-semibold text-danger-color">{tCommon("feedback.error")}</p>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary-blue hover:underline"
-          >
-            <RefreshCw size={12} aria-hidden="true" />
-            {t("stats.retry")}
-          </button>
-        </div>
-      ) : (
-        <div>
-          <p className="text-2xl font-extrabold leading-tight tabular-nums text-dark-navy">
-            {value.toLocaleString()}
-          </p>
-          <p className="mt-0.5 text-xs font-semibold text-text-light">{label}</p>
-          {value === 0 && hint && (
-            <p className="mt-1.5 text-[11px] leading-snug text-text-light">
-              {hint.text}
-              {hint.href && hint.actionLabel && (
-                <>
-                  {" "}
-                  <Link href={hint.href} className="font-bold text-primary-blue hover:underline">
-                    {hint.actionLabel}
-                  </Link>
-                </>
-              )}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function TimeRangeControl({
   value,
   onChange,
@@ -279,18 +196,10 @@ function TimeRangeControl({
   );
 }
 
-const STATUS_DONUT_CONFIG: { key: string; color: string }[] = [
-  { key: "SCHEDULED", color: "#3b82f6" },
-  { key: "IN_PROGRESS", color: "#f59e0b" },
-  { key: "COMPLETED", color: "#10b981" },
-  { key: "CANCELLED", color: "#ef4444" },
-  { key: "NO_SHOW", color: "#94a3b8" },
-];
-
-const STATUS_DONUT_SIZE = 132;
-const STATUS_DONUT_STROKE = 18;
-const STATUS_DONUT_RADIUS = (STATUS_DONUT_SIZE - STATUS_DONUT_STROKE) / 2;
-const STATUS_DONUT_CIRCUMFERENCE = 2 * Math.PI * STATUS_DONUT_RADIUS;
+const DONUT_SIZE = 132;
+const DONUT_STROKE = 18;
+const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
 /**
  * Har bir segment uchun SVG dash/dashOffset'ni hisoblaydi. Alohida modul
@@ -315,54 +224,46 @@ function computeDonutSegments<T extends { value: number }>(
   });
 }
 
-/**
- * Tanlangan vaqt oralig'idagi appointments'ni status bo'yicha taqsimlaydi —
- * eski donutdan farqli, bu yerda haqiqatan ham bir nechta segment bo'ladi
- * (avvalgisi doim "20 Total" uchun bitta to'liq segment chizardi).
- */
-type AppointmentLike = { status?: string };
+type CategoryDonutSegment = { key: string; color: string; label: string; value: number };
 
-function AppointmentStatusDonut({
-  list,
+/**
+ * Umumiy, qayta ishlatiladigan donut — segment + legend. AppointmentStatusDonut
+ * va PracticeCompositionDonut ikkalasi ham shu komponentdan foydalanadi
+ * (bir xil vizual tilni ikki marta yozmaslik uchun).
+ */
+function CategoryDonut({
+  title,
+  centerLabel,
+  segments: rawSegments,
   loading,
   error,
   onRetry,
+  formatValue = (v: number) => v.toLocaleString(),
 }: {
-  list: AppointmentLike[];
+  title: string;
+  centerLabel: string;
+  segments: CategoryDonutSegment[];
   loading?: boolean;
   error?: boolean;
   onRetry?: () => void;
+  formatValue?: (value: number) => string;
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-  const statusLabels: Record<string, string> = {
-    SCHEDULED: t("appointmentStatus.scheduled"),
-    IN_PROGRESS: t("appointmentStatus.inProgress"),
-    COMPLETED: t("appointmentStatus.completed"),
-    CANCELLED: t("appointmentStatus.cancelled"),
-    NO_SHOW: t("appointmentStatus.noShow"),
-  };
-
-  const rawSegments = STATUS_DONUT_CONFIG.map((s) => ({
-    ...s,
-    label: statusLabels[s.key],
-    value: list.filter((a) => a.status === s.key).length,
-  }));
-
   const total = rawSegments.reduce((sum, s) => sum + s.value, 0);
-  const segments = computeDonutSegments(rawSegments, total, STATUS_DONUT_CIRCUMFERENCE);
+  const segments = computeDonutSegments(rawSegments, total, DONUT_CIRCUMFERENCE);
 
   return (
     <div className="rounded-xl border border-border-color bg-white p-4 sm:p-5">
-      <p className="text-sm font-bold text-dark-navy">{t("stats.statusBreakdownTitle")}</p>
+      <p className="text-sm font-bold text-dark-navy">{title}</p>
 
       {loading ? (
         <div className="mt-4 flex items-center gap-5">
           <div
             className="shrink-0 animate-pulse rounded-full bg-slate-100"
-            style={{ width: STATUS_DONUT_SIZE, height: STATUS_DONUT_SIZE }}
+            style={{ width: DONUT_SIZE, height: DONUT_SIZE }}
           />
           <div className="flex-1 space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -389,20 +290,20 @@ function AppointmentStatusDonut({
         </div>
       ) : (
         <div className="mt-4 flex items-center gap-5">
-          <div className="relative shrink-0" style={{ width: STATUS_DONUT_SIZE, height: STATUS_DONUT_SIZE }}>
+          <div className="relative shrink-0" style={{ width: DONUT_SIZE, height: DONUT_SIZE }}>
             <svg
-              width={STATUS_DONUT_SIZE}
-              height={STATUS_DONUT_SIZE}
-              viewBox={`0 0 ${STATUS_DONUT_SIZE} ${STATUS_DONUT_SIZE}`}
+              width={DONUT_SIZE}
+              height={DONUT_SIZE}
+              viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
               className="-rotate-90 overflow-visible"
             >
               <circle
-                cx={STATUS_DONUT_SIZE / 2}
-                cy={STATUS_DONUT_SIZE / 2}
-                r={STATUS_DONUT_RADIUS}
+                cx={DONUT_SIZE / 2}
+                cy={DONUT_SIZE / 2}
+                r={DONUT_RADIUS}
                 fill="none"
                 stroke="#eef2f6"
-                strokeWidth={STATUS_DONUT_STROKE}
+                strokeWidth={DONUT_STROKE}
               />
               {segments.map((s) => {
                 if (s.value <= 0) return null;
@@ -412,13 +313,13 @@ function AppointmentStatusDonut({
                 return (
                   <circle
                     key={s.key}
-                    cx={STATUS_DONUT_SIZE / 2}
-                    cy={STATUS_DONUT_SIZE / 2}
-                    r={STATUS_DONUT_RADIUS}
+                    cx={DONUT_SIZE / 2}
+                    cy={DONUT_SIZE / 2}
+                    r={DONUT_RADIUS}
                     fill="none"
                     stroke={s.color}
-                    strokeWidth={isHovered ? STATUS_DONUT_STROKE + 4 : STATUS_DONUT_STROKE}
-                    strokeDasharray={`${s.dash} ${STATUS_DONUT_CIRCUMFERENCE - s.dash}`}
+                    strokeWidth={isHovered ? DONUT_STROKE + 4 : DONUT_STROKE}
+                    strokeDasharray={`${s.dash} ${DONUT_CIRCUMFERENCE - s.dash}`}
                     strokeDashoffset={s.dashOffset}
                     className="cursor-pointer transition-all duration-200"
                     style={{ opacity: isDimmed ? 0.35 : 1 }}
@@ -430,9 +331,9 @@ function AppointmentStatusDonut({
             </svg>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <p className="text-lg font-extrabold tabular-nums text-dark-navy">
-                {total.toLocaleString()}
+                {formatValue(total)}
               </p>
-              <p className="text-[10px] font-semibold text-text-light">{t("stats.appointments")}</p>
+              <p className="text-[10px] font-semibold text-text-light">{centerLabel}</p>
             </div>
           </div>
 
@@ -454,12 +355,174 @@ function AppointmentStatusDonut({
                   />
                   <span className="truncate font-medium text-text-light">{s.label}</span>
                 </span>
-                <span className="shrink-0 font-bold tabular-nums text-dark-navy">{s.value}</span>
+                <span className="shrink-0 font-bold tabular-nums text-dark-navy">
+                  {formatValue(s.value)}
+                </span>
               </li>
             ))}
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+const STATUS_DONUT_CONFIG: { key: string; color: string }[] = [
+  { key: "SCHEDULED", color: "#3b82f6" },
+  { key: "IN_PROGRESS", color: "#f59e0b" },
+  { key: "COMPLETED", color: "#10b981" },
+  { key: "CANCELLED", color: "#ef4444" },
+  { key: "NO_SHOW", color: "#94a3b8" },
+];
+
+/**
+ * Tanlangan vaqt oralig'idagi appointments'ni status bo'yicha taqsimlaydi —
+ * eski donutdan farqli, bu yerda haqiqatan ham bir nechta segment bo'ladi
+ * (avvalgisi doim "20 Total" uchun bitta to'liq segment chizardi).
+ */
+type AppointmentLike = { status?: string };
+
+function AppointmentStatusDonut({
+  list,
+  loading,
+  error,
+  onRetry,
+}: {
+  list: AppointmentLike[];
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+}) {
+  const t = useTranslations("dashboard");
+
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("appointmentStatus.scheduled"),
+    IN_PROGRESS: t("appointmentStatus.inProgress"),
+    COMPLETED: t("appointmentStatus.completed"),
+    CANCELLED: t("appointmentStatus.cancelled"),
+    NO_SHOW: t("appointmentStatus.noShow"),
+  };
+
+  const segments = STATUS_DONUT_CONFIG.map((s) => ({
+    ...s,
+    label: statusLabels[s.key],
+    value: list.filter((a) => a.status === s.key).length,
+  }));
+
+  return (
+    <CategoryDonut
+      title={t("stats.statusBreakdownTitle")}
+      centerLabel={t("stats.appointments")}
+      segments={segments}
+      loading={loading}
+      error={error}
+      onRetry={onRetry}
+    />
+  );
+}
+
+/**
+ * Klinika tarkibi — bemorlar va xodimlar (shifokor/yordamchi/registratura)
+ * roli bo'yicha. Diqqat: bemorlar soni odatda xodimlardan ancha katta
+ * bo'ladi, shuning uchun bitta segment ustunlik qilishi mumkin — lekin bu
+ * eski donutdagi kabi FAKE emas, real nisbat.
+ */
+function PracticeCompositionDonut({
+  patients,
+  doctors,
+  assistants,
+  receptionists,
+  loading,
+  error,
+  onRetry,
+}: {
+  patients: number;
+  doctors: number;
+  assistants: number;
+  receptionists: number;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+}) {
+  const t = useTranslations("dashboard");
+
+  const segments: CategoryDonutSegment[] = [
+    { key: "patients", color: "#35a8f5", label: t("stats.totalPatients"), value: patients },
+    { key: "doctors", color: "#f59e0b", label: t("stats.doctors"), value: doctors },
+    { key: "assistants", color: "#06b6d4", label: t("stats.assistants"), value: assistants },
+    { key: "receptionists", color: "#a855f7", label: t("stats.receptionists"), value: receptionists },
+  ];
+
+  return (
+    <CategoryDonut
+      title={t("stats.compositionTitle")}
+      centerLabel={t("stats.overviewTotal")}
+      segments={segments}
+      loading={loading}
+      error={error}
+      onRetry={onRetry}
+    />
+  );
+}
+
+/**
+ * Xarajatlar — tanlangan vaqt oralig'idagi to'langan/kutilayotgan summalar
+ * haqiqiy nisbat sifatida (donut). Takrorlanuvchi xarajatlar summasi sana
+ * oralig'iga BOG'LIQ EMAS (joriy faol shablonlar yig'indisi), shuning
+ * uchun donut segmentiga qo'shilmaydi — aks holda kattaligi butunlay
+ * boshqa metrika bitta segmentni ustunlik qildirib yuboradi (eski
+ * donutdagi kabi "yolg'on" nisbat hosil bo'ladi). Shuning uchun alohida
+ * qatorda ko'rsatiladi.
+ */
+function ExpensesOverviewColumn({
+  paidTotal,
+  pendingTotal,
+  recurringTotal,
+  currency,
+  loading,
+  error,
+  onRetry,
+}: {
+  paidTotal: number;
+  pendingTotal: number;
+  recurringTotal: number;
+  currency: string;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+}) {
+  const t = useTranslations("dashboard");
+
+  const segments: CategoryDonutSegment[] = [
+    { key: "paid", color: "#10b981", label: t("stats.expensesPaid"), value: paidTotal },
+    { key: "pending", color: "#f59e0b", label: t("stats.expensesPending"), value: pendingTotal },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <CategoryDonut
+        title={t("stats.expensesTitle")}
+        centerLabel={currency}
+        segments={segments}
+        loading={loading}
+        error={error}
+        onRetry={onRetry}
+        formatValue={formatMoney}
+      />
+
+      <div className="rounded-xl border border-border-color bg-white px-4 py-3 sm:px-5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-text-light">
+          {t("stats.recurringExpensesLabel")}
+        </p>
+        {loading ? (
+          <div className="mt-2 h-5 w-28 animate-pulse rounded bg-slate-100" />
+        ) : (
+          <p className="mt-1 flex items-baseline gap-1 text-base font-extrabold tabular-nums text-dark-navy">
+            {formatMoney(recurringTotal)}
+            <span className="text-xs font-semibold text-text-light">{currency}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -482,21 +545,44 @@ function TrendPlaceholder() {
 }
 
 function OverviewCard({
-  tiles,
   range,
   onRangeChange,
   statusList,
   statusLoading,
   statusError,
   onStatusRetry,
+  compositionPatients,
+  compositionDoctors,
+  compositionAssistants,
+  compositionReceptionists,
+  compositionLoading,
+  compositionError,
+  onCompositionRetry,
+  expenses,
 }: {
-  tiles: StatTileData[];
   range: OverviewRange;
   onRangeChange: (r: OverviewRange) => void;
   statusList: AppointmentLike[];
   statusLoading?: boolean;
   statusError?: boolean;
   onStatusRetry?: () => void;
+  compositionPatients: number;
+  compositionDoctors: number;
+  compositionAssistants: number;
+  compositionReceptionists: number;
+  compositionLoading?: boolean;
+  compositionError?: boolean;
+  onCompositionRetry?: () => void;
+  /** Faqat isStaffAdmin uchun — moliyaviy ma'lumot, boshqalarga ko'rsatilmaydi. */
+  expenses?: {
+    paidTotal: number;
+    pendingTotal: number;
+    recurringTotal: number;
+    currency: string;
+    loading?: boolean;
+    error?: boolean;
+    onRetry?: () => void;
+  };
 }) {
   const t = useTranslations("dashboard");
 
@@ -513,21 +599,38 @@ function OverviewCard({
         <TimeRangeControl value={range} onChange={onRangeChange} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
-        {tiles.map(({ key, ...tile }) => (
-          <StatTile key={key} {...tile} />
-        ))}
-      </div>
+      <div className={`mt-4 grid gap-4 ${expenses ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+        <PracticeCompositionDonut
+          patients={compositionPatients}
+          doctors={compositionDoctors}
+          assistants={compositionAssistants}
+          receptionists={compositionReceptionists}
+          loading={compositionLoading}
+          error={compositionError}
+          onRetry={onCompositionRetry}
+        />
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <AppointmentStatusDonut
           list={statusList}
           loading={statusLoading}
           error={statusError}
           onRetry={onStatusRetry}
         />
-        <TrendPlaceholder />
+
+        {expenses && (
+          <ExpensesOverviewColumn
+            paidTotal={expenses.paidTotal}
+            pendingTotal={expenses.pendingTotal}
+            recurringTotal={expenses.recurringTotal}
+            currency={expenses.currency}
+            loading={expenses.loading}
+            error={expenses.error}
+            onRetry={expenses.onRetry}
+          />
+        )}
       </div>
+
+      {/* <TrendPlaceholder /> */}
     </div>
   );
 }
@@ -770,6 +873,245 @@ function RevenueChart({
 }
 
 // ---------------------------------------------------------------------------
+// Course payments (USD / UZS) — coursePaymentSummaries
+// ---------------------------------------------------------------------------
+
+/** `12,340,000 UZS` / `1,250 USD` — valyuta kodi har doim ko'rsatiladi, chunki bu bo'limda bir nechta valyuta yonma-yon turadi. */
+function formatCourseMoney(amount: number | null | undefined, currency: string) {
+  const value = Number(amount) || 0;
+  return `${value.toLocaleString()} ${currency}`;
+}
+
+function SummaryRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "danger";
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
+      <span className="text-text-light">{label}</span>
+      <span
+        className={`font-bold tabular-nums ${
+          tone === "success"
+            ? "text-emerald-600"
+            : tone === "danger"
+            ? "text-danger-color"
+            : "text-dark-navy"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Bitta valyuta uchun: to'lov holati donuti (Paid/Partially paid/Unpaid —
+ * kurs SONI bo'yicha, pul emas) + moliyaviy va son bo'yicha xulosa
+ * panellari. Barcha qiymatlar `coursePaymentSummaries`dan — hech narsa
+ * `courses` massividan qayta hisoblanmaydi.
+ */
+function CoursePaymentCard({ summary }: { summary: CoursePaymentSummary }) {
+  const t = useTranslations("dashboard");
+
+  const currency = summary.currency;
+  const paidCourseCount = summary.paidCourseCount ?? 0;
+  const partiallyPaidCourseCount = summary.partiallyPaidCourseCount ?? 0;
+  const unpaidCourseCount = summary.unpaidCourseCount ?? 0;
+  const courseCount = summary.courseCount ?? 0;
+  const totalCoursePrice = summary.totalCoursePrice ?? 0;
+  const paidAmount = summary.paidAmount ?? 0;
+  const unpaidAmount = summary.unpaidAmount ?? 0;
+
+  const statusSegments: CategoryDonutSegment[] = [
+    { key: "paid", color: "#10b981", label: t("stats.coursePayments.paid"), value: paidCourseCount },
+    {
+      key: "partial",
+      color: "#f59e0b",
+      label: t("stats.coursePayments.partiallyPaid"),
+      value: partiallyPaidCourseCount,
+    },
+    { key: "unpaid", color: "#ef4444", label: t("stats.coursePayments.unpaid"), value: unpaidCourseCount },
+  ];
+
+  // Total course price = paid + unpaid, shuning uchun donut segmentiga
+  // alohida qo'shilmaydi (aks holda ikki barobar hisoblanadi) — markazdagi
+  // "total" sifatida ko'rsatiladi, xuddi statusDonut'dagi kabi.
+  const financialSegments: CategoryDonutSegment[] = [
+    { key: "paid", color: "#10b981", label: t("stats.coursePayments.paidAmount"), value: paidAmount },
+    { key: "unpaid", color: "#ef4444", label: t("stats.coursePayments.unpaidAmount"), value: unpaidAmount },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border-color bg-white p-4 sm:p-5">
+      <div className="grid gap-4 md:grid-cols-2">
+        <CategoryDonut
+          title={t("stats.coursePayments.statusDonutTitle")}
+          centerLabel={t("stats.coursePayments.totalCourses")}
+          segments={statusSegments}
+        />
+
+        <CategoryDonut
+          title={t("stats.coursePayments.financialSummaryTitle")}
+          centerLabel={currency}
+          segments={financialSegments}
+          formatValue={formatMoney}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-border-color bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">
+            {t("stats.coursePayments.countSummaryTitle")}
+          </p>
+          <div className="mt-2.5 space-y-1.5">
+            <SummaryRow label={t("stats.coursePayments.totalCourses")} value={courseCount.toLocaleString()} />
+            <SummaryRow
+              label={t("stats.coursePayments.paid")}
+              value={paidCourseCount.toLocaleString()}
+              tone="success"
+            />
+            <SummaryRow
+              label={t("stats.coursePayments.partiallyPaid")}
+              value={partiallyPaidCourseCount.toLocaleString()}
+            />
+            <SummaryRow
+              label={t("stats.coursePayments.unpaid")}
+              value={unpaidCourseCount.toLocaleString()}
+              tone="danger"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border-color bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-text-light">
+            {t("stats.coursePayments.financialSummaryTitle")}
+          </p>
+          <div className="mt-2.5 space-y-1.5">
+            <SummaryRow
+              label={t("stats.coursePayments.totalCoursePrice")}
+              value={formatCourseMoney(totalCoursePrice, currency)}
+            />
+            <SummaryRow
+              label={t("stats.coursePayments.paidAmount")}
+              value={formatCourseMoney(paidAmount, currency)}
+              tone="success"
+            />
+            <SummaryRow
+              label={t("stats.coursePayments.unpaidAmount")}
+              value={formatCourseMoney(unpaidAmount, currency)}
+              tone="danger"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const COURSE_PAYMENT_TABS = ["USD", "UZS"] as const;
+type CoursePaymentCurrency = (typeof COURSE_PAYMENT_TABS)[number];
+
+/**
+ * USD va UZS tablari doim ko'rinadi (ikkalasi ham "asosiy" valyutalar
+ * sifatida qat'iy belgilangan) — faqat mavjud bo'lgan valyutaga qarab
+ * shartli ko'rsatilmaydi, aks holda foydalanuvchi tab borligini bilmaydi.
+ * Tanlangan valyutada ma'lumot yo'q bo'lsa, o'sha tab ichida (butun
+ * bo'lim emas) "no data" holati ko'rsatiladi — soxta/bo'sh chart chizilmaydi.
+ */
+function CoursePaymentsSection({
+  usd,
+  uzs,
+  loading,
+  error,
+  onRetry,
+}: {
+  usd?: CoursePaymentSummary;
+  uzs?: CoursePaymentSummary;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+}) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const [activeTab, setActiveTab] = useState<CoursePaymentCurrency>("USD");
+
+  const summaryByCurrency: Record<CoursePaymentCurrency, CoursePaymentSummary | undefined> = {
+    USD: usd,
+    UZS: uzs,
+  };
+  const tabLabel: Record<CoursePaymentCurrency, string> = {
+    USD: t("stats.coursePayments.usdTitle"),
+    UZS: t("stats.coursePayments.uzsTitle"),
+  };
+  const activeSummary = summaryByCurrency[activeTab];
+
+  return (
+    <div className="rounded-2xl border border-border-color bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-blue/10">
+            <PieChart size={17} className="text-primary-blue" aria-hidden="true" />
+          </span>
+          <h2 className="font-extrabold text-dark-navy">{t("stats.coursePayments.title")}</h2>
+        </div>
+
+        <div
+          role="group"
+          aria-label={t("stats.coursePayments.title")}
+          className="inline-flex items-center gap-0.5 rounded-xl border border-border-color bg-slate-50 p-1"
+        >
+          {COURSE_PAYMENT_TABS.map((currency) => (
+            <button
+              key={currency}
+              type="button"
+              aria-pressed={activeTab === currency}
+              onClick={() => setActiveTab(currency)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
+                activeTab === currency
+                  ? "bg-white text-primary-blue-dark shadow-sm"
+                  : "text-text-light hover:text-dark-navy"
+              }`}
+            >
+              {tabLabel[currency]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="mt-4 h-56 animate-pulse rounded-xl bg-slate-100" />
+      ) : error ? (
+        <div className="mt-4 flex min-h-[160px] flex-col items-center justify-center gap-2 text-slate-400">
+          <p className="text-xs font-semibold text-danger-color">{tCommon("feedback.error")}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex items-center gap-1 text-xs font-bold text-primary-blue hover:underline"
+          >
+            <RefreshCw size={12} aria-hidden="true" />
+            {t("stats.retry")}
+          </button>
+        </div>
+      ) : !activeSummary ? (
+        <div className="mt-4 flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-slate-400">
+          <PieChart size={30} className="opacity-30" aria-hidden="true" />
+          <p className="text-sm font-medium">{tCommon("feedback.noData")}</p>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <CoursePaymentCard summary={activeSummary} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Appointment row
 // ---------------------------------------------------------------------------
 
@@ -927,7 +1269,6 @@ function PayrollDoctorRow({
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const months = t.raw("months") as string[];
 
   const user = useAuthStore((s) => s.user);
   const isAdmin = useAuthStore((s) => s.isAdmin());
@@ -969,7 +1310,12 @@ export default function DashboardPage() {
     setIsCustomRange(true);
   }
 
-  const { data: allStaff = [] } = useGetDoctors();
+  const {
+    data: allStaff = [],
+    isLoading: staffLoading,
+    isError: staffIsError,
+    refetch: refetchStaff,
+  } = useGetDoctors();
 
   const doctorNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -1016,21 +1362,6 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const {
-    data: doctors,
-    isLoading: doctorsLoading,
-    isError: doctorsIsError,
-    refetch: refetchDoctors,
-  } = useQuery({
-    queryKey: ["doctors-count"],
-    queryFn: async () => {
-      const res = await tenantHttp().get(`${ENDPOINTS.doctors.list}?limit=1`);
-      return res.data;
-    },
-    retry: false,
-    enabled: isStaffAdmin,
-  });
-
   /**
    * Overview KPI qatori uchun "This week" / "This month" — backendda
    * appointments uchun sana-oralig'i endpointi yo'q (faqat /by-date, bitta
@@ -1067,17 +1398,59 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  // Grafik uchun — tanlangan davr
+  /**
+   * Overview'dagi "Expenses" ustuni — faqat isStaffAdmin uchun (moliyaviy
+   * ma'lumot). Paid/Pending — tanlangan vaqt oralig'iga bog'liq (Overview
+   * range control bilan bir xil sanalar), Recurring — joriy faol
+   * shablonlar yig'indisi, sana oralig'iga bog'liq emas.
+   */
+  const overviewFromDate = overviewRangeDates[0] ?? today;
+  const overviewToDate = overviewRangeDates[overviewRangeDates.length - 1] ?? today;
+  const EXPENSE_CURRENCY = "UZS";
+
+  const {
+    data: paidExpenseSummary,
+    isLoading: paidExpenseLoading,
+    isError: paidExpenseIsError,
+    refetch: refetchPaidExpense,
+  } = useGetExpenseSummary(
+    { fromDate: overviewFromDate, toDate: overviewToDate, currency: EXPENSE_CURRENCY, status: "PAID" },
+    { enabled: isStaffAdmin }
+  );
+
+  const {
+    data: pendingExpenseSummary,
+    isLoading: pendingExpenseLoading,
+    isError: pendingExpenseIsError,
+    refetch: refetchPendingExpense,
+  } = useGetExpenseSummary(
+    { fromDate: overviewFromDate, toDate: overviewToDate, currency: EXPENSE_CURRENCY, status: "PENDING" },
+    { enabled: isStaffAdmin }
+  );
+
+  const {
+    data: recurringExpenses,
+    isLoading: recurringExpensesLoading,
+    isError: recurringExpensesIsError,
+    refetch: refetchRecurringExpenses,
+  } = useGetRecurringExpenses({ enabled: isStaffAdmin });
+
+  // Grafik uchun — tanlangan davr. includeCourseDetails=true — Course
+  // Payments (USD/UZS) bo'limi shu javobdagi coursePaymentSummaries'dan
+  // o'qiydi, alohida so'rov yubormaydi (bir xil sana oralig'i/filtr).
   const {
     data: revenueData,
     isLoading: revenueLoading,
     isFetching: revenueFetching,
+    isError: revenueIsError,
+    refetch: refetchRevenue,
   } = useRevenue({
     fromDate,
     toDate,
     filter: revenueFilter,
     sort: "PERIOD",
     direction: "ASC",
+    includeCourseDetails: true,
     enabled: isStaffAdmin && Boolean(fromDate && toDate),
   });
 
@@ -1132,6 +1505,9 @@ export default function DashboardPage() {
   const revenueList = primaryRevenue(revenueData)?.points ?? [];
   const totalRevenue = primaryRevenue(revenueData)?.totalRevenue ?? 0;
   const totalTxCount = primaryRevenue(revenueData)?.totalTransactionCount ?? 0;
+  const coursePaymentSummaries = revenueData?.coursePaymentSummaries ?? [];
+  const usdCoursePayments = coursePaymentSummaries.find((s) => s.currency === "USD");
+  const uzsCoursePayments = coursePaymentSummaries.find((s) => s.currency === "UZS");
 
   /**
    * Backend javob shakli har xil bo'lishi mumkin:
@@ -1147,102 +1523,50 @@ export default function DashboardPage() {
   const todayCount = todayList.length;
   const patientsTotal =
     patients?.totalCount ?? patients?.totalElements ?? patients?.total ?? 0;
-  const doctorsTotal =
-    doctors?.totalCount ?? doctors?.totalElements ?? doctors?.total ?? 0;
 
   // Overview KPI qatori — tanlangan vaqt oralig'iga mos ro'yxat
   const overviewList = overviewRange === "today" ? todayList : rangeApts ?? [];
   const overviewLoading = overviewRange === "today" ? aptsLoading : rangeAptsLoading;
   const overviewIsError = overviewRange === "today" ? aptsIsError : rangeAptsIsError;
-  const overviewAppointmentsCount = overviewList.length;
-  const overviewCompletedCount = overviewList.filter((a: any) => a.status === "COMPLETED").length;
-  const overviewCancelledCount = overviewList.filter((a: any) => a.status === "CANCELLED").length;
 
   function handleRetryOverviewAppointments() {
     if (overviewRange === "today") refetchTodayApts();
     else refetchRangeApts();
   }
 
-  const overviewTiles: StatTileData[] = [
-    {
-      key: "patients",
-      label: t("stats.totalPatients"),
-      value: patientsTotal,
-      color: "#35a8f5",
-      icon: Users,
-      loading: patientsLoading,
-      error: patientsIsError,
-      onRetry: refetchPatients,
-      hint:
-        patientsTotal === 0
-          ? {
-              text: t("stats.noPatientsHint"),
-              href: "/patients",
-              actionLabel: t("stats.addFirstPatient"),
-            }
-          : undefined,
-    },
-    {
-      key: "appointments",
-      label: t("stats.appointments"),
-      value: overviewAppointmentsCount,
-      color: "#8b5cf6",
-      icon: Calendar,
-      loading: overviewLoading,
-      error: overviewIsError,
-      onRetry: handleRetryOverviewAppointments,
-      hint:
-        overviewAppointmentsCount === 0
-          ? {
-              text: t("stats.noAppointmentsHint"),
-              href: "/appointments",
-              actionLabel: t("stats.scheduleOne"),
-            }
-          : undefined,
-    },
-    {
-      key: "completed",
-      label: t("stats.completed"),
-      value: overviewCompletedCount,
-      color: "#10b981",
-      icon: CheckCircle2,
-      loading: overviewLoading,
-      error: overviewIsError,
-      onRetry: handleRetryOverviewAppointments,
-    },
-    {
-      key: "cancelled",
-      label: t("stats.cancelled"),
-      value: overviewCancelledCount,
-      color: "#ef4444",
-      icon: XCircle,
-      loading: overviewLoading,
-      error: overviewIsError,
-      onRetry: handleRetryOverviewAppointments,
-    },
-    ...(isStaffAdmin
-      ? [
-          {
-            key: "doctors",
-            label: t("stats.doctors"),
-            value: doctorsTotal,
-            color: "#f59e0b",
-            icon: Stethoscope,
-            loading: doctorsLoading,
-            error: doctorsIsError,
-            onRetry: refetchDoctors,
-            hint:
-              doctorsTotal === 0
-                ? {
-                    text: t("stats.noDoctorsHint"),
-                    href: "/doctors",
-                    actionLabel: t("stats.addFirstDoctor"),
-                  }
-                : undefined,
-          } satisfies StatTileData,
-        ]
-      : []),
-  ];
+  /**
+   * Klinika tarkibi donuti uchun — /api/dental/doctors ro'yxati aslida
+   * BARCHA xodimlarni qaytaradi (`roles` massivi orqali DOCTOR/ASSISTANT/
+   * RECEPTIONIST ajratiladi), shuning uchun alohida so'rov shart emas.
+   * Eslatma: bu ro'yxat sahifalangan (limit ~100) — juda katta klinikada
+   * pastroq chegara bo'lishi mumkin.
+   */
+  const compositionDoctorsCount = allStaff.filter((s) => s.roles?.includes(Role.DOCTOR)).length;
+  const compositionAssistantsCount = allStaff.filter((s) => s.roles?.includes(Role.ASSISTANT)).length;
+  const compositionReceptionistsCount = allStaff.filter((s) =>
+    s.roles?.includes(Role.RECEPTIONIST)
+  ).length;
+  const compositionLoading = patientsLoading || staffLoading;
+  const compositionIsError = patientsIsError || staffIsError;
+
+  function handleRetryComposition() {
+    if (patientsIsError) refetchPatients();
+    if (staffIsError) refetchStaff();
+  }
+
+  const expensesPaidTotal = paidExpenseSummary?.totalAmount ?? 0;
+  const expensesPendingTotal = pendingExpenseSummary?.totalAmount ?? 0;
+  const recurringExpensesTotal =
+    recurringExpenses?.totalAmountsByCurrency.find((c) => c.currency === EXPENSE_CURRENCY)
+      ?.totalAmount ?? 0;
+  const expensesLoading = paidExpenseLoading || pendingExpenseLoading || recurringExpensesLoading;
+  const expensesIsError = paidExpenseIsError || pendingExpenseIsError || recurringExpensesIsError;
+
+  function handleRetryExpenses() {
+    if (paidExpenseIsError) refetchPaidExpense();
+    if (pendingExpenseIsError) refetchPendingExpense();
+    if (recurringExpensesIsError) refetchRecurringExpenses();
+  }
 
   const doctorRevenueList = doctorRevenueData ?? [];
 
@@ -1257,29 +1581,46 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-extrabold text-dark-navy sm:text-2xl">
-          {t("header.title")}
-        </h1>
-        <p className="mt-1 text-sm text-text-light">
-          {t("header.welcome", {
-            name: user?.firstName ?? "",
-            date: formatDisplayDate(new Date(), months),
-          })}
-        </p>
-      </div>
-
-      {/* Overview KPI qatori */}
+      {/* Overview */}
       <OverviewCard
-        tiles={overviewTiles}
         range={overviewRange}
         onRangeChange={setOverviewRange}
         statusList={overviewList}
         statusLoading={overviewLoading}
         statusError={overviewIsError}
         onStatusRetry={handleRetryOverviewAppointments}
+        compositionPatients={patientsTotal}
+        compositionDoctors={compositionDoctorsCount}
+        compositionAssistants={compositionAssistantsCount}
+        compositionReceptionists={compositionReceptionistsCount}
+        compositionLoading={compositionLoading}
+        compositionError={compositionIsError}
+        onCompositionRetry={handleRetryComposition}
+        expenses={
+          isStaffAdmin
+            ? {
+                paidTotal: expensesPaidTotal,
+                pendingTotal: expensesPendingTotal,
+                recurringTotal: recurringExpensesTotal,
+                currency: EXPENSE_CURRENCY,
+                loading: expensesLoading,
+                error: expensesIsError,
+                onRetry: handleRetryExpenses,
+              }
+            : undefined
+        }
       />
+
+      {/* Course payments (USD / UZS) */}
+      {isStaffAdmin && (
+        <CoursePaymentsSection
+          usd={usdCoursePayments}
+          uzs={uzsCoursePayments}
+          loading={revenueLoading}
+          error={revenueIsError}
+          onRetry={refetchRevenue}
+        />
+      )}
 
       {/*
         Revenue + Today appointments

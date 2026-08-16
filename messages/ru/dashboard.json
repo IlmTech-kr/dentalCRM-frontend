@@ -30,7 +30,29 @@
     "scheduleOne": "Записать пациента",
     "trendTitle": "Приёмы — последние 14 дней",
     "trendPlaceholder": "Заглушка графика — нужен API истории приёмов (см. заметки к PR).",
-    "statusBreakdownTitle": "Разбивка по статусу приёмов"
+    "statusBreakdownTitle": "Разбивка по статусу приёмов",
+    "assistants": "Ассистенты",
+    "receptionists": "Регистратура",
+    "compositionTitle": "Пациенты и персонал",
+    "expensesTitle": "Расходы",
+    "expensesPaid": "Оплачено",
+    "expensesPending": "Ожидает",
+    "recurringExpensesLabel": "Регулярные (активные шаблоны)",
+    "coursePayments": {
+      "title": "Оплата курсов",
+      "usdTitle": "Платежи в USD",
+      "uzsTitle": "Платежи в UZS",
+      "statusDonutTitle": "Статус оплаты",
+      "totalCourses": "Всего курсов",
+      "paid": "Оплачено",
+      "partiallyPaid": "Частично оплачено",
+      "unpaid": "Не оплачено",
+      "financialSummaryTitle": "Финансовая сводка по курсам",
+      "countSummaryTitle": "Сводка по количеству курсов",
+      "totalCoursePrice": "Общая стоимость курсов",
+      "paidAmount": "Оплаченная сумма",
+      "unpaidAmount": "Неоплаченная сумма"
+    }
   },
   "revenue": {
     "title": "Статистика выручки",

@@ -30,7 +30,29 @@
     "scheduleOne": "Qabul belgilash",
     "trendTitle": "Qabullar — so'nggi 14 kun",
     "trendPlaceholder": "Trend grafik placeholder — tarixiy qabullar API kerak (PR izohiga qarang).",
-    "statusBreakdownTitle": "Qabul holati bo'yicha taqsimot"
+    "statusBreakdownTitle": "Qabul holati bo'yicha taqsimot",
+    "assistants": "Yordamchilar",
+    "receptionists": "Registratura",
+    "compositionTitle": "Bemorlar va xodimlar",
+    "expensesTitle": "Xarajatlar",
+    "expensesPaid": "To'langan",
+    "expensesPending": "Kutilmoqda",
+    "recurringExpensesLabel": "Takrorlanuvchi (faol shablonlar)",
+    "coursePayments": {
+      "title": "Kurs to'lovlari",
+      "usdTitle": "USD to'lovlari",
+      "uzsTitle": "UZS to'lovlari",
+      "statusDonutTitle": "To'lov holati",
+      "totalCourses": "Jami kurslar",
+      "paid": "To'langan",
+      "partiallyPaid": "Qisman to'langan",
+      "unpaid": "To'lanmagan",
+      "financialSummaryTitle": "Kurs moliyaviy xulosasi",
+      "countSummaryTitle": "Kurslar soni xulosasi",
+      "totalCoursePrice": "Jami kurs narxi",
+      "paidAmount": "To'langan summa",
+      "unpaidAmount": "To'lanmagan summa"
+    }
   },
   "revenue": {
     "title": "Daromad statistikasi",
