@@ -42,7 +42,6 @@
       "amountLabel": "Summa",
       "currencyLabel": "Valyuta",
       "methodLabel": "To'lov usuli",
-      "paidAtLabel": "To'lov sanasi va vaqti",
       "referenceLabel": "Referens (ixtiyoriy)",
       "referencePlaceholder": "UZCARD terminal chek 45821",
       "noteLabel": "Izoh (ixtiyoriy)",
@@ -61,7 +60,6 @@
     },
     "toast": {
       "amountRequired": "Summani to'g'ri kiriting",
-      "paidAtRequired": "Sana va vaqtni tanlang",
       "reasonRequired": "Bekor qilish sababini kiriting",
       "created": "To'lov qo'shildi",
       "saveFailed": "To'lovni saqlashda xatolik",

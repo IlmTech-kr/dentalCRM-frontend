@@ -23,12 +23,7 @@ import type { Currency, PaymentMethod, TreatmentPayment } from "@/src/features/t
 import { getMethodLabel } from "@/src/features/treatment-payments/method";
 import { formatPaymentMoney } from "@/src/features/treatment-payments/format";
 import { CURRENCIES, PAYMENT_METHODS } from "@/src/features/treatment-payments/constants";
-import {
-  formatDateTimeDisplay,
-  fromDateTimeInputValue,
-  nowDateTime,
-  toDateTimeInputValue,
-} from "@/src/features/treatment-payments/dates";
+import { formatDateTimeDisplay } from "@/src/features/treatment-payments/dates";
 import {
   useGetInvoiceByCourse,
   useGetInvoiceById,
@@ -59,7 +54,6 @@ export function AddPaymentModal({
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState<Currency>(defaultCurrency);
   const [method, setMethod] = useState<PaymentMethod>("CARD");
-  const [paidAt, setPaidAt] = useState(nowDateTime());
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
 
@@ -69,14 +63,12 @@ export function AddPaymentModal({
     e.preventDefault();
 
     if (!amount || amount <= 0) return toast.error(t("toast.amountRequired"));
-    if (!paidAt) return toast.error(t("toast.paidAtRequired"));
 
     createMutation.mutate(
       {
         amount,
         currency,
         method,
-        paidAt,
         reference: reference.trim() || undefined,
         note: note.trim() || undefined,
       },
@@ -136,16 +128,6 @@ export function AddPaymentModal({
               </option>
             ))}
           </select>
-        </div>
-
-        <div>
-          <label className={fieldLabelClassName}>{t("createModal.paidAtLabel")}</label>
-          <input
-            type="datetime-local"
-            value={toDateTimeInputValue(paidAt)}
-            onChange={(e) => setPaidAt(fromDateTimeInputValue(e.target.value))}
-            className={fieldClassName}
-          />
         </div>
 
         <div>

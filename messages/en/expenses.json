@@ -52,6 +52,7 @@
     },
     "summary": {
       "totalAmount": "Total amount",
+      "totalAmountUsd": "Total (USD)",
       "totalCount": "Expense count",
       "loading": "Calculating..."
     },

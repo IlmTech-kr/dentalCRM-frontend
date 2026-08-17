@@ -381,6 +381,18 @@ export default function ExpensesPage() {
     [fromDate, toDate, currency, status]
   );
 
+  // USD summasi doim, valyuta filtridan qat'i nazar ko'rsatiladi — filtr
+  // UZS'da bo'lsa ham foydalanuvchi USD xarajatlar jamini ko'ra oladi.
+  const usdSummaryParams = useMemo(
+    () => ({
+      fromDate: fromDate || undefined,
+      toDate: toDate || undefined,
+      currency: "USD" as Currency,
+      status: (status || undefined) as ExpenseStatus | undefined,
+    }),
+    [fromDate, toDate, status]
+  );
+
   const { data: categories = [] } = useGetExpenseCategories();
   const {
     data: expenseList,
@@ -390,6 +402,8 @@ export default function ExpensesPage() {
   } = useGetExpenses(listParams);
   const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary } =
     useGetExpenseSummary(summaryParams);
+  const { data: usdSummary, isLoading: isUsdSummaryLoading, refetch: refetchUsdSummary } =
+    useGetExpenseSummary(usdSummaryParams);
 
   const items = expenseList?.items ?? [];
   const totalPages = expenseList?.totalPages ?? 0;
@@ -401,6 +415,7 @@ export default function ExpensesPage() {
   function refreshAll() {
     refetchList();
     refetchSummary();
+    refetchUsdSummary();
   }
 
   const categoryNameById = useMemo(() => {
@@ -446,7 +461,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-400">
             <Wallet size={14} className="text-primary-blue" />
@@ -457,6 +472,19 @@ export default function ExpensesPage() {
           ) : (
             <p className="mt-2 text-2xl font-black text-slate-900">
               {formatExpenseMoney(totalAmount, summary?.currency || currency || "UZS")}
+            </p>
+          )}
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-400">
+            <Wallet size={14} className="text-primary-blue" />
+            {t("summary.totalAmountUsd")}
+          </div>
+          {isUsdSummaryLoading ? (
+            <div className="mt-3 h-8 w-32 animate-pulse rounded-lg bg-slate-100" />
+          ) : (
+            <p className="mt-2 text-2xl font-black text-slate-900">
+              {formatExpenseMoney(usdSummary?.totalAmount ?? 0, "USD")}
             </p>
           )}
         </div>

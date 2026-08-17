@@ -1,7 +1,6 @@
 import type { Currency, ExpenseStatus } from "./types";
 
-/** Hozircha faqat UZS tasdiqlangan (bkz. types.ts izohi). */
-export const CURRENCIES: Currency[] = ["UZS"];
+export const CURRENCIES: Currency[] = ["UZS", "USD"];
 
 /** Filtr/select uchun — "VOIDED" alohida ko'rsatilmaydi, VOID bilan bir xil ma'noda. */
 export const EXPENSE_STATUSES: ExpenseStatus[] = ["PENDING", "PAID", "VOID"];

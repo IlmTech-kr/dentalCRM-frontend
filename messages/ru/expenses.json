@@ -52,6 +52,7 @@
     },
     "summary": {
       "totalAmount": "Общая сумма",
+      "totalAmountUsd": "Итого (USD)",
       "totalCount": "Количество расходов",
       "loading": "Подсчёт..."
     },

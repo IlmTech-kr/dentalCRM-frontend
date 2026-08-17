@@ -52,6 +52,7 @@
     },
     "summary": {
       "totalAmount": "Jami summa",
+      "totalAmountUsd": "Jami (USD)",
       "totalCount": "Xarajatlar soni",
       "loading": "Hisoblanmoqda..."
     },

@@ -42,7 +42,6 @@
       "amountLabel": "Amount",
       "currencyLabel": "Currency",
       "methodLabel": "Payment method",
-      "paidAtLabel": "Payment date & time",
       "referenceLabel": "Reference (optional)",
       "referencePlaceholder": "UZCARD terminal receipt 45821",
       "noteLabel": "Note (optional)",
@@ -61,7 +60,6 @@
     },
     "toast": {
       "amountRequired": "Enter a valid amount",
-      "paidAtRequired": "Select a date and time",
       "reasonRequired": "Enter a reason for voiding",
       "created": "Payment added",
       "saveFailed": "Failed to save payment",

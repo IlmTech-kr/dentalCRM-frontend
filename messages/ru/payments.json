@@ -42,7 +42,6 @@
       "amountLabel": "Сумма",
       "currencyLabel": "Валюта",
       "methodLabel": "Способ оплаты",
-      "paidAtLabel": "Дата и время оплаты",
       "referenceLabel": "Референс (необязательно)",
       "referencePlaceholder": "Чек терминала UZCARD 45821",
       "noteLabel": "Заметка (необязательно)",
@@ -61,7 +60,6 @@
     },
     "toast": {
       "amountRequired": "Введите корректную сумму",
-      "paidAtRequired": "Выберите дату и время",
       "reasonRequired": "Укажите причину отмены",
       "created": "Платёж добавлен",
       "saveFailed": "Ошибка при сохранении платежа",

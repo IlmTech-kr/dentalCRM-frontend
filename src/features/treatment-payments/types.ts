@@ -41,7 +41,8 @@ export interface CreateTreatmentPaymentDto {
   amount: number;
   currency: Currency;
   method: PaymentMethod;
-  paidAt: string;
+  /** Backend avtomatik belgilaydi — frontend endi yubormaydi. */
+  paidAt?: string;
   reference?: string;
   note?: string;
 }

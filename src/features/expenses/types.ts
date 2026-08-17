@@ -37,8 +37,8 @@ export interface UpdateExpenseCategoryDto extends CreateExpenseCategoryDto {
  */
 export type ExpenseStatus = "PENDING" | "PAID" | "VOID" | "VOIDED" | string;
 
-/** Hozircha faqat UZS tasdiqlangan — boshqa valyutalar backend bilan tekshirilmagan. */
-export type Currency = "UZS" | string;
+/** UI'da UZS va USD taklif qilinadi (bkz. constants.ts CURRENCIES) — USD qiymatini backend qabul qilishi tasdiqlanmagan. */
+export type Currency = "UZS" | "USD" | string;
 
 export interface Expense {
   id: string;
