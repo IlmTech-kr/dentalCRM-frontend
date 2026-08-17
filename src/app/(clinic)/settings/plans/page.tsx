@@ -25,6 +25,7 @@ import {
   useGetPlans,
 } from "@/src/features/subscriptions/hooks/useSubscription";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 
 import type {
   CurrentSubscription,
@@ -637,7 +638,9 @@ function PlanCard({
 
 export default function PlansPage() {
   const t = useTranslations("settings.plans");
+  const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<TabType>("current");
   const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({});
 
@@ -693,8 +696,12 @@ export default function PlansPage() {
     });
   }
 
-  function handleCancelPlan() {
-    if (!window.confirm(t("toast.cancelConfirm"))) return;
+  async function handleCancelPlan() {
+    const ok = await confirm({
+      title: tCommon("actions.confirm"),
+      message: t("toast.cancelConfirm"),
+    });
+    if (!ok) return;
     cancelMutation.mutate(undefined, {
       onSuccess: () => {
         toast.success(t("toast.planCancelled"));

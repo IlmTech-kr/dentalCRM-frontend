@@ -35,6 +35,7 @@ import type {
 import { DayOfWeek } from "@/src/lib/enums/enums.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -760,7 +761,9 @@ function WeekEditorModal({
 
 export default function DoctorSchedulePage() {
   const t = useTranslations("doctors.schedule");
+  const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
 
   const page = 0;
   const limit = 20;
@@ -962,7 +965,12 @@ export default function DoctorSchedulePage() {
       toast.error(t("toast.scheduleIdNotFound"));
       return;
     }
-    if (!window.confirm(t("toast.deleteConfirm"))) return;
+    const ok = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("toast.deleteConfirm"),
+      confirmLabel: tCommon("actions.delete"),
+    });
+    if (!ok) return;
 
     try {
       await deleteScheduleMutation.mutateAsync(scheduleId);

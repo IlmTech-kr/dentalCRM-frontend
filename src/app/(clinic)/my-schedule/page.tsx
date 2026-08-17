@@ -41,6 +41,7 @@ import type {
 import { DayOfWeek } from "@/src/lib/enums/enums.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { useAuthStore } from "@/src/store/auth.store";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -419,9 +420,11 @@ function WeekEditorModal({
 
 export default function MySchedulePage() {
   const t = useTranslations("myschedule");
+  const tCommon = useTranslations("common");
   const DAYS = useMemo(() => buildLocalizedDays(t), [t]);
 
   const toast = useToast();
+  const confirm = useConfirm();
 
   const currentUser = useAuthStore((s) => s.user);
   const isDoctorRole = useAuthStore((s) => s.isDoctor());
@@ -513,7 +516,12 @@ export default function MySchedulePage() {
       toast.error(t("toast.scheduleIdNotFound"));
       return;
     }
-    if (!window.confirm(t("toast.confirmDelete"))) return;
+    const ok = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("toast.confirmDelete"),
+      confirmLabel: tCommon("actions.delete"),
+    });
+    if (!ok) return;
 
     try {
       await deleteScheduleMutation.mutateAsync(ownScheduleId);

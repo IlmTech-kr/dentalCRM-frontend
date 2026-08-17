@@ -25,6 +25,7 @@ import { STORAGE_BUCKET } from "@/src/types/storage.types";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role, UserStatus } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { useAuthStore } from "@/src/store/auth.store";
 
 import type {
@@ -342,7 +343,9 @@ function Dropdown({
 
 export default function DoctorsPage() {
   const t = useTranslations("doctors");
+  const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
 
   const isAdmin = useAuthStore((state) => state.isAdmin());
   const isClinicAdmin = useAuthStore(
@@ -687,11 +690,13 @@ export default function DoctorsPage() {
       return;
     }
 
-    const confirmed = window.confirm(
-      t("toast.deleteConfirm", {
+    const confirmed = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("toast.deleteConfirm", {
         name: `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim(),
-      })
-    );
+      }),
+      confirmLabel: tCommon("actions.delete"),
+    });
 
     if (!confirmed) {
       return;

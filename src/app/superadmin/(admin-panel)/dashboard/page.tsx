@@ -16,6 +16,7 @@ import {
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 
 import {
@@ -379,6 +380,7 @@ function normalizeClinics(
 
 export default function DashboardPage() {
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [status, setStatus] =
     useState<StatusFilter>(
@@ -548,10 +550,11 @@ export default function DashboardPage() {
     tenantId: string,
     clinicName: string
   ) {
-    const confirmed =
-      window.confirm(
-        `"${clinicName}" tenantini to‘xtatib qo‘yasizmi?`
-      );
+    const confirmed = await confirm({
+      title: "Tenantni to‘xtatish",
+      message: `"${clinicName}" tenantini to‘xtatib qo‘yasizmi?`,
+      confirmLabel: "To‘xtatish",
+    });
 
     if (!confirmed) {
       return;

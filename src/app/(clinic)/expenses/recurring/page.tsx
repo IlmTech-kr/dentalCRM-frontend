@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Ban, Edit3, Plus, Repeat, Wallet } from "lucide-react";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { useGetExpenseCategories } from "@/src/features/expenses/hooks/useExpenseCategories";
 import {
   useGetRecurringExpenses,
@@ -230,7 +231,9 @@ function RecurringExpenseModal({
 
 export default function RecurringExpensesPage() {
   const t = useTranslations("expenses.recurring");
+  const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
 
   const { data: categories = [] } = useGetExpenseCategories();
   const { data, isLoading } = useGetRecurringExpenses();
@@ -250,8 +253,12 @@ export default function RecurringExpensesPage() {
     setModalTarget(undefined);
   }
 
-  function handleDeactivate(recurring: RecurringExpense) {
-    if (!window.confirm(t("toast.deactivateConfirm", { name: recurring.payeeName }))) return;
+  async function handleDeactivate(recurring: RecurringExpense) {
+    const ok = await confirm({
+      title: tCommon("actions.confirm"),
+      message: t("toast.deactivateConfirm", { name: recurring.payeeName }),
+    });
+    if (!ok) return;
 
     deactivateMutation.mutate(recurring.id, {
       onSuccess: () => toast.success(t("toast.deactivated")),

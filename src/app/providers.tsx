@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NextIntlClientProvider } from "next-intl";
 import { queryClient } from "../lib/react-query/client";
 import { ToastContainer } from "../components/ui/Toastcontainer";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import DentalLoader from "../components/ui/DentalLoader";
 import { useLocaleStore } from "../store/locale.store";
 import { useUiStore } from "../store/ui.store";
@@ -52,6 +53,7 @@ export default function Providers({
         <AiActionOrchestrator />
         <ReactQueryDevtools initialIsOpen={false} />
         <ToastContainer />
+        <ConfirmDialog />
       </QueryClientProvider>
     </NextIntlClientProvider>
   );

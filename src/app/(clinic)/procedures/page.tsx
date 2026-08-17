@@ -23,6 +23,7 @@ import { MoneyInput } from "@/src/components/ui/MoneyInput";
 
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 
 import type {
@@ -227,6 +228,7 @@ export default function ProceduresPage() {
   const t = useTranslations("procedures");
   const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -423,11 +425,11 @@ export default function ProceduresPage() {
       return;
     }
 
-    const ok = window.confirm(
-      t("toast.deleteConfirm", {
-        name: procedure.name,
-      })
-    );
+    const ok = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("toast.deleteConfirm", { name: procedure.name }),
+      confirmLabel: tCommon("actions.delete"),
+    });
 
     if (!ok) return;
 

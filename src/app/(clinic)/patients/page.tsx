@@ -33,6 +33,7 @@ import { Gender, Role } from "@/src/lib/enums/enums.types";
 
 import type { CreatePatientDto, Patient } from "@/src/types/patient.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { Tooltip } from "@/src/components/ui/Tooltip";
@@ -112,6 +113,7 @@ export default function PatientsPage() {
   const t = useTranslations("patients");
   const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
   const router = useRouter();
   const isReceptionist = useAuthStore((state) => state.isReceptionist());
 
@@ -352,7 +354,11 @@ const filteredPatients = useMemo(() => {
   }
 
   async function handleDelete(id: string) {
-    const confirmed = window.confirm(t("deleteConfirm.message"));
+    const confirmed = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("deleteConfirm.message"),
+      confirmLabel: tCommon("actions.delete"),
+    });
     if (!confirmed) return;
     try {
       await deleteMutation.mutateAsync(id);

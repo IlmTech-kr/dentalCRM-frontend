@@ -62,6 +62,7 @@ import {
 import { tenantHttp } from "@/src/lib/api/http";
 import { Role, ToothCondition } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { useAuthStore } from "@/src/store/auth.store";
 import type { ToothItem, ToothMap } from "@/src/types/dental-chart.types";
 import type { DentalProcedure } from "@/src/types/dental-procedure.types";
@@ -1537,11 +1538,13 @@ function VisitForm({
 
 export default function TreatmentPatientPage() {
   const t = useTranslations("treatments");
+  const tCommon = useTranslations("common");
   const tPayments = useTranslations("payments.course");
   const params = useParams<{ patientId: string }>();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const patientId = params.patientId;
   const appointmentId = searchParams.get("appointmentId") || "";
@@ -2190,7 +2193,12 @@ export default function TreatmentPatientPage() {
   }
 
   async function handleCompleteCourse(courseId: string) {
-    if (!window.confirm(t("patientDetail.course.confirmComplete"))) return;
+    const ok = await confirm({
+      title: tCommon("actions.confirm"),
+      message: t("patientDetail.course.confirmComplete"),
+      tone: "primary",
+    });
+    if (!ok) return;
 
     try {
       await completeCourse(courseId);

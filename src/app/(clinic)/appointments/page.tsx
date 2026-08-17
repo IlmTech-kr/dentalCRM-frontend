@@ -36,6 +36,7 @@ import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import { Role } from "@/src/lib/enums/enums.types";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import type {
@@ -512,7 +513,9 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
 
 export default function AppointmentsPage() {
   const t = useTranslations("appointments");
+  const tCommon = useTranslations("common");
   const toast = useToast();
+  const confirm = useConfirm();
   const searchParams = useSearchParams();
 
   const patientIdFromUrl = searchParams.get("patientId");
@@ -719,7 +722,12 @@ export default function AppointmentsPage() {
   async function handleDelete(appointment: Appointment) {
     const appointmentId = getAppointmentId(appointment);
     if (!appointmentId) { toast.error(t("toast.appointmentIdNotFound")); return; }
-    if (!confirm(t("toast.deleteConfirm"))) return;
+    const ok = await confirm({
+      title: tCommon("actions.delete"),
+      message: t("toast.deleteConfirm"),
+      confirmLabel: tCommon("actions.delete"),
+    });
+    if (!ok) return;
     try {
       await deleteAppointmentMutation.mutateAsync(appointmentId);
       toast.success(t("toast.deleted"));
