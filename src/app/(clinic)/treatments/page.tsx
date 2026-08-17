@@ -231,7 +231,7 @@ export default function TreatmentsPage() {
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center justify-between gap-2">
-              <p className="min-w-0 text-sm font-bold text-slate-500">IN_PROGRESS</p>
+              <p className="min-w-0 text-sm font-bold text-slate-500">{t("inProgress.inProgressLabel")}</p>
               <div className="shrink-0 rounded-2xl bg-emerald-50 p-3 text-emerald-600">
                 <Clock3 size={20} />
               </div>
@@ -391,7 +391,7 @@ export default function TreatmentsPage() {
                         </div>
 
                         <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
-                          IN_PROGRESS
+                          {t("inProgress.inProgressLabel")}
                         </span>
                       </div>
 
@@ -490,7 +490,7 @@ export default function TreatmentsPage() {
                           </div>
 
                           <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 ring-1 ring-emerald-100">
-                            IN_PROGRESS
+                            {t("inProgress.inProgressLabel")}
                           </span>
                         </div>
 
@@ -580,7 +580,7 @@ export default function TreatmentsPage() {
 
                             <td className="px-5 py-4">
                               <span className="whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
-                                IN_PROGRESS
+                                {t("inProgress.inProgressLabel")}
                               </span>
                             </td>
 

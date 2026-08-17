@@ -6,7 +6,13 @@ export type ResultingCondition =
   | ToothCondition.IMPLANT
   | ToothCondition.ROOT_CANAL
   | ToothCondition.EXTRACTED
-  | ToothCondition.MISSING;
+  | ToothCondition.MISSING
+  | ToothCondition.HEALTHY
+  | ToothCondition.CARIES
+  | ToothCondition.PULPITIS
+  | ToothCondition.CRACK
+  | ToothCondition.BRIDGE
+  | ToothCondition.GINGIVITIS
 
 export interface DentalProcedure {
   _id: string;

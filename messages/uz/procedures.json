@@ -1,26 +1,26 @@
 {
   "header": {
-    "badge": "Dental Service narxlar listi",
-    "title": "Procedures",
-    "subtitle": "Bu sahifada klinika xizmatlari va narxlari boshqariladi. Treatment visit ichida doctor shu listdan procedure tanlaydi.",
-    "addButton": "Yangi procedure"
+    "badge": "Stomatologik xizmat narxlar listi",
+    "title": "Muolaja",
+    "subtitle": "Bu sahifada klinika xizmatlari va narxlari boshqariladi. Treatment visit ichida doctor shu listdan Muolaja tanlaydi.",
+    "addButton": "Yangi Muolaja"
   },
   "stats": {
-    "total": "Jami procedures",
-    "totalPrice": "Umumiy default narx",
+    "total": "Jami Muolaja",
+    "totalPrice": "Umumiy standart narx",
     "status": "Status",
     "active": "Active"
   },
   "list": {
-    "title": "Procedure list",
+    "title": "Muolaja list",
     "subtitle": "Bu ro'yxat treatment visitda tanlash uchun ishlatiladi.",
-    "searchPlaceholder": "Procedure qidirish...",
-    "loading": "Procedures yuklanmoqda...",
-    "empty": "Procedure topilmadi",
-    "emptyHint": "Yangi procedure yarating yoki searchni tozalang."
+    "searchPlaceholder": "Muolaja qidirish...",
+    "loading": "Muolaja yuklanmoqda...",
+    "empty": "Muolaja topilmadi",
+    "emptyHint": "Yangi Muolaja yarating yoki searchni tozalang."
   },
   "table": {
-    "code": "Code",
+    "code": "Kodi",
     "name": "Nomi",
     "price": "Narxi",
     "result": "Natija",
@@ -36,38 +36,49 @@
     "implant": "Implant",
     "rootCanal": "Kanal davolash",
     "extracted": "Sug'urilgan",
-    "missing": "Yo'q"
+    "missing": "Yo'q",
+    "healthy": "Sog'lom",
+    "caries": "Kariyes",
+    "pulpitis": "Pulpit",
+    "crack": "Yoriq",
+    "bridge": "Ko'prik",
+    "gingivitis": "Gingivit"
   },
   "modal": {
     "editModeBadge": "Edit mode",
     "createModeBadge": "Create mode",
-    "editTitle": "Procedure update qilish",
-    "createTitle": "Yangi procedure yaratish",
-    "subtitle": "Procedure narxi va natija conditionini kiriting. Bu service keyinchalik treatment visit ichida tanlanadi.",
-    "codeLabel": "Procedure code",
+    "editTitle": "Muolaja update qilish",
+    "createTitle": "Yangi Muolaja yaratish",
+    "subtitle": "Muolaja narxi va natija conditionini kiriting. Bu service keyinchalik treatment visit ichida tanlanadi.",
+    "codeLabel": "Muolaja kodi",
     "codePlaceholder": "PROC_002",
-    "priceLabel": "Default price",
-    "pricePlaceholder": "550000",
-    "nameLabel": "Procedure nomi",
+    "generateCodeButton": "Generatsiya",
+    "generateCodeTitle": "Noyob Muolaja kod generatsiya qilish",
+    "codeHint": "O'z Muolaja kod'ingizni kiriting yoki avtomatik generatsiya qiling.",
+    "priceLabel": "Standart narx",
+    "pricePlaceholder": "550.000",
+    "nameLabel": "Muolaja nomi",
     "namePlaceholder": "Doimiy yorug'likli kompozit plomba",
-    "resultingConditionLabel": "Resulting condition",
-    "previewLabel": "Preview",
-    "previewNameFallback": "Procedure nomi",
+    "resultingConditionLabel": "Natijaviy holat",
+    "previewLabel": "Oldindan ko'rish",
+    "previewNameFallback": "Muolaja nomi",
     "previewCodeFallback": "PROC_CODE",
     "cancel": "Bekor qilish",
-    "update": "Update qilish",
-    "create": "Create qilish"
+    "update": "Yangilash",
+    "create": "Yaratish"
   },
   "toast": {
-    "enterCode": "Procedure code kiriting",
-    "enterName": "Procedure nomini kiriting",
-    "enterPrice": "Procedure narxini kiriting",
-    "procedureIdNotFound": "Procedure ID topilmadi",
-    "updated": "Procedure muvaffaqiyatli yangilandi",
-    "created": "Procedure muvaffaqiyatli yaratildi",
-    "saveFailed": "Procedure saqlashda xatolik. Create/update faqat CLINIC_ADMIN role bilan ishlaydi.",
-    "deleteConfirm": "\"{name}\" procedureni o'chirasizmi?",
-    "deleted": "Procedure o'chirildi",
-    "deleteFailed": "Procedure o'chirishda xatolik. Delete faqat CLINIC_ADMIN role bilan ishlaydi."
+    "enterCode": "Muolaja kodni kiriting",
+    "enterName": "Muolaja nomini kiriting",
+    "enterPrice": "Muolaja narxini kiriting",
+    "codeGenerated": "Muolaja kod muvaffaqiyatli generatsiya qilindi",
+    "duplicateCode": "Bu Muolaja kod allaqachon mavjud. Boshqa kod kiriting yoki yangisini generatsiya qiling.",
+    "MuolajaIdNotFound": "Muolaja ID topilmadi",
+    "updated": "Muolaja muvaffaqiyatli yangilandi",
+    "created": "Muolaja muvaffaqiyatli yaratildi",
+    "saveFailed": "Muolaja saqlashda xatolik. Create/update faqat CLINIC_ADMIN role bilan ishlaydi.",
+    "deleteConfirm": "\"{name}\" Muolajani o'chirasizmi?",
+    "deleted": "Muolaja o'chirildi",
+    "deleteFailed": "Muolaja o'chirishda xatolik. Delete faqat CLINIC_ADMIN role bilan ishlaydi."
   }
 }

@@ -19,6 +19,7 @@ import {
 import DentalLoader, {
   DentalLoaderIcon,
 } from "@/src/components/ui/DentalLoader";
+import { MoneyInput } from "@/src/components/ui/MoneyInput";
 
 import { useDentalProcedures } from "@/src/features/treatments/hooks/useDentalProcedures";
 import { useToast } from "@/src/lib/hooks/Usetoast";
@@ -40,6 +41,12 @@ const RESULTING_CONDITIONS: ResultingCondition[] = [
   ToothCondition.ROOT_CANAL,
   ToothCondition.EXTRACTED,
   ToothCondition.MISSING,
+  ToothCondition.HEALTHY,
+  ToothCondition.CARIES,
+  ToothCondition.PULPITIS,
+  ToothCondition.CRACK,
+  ToothCondition.BRIDGE,
+  ToothCondition.GINGIVITIS,
 ];
 
 const emptyForm: CreateDentalProcedureDto = {
@@ -147,6 +154,24 @@ function getConditionStyle(
     case ToothCondition.MISSING:
       return "bg-slate-100 text-slate-700 ring-slate-200";
 
+    case ToothCondition.HEALTHY:
+      return "bg-green-50 text-green-700 ring-green-100";
+
+    case ToothCondition.CARIES:
+      return "bg-amber-50 text-amber-700 ring-amber-100";
+
+    case ToothCondition.PULPITIS:
+      return "bg-rose-50 text-rose-700 ring-rose-100";
+
+    case ToothCondition.CRACK:
+      return "bg-yellow-50 text-yellow-700 ring-yellow-100";
+
+    case ToothCondition.BRIDGE:
+      return "bg-indigo-50 text-indigo-700 ring-indigo-100";
+
+    case ToothCondition.GINGIVITIS:
+      return "bg-pink-50 text-pink-700 ring-pink-100";
+
     default:
       return "bg-slate-100 text-slate-700 ring-slate-200";
   }
@@ -174,6 +199,24 @@ function getConditionLabel(
 
     case ToothCondition.MISSING:
       return t("condition.missing");
+
+    case ToothCondition.HEALTHY:
+      return t("condition.healthy");
+
+    case ToothCondition.CARIES:
+      return t("condition.caries");
+
+    case ToothCondition.PULPITIS:
+      return t("condition.pulpitis");
+
+    case ToothCondition.CRACK:
+      return t("condition.crack");
+
+    case ToothCondition.BRIDGE:
+      return t("condition.bridge");
+
+    case ToothCondition.GINGIVITIS:
+      return t("condition.gingivitis");
 
     default:
       return condition || "-";
@@ -277,9 +320,7 @@ export default function ProceduresPage() {
       code: generatedCode,
     }));
 
-    toast.success(
-      "Procedure code generated successfully"
-    );
+    toast.success(t("toast.codeGenerated"));
   }
 
   /**
@@ -324,9 +365,7 @@ export default function ProceduresPage() {
     );
 
     if (duplicateProcedure) {
-      toast.error(
-        "This procedure code already exists. Please enter another code or generate a new one."
-      );
+      toast.error(t("toast.duplicateCode"));
       return;
     }
 
@@ -707,11 +746,11 @@ export default function ProceduresPage() {
             aria-label={tCommon("actions.close")}
           />
 
-          <div className="relative z-10 max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] border border-white/40 bg-white shadow-2xl shadow-slate-950/20 sm:max-w-2xl sm:rounded-[32px]">
+          <div className="relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[2rem] border border-white/40 bg-white shadow-2xl shadow-slate-950/20 sm:max-w-2xl sm:rounded-[32px]">
 
             {/* Modal Header */}
             <div
-              className="relative overflow-hidden px-4 py-6 text-white sm:px-6 sm:py-7"
+              className="relative shrink-0 overflow-hidden px-4 py-6 text-white sm:px-6 sm:py-7"
               style={{
                 background:
                   "linear-gradient(135deg, var(--primary-blue) 0%, color-mix(in srgb, var(--primary-blue) 70%, var(--primary-blue-dark)) 55%, var(--primary-blue-dark) 100%)",
@@ -760,7 +799,7 @@ export default function ProceduresPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="max-h-[calc(92vh-150px)] space-y-5 overflow-y-auto p-4 sm:p-6">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
 
               {/* Procedure Code */}
               <div>
@@ -788,16 +827,16 @@ export default function ProceduresPage() {
                     onClick={handleGenerateCode}
                     disabled={isSaving}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-primary-blue/20 bg-primary-blue/5 px-4 py-3 text-sm font-black text-primary-blue transition hover:border-primary-blue/30 hover:bg-primary-blue/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Generate unique procedure code"
+                    title={t("modal.generateCodeTitle")}
                   >
                     <Sparkles size={17} />
-                    Generate
+                    {t("modal.generateCodeButton")}
                   </button>
 
                 </div>
 
                 <p className="mt-2 text-xs font-medium text-slate-400">
-                  Enter your own procedure code or generate one automatically.
+                  {t("modal.codeHint")}
                 </p>
 
               </div>
@@ -809,24 +848,14 @@ export default function ProceduresPage() {
                   {t("modal.priceLabel")}
                 </label>
 
-                <input
-                  type="number"
-                  value={
-                    form.defaultPrice === 0
-                      ? ""
-                      : form.defaultPrice
-                  }
-                  onChange={(e) => {
-                    const raw = e.target.value;
-
+                <MoneyInput
+                  value={form.defaultPrice}
+                  onChange={(value) =>
                     setForm((prev) => ({
                       ...prev,
-                      defaultPrice:
-                        raw === ""
-                          ? 0
-                          : Number(raw),
-                    }));
-                  }}
+                      defaultPrice: value,
+                    }))
+                  }
                   placeholder={t("modal.pricePlaceholder")}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/5"
                 />
@@ -956,7 +985,7 @@ export default function ProceduresPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-4 py-5 sm:flex-row sm:justify-end sm:px-6">
+            <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-4 py-5 sm:flex-row sm:justify-end sm:px-6">
 
               <button
                 type="button"
