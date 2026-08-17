@@ -63,7 +63,7 @@ export function LanguageSwitcher({
         {variant === "default" && (
           <span
             className={`text-sm font-semibold ${
-              isAccent ? "text-primary-blue" : "text-slate-700"
+              isAccent ? "text-black" : "text-slate-700"
             }`}
           >
             {LOCALE_LABELS[locale].short}
@@ -72,7 +72,7 @@ export function LanguageSwitcher({
 
         <ChevronDown
           size={14}
-          className={`transition ${isAccent ? "text-primary-blue/60" : "text-slate-400"} ${
+          className={`transition ${isAccent ? "text-black/60" : "text-slate-400"} ${
             open ? "rotate-180" : ""
           }`}
         />

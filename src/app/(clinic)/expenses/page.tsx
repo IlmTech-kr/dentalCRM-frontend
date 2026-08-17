@@ -592,7 +592,6 @@ export default function ExpensesPage() {
                   <th className="px-4 py-3">{t("table.date")}</th>
                   <th className="px-4 py-3">{t("table.category")}</th>
                   <th className="px-4 py-3">{t("table.payee")}</th>
-                  <th className="px-4 py-3">{t("table.reference")}</th>
                   <th className="px-4 py-3 text-right">{t("table.amount")}</th>
                   <th className="px-4 py-3">{t("table.status")}</th>
                   <th className="px-4 py-3 text-right">{t("table.actions")}</th>
@@ -612,7 +611,6 @@ export default function ExpensesPage() {
                         {expense.category?.name || categoryNameById.get(expense.categoryId) || "—"}
                       </td>
                       <td className="px-4 py-3 font-bold text-slate-900">{expense.payeeName}</td>
-                      <td className="px-4 py-3 text-slate-400">{expense.reference || "—"}</td>
                       <td className="px-4 py-3 text-right font-black text-slate-900">
                         {formatExpenseMoney(expense.amount, expense.currency)}
                       </td>

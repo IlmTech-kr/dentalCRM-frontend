@@ -145,7 +145,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <button
             type="button"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary-blue/20 bg-primary-blue/10 text-primary-blue backdrop-blur-sm transition hover:scale-105 hover:bg-primary-blue/20 active:scale-95 sm:h-11 sm:w-11"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary-blue/20 bg-primary-blue/10 text-black backdrop-blur-sm transition hover:scale-105 hover:bg-primary-blue/20 active:scale-95 sm:h-11 sm:w-11"
           >
             <Bell size={19} />
           </button>
