@@ -1,40 +1,132 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowUpRight, ChevronDown, ChevronUp, Info, Plus, Trash2 } from "lucide-react";
+import { ArrowUpRight, Camera, ChevronDown, ChevronUp, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { useSocialsStore } from "@/src/store/socials.store";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import {
+  useGetClinicProfile,
+  useUpdateClinicProfile,
+} from "@/src/features/clinicProfile/hooks/useClinicProfile";
+import { useStorageImage, useUploadFile } from "@/src/features/storage/hooks/useStorage";
+import { STORAGE_BUCKET, StorageTarget } from "@/src/types/storage.types";
 import SegmentedControl from "@/src/components/ui/SegmentedControl";
+import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import {
   PlatformIcon,
   SOCIAL_PLATFORM_COLOR,
   SOCIAL_PLATFORM_LABEL,
 } from "@/src/features/socials/platformConfig";
-import { SOCIAL_PLATFORMS, type SocialDisplayMode, type SocialPlatform } from "@/src/types/social.types";
+import {
+  SOCIAL_PLATFORMS,
+  type SocialDisplayMode,
+  type SocialLink,
+  type SocialPlatform,
+} from "@/src/types/social.types";
 
 export default function SocialsSettingsPage() {
   const t = useTranslations("settings.socials");
+  const tCommon = useTranslations("common");
   const toast = useToast();
 
-  const isHydrated = useSocialsStore((s) => s.isHydrated);
+  const isDisplayModeHydrated = useSocialsStore((s) => s.isHydrated);
   const hydrateFromStorage = useSocialsStore((s) => s.hydrateFromStorage);
-  const links = useSocialsStore((s) => s.links);
   const displayMode = useSocialsStore((s) => s.displayMode);
-  const addLink = useSocialsStore((s) => s.addLink);
-  const removeLink = useSocialsStore((s) => s.removeLink);
-  const reorderLinks = useSocialsStore((s) => s.reorderLinks);
   const setDisplayMode = useSocialsStore((s) => s.setDisplayMode);
 
   useEffect(() => {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
+  const { data: profile, isLoading, isError, refetch } = useGetClinicProfile();
+  const updateMutation = useUpdateClinicProfile();
+  const uploadMutation = useUploadFile();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const localPreviewRef = useRef<string>("");
+  const [localPreviewUrl, setLocalPreviewUrl] = useState("");
+
+  // Backenddan kelgan socials — mahalliy tahrirlanadigan holatga ko'chiriladi.
+  const [socials, setSocials] = useState<SocialLink[]>([]);
+
+  // Klinika profili maydonlari — companyName/bio/imageUrl (storage path).
+  const [companyName, setCompanyName] = useState("");
+  const [bio, setBio] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+
+  useEffect(() => {
+    setSocials(profile?.socials ?? []);
+    setCompanyName(profile?.companyName ?? "");
+    setBio(profile?.bio ?? "");
+    setImageUrl(profile?.imageUrl ?? "");
+  }, [profile]);
+
+  const clinicImage = useStorageImage(imageUrl, STORAGE_BUCKET);
+  const clinicImageSrc = localPreviewUrl || clinicImage.url;
+  const isClinicImageLoading =
+    uploadMutation.isPending ||
+    Boolean(imageUrl && !clinicImageSrc && clinicImage.isFetching);
+
+  // Server rasmi yuklangach, vaqtinchalik local preview o'chiriladi.
+  useEffect(() => {
+    if (!clinicImage.url || !localPreviewRef.current) return;
+    URL.revokeObjectURL(localPreviewRef.current);
+    localPreviewRef.current = "";
+    setLocalPreviewUrl("");
+  }, [clinicImage.url]);
+
+  useEffect(() => {
+    return () => {
+      if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    };
+  }, []);
+
+  async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.warning(t("toast.selectImageFile"));
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning(t("toast.imageTooLarge"));
+      e.target.value = "";
+      return;
+    }
+
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    const nextPreviewUrl = URL.createObjectURL(file);
+    localPreviewRef.current = nextPreviewUrl;
+    setLocalPreviewUrl(nextPreviewUrl);
+
+    try {
+      const uploadedFile = await uploadMutation.mutateAsync({
+        file,
+        target: StorageTarget.CLINICS,
+        bucket: STORAGE_BUCKET,
+      });
+      setImageUrl(uploadedFile.storagePath);
+      toast.success(t("toast.imageUploaded"));
+    } catch (error) {
+      if (localPreviewRef.current) {
+        URL.revokeObjectURL(localPreviewRef.current);
+        localPreviewRef.current = "";
+      }
+      setLocalPreviewUrl("");
+      toast.error(error instanceof Error ? error.message : t("toast.imageUploadFailed"));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   const [platform, setPlatform] = useState<SocialPlatform>("INSTAGRAM");
   const [url, setUrl] = useState("");
-  const [label, setLabel] = useState("");
 
   function handleAdd(e: FormEvent) {
     e.preventDefault();
@@ -44,26 +136,48 @@ export default function SocialsSettingsPage() {
       return;
     }
     const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-    addLink(platform, normalized, label);
+
+    setSocials((prev) => {
+      const existingIndex = prev.findIndex((link) => link.platform === platform);
+      if (existingIndex === -1) return [...prev, { platform, url: normalized }];
+      const next = [...prev];
+      next[existingIndex] = { platform, url: normalized };
+      return next;
+    });
+
     setUrl("");
-    setLabel("");
-    toast.success(t("toast.added"));
   }
 
-  function handleRemove(id: string) {
-    removeLink(id);
-    toast.success(t("toast.removed"));
+  function handleRemove(targetPlatform: SocialPlatform) {
+    setSocials((prev) => prev.filter((link) => link.platform !== targetPlatform));
   }
 
   function moveLink(index: number, direction: -1 | 1) {
     const target = index + direction;
-    if (target < 0 || target >= links.length) return;
-    const next = [...links];
-    [next[index], next[target]] = [next[target], next[index]];
-    reorderLinks(next);
+    if (target < 0 || target >= socials.length) return;
+    setSocials((prev) => {
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
-  if (!isHydrated) {
+  function handleSave() {
+    if (!profile) return;
+    if (uploadMutation.isPending) {
+      toast.warning(t("toast.imageStillUploading"));
+      return;
+    }
+    updateMutation.mutate(
+      { ...profile, companyName: companyName.trim(), bio: bio.trim(), imageUrl, socials },
+      {
+        onSuccess: () => toast.success(t("toast.saved")),
+        onError: (error) => toast.error(error.message || t("toast.saveFailed")),
+      }
+    );
+  }
+
+  if (!isDisplayModeHydrated) {
     return null;
   }
 
@@ -74,152 +188,243 @@ export default function SocialsSettingsPage() {
         <p className="mt-1 text-sm text-slate-500">{t("page.subtitle")}</p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        <Info size={18} className="mt-0.5 shrink-0" />
-        <p>{t("testNotice")}</p>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {/* Add form */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-            <h2 className="text-sm font-black text-slate-900">{t("form.title")}</h2>
-
-            <form onSubmit={handleAdd} className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-bold text-slate-500">{t("form.platformLabel")}</label>
-                <select
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value as SocialPlatform)}
-                  className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15"
-                >
-                  {SOCIAL_PLATFORMS.map((p) => (
-                    <option key={p} value={p}>
-                      {SOCIAL_PLATFORM_LABEL[p]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-500">{t("form.labelLabel")}</label>
-                <input
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder={t("form.labelPlaceholder")}
-                  className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-xs font-bold text-slate-500">{t("form.urlLabel")}</label>
-                <input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder={t("form.urlPlaceholder")}
-                  className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary-blue py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark sm:col-span-2"
-              >
-                <Plus size={16} />
-                {t("form.addButton")}
-              </button>
-            </form>
-          </div>
-
-          {/* Links list */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-            <h2 className="text-sm font-black text-slate-900">{t("list.title")}</h2>
-
-            {links.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-400">{t("list.empty")}</p>
-            ) : (
-              <ul className="mt-4 space-y-2">
-                {links.map((link, index) => (
-                  <li
-                    key={link.id}
-                    className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
-                  >
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white"
-                      style={{ backgroundColor: SOCIAL_PLATFORM_COLOR[link.platform] }}
-                    >
-                      <PlatformIcon platform={link.platform} size={16} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-slate-900">
-                        {link.label || SOCIAL_PLATFORM_LABEL[link.platform]}
-                      </p>
-                      <p className="truncate text-xs text-slate-400">{link.url}</p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveLink(index, -1)}
-                        disabled={index === 0}
-                        aria-label={t("list.moveUp")}
-                        className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveLink(index, 1)}
-                        disabled={index === links.length - 1}
-                        aria-label={t("list.moveDown")}
-                        className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(link.id)}
-                        aria-label={t("list.delete")}
-                        className="rounded-lg p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+      {isError ? (
+        <div className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm font-semibold text-slate-500">{tCommon("feedback.error")}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-primary-blue transition hover:bg-slate-50"
+          >
+            <RefreshCw size={14} />
+            {tCommon("actions.confirm")}
+          </button>
         </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="space-y-6">
+            {/* Clinic profile */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+              <h2 className="text-sm font-black text-slate-900">{t("profile.title")}</h2>
+              <p className="mt-1 text-xs text-slate-500">{t("profile.subtitle")}</p>
 
-        {/* Display mode + public page link */}
-        <div className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-            <h2 className="text-sm font-black text-slate-900">{t("display.title")}</h2>
-            <p className="mt-1 text-xs text-slate-500">{t("display.subtitle")}</p>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-primary-blue/10 shadow-md ring-4 ring-white">
+                    {clinicImageSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={clinicImageSrc}
+                        alt={t("profile.photoLabel")}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Camera size={20} className="text-primary-blue/60" />
+                    )}
 
-            <div className="mt-4">
-              <SegmentedControl<SocialDisplayMode>
-                value={displayMode}
-                onChange={setDisplayMode}
-                ariaLabel={t("display.title")}
-                options={[
-                  { key: "list", label: t("display.list") },
-                  { key: "circle", label: t("display.circle") },
-                ]}
-              />
+                    {isClinicImageLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40">
+                        <DentalLoaderIcon size={18} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadMutation.isPending}
+                    className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary-blue text-white shadow-lg transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
+                    title={t("profile.changePhoto")}
+                  >
+                    <Camera size={12} />
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    hidden
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleImageChange}
+                    disabled={uploadMutation.isPending}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-500">
+                    {t("profile.companyNameLabel")}
+                  </label>
+                  <input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder={t("profile.companyNamePlaceholder")}
+                    disabled={isLoading}
+                    className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="text-xs font-bold text-slate-500">{t("profile.bioLabel")}</label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder={t("profile.bioPlaceholder")}
+                  disabled={isLoading}
+                  rows={3}
+                  className="mt-1.5 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15 disabled:opacity-50"
+                />
+              </div>
             </div>
 
-            <Link
-              href="/socials"
-              target="_blank"
-              className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-            >
-              {t("display.openPublicPage")}
-              <ArrowUpRight size={16} />
-            </Link>
+            {/* Add form */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+              <h2 className="text-sm font-black text-slate-900">{t("form.title")}</h2>
+
+              <form onSubmit={handleAdd} className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-bold text-slate-500">{t("form.platformLabel")}</label>
+                  <select
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value as SocialPlatform)}
+                    disabled={isLoading}
+                    className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15 disabled:opacity-50"
+                  >
+                    {SOCIAL_PLATFORMS.map((p) => (
+                      <option key={p} value={p}>
+                        {SOCIAL_PLATFORM_LABEL[p]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500">{t("form.urlLabel")}</label>
+                  <input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder={t("form.urlPlaceholder")}
+                    disabled={isLoading}
+                    className="mt-1.5 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/15 disabled:opacity-50"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-primary-blue py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2"
+                >
+                  <Plus size={16} />
+                  {t("form.addButton")}
+                </button>
+              </form>
+            </div>
+
+            {/* Links list */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+              <h2 className="text-sm font-black text-slate-900">{t("list.title")}</h2>
+
+              {isLoading ? (
+                <div className="mt-4 space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+                  ))}
+                </div>
+              ) : socials.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-400">{t("list.empty")}</p>
+              ) : (
+                <ul className="mt-4 space-y-2">
+                  {socials.map((link, index) => (
+                    <li
+                      key={link.platform}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
+                    >
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white"
+                        style={{ backgroundColor: SOCIAL_PLATFORM_COLOR[link.platform] }}
+                      >
+                        <PlatformIcon platform={link.platform} size={16} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {SOCIAL_PLATFORM_LABEL[link.platform]}
+                        </p>
+                        <p className="truncate text-xs text-slate-400">{link.url}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveLink(index, -1)}
+                          disabled={index === 0}
+                          aria-label={t("list.moveUp")}
+                          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+                        >
+                          <ChevronUp size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveLink(index, 1)}
+                          disabled={index === socials.length - 1}
+                          aria-label={t("list.moveDown")}
+                          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(link.platform)}
+                          aria-label={t("list.delete")}
+                          className="rounded-lg p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isLoading || updateMutation.isPending}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-blue py-2.5 text-sm font-bold text-white transition hover:bg-primary-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {updateMutation.isPending && <DentalLoaderIcon size={16} />}
+                {t("list.save")}
+              </button>
+            </div>
+          </div>
+
+          {/* Display mode + public page link */}
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+              <h2 className="text-sm font-black text-slate-900">{t("display.title")}</h2>
+              <p className="mt-1 text-xs text-slate-500">{t("display.subtitle")}</p>
+
+              <div className="mt-4">
+                <SegmentedControl<SocialDisplayMode>
+                  value={displayMode}
+                  onChange={setDisplayMode}
+                  ariaLabel={t("display.title")}
+                  options={[
+                    { key: "list", label: t("display.list") },
+                    { key: "circle", label: t("display.circle") },
+                  ]}
+                />
+              </div>
+
+              <Link
+                href="/socials"
+                target="_blank"
+                className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                {t("display.openPublicPage")}
+                <ArrowUpRight size={16} />
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

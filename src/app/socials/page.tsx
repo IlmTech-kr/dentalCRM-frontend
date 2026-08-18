@@ -3,12 +3,30 @@
 import { useEffect } from "react";
 import { LogoMark, BRAND } from "@/src/components/shared/BrandLogo";
 import { useSocialsStore } from "@/src/store/socials.store";
+import { useGetPublicClinicProfile } from "@/src/features/clinicProfile/hooks/useClinicProfile";
+import { buildTenantBaseUrl } from "@/src/lib/api/http";
+import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import {
   PlatformIcon,
   SOCIAL_PLATFORM_COLOR,
   SOCIAL_PLATFORM_LABEL,
 } from "@/src/features/socials/platformConfig";
 import type { SocialLink } from "@/src/types/social.types";
+
+/** `imageUrl` backenddan "/api/storage/..." kabi nisbiy yo'l sifatida keladi — joriy tenant bazaviy URL'iga biriktiriladi. To'liq URL bo'lsa (http/https) o'zgarishsiz qaytadi. */
+function resolveClinicImageUrl(imageUrl?: string): string {
+  if (!imageUrl) return "";
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+
+  const subdomain = getCurrentSubdomain();
+  if (!subdomain) return imageUrl;
+
+  try {
+    return `${buildTenantBaseUrl(subdomain)}${imageUrl}`;
+  } catch {
+    return imageUrl;
+  }
+}
 
 /**
  * Ro'yxat ko'rinishi — har bir havola pastdan tepaga "pop-in" bilan
@@ -19,7 +37,7 @@ function SocialListView({ links }: { links: SocialLink[] }) {
     <div className="w-full space-y-3">
       {links.map((link, index) => (
         <a
-          key={link.id}
+          key={link.platform}
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
@@ -33,7 +51,7 @@ function SocialListView({ links }: { links: SocialLink[] }) {
             <PlatformIcon platform={link.platform} size={18} />
           </span>
           <span className="flex-1 truncate text-sm font-bold text-dark-navy">
-            {link.label || SOCIAL_PLATFORM_LABEL[link.platform]}
+            {SOCIAL_PLATFORM_LABEL[link.platform]}
           </span>
         </a>
       ))}
@@ -57,7 +75,7 @@ const RING_RADIUS_PCT = 37;
  */
 function SocialOrb({ link, size, delay }: { link: SocialLink; size: number; delay: number }) {
   const color = SOCIAL_PLATFORM_COLOR[link.platform];
-  const label = link.label || SOCIAL_PLATFORM_LABEL[link.platform];
+  const label = SOCIAL_PLATFORM_LABEL[link.platform];
 
   return (
     <a
@@ -92,18 +110,26 @@ function SocialOrb({ link, size, delay }: { link: SocialLink; size: number; dela
 
 /**
  * Doira ko'rinishi — haqiqiy RING: ikonkalar doira bo'ylab teng
- * masofada, markazda brend logotipi. 2 tagacha havola bo'lsa ring
+ * masofada, markazda klinika logotipi/nomi. 2 tagacha havola bo'lsa ring
  * geometriyasi ortiqcha (o'rtada bo'sh joy qolib ketadi) — shunchaki
  * markazlashgan qator sifatida ko'rsatiladi.
  */
-function SocialCircleView({ links }: { links: SocialLink[] }) {
+function SocialCircleView({
+  links,
+  companyName,
+  imageSrc,
+}: {
+  links: SocialLink[];
+  companyName: string;
+  imageSrc: string;
+}) {
   const count = links.length;
 
   if (count <= 2) {
     return (
       <div className="flex items-center justify-center gap-6">
         {links.map((link, index) => (
-          <SocialOrb key={link.id} link={link} size={72} delay={index * 110} />
+          <SocialOrb key={link.platform} link={link} size={72} delay={index * 110} />
         ))}
       </div>
     );
@@ -137,15 +163,20 @@ function SocialCircleView({ links }: { links: SocialLink[] }) {
         }}
       />
 
-      {/* Markaz — brend logotipi */}
+      {/* Markaz — klinika logotipi/nomi */}
       <div
         className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
         style={{ animation: "socials-pop-in 0.5s ease-out 200ms both" }}
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-100">
-          <LogoMark />
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-100">
+          {imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageSrc} alt={companyName} className="h-full w-full object-cover" />
+          ) : (
+            <LogoMark />
+          )}
         </div>
-        <p className="text-xs font-extrabold text-dark-navy">{BRAND}</p>
+        <p className="max-w-[110px] truncate text-xs font-extrabold text-dark-navy">{companyName}</p>
       </div>
 
       {/* Ring bo'ylab joylashgan orb'lar */}
@@ -156,7 +187,7 @@ function SocialCircleView({ links }: { links: SocialLink[] }) {
 
         return (
           <div
-            key={link.id}
+            key={link.platform}
             className="absolute"
             style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
           >
@@ -169,16 +200,21 @@ function SocialCircleView({ links }: { links: SocialLink[] }) {
 }
 
 export default function PublicSocialsPage() {
-  const isHydrated = useSocialsStore((s) => s.isHydrated);
+  const isDisplayModeHydrated = useSocialsStore((s) => s.isHydrated);
   const hydrateFromStorage = useSocialsStore((s) => s.hydrateFromStorage);
-  const links = useSocialsStore((s) => s.links);
   const displayMode = useSocialsStore((s) => s.displayMode);
 
   useEffect(() => {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
+  const { data: profile, isLoading } = useGetPublicClinicProfile();
+
+  const links = profile?.socials ?? [];
+  const companyName = profile?.companyName?.trim() || BRAND;
+  const imageSrc = resolveClinicImageUrl(profile?.imageUrl);
   const isCircle = displayMode === "circle";
+  const isReady = isDisplayModeHydrated && !isLoading;
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-sky-50 via-white to-violet-50 px-6 py-16 pb-12">
@@ -186,27 +222,40 @@ export default function PublicSocialsPage() {
       {!isCircle && (
         <>
           <div
-            className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-lg ring-1 ring-slate-100"
+            className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-slate-100"
             style={{ animation: "socials-pop-in 0.5s ease-out both" }}
           >
-            <LogoMark />
+            {imageSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageSrc} alt={companyName} className="h-full w-full object-cover" />
+            ) : (
+              <LogoMark />
+            )}
           </div>
           <h1
             className="mt-5 text-xl font-extrabold text-dark-navy"
             style={{ animation: "socials-pop-in 0.5s ease-out 60ms both" }}
           >
-            {BRAND}
+            {companyName}
           </h1>
+          {profile?.bio && (
+            <p
+              className="mt-1 max-w-sm text-center text-sm text-text-light"
+              style={{ animation: "socials-pop-in 0.5s ease-out 100ms both" }}
+            >
+              {profile.bio}
+            </p>
+          )}
         </>
       )}
 
       <div className={`w-full ${isCircle ? "mt-4 max-w-lg" : "mt-10 max-w-md"}`}>
-        {!isHydrated ? null : links.length === 0 ? (
+        {!isReady ? null : links.length === 0 ? (
           <p className="text-center text-sm text-text-light">—</p>
         ) : displayMode === "list" ? (
           <SocialListView links={links} />
         ) : (
-          <SocialCircleView links={links} />
+          <SocialCircleView links={links} companyName={companyName} imageSrc={imageSrc} />
         )}
       </div>
     </main>

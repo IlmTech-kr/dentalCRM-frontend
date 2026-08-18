@@ -188,14 +188,21 @@
       "title": "Socials",
       "subtitle": "Manage the social links shown on your public page"
     },
-    "testNotice": "Frontend-only preview for now — links are saved in this browser only, no backend yet.",
+    "profile": {
+      "title": "Clinic profile",
+      "subtitle": "Shown at the top of your public page",
+      "photoLabel": "Photo",
+      "changePhoto": "Change photo",
+      "companyNameLabel": "Clinic name",
+      "companyNamePlaceholder": "Enter clinic name",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Tell visitors about your clinic"
+    },
     "form": {
       "title": "Add a link",
       "platformLabel": "Platform",
       "urlLabel": "URL",
       "urlPlaceholder": "https://...",
-      "labelLabel": "Label (optional)",
-      "labelPlaceholder": "Custom name shown instead of the platform name",
       "addButton": "Add link"
     },
     "list": {
@@ -203,7 +210,8 @@
       "empty": "No links yet — add your first one above.",
       "moveUp": "Move up",
       "moveDown": "Move down",
-      "delete": "Delete"
+      "delete": "Delete",
+      "save": "Save changes"
     },
     "display": {
       "title": "Public page style",
@@ -213,9 +221,14 @@
       "openPublicPage": "Open public page"
     },
     "toast": {
-      "added": "Link added",
-      "removed": "Link removed",
-      "invalidUrl": "Enter a valid URL"
+      "invalidUrl": "Enter a valid URL",
+      "saved": "Socials saved",
+      "saveFailed": "Failed to save socials",
+      "selectImageFile": "Please select an image file",
+      "imageTooLarge": "Image must be smaller than 5 MB",
+      "imageUploaded": "Photo uploaded",
+      "imageUploadFailed": "Failed to upload photo",
+      "imageStillUploading": "Please wait for the photo to finish uploading"
     }
   }
 }

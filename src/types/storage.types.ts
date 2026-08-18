@@ -3,6 +3,7 @@ export const STORAGE_BUCKET = "dental-storage";
 export enum StorageTarget {
   USERS = "users",
   DOCUMENTS = "documents",
+  CLINICS = "clinics",
 }
 
 export interface UploadFilePayload {

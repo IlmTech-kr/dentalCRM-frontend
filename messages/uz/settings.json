@@ -188,14 +188,21 @@
       "title": "Ijtimoiy tarmoqlar",
       "subtitle": "Ommaviy sahifangizda ko'rsatiladigan havolalarni boshqaring"
     },
-    "testNotice": "Hozircha faqat frontend ko'rinishi — havolalar shu brauzerda saqlanadi, backend hali yo'q.",
+    "profile": {
+      "title": "Klinika profili",
+      "subtitle": "Ommaviy sahifangiz tepasida ko'rsatiladi",
+      "photoLabel": "Rasm",
+      "changePhoto": "Rasmni o'zgartirish",
+      "companyNameLabel": "Klinika nomi",
+      "companyNamePlaceholder": "Klinika nomini kiriting",
+      "bioLabel": "Klinika haqida",
+      "bioPlaceholder": "Tashrif buyuruvchilarga klinikangiz haqida yozing"
+    },
     "form": {
       "title": "Havola qo'shish",
       "platformLabel": "Platforma",
       "urlLabel": "URL",
       "urlPlaceholder": "https://...",
-      "labelLabel": "Nom (ixtiyoriy)",
-      "labelPlaceholder": "Platforma nomi o'rniga ko'rsatiladigan nom",
       "addButton": "Havola qo'shish"
     },
     "list": {
@@ -203,7 +210,8 @@
       "empty": "Hali havolalar yo'q — yuqoridan birinchisini qo'shing.",
       "moveUp": "Yuqoriga",
       "moveDown": "Pastga",
-      "delete": "O'chirish"
+      "delete": "O'chirish",
+      "save": "O'zgarishlarni saqlash"
     },
     "display": {
       "title": "Ommaviy sahifa ko'rinishi",
@@ -213,9 +221,14 @@
       "openPublicPage": "Ommaviy sahifani ochish"
     },
     "toast": {
-      "added": "Havola qo'shildi",
-      "removed": "Havola o'chirildi",
-      "invalidUrl": "To'g'ri URL kiriting"
+      "invalidUrl": "To'g'ri URL kiriting",
+      "saved": "Ijtimoiy tarmoqlar saqlandi",
+      "saveFailed": "Saqlashda xatolik yuz berdi",
+      "selectImageFile": "Rasm faylini tanlang",
+      "imageTooLarge": "Rasm hajmi 5 MB dan kichik bo'lishi kerak",
+      "imageUploaded": "Rasm yuklandi",
+      "imageUploadFailed": "Rasmni yuklab bo'lmadi",
+      "imageStillUploading": "Rasm yuklanib bo'lishini kuting"
     }
   }
 }

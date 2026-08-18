@@ -13,6 +13,14 @@ export const ENDPOINTS = {
     changePassword: "/api/v1/users/me/change-password",
   },
 
+  clinicProfile: {
+    // CLINIC_ADMIN — o'z klinikasining ommaviy profilini olish/yangilash.
+    get: "/api/v1/clinic/public-profile",
+    update: "/api/v1/clinic/public-profile",
+    // Autentifikatsiyasiz — /socials ommaviy sahifasi shu yerdan o'qiydi.
+    public: "/api/public/clinics",
+  },
+
   ai: {
     sessions: "/api/dental/ai/chat/sessions",
     history: (sessionId: string) =>
