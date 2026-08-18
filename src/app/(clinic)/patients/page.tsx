@@ -145,14 +145,27 @@ export default function PatientsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
+// Eng oxirgi qo'shilgan bemor jadval boshida ko'rinishi kerak. Backend
+// createdAt qaytarsa shu ishlatiladi; bo'lmasa Mongo ObjectId (id ning
+// dastlabki qismi) yaratilish vaqtini o'zida saqlaydi — id bo'yicha
+// kamayish tartibida solishtirish ham teskari xronologik tartib beradi.
+const sortedPatients = useMemo(() => {
+  return [...patients].sort((a, b) => {
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return (b.id || "").localeCompare(a.id || "");
+  });
+}, [patients]);
+
 const filteredPatients = useMemo(() => {
   const query = tableSearch.trim().toLowerCase();
-  if (!query) return patients;
+  if (!query) return sortedPatients;
 
   const digits = extractDigits(tableSearch);
   const isPhoneQuery = digits.length > 0 && /^[\d\s+()-]+$/.test(tableSearch.trim());
 
-  return patients.filter((patient) => {
+  return sortedPatients.filter((patient) => {
     // Telefon raqami bo'yicha moslik
     if (isPhoneQuery) {
       const patientDigits = extractDigits(
@@ -167,7 +180,7 @@ const filteredPatients = useMemo(() => {
 
     return fullName.includes(query) || reversedName.includes(query);
   });
-}, [patients, tableSearch]);
+}, [sortedPatients, tableSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE));
   const paginatedPatients = filteredPatients.slice(

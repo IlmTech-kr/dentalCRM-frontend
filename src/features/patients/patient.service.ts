@@ -54,25 +54,31 @@ function normalizePatient(patient: any): Patient {
 
 /**
  * API response har xil formatda kelsa ham array qilib olamiz.
+ * Backend Spring Pageable qaytarsa (content/totalPages/...), bu yerda
+ * faqat bitta sahifaning array qismini ajratib olamiz — sahifalash
+ * (barcha sahifalarni yig'ish) getPatients() ichida bajariladi.
  */
-function normalizePatientsResponse(responseData: any): Patient[] {
-  let patients: any[] = [];
-
+function extractPatientsArray(responseData: any): any[] {
   if (Array.isArray(responseData)) {
-    patients = responseData;
-  } else if (Array.isArray(responseData?.data)) {
-    patients = responseData.data;
-  } else if (Array.isArray(responseData?.content)) {
-    patients = responseData.content;
-  } else if (Array.isArray(responseData?.patients)) {
-    patients = responseData.patients;
-  } else if (Array.isArray(responseData?.data?.content)) {
-    patients = responseData.data.content;
-  } else {
-    patients = [];
+    return responseData;
   }
+  if (Array.isArray(responseData?.data)) {
+    return responseData.data;
+  }
+  if (Array.isArray(responseData?.content)) {
+    return responseData.content;
+  }
+  if (Array.isArray(responseData?.patients)) {
+    return responseData.patients;
+  }
+  if (Array.isArray(responseData?.data?.content)) {
+    return responseData.data.content;
+  }
+  return [];
+}
 
-  return patients.map(normalizePatient);
+function normalizePatientsResponse(responseData: any): Patient[] {
+  return extractPatientsArray(responseData).map(normalizePatient);
 }
 
 // ---------------------------------------------------------------------------
@@ -101,18 +107,78 @@ function normalizePatientPayload<T extends CreatePatientDto | UpdatePatientDto>(
 // ---------------------------------------------------------------------------
 
 /**
+ * Backend /api/dental/patients javobi: { patients: [...], total: N } —
+ * `size` so'ralganidan qat'i nazar backend sahifa hajmini o'zi
+ * kichraytiradi (masalan har doim ko'pi bilan 20ta qaytaradi), shuning
+ * uchun "kelgan miqdor so'ralgandan kam bo'lsa oxirgi sahifa" degan
+ * taxmin ISHLAMAYDI. Shu sababli `page`ni oshirib, `total`ga yetguncha
+ * davom etiladi.
+ *
+ * `page` parametri e'tiborga olinmasligi (va har doim bitta xil sahifa
+ * qaytishi) ehtimoliga qarshi — id bo'yicha dedup qilinadi: yangi
+ * sahifada bironta ham yangi id kelmasa, bu backend ilgarilamayotganini
+ * anglatadi va cheksiz/takroriy yig'ishning oldini olish uchun to'xtaymiz.
+ */
+const PATIENTS_PAGE_FETCH_SIZE = 200;
+const PATIENTS_MAX_PAGES = 100; // xavfsizlik cheklovi — cheksiz loopdan saqlaydi
+
+/**
  * GET /patients
  */
 export async function getPatients(): Promise<Patient[]> {
   try {
     const http = tenantHttp();
-    const response = await http.get(ENDPOINTS.patients.list);
+    const byId = new Map<string, any>();
+    let page = 0;
+    let total: number | undefined;
 
-    if (process.env.NODE_ENV === "development") {
-      console.debug("[Patient Service] getPatients response:", response.data);
-    }
+    do {
+      const response = await http.get(
+        `${ENDPOINTS.patients.list}?page=${page}&size=${PATIENTS_PAGE_FETCH_SIZE}`
+      );
+      const data = response.data;
+      const pagePatients = extractPatientsArray(data);
 
-    return normalizePatientsResponse(response.data);
+      if (typeof data?.total === "number") {
+        total = data.total;
+      } else if (typeof data?.totalElements === "number") {
+        total = data.totalElements;
+      } else if (typeof data?.totalCount === "number") {
+        total = data.totalCount;
+      }
+
+      let newCount = 0;
+      for (const patient of pagePatients) {
+        const id = patient?.id || patient?._id;
+        const key = id != null ? String(id) : `__idx_${byId.size}_${newCount}`;
+        if (!byId.has(key)) newCount += 1;
+        byId.set(key, patient);
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[Patient Service] getPatients page response:", {
+          page,
+          received: pagePatients.length,
+          newCount,
+          collected: byId.size,
+          total,
+        });
+      }
+
+      page += 1;
+
+      // Backend sahifalashsiz to'g'ridan-to'g'ri array qaytarsa (Pageable
+      // emas) — bitta so'rovda hammasi keladi, qayta so'rash shart emas.
+      if (Array.isArray(data)) break;
+
+      // Bo'sh sahifa, oldinga siljimayotgan `page`, yoki total'ga
+      // yetilgan bo'lsa — to'xtaymiz.
+      if (pagePatients.length === 0) break;
+      if (newCount === 0) break;
+      if (typeof total === "number" && byId.size >= total) break;
+    } while (page < PATIENTS_MAX_PAGES);
+
+    return Array.from(byId.values()).map(normalizePatient);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[Patient Service] getPatients failed:", getApiErrorMessage(error));
