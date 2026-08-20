@@ -108,18 +108,28 @@ function normalizePatientPayload<T extends CreatePatientDto | UpdatePatientDto>(
 
 /**
  * Backend /api/dental/patients javobi: { patients: [...], total: N } —
- * `size` so'ralganidan qat'i nazar backend sahifa hajmini o'zi
- * kichraytiradi (masalan har doim ko'pi bilan 20ta qaytaradi), shuning
- * uchun "kelgan miqdor so'ralgandan kam bo'lsa oxirgi sahifa" degan
- * taxmin ISHLAMAYDI. Shu sababli `page`ni oshirib, `total`ga yetguncha
- * davom etiladi.
+ * boshqa ro'yxat endpointlari (expenses, treatmentPayments, ...) kabi
+ * `page` + `limit` bilan sahifalanadi (bkz. api/dental/patients?page=0&limit=10).
+ * Bitta so'rovda hammasini olish uchun `page`ni oshirib, `total`ga
+ * yetguncha davom etiladi.
+ *
+ * DIQQAT: backend `sortBy`/`sortDirection` kabi tartiblash parametrini
+ * qo'llab-quvvatlashi tasdiqlanmagan — shuning uchun "eng oxirgi
+ * qo'shilgan bemor birinchi ko'rinishi" talabi bu yerda emas, chaqiruvchi
+ * tomonda (patients/page.tsx, sortedPatients) hal qilinadi: bu funksiya
+ * BARCHA bemorni yig'ib beradi, so'ng ular createdAt/id bo'yicha klient
+ * tomonda kamayish tartibida saralanadi va shundan keyingina sahifalanadi.
+ * Bu — backend qaysi tartibda qaytarishidan qat'i nazar to'g'ri natijani
+ * kafolatlashning yagona ishonchli yo'li (haqiqiy "har bosishda bitta
+ * sahifa" so'rovi bilan bu kafolatlanmaydi, chunki backend offset emas,
+ * sahifa indeksi bilan ishlaydi).
  *
  * `page` parametri e'tiborga olinmasligi (va har doim bitta xil sahifa
  * qaytishi) ehtimoliga qarshi — id bo'yicha dedup qilinadi: yangi
  * sahifada bironta ham yangi id kelmasa, bu backend ilgarilamayotganini
  * anglatadi va cheksiz/takroriy yig'ishning oldini olish uchun to'xtaymiz.
  */
-const PATIENTS_PAGE_FETCH_SIZE = 200;
+const PATIENTS_PAGE_FETCH_LIMIT = 10;
 const PATIENTS_MAX_PAGES = 100; // xavfsizlik cheklovi — cheksiz loopdan saqlaydi
 
 /**
@@ -134,7 +144,7 @@ export async function getPatients(): Promise<Patient[]> {
 
     do {
       const response = await http.get(
-        `${ENDPOINTS.patients.list}?page=${page}&size=${PATIENTS_PAGE_FETCH_SIZE}`
+        `${ENDPOINTS.patients.list}?page=${page}&limit=${PATIENTS_PAGE_FETCH_LIMIT}`
       );
       const data = response.data;
       const pagePatients = extractPatientsArray(data);

@@ -28,6 +28,13 @@ export const patientKeys = {
   search: (phone: string) => [...patientKeys.all, "search", phone] as const,
 };
 
+/**
+ * Bemorlar jadvali (patients/page.tsx) shu bilan ishlaydi. Backend
+ * `sortBy`/`sortDirection` qo'llab-quvvatlashi tasdiqlanmagani uchun
+ * hammasi shu yerda yig'ib olinadi va "eng oxirgi qo'shilgan birinchi"
+ * tartibi hamda sahifalash tugmalari klient tomonda hal qilinadi (bkz.
+ * patient.service.ts dagi getPatients() izohi).
+ */
 export function useGetPatients() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 

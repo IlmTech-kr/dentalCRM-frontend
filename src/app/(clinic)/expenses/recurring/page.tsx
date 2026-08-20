@@ -22,6 +22,7 @@ import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
 import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
 import { MoneyInput } from "@/src/components/ui/MoneyInput";
 import { fieldClassName, fieldLabelClassName } from "@/src/components/ui/formFieldStyles";
+import { DateInput } from "@/src/components/ui/DateInput";
 
 // ---------------------------------------------------------------------------
 // Create/edit modal
@@ -195,20 +196,19 @@ function RecurringExpenseModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={fieldLabelClassName}>{t("modal.startDateLabel")}</label>
-            <input
-              type="date"
+            <DateInput
               value={normalizeDateForInput(startDate)}
-              onChange={(e) => setStartDate(e.target.value)}
-              className={fieldClassName}
+              onChange={setStartDate}
+              className={`${fieldClassName} flex items-center gap-2 text-left`}
             />
           </div>
           <div>
             <label className={fieldLabelClassName}>{t("modal.endDateLabel")}</label>
-            <input
-              type="date"
+            <DateInput
               value={endDate ? normalizeDateForInput(endDate) : ""}
-              onChange={(e) => setEndDate(e.target.value)}
-              className={fieldClassName}
+              onChange={setEndDate}
+              min={normalizeDateForInput(startDate)}
+              className={`${fieldClassName} flex items-center gap-2 text-left`}
             />
           </div>
         </div>

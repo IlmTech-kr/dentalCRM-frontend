@@ -29,6 +29,7 @@ import type {
 } from "@/src/features/statistics/services/statistics.service";
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import SegmentedControl from "@/src/components/ui/SegmentedControl";
+import { DateInput } from "@/src/components/ui/DateInput";
 
 // ---------------------------------------------------------------------------
 // Date helpers (no date-fns)
@@ -636,20 +637,18 @@ function DateRangePicker({
 }) {
   return (
     <div className="inline-flex items-center gap-1 rounded-xl border border-border-color bg-white px-1.5 py-1 shadow-sm">
-      <input
-        type="date"
+      <DateInput
         value={from}
         max={to || undefined}
-        onChange={(e) => onFromChange(e.target.value)}
-        className="w-[120px] rounded-lg bg-transparent px-1.5 py-1 text-xs font-semibold text-slate-600 outline-none transition focus:bg-slate-50"
+        onChange={onFromChange}
+        className="flex w-[120px] items-center gap-1 rounded-lg bg-transparent px-1.5 py-1 text-left text-xs font-semibold text-slate-600 outline-none transition focus:bg-slate-50"
       />
       <span className="select-none text-xs text-slate-300">→</span>
-      <input
-        type="date"
+      <DateInput
         value={to}
         min={from || undefined}
-        onChange={(e) => onToChange(e.target.value)}
-        className="w-[120px] rounded-lg bg-transparent px-1.5 py-1 text-xs font-semibold text-slate-600 outline-none transition focus:bg-slate-50"
+        onChange={onToChange}
+        className="flex w-[120px] items-center gap-1 rounded-lg bg-transparent px-1.5 py-1 text-left text-xs font-semibold text-slate-600 outline-none transition focus:bg-slate-50"
       />
     </div>
   );
@@ -1322,7 +1321,7 @@ export default function DashboardPage() {
   } = useQuery({
     queryKey: ["patients-count"],
     queryFn: async () => {
-      const res = await tenantHttp().get(`${ENDPOINTS.patients.list}?size=1`);
+      const res = await tenantHttp().get(`${ENDPOINTS.patients.list}?page=0&limit=1`);
       return res.data;
     },
     retry: false,

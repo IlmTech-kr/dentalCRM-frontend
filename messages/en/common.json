@@ -28,5 +28,13 @@
     "error": "An error occurred",
     "success": "Success",
     "required": "Required field"
+  },
+  "datePicker": {
+    "today": "Today",
+    "clear": "Clear",
+    "now": "Now",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "done": "Done"
   }
 }

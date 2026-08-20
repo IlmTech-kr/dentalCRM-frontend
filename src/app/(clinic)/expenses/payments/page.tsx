@@ -20,6 +20,7 @@ import { ModalShell } from "@/src/components/ui/ModalShell";
 import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
 import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
 import { dangerFieldClassName, fieldLabelClassName, filterFieldClassName } from "@/src/components/ui/formFieldStyles";
+import { DateInput } from "@/src/components/ui/DateInput";
 import {
   useGetTreatmentPayments,
   useGetTreatmentPaymentsSummary,
@@ -220,20 +221,20 @@ export default function TreatmentPaymentsPage() {
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-500">{t("filters.fromDate")}</label>
-          <input
-            type="date"
+          <DateInput
             value={fromDate}
-            onChange={(e) => updateParams({ fromDate: e.target.value })}
-            className={filterFieldClassName}
+            onChange={(value) => updateParams({ fromDate: value })}
+            max={toDate}
+            className={`${filterFieldClassName} flex items-center gap-2 text-left`}
           />
         </div>
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-500">{t("filters.toDate")}</label>
-          <input
-            type="date"
+          <DateInput
             value={toDate}
-            onChange={(e) => updateParams({ toDate: e.target.value })}
-            className={filterFieldClassName}
+            onChange={(value) => updateParams({ toDate: value })}
+            min={fromDate}
+            className={`${filterFieldClassName} flex items-center gap-2 text-left`}
           />
         </div>
 

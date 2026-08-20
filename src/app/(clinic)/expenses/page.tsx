@@ -36,6 +36,7 @@ import { ModalShell } from "@/src/components/ui/ModalShell";
 import { ModalFormActions } from "@/src/components/ui/ModalFormActions";
 import { EmptyState, LoadingState } from "@/src/components/ui/EmptyState";
 import { MoneyInput } from "@/src/components/ui/MoneyInput";
+import { DateInput } from "@/src/components/ui/DateInput";
 import {
   dangerFieldClassName,
   fieldClassName,
@@ -136,11 +137,10 @@ function CreateExpenseModal({
 
         <div>
           <label className={fieldLabelClassName}>{t("createModal.dateLabel")}</label>
-          <input
-            type="date"
+          <DateInput
             value={normalizeDateForInput(expenseDate)}
-            onChange={(e) => setExpenseDate(e.target.value)}
-            className={fieldClassName}
+            onChange={setExpenseDate}
+            className={`${fieldClassName} flex items-center gap-2 text-left`}
           />
         </div>
 
@@ -234,11 +234,10 @@ function PayExpenseModal({
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
         <div>
           <label className={fieldLabelClassName}>{t("payModal.dateLabel")}</label>
-          <input
-            type="date"
+          <DateInput
             value={normalizeDateForInput(paidAt)}
-            onChange={(e) => setPaidAt(e.target.value)}
-            className={fieldClassName}
+            onChange={setPaidAt}
+            className={`${fieldClassName} flex items-center gap-2 text-left`}
             autoFocus
           />
         </div>
@@ -505,20 +504,20 @@ export default function ExpensesPage() {
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-500">{t("filters.fromDate")}</label>
-          <input
-            type="date"
+          <DateInput
             value={fromDate}
-            onChange={(e) => updateParams({ fromDate: e.target.value })}
-            className={filterFieldClassName}
+            onChange={(value) => updateParams({ fromDate: value })}
+            max={toDate}
+            className={`${filterFieldClassName} flex items-center gap-2 text-left`}
           />
         </div>
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-500">{t("filters.toDate")}</label>
-          <input
-            type="date"
+          <DateInput
             value={toDate}
-            onChange={(e) => updateParams({ toDate: e.target.value })}
-            className={filterFieldClassName}
+            onChange={(value) => updateParams({ toDate: value })}
+            min={fromDate}
+            className={`${filterFieldClassName} flex items-center gap-2 text-left`}
           />
         </div>
         <div>

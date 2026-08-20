@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { TimeInput } from "@/src/components/ui/TimeInput";
 
 import {
   useCreateDoctorSchedule,
@@ -599,20 +600,18 @@ function WeekEditorModal({
                       <span className="text-sm font-extrabold text-slate-900">{getDayLabel(day.value, t)}</span>
                     </label>
 
-                    <input
-                      type="time"
+                    <TimeInput
                       value={row.startTime}
                       disabled={!row.active}
-                      onChange={(e) => updateRow(index, { startTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      onChange={(value) => updateRow(index, { startTime: normalizeScheduleTime(value) })}
+                      className="flex min-w-[120px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                     <span className="text-xs text-slate-400">—</span>
-                    <input
-                      type="time"
+                    <TimeInput
                       value={row.endTime}
                       disabled={!row.active}
-                      onChange={(e) => updateRow(index, { endTime: normalizeScheduleTime(e.target.value) })}
-                      className="min-w-[120px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      onChange={(value) => updateRow(index, { endTime: normalizeScheduleTime(value) })}
+                      className="flex min-w-[120px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                 );
@@ -696,22 +695,20 @@ function WeekEditorModal({
                   <label className="mb-3 block text-sm font-bold text-slate-900">
                     {t("modal.startTimeLabel")} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="time"
+                  <TimeInput
                     value={createStartTime}
-                    onChange={(e) => onCreateStartTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
+                    onChange={(value) => onCreateStartTimeChange(normalizeScheduleTime(value))}
+                    className="flex w-full items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
                 <div>
                   <label className="mb-3 block text-sm font-bold text-slate-900">
                     {t("modal.endTimeLabel")} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="time"
+                  <TimeInput
                     value={createEndTime}
-                    onChange={(e) => onCreateEndTimeChange(normalizeScheduleTime(e.target.value))}
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
+                    onChange={(value) => onCreateEndTimeChange(normalizeScheduleTime(value))}
+                    className="flex w-full items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10"
                   />
                 </div>
               </div>

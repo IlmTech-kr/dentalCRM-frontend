@@ -37,6 +37,8 @@ import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { getApiErrorMessage } from "@/src/lib/api/http";
 import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { Tooltip } from "@/src/components/ui/Tooltip";
+import { DateInput } from "@/src/components/ui/DateInput";
+import { TimeInput } from "@/src/components/ui/TimeInput";
 
 const PAGE_SIZE = 10;
 
@@ -57,6 +59,11 @@ const emptyAppointmentForm = {
   notes: "",
 };
 
+/** Yangi appointment modal ochilganda sana bo'sh emas, bugungi kun bilan boshlanadi. */
+function createEmptyAppointmentForm() {
+  return { ...emptyAppointmentForm, appointmentDate: todayYMDValue() };
+}
+
 type ModalState =
   | "none"
   | "form"
@@ -76,6 +83,11 @@ function formatPhoneNumber(input: string): string {
 
 function extractDigits(phone: string): string {
   return phone.replace(/\D/g, "");
+}
+
+function todayYMDValue(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 function getPatientPhone(patient?: Patient | null) {
@@ -137,52 +149,55 @@ export default function PatientsPage() {
   const [phoneSearch, setPhoneSearch] = useState<string>("+998");
   const [phoneSearchError, setPhoneSearchError] = useState("");
   const [phoneSearchAttempted, setPhoneSearchAttempted] = useState(false);
-  const [appointmentForm, setAppointmentForm] = useState(emptyAppointmentForm);
+  const [appointmentForm, setAppointmentForm] = useState(createEmptyAppointmentForm);
 
-  // Jadval qidiruvi — telefon raqami bo'yicha
+  // Jadval qidiruvi — telefon raqami/ism bo'yicha
   const [tableSearch, setTableSearch] = useState("");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-// Eng oxirgi qo'shilgan bemor jadval boshida ko'rinishi kerak. Backend
-// createdAt qaytarsa shu ishlatiladi; bo'lmasa Mongo ObjectId (id ning
-// dastlabki qismi) yaratilish vaqtini o'zida saqlaydi — id bo'yicha
-// kamayish tartibida solishtirish ham teskari xronologik tartib beradi.
-const sortedPatients = useMemo(() => {
-  return [...patients].sort((a, b) => {
-    if (a.createdAt && b.createdAt) {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-    return (b.id || "").localeCompare(a.id || "");
-  });
-}, [patients]);
+  // Backend tartiblashni (sortBy/sortDirection) qo'llab-quvvatlashi
+  // tasdiqlanmagan, shuning uchun "eng oxirgi qo'shilgan bemor birinchi
+  // ko'rinishi" talabini bu yerda, to'liq ro'yxat ustida, klient tomonda
+  // kafolatlaymiz: createdAt bo'lsa shu, bo'lmasa Mongo ObjectId (id ning
+  // dastlabki qismi yaratilish vaqtini o'zida saqlaydi) kamayish
+  // tartibida — ikkalasi ham eng yangisini birinchi qiladi.
+  const sortedPatients = useMemo(() => {
+    return [...patients].sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      return (b.id || "").localeCompare(a.id || "");
+    });
+  }, [patients]);
 
-const filteredPatients = useMemo(() => {
-  const query = tableSearch.trim().toLowerCase();
-  if (!query) return sortedPatients;
+  const filteredPatients = useMemo(() => {
+    const query = tableSearch.trim().toLowerCase();
+    if (!query) return sortedPatients;
 
-  const digits = extractDigits(tableSearch);
-  const isPhoneQuery = digits.length > 0 && /^[\d\s+()-]+$/.test(tableSearch.trim());
+    const digits = extractDigits(tableSearch);
+    const isPhoneQuery = digits.length > 0 && /^[\d\s+()-]+$/.test(tableSearch.trim());
 
-  return sortedPatients.filter((patient) => {
-    // Telefon raqami bo'yicha moslik
-    if (isPhoneQuery) {
-      const patientDigits = extractDigits(
-        patient.phone || patient.phoneNumber || ""
-      );
-      if (patientDigits.includes(digits)) return true;
-    }
+    return sortedPatients.filter((patient) => {
+      // Telefon raqami bo'yicha moslik
+      if (isPhoneQuery) {
+        const patientDigits = extractDigits(
+          patient.phone || patient.phoneNumber || ""
+        );
+        if (patientDigits.includes(digits)) return true;
+      }
 
-    // Ism / familiya bo'yicha moslik
-    const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.toLowerCase();
-    const reversedName = `${patient.lastName || ""} ${patient.firstName || ""}`.toLowerCase();
+      // Ism / familiya bo'yicha moslik
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.toLowerCase();
+      const reversedName = `${patient.lastName || ""} ${patient.firstName || ""}`.toLowerCase();
 
-    return fullName.includes(query) || reversedName.includes(query);
-  });
-}, [sortedPatients, tableSearch]);
+      return fullName.includes(query) || reversedName.includes(query);
+    });
+  }, [sortedPatients, tableSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE));
+  const totalPatients = filteredPatients.length;
   const paginatedPatients = filteredPatients.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -255,7 +270,7 @@ const filteredPatients = useMemo(() => {
   function openAppointmentModal(patient: Patient) {
     setSelectedPatient(patient);
     setEditingPatient(null);
-    setAppointmentForm(emptyAppointmentForm);
+    setAppointmentForm(createEmptyAppointmentForm());
     setModalState("appointment");
   }
 
@@ -265,7 +280,7 @@ const filteredPatients = useMemo(() => {
     setSelectedPatient(null);
     setPendingNewPatient(null);
     setForm(emptyForm);
-    setAppointmentForm(emptyAppointmentForm);
+    setAppointmentForm(createEmptyAppointmentForm());
     setPhoneSearch("+998");
     setPhoneSearchError("");
     setPhoneSearchAttempted(false);
@@ -471,7 +486,7 @@ const filteredPatients = useMemo(() => {
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-dark-navy">{t("list.sectionTitle")}</h2>
             <span className="rounded-full bg-primary-blue/10 px-3 py-1 text-sm font-medium text-primary-blue">
-              {t("list.patientsCount", { count: filteredPatients.length })}
+              {t("list.patientsCount", { count: totalPatients })}
             </span>
           </div>
 
@@ -617,8 +632,8 @@ const filteredPatients = useMemo(() => {
                 <p className="text-sm text-text-light">
                   {t.rich("list.paginationSummary", {
                     from: (currentPage - 1) * PAGE_SIZE + 1,
-                    to: Math.min(currentPage * PAGE_SIZE, filteredPatients.length),
-                    total: filteredPatients.length,
+                    to: Math.min(currentPage * PAGE_SIZE, totalPatients),
+                    total: totalPatients,
                     b: (chunks) => <span className="font-semibold text-dark-navy">{chunks}</span>,
                   })}
                 </p>
@@ -858,22 +873,18 @@ const filteredPatients = useMemo(() => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-bold text-slate-700">{t("appointmentModal.dateLabel")}</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={appointmentForm.appointmentDate}
-                    onChange={(e) => setAppointmentForm((prev) => ({ ...prev, appointmentDate: e.target.value }))}
-                    required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
+                    onChange={(value) => setAppointmentForm((prev) => ({ ...prev, appointmentDate: value }))}
+                    className="flex w-full items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-left outline-none focus:ring-2 focus:ring-primary-blue"
                   />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-bold text-slate-700">{t("appointmentModal.startTimeLabel")}</label>
-                  <input
-                    type="time"
+                  <TimeInput
                     value={appointmentForm.startTime}
-                    onChange={(e) => setAppointmentForm((prev) => ({ ...prev, startTime: e.target.value }))}
-                    required
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue"
+                    onChange={(value) => setAppointmentForm((prev) => ({ ...prev, startTime: value }))}
+                    className="flex w-full items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-left outline-none focus:ring-2 focus:ring-primary-blue"
                   />
                 </div>
               </div>
@@ -936,7 +947,12 @@ const filteredPatients = useMemo(() => {
             <form onSubmit={handleSubmit} className="grid max-h-[calc(92vh-88px)] grid-cols-1 gap-4 overflow-y-auto p-4 sm:grid-cols-2 sm:p-6">
               <input name="firstName" value={form.firstName} onChange={handleChange} placeholder={t("form.firstNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
               <input name="lastName" value={form.lastName} onChange={handleChange} placeholder={t("form.lastNamePlaceholder")} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
-              <input name="birthDate" type="date" value={form.birthDate} onChange={handleChange} required className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-blue" />
+              <DateInput
+                value={form.birthDate}
+                onChange={(value) => setForm((prev) => ({ ...prev, birthDate: value }))}
+                max={todayYMDValue()}
+                className="flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-left outline-none focus:ring-2 focus:ring-primary-blue"
+              />
               <input
                 name="phone"
                 value={form.phone}

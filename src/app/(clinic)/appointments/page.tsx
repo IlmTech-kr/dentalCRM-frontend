@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { DateInput } from "@/src/components/ui/DateInput";
+import { TimeInput } from "@/src/components/ui/TimeInput";
 
 import {
   useCreateAppointment,
@@ -470,11 +472,11 @@ function AppointmentModal({ open, form, selectedAppointment, doctors, isSubmitti
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.dateLabel")} <span className="text-red-500">*</span></label>
-              <input type="date" value={normalizeDateForInput(form.appointmentDate)} onChange={(e) => onChange({ ...form, appointmentDate: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
+              <DateInput value={normalizeDateForInput(form.appointmentDate)} onChange={(value) => onChange({ ...form, appointmentDate: value })} className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">{t("modal.startTimeLabel")} <span className="text-red-500">*</span></label>
-              <input type="time" value={normalizeTimeForInput(form.startTime)} onChange={(e) => onChange({ ...form, startTime: e.target.value })} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
+              <TimeInput value={normalizeTimeForInput(form.startTime)} onChange={(value) => onChange({ ...form, startTime: value })} className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left text-sm font-bold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
             </div>
           </div>
 
@@ -827,7 +829,7 @@ export default function AppointmentsPage() {
                 {t("filters.all")}
               </button>
               {viewMode === "BY_DATE" && (
-                <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
+                <DateInput value={selectedDate} onChange={setSelectedDate} className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-extrabold text-slate-900 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-4 focus:ring-primary-blue/10" />
               )}
             </div>
             <div className="relative w-full lg:max-w-md">

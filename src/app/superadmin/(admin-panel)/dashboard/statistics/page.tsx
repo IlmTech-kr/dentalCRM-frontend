@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import DentalLoader from "@/src/components/ui/DentalLoader";
+import { DateInput } from "@/src/components/ui/DateInput";
 
 import { useRevenueByClinic } from "@/src/features/superadmin/statistics/UseStatisticsAdmin";
 
@@ -81,22 +82,22 @@ export default function StatisticsPage() {
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
               Boshlanish sanasi
             </label>
-            <input
-              type="date"
+            <DateInput
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="h-11 rounded-xl border border-border-color bg-slate-50 px-3 text-sm outline-none focus:border-violet-400"
+              onChange={setFromDate}
+              max={toDate}
+              className="flex h-11 items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-3 text-left text-sm outline-none transition focus:border-violet-400"
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500">
               Tugash sanasi
             </label>
-            <input
-              type="date"
+            <DateInput
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="h-11 rounded-xl border border-border-color bg-slate-50 px-3 text-sm outline-none focus:border-violet-400"
+              onChange={setToDate}
+              min={fromDate}
+              className="flex h-11 items-center gap-2 rounded-xl border border-border-color bg-slate-50 px-3 text-left text-sm outline-none transition focus:border-violet-400"
             />
           </div>
           <div>

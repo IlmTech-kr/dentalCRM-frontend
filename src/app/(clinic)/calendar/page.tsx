@@ -40,6 +40,7 @@ import { useAuthStore } from "@/src/store/auth.store";
 import { useGetDoctors } from "@/src/features/doctors/hooks/useDoctors";
 import { Role } from "@/src/lib/enums/enums.types";
 import DentalLoader from "@/src/components/ui/DentalLoader";
+import { DateInput } from "@/src/components/ui/DateInput";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -544,11 +545,10 @@ export default function CalendarPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Date picker */}
-          <input
-            type="date"
+          <DateInput
             value={toYMD(anchorDate)}
-            onChange={(e) => handleDatePicked(e.target.value)}
-            className="rounded-xl border border-border-color bg-white px-3 py-2 text-sm font-semibold text-dark-navy outline-none focus:border-primary-blue"
+            onChange={handleDatePicked}
+            className="flex items-center gap-2 rounded-xl border border-border-color bg-white px-3 py-2 text-left text-sm font-semibold text-dark-navy outline-none transition focus:border-primary-blue"
           />
 
           {/* Doctor filter — DOCTOR uchun yashirin, faqat o'zi bilan qulflangan */}

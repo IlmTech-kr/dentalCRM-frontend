@@ -40,18 +40,3 @@ export interface UpdatePatientDto {
   gender?: Gender;
   anamnesis?: string;
 }
-
-export interface PatientListResponse {
-  data?: Patient[];
-  patients?: Patient[];
-  content?: Patient[];
-  items?: Patient[];
-  results?: Patient[];
-
-  total?: number;
-  totalElements?: number;
-  totalPages?: number;
-  page?: number;
-  limit?: number;
-  size?: number;
-}

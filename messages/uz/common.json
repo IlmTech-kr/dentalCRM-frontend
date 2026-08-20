@@ -28,5 +28,13 @@
     "error": "Xatolik yuz berdi",
     "success": "Muvaffaqiyatli",
     "required": "Majburiy maydon"
+  },
+  "datePicker": {
+    "today": "Bugun",
+    "clear": "Tozalash",
+    "now": "Hozir",
+    "selectDate": "Sanani tanlang",
+    "selectTime": "Vaqtni tanlang",
+    "done": "Tayyor"
   }
 }
