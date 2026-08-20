@@ -196,7 +196,11 @@
       "companyNameLabel": "Klinika nomi",
       "companyNamePlaceholder": "Klinika nomini kiriting",
       "bioLabel": "Klinika haqida",
-      "bioPlaceholder": "Tashrif buyuruvchilarga klinikangiz haqida yozing"
+      "bioPlaceholder": "Tashrif buyuruvchilarga klinikangiz haqida yozing",
+      "phoneLabel": "Telefon raqami",
+      "phonePlaceholder": "Hozircha ma'lumot yo'q",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Hozircha ma'lumot yo'q"
     },
     "form": {
       "title": "Havola qo'shish",

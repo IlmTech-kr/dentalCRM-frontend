@@ -196,7 +196,11 @@
       "companyNameLabel": "Clinic name",
       "companyNamePlaceholder": "Enter clinic name",
       "bioLabel": "Bio",
-      "bioPlaceholder": "Tell visitors about your clinic"
+      "bioPlaceholder": "Tell visitors about your clinic",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "No info yet",
+      "emailLabel": "Email",
+      "emailPlaceholder": "No info yet"
     },
     "form": {
       "title": "Add a link",

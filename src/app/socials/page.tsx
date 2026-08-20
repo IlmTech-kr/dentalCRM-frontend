@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { Mail, Phone } from "lucide-react";
 import { LogoMark, BRAND } from "@/src/components/shared/BrandLogo";
 import { useSocialsStore } from "@/src/store/socials.store";
 import { useGetPublicClinicProfile } from "@/src/features/clinicProfile/hooks/useClinicProfile";
@@ -11,10 +13,94 @@ import {
   SOCIAL_PLATFORM_COLOR,
   SOCIAL_PLATFORM_LABEL,
 } from "@/src/features/socials/platformConfig";
-import type { SocialLink } from "@/src/types/social.types";
+import type { ClinicPublicProfile } from "@/src/types/clinicProfile.types";
+import type { SocialPlatform } from "@/src/types/social.types";
+
+/** Telefon/email uchun ranglar — mavjud brend ranglariga (Instagram/Facebook/...) urilib qolmasligi uchun tanlangan. */
+const PHONE_COLOR = "#22C55E";
+const EMAIL_COLOR = "#3ba5f6";
+
+/**
+ * Ro'yxat/doira ko'rinishlari endi faqat social havolalarni emas, telefon
+ * va emailni ham "socials kabi" bir xil kartochka/orb uslubida
+ * ko'rsatadi — shuning uchun ikkalasi ham shu umumiy shaklga keltiriladi.
+ * Bu FAQAT ko'rsatish uchun (client-side birlashtirish) — backendga hech
+ * narsa qo'shilmaydi, phoneNumber/email profil maydonlari o'zgarishsiz
+ * qoladi. `iconKind` — glif turli o'lchamda (ro'yxatda 18px, ringda
+ * 48-72px) qayta chizilishi kerak, shuning uchun tayyor ReactNode emas,
+ * shu discriminant saqlanadi (bkz. EntryIcon).
+ */
+interface ContactEntry {
+  key: string;
+  url: string;
+  label: string;
+  color: string;
+  iconKind: SocialPlatform | "PHONE" | "EMAIL";
+}
+
+function EntryIcon({ entry, size }: { entry: ContactEntry; size: number }) {
+  if (entry.iconKind === "PHONE") return <Phone size={size} />;
+  if (entry.iconKind === "EMAIL") return <Mail size={size} />;
+  return <PlatformIcon platform={entry.iconKind} size={size} />;
+}
+
+/**
+ * Telefon/email SOCIALS RO'YXATINING BOSHIDA chiqadi — eng tez-tez kerak
+ * bo'ladigan aloqa yo'llari sifatida. Kartochkada raqam/manzilning o'zi
+ * emas, umumiy yorliq ("Phone number" / "Email") ko'rsatiladi — haqiqiy
+ * qiymat faqat tel:/mailto: havolasida ishlatiladi.
+ */
+function buildContactEntries(
+  profile: ClinicPublicProfile | undefined,
+  labels: { phone: string; email: string }
+): ContactEntry[] {
+  const entries: ContactEntry[] = [];
+
+  if (profile?.phoneNumber) {
+    entries.push({
+      key: "phone",
+      url: `tel:${profile.phoneNumber}`,
+      label: labels.phone,
+      color: PHONE_COLOR,
+      iconKind: "PHONE",
+    });
+  }
+
+  if (profile?.email) {
+    entries.push({
+      key: "email",
+      url: `mailto:${profile.email}`,
+      label: labels.email,
+      color: EMAIL_COLOR,
+      iconKind: "EMAIL",
+    });
+  }
+
+  const links = [...(profile?.socials ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  for (const link of links) {
+    entries.push({
+      key: link.platform,
+      url: link.url,
+      label: SOCIAL_PLATFORM_LABEL[link.platform],
+      color: SOCIAL_PLATFORM_COLOR[link.platform],
+      iconKind: link.platform,
+    });
+  }
+
+  return entries;
+}
+
+/** Hex rangga alfa (shaffoflik) qo'shadi — border/shadow uchun ranglarni yumshoq qiladi. */
+function withAlpha(hex: string, alpha: string): string {
+  return `${hex}${alpha}`;
+}
+
+function isExternalUrl(url: string): boolean {
+  return !url.startsWith("tel:") && !url.startsWith("mailto:");
+}
 
 /** `imageUrl` backenddan "/api/storage/..." kabi nisbiy yo'l sifatida keladi — joriy tenant bazaviy URL'iga biriktiriladi. To'liq URL bo'lsa (http/https) o'zgarishsiz qaytadi. */
-function resolveClinicImageUrl(imageUrl?: string): string {
+function resolveClinicImageUrl(imageUrl?: string | null): string {
   if (!imageUrl) return "";
   if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
 
@@ -29,30 +115,32 @@ function resolveClinicImageUrl(imageUrl?: string): string {
 }
 
 /**
- * Ro'yxat ko'rinishi — har bir havola pastdan tepaga "pop-in" bilan
- * ketma-ket (staggered) paydo bo'ladi.
+ * Ro'yxat ko'rinishi — har bir qator (social havola, telefon yoki email)
+ * pastdan tepaga "pop-in" bilan ketma-ket (staggered) paydo bo'ladi.
  */
-function SocialListView({ links }: { links: SocialLink[] }) {
+function SocialListView({ entries }: { entries: ContactEntry[] }) {
   return (
     <div className="w-full space-y-3">
-      {links.map((link, index) => (
+      {entries.map((entry, index) => (
         <a
-          key={link.platform}
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/85 px-5 py-4 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-          style={{ animation: `socials-pop-in 0.45s ease-out ${index * 70}ms both` }}
+          key={entry.key}
+          href={entry.url}
+          target={isExternalUrl(entry.url) ? "_blank" : undefined}
+          rel={isExternalUrl(entry.url) ? "noopener noreferrer" : undefined}
+          className="flex items-center gap-3 rounded-2xl border-2 bg-white/90 px-5 py-4 backdrop-blur transition duration-200 hover:-translate-y-0.5"
+          style={{
+            borderColor: withAlpha(entry.color, "40"),
+            boxShadow: `0 10px 26px -12px ${withAlpha(entry.color, "99")}`,
+            animation: `socials-pop-in 0.45s ease-out ${index * 70}ms both`,
+          }}
         >
           <span
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
-            style={{ backgroundColor: SOCIAL_PLATFORM_COLOR[link.platform] }}
+            style={{ backgroundColor: entry.color, boxShadow: `0 6px 14px -4px ${withAlpha(entry.color, "aa")}` }}
           >
-            <PlatformIcon platform={link.platform} size={18} />
+            <EntryIcon entry={entry} size={18} />
           </span>
-          <span className="flex-1 truncate text-sm font-bold text-dark-navy">
-            {SOCIAL_PLATFORM_LABEL[link.platform]}
-          </span>
+          <span className="flex-1 truncate text-sm font-bold text-dark-navy">{entry.label}</span>
         </a>
       ))}
     </div>
@@ -73,15 +161,14 @@ const RING_RADIUS_PCT = 37;
  * Yorliq ring geometriyasini buzmasligi uchun inline oqim matni EMAS —
  * orb ostida hover'da chiqadigan tooltip sifatida ko'rsatiladi.
  */
-function SocialOrb({ link, size, delay }: { link: SocialLink; size: number; delay: number }) {
-  const color = SOCIAL_PLATFORM_COLOR[link.platform];
-  const label = SOCIAL_PLATFORM_LABEL[link.platform];
+function SocialOrb({ entry, size, delay }: { entry: ContactEntry; size: number; delay: number }) {
+  const { color, label } = entry;
 
   return (
     <a
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={entry.url}
+      target={isExternalUrl(entry.url) ? "_blank" : undefined}
+      rel={isExternalUrl(entry.url) ? "noopener noreferrer" : undefined}
       title={label}
       className="group relative block"
       style={{ animation: `socials-pop-in 0.5s ease-out ${delay}ms both` }}
@@ -98,7 +185,7 @@ function SocialOrb({ link, size, delay }: { link: SocialLink; size: number; dela
           }ms infinite`,
         }}
       >
-        <PlatformIcon platform={link.platform} size={Math.round(size * 0.42)} />
+        <EntryIcon entry={entry} size={Math.round(size * 0.42)} />
       </span>
 
       <span className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
@@ -114,22 +201,14 @@ function SocialOrb({ link, size, delay }: { link: SocialLink; size: number; dela
  * geometriyasi ortiqcha (o'rtada bo'sh joy qolib ketadi) — shunchaki
  * markazlashgan qator sifatida ko'rsatiladi.
  */
-function SocialCircleView({
-  links,
-  companyName,
-  imageSrc,
-}: {
-  links: SocialLink[];
-  companyName: string;
-  imageSrc: string;
-}) {
-  const count = links.length;
+function SocialCircleView({ entries }: { entries: ContactEntry[] }) {
+  const count = entries.length;
 
   if (count <= 2) {
     return (
       <div className="flex items-center justify-center gap-6">
-        {links.map((link, index) => (
-          <SocialOrb key={link.platform} link={link} size={72} delay={index * 110} />
+        {entries.map((entry, index) => (
+          <SocialOrb key={entry.key} entry={entry} size={72} delay={index * 110} />
         ))}
       </div>
     );
@@ -163,35 +242,37 @@ function SocialCircleView({
         }}
       />
 
-      {/* Markaz — klinika logotipi/nomi */}
-      <div
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
+      {/* Markaz — Dental CRM (platforma) brendi, dental.ilmtech.uz'ga olib boradi.
+          Klinika logotipi/nomi endi yuqorida — bu yerda takrorlanmaydi. */}
+      <a
+        href="https://dental.ilmtech.uz"
+        target="_blank"
+        rel="noopener noreferrer"
+        title={BRAND}
+        className="group absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5"
         style={{ animation: "socials-pop-in 0.5s ease-out 200ms both" }}
       >
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-100">
-          {imageSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageSrc} alt={companyName} className="h-full w-full object-cover" />
-          ) : (
-            <LogoMark />
-          )}
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-105">
+          <LogoMark />
         </div>
-        <p className="max-w-[110px] truncate text-xs font-extrabold text-dark-navy">{companyName}</p>
-      </div>
+        <span className="text-[11px] font-extrabold tracking-tight text-dark-navy">
+          Dental <span className="bg-gradient-to-r from-sky-500 via-violet-500 to-rose-500 bg-clip-text text-transparent">CRM</span>
+        </span>
+      </a>
 
       {/* Ring bo'ylab joylashgan orb'lar */}
-      {links.map((link, index) => {
+      {entries.map((entry, index) => {
         const theta = (-90 + (360 / count) * index) * (Math.PI / 180);
         const x = 50 + RING_RADIUS_PCT * Math.cos(theta);
         const y = 50 + RING_RADIUS_PCT * Math.sin(theta);
 
         return (
           <div
-            key={link.platform}
+            key={entry.key}
             className="absolute"
             style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
           >
-            <SocialOrb link={link} size={orbSize} delay={index * 110} />
+            <SocialOrb entry={entry} size={orbSize} delay={index * 110} />
           </div>
         );
       })}
@@ -200,6 +281,7 @@ function SocialCircleView({
 }
 
 export default function PublicSocialsPage() {
+  const t = useTranslations("settings.socials.profile");
   const isDisplayModeHydrated = useSocialsStore((s) => s.isHydrated);
   const hydrateFromStorage = useSocialsStore((s) => s.hydrateFromStorage);
   const displayMode = useSocialsStore((s) => s.displayMode);
@@ -210,7 +292,7 @@ export default function PublicSocialsPage() {
 
   const { data: profile, isLoading } = useGetPublicClinicProfile();
 
-  const links = profile?.socials ?? [];
+  const entries = buildContactEntries(profile, { phone: t("phoneLabel"), email: t("emailLabel") });
   const companyName = profile?.companyName?.trim() || BRAND;
   const imageSrc = resolveClinicImageUrl(profile?.imageUrl);
   const isCircle = displayMode === "circle";
@@ -218,44 +300,40 @@ export default function PublicSocialsPage() {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-sky-50 via-white to-violet-50 px-6 py-16 pb-12">
-      {/* Doira rejimida logotip/nom ringning markazida chiqadi — bu yerda takrorlanmaydi. */}
-      {!isCircle && (
-        <>
-          <div
-            className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-slate-100"
-            style={{ animation: "socials-pop-in 0.5s ease-out both" }}
-          >
-            {imageSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageSrc} alt={companyName} className="h-full w-full object-cover" />
-            ) : (
-              <LogoMark />
-            )}
-          </div>
-          <h1
-            className="mt-5 text-xl font-extrabold text-dark-navy"
-            style={{ animation: "socials-pop-in 0.5s ease-out 60ms both" }}
-          >
-            {companyName}
-          </h1>
-          {profile?.bio && (
-            <p
-              className="mt-1 max-w-sm text-center text-sm text-text-light"
-              style={{ animation: "socials-pop-in 0.5s ease-out 100ms both" }}
-            >
-              {profile.bio}
-            </p>
-          )}
-        </>
+      {/* Logotip/nom/bio endi ikkala rejimda ham yuqorida bir marta chiqadi — doira rejimida ring markazida takrorlanmaydi. */}
+      <div
+        className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-slate-100"
+        style={{ animation: "socials-pop-in 0.5s ease-out both" }}
+      >
+        {imageSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageSrc} alt={companyName} className="h-full w-full object-cover" />
+        ) : (
+          <LogoMark />
+        )}
+      </div>
+      <h1
+        className="mt-5 text-xl font-extrabold text-dark-navy"
+        style={{ animation: "socials-pop-in 0.5s ease-out 60ms both" }}
+      >
+        {companyName}
+      </h1>
+      {profile?.bio && (
+        <p
+          className="mt-1 max-w-sm text-center text-sm text-text-light"
+          style={{ animation: "socials-pop-in 0.5s ease-out 100ms both" }}
+        >
+          {profile.bio}
+        </p>
       )}
 
-      <div className={`w-full ${isCircle ? "mt-4 max-w-lg" : "mt-10 max-w-md"}`}>
-        {!isReady ? null : links.length === 0 ? (
+      <div className={`mt-10 w-full ${isCircle ? "max-w-lg" : "max-w-md"}`}>
+        {!isReady ? null : entries.length === 0 ? (
           <p className="text-center text-sm text-text-light">—</p>
         ) : displayMode === "list" ? (
-          <SocialListView links={links} />
+          <SocialListView entries={entries} />
         ) : (
-          <SocialCircleView links={links} companyName={companyName} imageSrc={imageSrc} />
+          <SocialCircleView entries={entries} />
         )}
       </div>
     </main>

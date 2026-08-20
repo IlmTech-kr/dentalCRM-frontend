@@ -196,7 +196,11 @@
       "companyNameLabel": "Название клиники",
       "companyNamePlaceholder": "Введите название клиники",
       "bioLabel": "О клинике",
-      "bioPlaceholder": "Расскажите посетителям о клинике"
+      "bioPlaceholder": "Расскажите посетителям о клинике",
+      "phoneLabel": "Номер телефона",
+      "phonePlaceholder": "Пока нет данных",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Пока нет данных"
     },
     "form": {
       "title": "Добавить ссылку",

@@ -23,7 +23,7 @@ import {
   Palette,
   Receipt,
   Repeat,
-  // Share2, // "/settings/socials" sidebar'da vaqtincha o'chirilgan
+  Share2, // "/settings/socials" sidebar'da vaqtincha o'chirilgan
   ShieldCheck,
   Sparkles,
   Tags,
@@ -133,7 +133,7 @@ function buildNavItems(
     { href: "/settings/profile", label: t("sidebar.navProfile"), icon: User },
     { href: "/settings/change-password", label: t("sidebar.navChangePassword"), icon: ShieldCheck },
     { href: "/settings/appearance", label: t("sidebar.navAppearance"), icon: Palette, isNew: true },
-    // { href: "/settings/socials", label: t("sidebar.navSocials"), icon: Share2, isNew: true },
+    { href: "/settings/socials", label: t("sidebar.navSocials"), icon: Share2, isNew: true },
   ];
 
   if (isStaffAdmin) {
