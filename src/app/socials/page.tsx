@@ -252,10 +252,11 @@ function SocialCircleView({ entries }: { entries: ContactEntry[] }) {
         className="group absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5"
         style={{ animation: "socials-pop-in 0.5s ease-out 200ms both" }}
       >
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-105">
-          <LogoMark />
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-white shadow-[0_16px_32px_-10px_rgba(56,189,248,0.55),0_8px_20px_-6px_rgba(167,139,250,0.45)] ring-2 ring-slate-200 transition-transform duration-300 group-hover:scale-105">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/social_logo.png" alt={BRAND} className="h-full w-full object-cover" />
         </div>
-        <span className="text-[11px] font-extrabold tracking-tight text-dark-navy">
+        <span className="text-sm font-extrabold tracking-tight text-dark-navy">
           Dental <span className="bg-gradient-to-r from-sky-500 via-violet-500 to-rose-500 bg-clip-text text-transparent">CRM</span>
         </span>
       </a>
