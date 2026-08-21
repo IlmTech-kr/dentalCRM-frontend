@@ -13,6 +13,7 @@ import Header from "./Header";
 import PlanExpiredOverlay from "./PlanExpiredOverlay";
 import { useGetCurrentPlan } from "@/src/features/subscriptions/hooks/useSubscription";
 import { useUiStore } from "@/src/store/ui.store";
+import ThemeSettingsSync from "@/src/features/settings/ThemeSettingsSync";
 
 const LOCKED_STATUSES = new Set(["EXPIRED", "SUSPENDED", "CANCELED"]);
 const AiDrawer = dynamic(() => import("@/src/features/ai/components/AiDrawer"), {
@@ -36,7 +37,8 @@ export default function DashboardLayout({
   const isLocked = !isBillingPage && !!status && LOCKED_STATUSES.has(status);
 
   return (
-    <div className="h-dvh overflow-hidden bg-light-background">
+    <div className="clinic-theme h-dvh overflow-hidden bg-light-background">
+      <ThemeSettingsSync />
       <div className={isLocked ? "pointer-events-none h-dvh select-none blur-sm" : "h-dvh"} aria-hidden={isLocked}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

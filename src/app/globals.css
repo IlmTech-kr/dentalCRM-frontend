@@ -169,3 +169,34 @@ textarea {
 .btn-primary:hover {
   background: var(--primary-blue-dark);
 }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #08111f;
+  --foreground: #e8f0f8;
+  --light-background: #08111f;
+  --card-bg: #101c2d;
+  --border-color: #24354a;
+  --dark-navy: #e8f0f8;
+  --text-light: #9eb0c5;
+  --soft-blue: color-mix(in srgb, var(--primary-blue) 16%, #101c2d);
+}
+
+html[data-theme="dark"] .clinic-theme { background: var(--light-background); color: var(--foreground); }
+html[data-theme="dark"] .clinic-theme .bg-white { background-color: var(--card-bg) !important; }
+html[data-theme="dark"] .clinic-theme .bg-slate-50,
+html[data-theme="dark"] .clinic-theme .bg-slate-100 { background-color: #0b1727 !important; }
+html[data-theme="dark"] .clinic-theme .text-slate-950,
+html[data-theme="dark"] .clinic-theme .text-slate-900,
+html[data-theme="dark"] .clinic-theme .text-slate-800,
+html[data-theme="dark"] .clinic-theme .text-dark-navy { color: #e8f0f8 !important; }
+html[data-theme="dark"] .clinic-theme .text-slate-700,
+html[data-theme="dark"] .clinic-theme .text-slate-600,
+html[data-theme="dark"] .clinic-theme .text-slate-500 { color: #9eb0c5 !important; }
+html[data-theme="dark"] .clinic-theme .border-slate-100,
+html[data-theme="dark"] .clinic-theme .border-slate-200,
+html[data-theme="dark"] .clinic-theme .border-slate-300,
+html[data-theme="dark"] .clinic-theme .border-border-color { border-color: var(--border-color) !important; }
+html[data-theme="dark"] .clinic-theme input,
+html[data-theme="dark"] .clinic-theme textarea,
+html[data-theme="dark"] .clinic-theme select { color: #e8f0f8; }

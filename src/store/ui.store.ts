@@ -20,14 +20,19 @@ import {
   saveSidebarCollapsed,
 } from "@/src/lib/theme/storage";
 import { applyAccentColor } from "@/src/lib/theme/applyAccentColor";
+import type { AccentType, AppearanceSettings, ThemeMode } from "@/src/types/settings.types";
 
 interface UiState {
   accentColor: string;
+  themeMode: ThemeMode;
+  accentType: AccentType;
+  resolvedTheme: "light" | "dark";
   sidebarCollapsed: boolean;
   aiDrawerOpen: boolean;
   isHydrated: boolean;
 
   setAccentColor: (color: string) => void;
+  applyAppearance: (settings: AppearanceSettings) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapsed: () => void;
   setAiDrawerOpen: (open: boolean) => void;
@@ -36,6 +41,9 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set, get) => ({
   accentColor: DEFAULT_ACCENT_COLOR,
+  themeMode: "LIGHT",
+  accentType: "DEFAULT",
+  resolvedTheme: "light",
   sidebarCollapsed: false,
   aiDrawerOpen: false,
   isHydrated: false,
@@ -50,6 +58,18 @@ export const useUiStore = create<UiState>((set, get) => ({
     saveAccentColor(safe);
     applyAccentColor(safe);
     set({ accentColor: safe });
+  },
+
+  applyAppearance: (settings) => {
+    const color = settings.effectiveAccentColor || DEFAULT_ACCENT_COLOR;
+    const resolved = settings.mode === "SYSTEM"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : settings.mode.toLowerCase() as "light" | "dark";
+    document.documentElement.dataset.theme = resolved;
+    saveAccentColor(color);
+    applyAccentColor(color);
+    localStorage.setItem("dashboard-theme-mode", settings.mode);
+    set({accentColor:color,themeMode:settings.mode,accentType:settings.accentType,resolvedTheme:resolved});
   },
 
   setSidebarCollapsed: (collapsed) => {
@@ -70,8 +90,13 @@ export const useUiStore = create<UiState>((set, get) => ({
     const safe = ensureUsableAccent(stored);
     if (safe !== stored) saveAccentColor(safe);
     applyAccentColor(safe);
+    const cachedMode=(localStorage.getItem("dashboard-theme-mode")||"LIGHT") as ThemeMode;
+    const resolved=cachedMode==="SYSTEM"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):cachedMode.toLowerCase() as "light"|"dark";
+    document.documentElement.dataset.theme=resolved;
     set({
       accentColor: safe,
+      themeMode: cachedMode,
+      resolvedTheme: resolved,
       sidebarCollapsed: getStoredSidebarCollapsed(),
       isHydrated: true,
     });
