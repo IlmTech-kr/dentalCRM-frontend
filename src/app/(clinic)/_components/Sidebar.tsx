@@ -17,6 +17,7 @@ import {
   List,
   Clock,
   BadgeDollarSign,
+  BellRing,
   CreditCard,
   HandCoins,
   PanelLeftOpen,
@@ -54,6 +55,7 @@ type NavItem = {
 
 type RoleFlags = {
   isStaffAdmin: boolean;
+  isClinicAdmin: boolean;
   isDoctor: boolean;
   isReceptionist: boolean;
   isAssistant: boolean;
@@ -61,7 +63,7 @@ type RoleFlags = {
 
 function buildNavItems(
   t: (key: string) => string,
-  { isStaffAdmin, isDoctor, isReceptionist }: RoleFlags
+  { isStaffAdmin, isClinicAdmin, isDoctor, isReceptionist }: RoleFlags
 ): NavItem[] {
   const canSeeDoctorsSection = isStaffAdmin;
 
@@ -139,6 +141,9 @@ function buildNavItems(
   if (isStaffAdmin) {
     settingsChildren.push({ href: "/settings/plans", label: t("sidebar.navPlans"), icon: CreditCard });
   }
+  if (isClinicAdmin) {
+    settingsChildren.push({ href: "/settings/notifications", label: t("sidebar.navNotifications"), icon: BellRing, isNew: true });
+  }
 
   items.push({
     href: "/settings",
@@ -173,11 +178,12 @@ export default function Sidebar({
     () =>
       buildNavItems(t, {
         isStaffAdmin,
+        isClinicAdmin,
         isDoctor: isDoctorRole,
         isReceptionist: isReceptionistRole,
         isAssistant: isAssistantRole,
       }),
-    [t, isStaffAdmin, isDoctorRole, isReceptionistRole, isAssistantRole]
+    [t, isStaffAdmin, isClinicAdmin, isDoctorRole, isReceptionistRole, isAssistantRole]
   );
 
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
