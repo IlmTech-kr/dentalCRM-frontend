@@ -27,6 +27,7 @@ import {
 import { BRAND, LogoMark } from "@/src/components/shared/BrandLogo";
 import Footer from "./_components/Footer";
 import LeadModal from "./_components/LeadModal";
+import MacbookFrameScene from "./_components/MacbookFrameScene";
 
 const FEATURE_ICONS = [
   Users,
@@ -64,181 +65,47 @@ export default function HomePage() {
     <div className="bg-white text-slate-900">
       <main>
         {/* ── HERO ─────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#e0f7ff,transparent_38%),radial-gradient(circle_at_top_right,#f5d0fe,transparent_30%),linear-gradient(to_bottom,#ffffff,#f8fbff)]">
-          <div className="absolute left-1/2 top-16 h-48 w-48 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-200/40 via-violet-200/40 to-rose-200/40 blur-3xl sm:h-72 sm:w-72" />
-
-          <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:py-24">
-            {/* Left */}
-            <div className="relative text-center lg:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/75 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur sm:px-4 sm:text-sm">
-                <LogoMark small />
-                {t("hero.badge")}
-              </div>
-
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-[#07105f] sm:text-4xl lg:text-[3.2rem]">
-                {t("hero.title")}
-              </h1>
-
-              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-slate-600 lg:mx-0 lg:text-lg">
-                {t("hero.description", { brand: BRAND })}
-              </p>
-
-              <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
-                <Link
-                  href="/subdomains"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-100 transition-all hover:scale-[1.02] sm:px-7 sm:py-3.5 sm:text-base"
-                >
-                  {t("hero.loginButton")} <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 sm:px-7 sm:py-3.5 sm:text-base"
-                >
-                  {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-8 grid grid-cols-2 gap-2 text-sm text-slate-600">
-                {checklist.map((text, i) => (
-                  <div key={text} className="flex items-center justify-center gap-2 lg:justify-start">
-                    <CheckCircle2 className={`h-4 w-4 shrink-0 ${CHECKLIST_COLORS[i]}`} />
-                    <span className="text-xs sm:text-sm">{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — MacBook mockup */}
-            <div className="relative mx-auto w-full max-w-[480px] lg:max-w-[560px]">
-              <div className="relative">
-                {/* Screen bezel */}
-                <div className="overflow-hidden rounded-t-[14px] rounded-b-[5px] border-[6px] border-[#1a1a1a] bg-[#1a1a1a] shadow-2xl shadow-slate-900/40 sm:border-[8px] sm:rounded-t-[18px] sm:rounded-b-[6px]">
-                  <div className="absolute left-1/2 top-0.5 z-10 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#333]" />
-
-                  <div className="overflow-hidden rounded-[4px] bg-white sm:rounded-[6px]">
-                    {/* Browser bar */}
-                    <div className="flex items-center gap-2 border-b border-slate-100 bg-[#f5f5f7] px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
-                      <div className="flex gap-1 sm:gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-[#ff5f57] sm:h-2.5 sm:w-2.5" />
-                        <div className="h-2 w-2 rounded-full bg-[#febc2e] sm:h-2.5 sm:w-2.5" />
-                        <div className="h-2 w-2 rounded-full bg-[#28c840] sm:h-2.5 sm:w-2.5" />
-                      </div>
-                      <div className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white px-2 py-1 text-[9px] text-slate-400 shadow-sm sm:text-[10px]">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        clinic1.dentalcrm.uz/dashboard
-                      </div>
-                      <div className="w-10 sm:w-14" />
-                    </div>
-
-                    {/* App UI */}
-                    <div className="flex h-[260px] sm:h-[320px] lg:h-[340px]">
-                      {/* Sidebar */}
-                      <div className="flex w-9 flex-col items-center gap-2.5 bg-[#3498db] py-3 sm:w-12 sm:gap-3 sm:py-4">
-                        <div className="h-6 w-6 rounded-lg bg-white/25 sm:h-7 sm:w-7" />
-                        <div className="mt-1 flex flex-col gap-2">
-                          {[...Array(6)].map((_, i) => (
-                            <div key={i} className={`h-5 w-5 rounded-md sm:h-6 sm:w-6 ${i === 0 ? "bg-white/30" : "bg-white/10"}`} />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Main content */}
-                      <div className="flex-1 overflow-hidden bg-[#eef3ff] p-2 sm:p-3">
-                        {/* Top bar */}
-                        <div className="mb-2 flex items-center justify-between sm:mb-3">
-                          <div>
-                            <p className="text-[8px] font-bold text-slate-400 sm:text-[9px]">{t("hero.mockup.dashboardLabel")}</p>
-                            <p className="text-[10px] font-black text-slate-800 sm:text-[11px]">{t("hero.mockup.welcome")}</p>
-                          </div>
-                          <div className="flex items-center gap-1 sm:gap-1.5">
-                            <div className="h-4 w-12 rounded-lg bg-white shadow-sm sm:h-5 sm:w-16" />
-                            <div className="h-4 w-4 rounded-lg bg-white shadow-sm sm:h-5 sm:w-5" />
-                            <div className="h-4 w-4 rounded-full bg-gradient-to-br from-sky-400 to-violet-500 sm:h-5 sm:w-5" />
-                          </div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="mb-2 grid grid-cols-3 gap-1.5 sm:mb-3 sm:gap-2">
-                          {[
-                            { label: t("hero.mockup.statPatients"), value: "1,248", color: "text-blue-600",    bg: "bg-blue-50" },
-                            { label: t("hero.mockup.statToday"),    value: "24",    color: "text-violet-600",  bg: "bg-violet-50" },
-                            { label: t("hero.mockup.statRevenue"),  value: "4.2M",  color: "text-emerald-600", bg: "bg-emerald-50" },
-                          ].map((s) => (
-                            <div key={s.label} className="rounded-xl bg-white p-2 shadow-sm sm:p-2.5">
-                              <span className={`inline-block rounded-md px-1 py-0.5 text-[7px] font-black sm:text-[8px] ${s.bg} ${s.color}`}>{s.label}</span>
-                              <p className={`mt-0.5 text-sm font-black leading-none sm:text-base ${s.color}`}>{s.value}</p>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Appointments */}
-                        <div className="rounded-xl bg-white p-2 shadow-sm sm:p-2.5">
-                          <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-                            <p className="text-[9px] font-black text-slate-700 sm:text-[10px]">{t("hero.mockup.appointmentsTitle")}</p>
-                            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[7px] font-black text-emerald-600 sm:text-[8px]">{t("hero.mockup.appointmentsGrowth")}</span>
-                          </div>
-                          <div className="space-y-1 sm:space-y-1.5">
-                            {[
-                              { time: "09:00", name: "Aziza Karimova",  doc: "Dr. Akmal",  dot: "bg-emerald-500" },
-                              { time: "10:30", name: "Javlon Tursunov", doc: "Dr. Madina", dot: "bg-amber-400" },
-                              { time: "12:00", name: "Dilnoza Aliyeva", doc: "Dr. Akmal",  dot: "bg-blue-500" },
-                            ].map((a) => (
-                              <div key={a.name} className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-1.5 py-1 sm:gap-2 sm:px-2 sm:py-1.5">
-                                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-sky-500 to-violet-600 text-[7px] font-black text-white sm:h-8 sm:w-8 sm:text-[8px]">
-                                  {a.time}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-[9px] font-black text-slate-800 sm:text-[10px]">{a.name}</p>
-                                  <p className="text-[8px] text-slate-400 sm:text-[9px]">{a.doc}</p>
-                                </div>
-                                <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${a.dot}`} />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Dental chart strip */}
-                        <div className="mt-2 flex items-center gap-2 rounded-xl bg-white px-2 py-1.5 shadow-sm sm:px-3 sm:py-2">
-                          <p className="shrink-0 text-[8px] font-black text-slate-400 sm:text-[9px]">{t("hero.mockup.dentalChartLabel")}</p>
-                          <div className="flex flex-1 gap-0.5 overflow-hidden sm:gap-1">
-                            {Array.from({ length: 20 }).map((_, i) => (
-                              <div key={i} className="h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3"
-                                style={{
-                                  background: i % 7 === 0 ? "#ef4444" : i % 5 === 0 ? "#f59e0b" : "linear-gradient(135deg,#bae6fd,#c4b5fd)"
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating notification */}
-                <div className="absolute -right-3 top-10 hidden rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-xl shadow-violet-100 sm:-right-6 sm:top-12 sm:rounded-2xl sm:px-3 sm:py-2.5 lg:block">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-slate-800">{t("hero.mockup.notificationTitle")}</p>
-                      <p className="text-[9px] text-slate-400">{t("hero.mockup.notificationSubtitle")}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* MacBook base */}
-              <div className="relative">
-                <div className="mx-auto h-[3px] w-full rounded-b-sm bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] sm:h-[4px]" />
-                <div className="mx-auto h-[16px] w-[108%] -translate-x-[3.7%] rounded-b-[10px] bg-gradient-to-b from-[#d0d0d0] to-[#b8b8b8] shadow-lg sm:h-[22px] sm:rounded-b-[12px]">
-                  <div className="mx-auto mt-1.5 h-2.5 w-16 rounded-md bg-[#c4c4c4] sm:mt-2 sm:h-3 sm:w-24" />
-                </div>
-              </div>
-            </div>
+        <MacbookFrameScene
+          loaderLabel={t("hero.mockup.dashboardLabel")}
+          panels={features.slice(0, 6).map((f) => ({ title: f.title, desc: f.desc }))}
+        >
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/75 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur sm:px-4 sm:text-sm">
+            <LogoMark small />
+            {t("hero.badge")}
           </div>
-        </section>
+
+          <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-[#07105f] sm:text-4xl lg:text-[3.2rem]">
+            {t("hero.title")}
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base lg:mx-0 lg:text-lg">
+            {t("hero.description", { brand: BRAND })}
+          </p>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-3 sm:mt-7 lg:justify-start">
+            <Link
+              href="/subdomains"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-100 transition-all hover:scale-[1.02] sm:px-7 sm:py-3.5 sm:text-base"
+            >
+              {t("hero.loginButton")} <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 sm:px-7 sm:py-3.5 sm:text-base"
+            >
+              {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-5 hidden grid-cols-2 gap-2 text-sm text-slate-600 sm:mt-8 sm:grid">
+            {checklist.map((text, i) => (
+              <div key={text} className="flex items-center justify-center gap-2 lg:justify-start">
+                <CheckCircle2 className={`h-4 w-4 shrink-0 ${CHECKLIST_COLORS[i]}`} />
+                <span className="text-xs sm:text-sm">{text}</span>
+              </div>
+            ))}
+          </div>
+        </MacbookFrameScene>
 
         {/* ── FEATURES ─────────────────────────────────────────────── */}
         <section id="features" className="bg-white py-14 sm:py-20">

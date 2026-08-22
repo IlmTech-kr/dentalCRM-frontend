@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ROOT_ALLOWED_PATHS, resolveHostContext } from "@/src/lib/tenant";
 
+/** Anything in public/ — never route these through tenant logic. */
+const STATIC_PREFIXES = ["/frames/", "/img/", "/fonts/"];
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Static assets bypass all tenant routing.
+  if (
+    STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+    /\.(webp|png|jpe?g|svg|gif|ico|avif|woff2?|ttf|otf|mp4|webm|json|txt|xml|webmanifest)$/i.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
   const host = req.headers.get("host") || "";
   const ctx = resolveHostContext(host);
 
@@ -24,8 +36,6 @@ export function proxy(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Tashqi URL toza qoladi (/login, /dashboard, ...),
-    // lekin ichkarida src/app/superadmin/* sahifalari render bo'ladi.
     if (!pathname.startsWith("/superadmin")) {
       const url = req.nextUrl.clone();
       url.pathname = `/superadmin${pathname}`;
@@ -46,5 +56,7 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|site.webmanifest|frames|img|.*\\..*).*)",
+  ],
 };
