@@ -1,7 +1,7 @@
 /**
  * SUPER_ADMIN har doim mainHttp (subdomainsiz, MAIN_API_URL) orqali ishlaydi.
- * admin.dental.ilmtech.uz'da ochilgan bo'lsa ham, backendga so'rov
- * to'g'ridan-to'g'ri dental.api.ilmtech.uz ga ketadi.
+ * admin-dental.ilmtech.uz'da ochilgan bo'lsa ham, backendga so'rov
+ * to'g'ridan-to'g'ri api-dental.ilmtech.uz ga ketadi.
  */
 
 import { mainHttp } from "@/src/lib/api/http";

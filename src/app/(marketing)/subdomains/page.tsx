@@ -5,7 +5,7 @@
  * - GET /api/auth/check/subdomain/exists?subdomain={value} (mainHttp,
  *   root domain so'rovi — hali qaysi tenant ekanligi noma'lum bo'lgani
  *   uchun tenantHttp emas).
- * - Agar subdomain MAVJUD bo'lsa → https://{subdomain}.dental.ilmtech.uz
+ * - Agar subdomain MAVJUD bo'lsa → https://{subdomain}-dental.ilmtech.uz
  *   ga yo'naltiriladi (butunlay boshqa domen bo'lgani uchun
  *   window.location.href, Next router emas).
  * - Agar MAVJUD BO'LMASA → /register sahifasiga yo'naltiriladi
@@ -19,10 +19,11 @@ import { useTranslations } from "next-intl";
 import { ArrowRight, Building2, Search } from "lucide-react";
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
-import { mainHttp, getApiErrorMessage, publicMainHttp, MAIN_API_URL } from "@/src/lib/api/http";
+import { getApiErrorMessage, MAIN_API_URL } from "@/src/lib/api/http";
+import { buildTenantFrontendHost } from "@/src/lib/tenant";
 import axios from "axios";
 
-const ROOT_DOMAIN = "dental.ilmtech.uz";
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "dental.ilmtech.uz";
 
 function normalizeSubdomain(value: string): string {
   return value
@@ -39,11 +40,17 @@ function normalizeSubdomain(value: string): string {
  * - { data: boolean }
  * Barcha variantlar qo'llab-quvvatlanadi.
  */
-function extractExists(result: any): boolean {
+function extractExists(result: unknown): boolean {
   if (typeof result === "boolean") return result;
-  if (typeof result?.exists === "boolean") return result.exists;
-  if (typeof result?.data === "boolean") return result.data;
-  if (typeof result?.data?.exists === "boolean") return result.data.exists;
+  if (!result || typeof result !== "object") return false;
+
+  const payload = result as { exists?: unknown; data?: unknown };
+  if (typeof payload.exists === "boolean") return payload.exists;
+  if (typeof payload.data === "boolean") return payload.data;
+  if (payload.data && typeof payload.data === "object") {
+    const data = payload.data as { exists?: unknown };
+    if (typeof data.exists === "boolean") return data.exists;
+  }
   return false;
 }
 
@@ -76,9 +83,9 @@ export default function SubdomainCheckPage() {
       const exists = extractExists(response.data);
 
       if (exists) {
-        // Boshqa domen (subdomain.dental.ilmtech.uz) — Next router emas,
+        // Boshqa domen (subdomain-dental.ilmtech.uz) — Next router emas,
         // to'liq sahifa o'tishi kerak.
-        window.location.href = `https://${value}.${ROOT_DOMAIN}`;
+        window.location.href = `https://${buildTenantFrontendHost(value)}`;
       } else {
         router.push(`/register?subdomain=${encodeURIComponent(value)}`);
       }
@@ -121,7 +128,7 @@ export default function SubdomainCheckPage() {
                   className="min-w-0 flex-1 bg-transparent px-2 py-3.5 text-sm font-semibold text-dark-navy outline-none placeholder:text-slate-400 sm:px-3"
                 />
                 <span className="shrink-0 pr-3 text-xs font-semibold text-slate-400 sm:pr-4 sm:text-sm">
-                  .{ROOT_DOMAIN}
+                  -{ROOT_DOMAIN}
                 </span>
               </div>
               {errorMessage && (

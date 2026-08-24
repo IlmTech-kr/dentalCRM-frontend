@@ -5,8 +5,8 @@
  * Refresh ham 401 bersa — /login ga redirect.
  *
  * mainHttp — subdomainsiz, to'g'ridan-to'g'ri MAIN_API_URL
- * (masalan https://dental.api.ilmtech.uz) ga so'rov yuboradi.
- * SUPERADMIN paneli (admin.dental.ilmtech.uz) shu instance orqali ishlaydi —
+ * (masalan https://api-dental.ilmtech.uz) ga so'rov yuboradi.
+ * SUPERADMIN paneli (admin-dental.ilmtech.uz) shu instance orqali ishlaydi —
  * hech qanday tenant/subdomain header qo'shilmaydi.
  */
 
@@ -20,22 +20,21 @@ import axios, {
 import { getCurrentSubdomain } from "@/src/lib/tenant.client";
 import { clearAuthStorage } from "@/src/lib/auth/storage";
 import { ENDPOINTS } from "@/src/lib/api/endpoints";
+import { buildTenantFrontendHost } from "@/src/lib/tenant";
 
 export const MAIN_API_URL =
-  process.env.NEXT_PUBLIC_MAIN_API_URL || "https://dental.api.ilmtech.uz";
+  process.env.NEXT_PUBLIC_MAIN_API_URL || "https://api-dental.ilmtech.uz";
 
-const TENANT_API_PROTOCOL =
-  process.env.NEXT_PUBLIC_TENANT_API_PROTOCOL || "https";
-
-const TENANT_API_ROOT_DOMAIN =
-  process.env.NEXT_PUBLIC_TENANT_API_ROOT_DOMAIN || "dental.api.ilmtech.uz";
+const FRONTEND_PROTOCOL = process.env.NEXT_PUBLIC_FRONTEND_PROTOCOL || "https";
+const FRONTEND_ROOT_DOMAIN =
+  process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "dental.ilmtech.uz";
 
 const ENV_TENANT_API_PORT = process.env.NEXT_PUBLIC_TENANT_API_PORT;
 
 const TENANT_API_PORT =
   ENV_TENANT_API_PORT !== undefined
     ? ENV_TENANT_API_PORT.trim()
-    : TENANT_API_ROOT_DOMAIN === "localhost"
+    : FRONTEND_ROOT_DOMAIN === "localhost"
       ? "9000"
       : "";
 
@@ -58,11 +57,21 @@ export function buildTenantBaseUrl(subDomain: string): string {
 
   const port = TENANT_API_PORT ? `:${TENANT_API_PORT}` : "";
 
-  if (TENANT_API_ROOT_DOMAIN === "localhost") {
-    return `${TENANT_API_PROTOCOL}://${cleanSubDomain}.localhost${port}`;
+  if (FRONTEND_ROOT_DOMAIN === "localhost") {
+    return `http://${cleanSubDomain}.localhost${port}`;
   }
 
-  return `${TENANT_API_PROTOCOL}://${cleanSubDomain}.${TENANT_API_ROOT_DOMAIN}${port}`;
+  return `${FRONTEND_PROTOCOL}://${buildTenantFrontendHost(cleanSubDomain)}${port}`;
+}
+
+function getCurrentTenantBaseUrl(subDomain: string): string {
+  if (isBrowser() && window.location.hostname.endsWith(".localhost")) {
+    return buildTenantBaseUrl(subDomain);
+  }
+  if (isBrowser() && getCurrentSubdomain() === subDomain) {
+    return window.location.origin;
+  }
+  return buildTenantBaseUrl(subDomain);
 }
 
 function getTenantSubDomainForBaseUrl(): string {
@@ -88,7 +97,12 @@ function getUrlSubDomain(): string {
 
 export function normalizeApiError(error: unknown): ApiErrorObject {
   if (axios.isAxiosError(error)) {
-    const data = error.response?.data as any;
+    const data = error.response?.data as {
+      code?: string;
+      errorCode?: string;
+      error?: string;
+      message?: string;
+    } | undefined;
     return {
       status: error.response?.status,
       code: data?.code || data?.errorCode || data?.error,
@@ -190,7 +204,7 @@ function attachTenantInterceptors(instance: AxiosInstance, baseURL: string): voi
   instance.interceptors.response.use(
     (response: AxiosResponse) => response,
 
-    async (error: AxiosError<any>) => {
+    async (error: AxiosError<{ code?: string }>) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & {
         _retry?: boolean;
         _tenantRetry?: boolean;
@@ -311,7 +325,7 @@ export function tenantHttp(subDomainOverride?: string): AxiosInstance {
   const cached = tenantHttpCache.get(subDomain);
   if (cached) return cached;
 
-  const baseURL = buildTenantBaseUrl(subDomain);
+  const baseURL = getCurrentTenantBaseUrl(subDomain);
 
   const instance = axios.create({
     baseURL,
@@ -340,7 +354,7 @@ export async function tenantFetch(
   init: RequestInit = {},
   retryAfterRefresh = true
 ): Promise<Response> {
-  const baseURL = buildTenantBaseUrl(getTenantSubDomainForBaseUrl());
+  const baseURL = getCurrentTenantBaseUrl(getTenantSubDomainForBaseUrl());
   const headers = new Headers(init.headers);
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -387,8 +401,8 @@ export const mainHttp = axios.create({
  * mainHttp ham xuddi tenantHttp kabi 401-refresh-retry oqimidan foydalanadi.
  * SUPERADMIN doim shu instance orqali ishlaydi — subdomain header'lari
  * qo'shilmaydi, so'rov to'g'ridan-to'g'ri MAIN_API_URL (masalan
- * https://dental.api.ilmtech.uz) ga ketadi, hostdan qat'i nazar
- * (admin.dental.ilmtech.uz'da ochilgan bo'lsa ham).
+ * https://api-dental.ilmtech.uz) ga ketadi, hostdan qat'i nazar
+ * (admin-dental.ilmtech.uz'da ochilgan bo'lsa ham).
  */
 attachTenantInterceptors(mainHttp, MAIN_API_URL);
 
@@ -407,7 +421,7 @@ export function publicTenantHttp(subDomainOverride?: string): AxiosInstance {
     .toLowerCase();
 
   return axios.create({
-    baseURL: buildTenantBaseUrl(subDomain),
+    baseURL: getCurrentTenantBaseUrl(subDomain),
     withCredentials: true,
     headers: {
       "Content-Type": "application/json",

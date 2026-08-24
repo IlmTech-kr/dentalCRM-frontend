@@ -16,7 +16,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // --- SUPERADMIN (admin.dental.ilmtech.uz) ---
+  // --- SUPERADMIN (admin-dental.ilmtech.uz) ---
   if (ctx.type === "superadmin") {
     if (pathname === "/") {
       const url = req.nextUrl.clone();
@@ -35,7 +35,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // --- TENANT (clinic1.dental.ilmtech.uz) ---
+  // --- TENANT (clinic1-dental.ilmtech.uz) ---
   if (pathname === "/") {
     const url = req.nextUrl.clone();
     url.pathname = "/login";

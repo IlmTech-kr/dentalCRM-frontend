@@ -209,7 +209,7 @@ export const ENDPOINTS = {
 
     /**
      * SUPER_ADMIN paneli — tariflar va tenantlarni boshqarish.
-     * mainHttp (root domain, dental.api.ilmtech.uz) orqali chaqiriladi.
+     * mainHttp (platform API, api-dental.ilmtech.uz) orqali chaqiriladi.
      */
     admin: {
       plans: {

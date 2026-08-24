@@ -33,9 +33,30 @@ export function isValidSubdomain(sub: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(sub);
 }
 
+function getRootDomain(): string {
+  return (process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "").trim().toLowerCase();
+}
+
+/**
+ * Production tenant names are flat first-level hosts, for example
+ * implant-dental.ilmtech.uz. This keeps Cloudflare Free Universal SSL coverage.
+ */
+export function buildTenantFrontendHost(subDomain: string): string {
+  const normalizedSubdomain = subDomain.trim().toLowerCase();
+  const rootDomain = getRootDomain();
+
+  if (!isValidSubdomain(normalizedSubdomain)) {
+    throw new Error("Invalid tenant subdomain");
+  }
+  if (!rootDomain || rootDomain === "localhost") {
+    return `${normalizedSubdomain}.localhost`;
+  }
+  return `${normalizedSubdomain}-${rootDomain}`;
+}
+
 export function resolveHostContext(host: string | null): HostContext {
   const hostname = (host ?? "").split(":")[0].trim().toLowerCase();
-  const rootDomain = (process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "").toLowerCase();
+  const rootDomain = getRootDomain();
 
   if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
     return { type: "root" };
@@ -52,10 +73,15 @@ export function resolveHostContext(host: string | null): HostContext {
 
   if (hostname.endsWith(".localhost")) {
     sub = hostname.slice(0, -".localhost".length);
+  } else if (rootDomain && hostname.endsWith(`-${rootDomain}`)) {
+    const candidate = hostname.slice(0, hostname.length - rootDomain.length - 1);
+    if (candidate && !candidate.includes(".")) sub = candidate;
   } else if (rootDomain) {
+    // Old dotted hosts are intentionally not considered tenants in production.
+    // They cannot be served through Cloudflare Free Universal SSL.
     if (hostname.endsWith(`.${rootDomain}`)) {
       const candidate = hostname.slice(0, hostname.length - rootDomain.length - 1);
-      if (candidate && !candidate.includes(".")) sub = candidate;
+      if (candidate && !candidate.includes(".")) return { type: "root" };
     }
   } else {
     // rootDomain umuman noma'lum — bitta ehtimoliy usul: >=3 labelli hostname'ning
