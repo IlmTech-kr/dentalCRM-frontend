@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * admin.dental.ilmtech.uz/login shu sahifaga proxy.ts orqali rewrite qilinadi.
+ * admin-dental.ilmtech.uz/login shu sahifaga proxy.ts orqali rewrite qilinadi.
  * Bu yerda hech qanday tenant subdomain tekshirilmaydi — login to'g'ridan-to'g'ri
- * mainHttp (dental.api.ilmtech.uz) ga ketadi.
+ * mainHttp (api-dental.ilmtech.uz) ga ketadi.
  */
 
 import { useEffect, useRef, useState } from "react";

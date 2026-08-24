@@ -22,6 +22,7 @@ import {
 
 import { useRegisterClinic } from "@/src/features/auth/hooks/useAuth";
 import { useToast } from "@/src/lib/hooks/Usetoast";
+import { buildTenantFrontendHost } from "@/src/lib/tenant";
 
 const FRONTEND_ROOT_DOMAIN = process.env.NEXT_PUBLIC_FRONTEND_ROOT_DOMAIN || "";
 const FRONTEND_PROTOCOL = process.env.NEXT_PUBLIC_FRONTEND_PROTOCOL || "http";
@@ -30,11 +31,11 @@ const FRONTEND_PROTOCOL = process.env.NEXT_PUBLIC_FRONTEND_PROTOCOL || "http";
  * Register bo'lgandan keyin clinic login sahifasiga redirect.
  *
  * Local:      http://clinic1.localhost:3000/login
- * Production: https://clinic1.dentalcrm.uz/login
+ * Production: https://clinic1-dental.ilmtech.uz/login
  */
 function buildClinicLoginUrl(subDomain: string): string {
   if (FRONTEND_ROOT_DOMAIN && FRONTEND_ROOT_DOMAIN !== "localhost") {
-    return `${FRONTEND_PROTOCOL}://${subDomain}.${FRONTEND_ROOT_DOMAIN}/login`;
+    return `${FRONTEND_PROTOCOL}://${buildTenantFrontendHost(subDomain)}/login`;
   }
 
   // Local dev fallback

@@ -18,6 +18,7 @@ import DentalLoader from "@/src/components/ui/DentalLoader";
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { useConfirm } from "@/src/lib/hooks/Useconfirm";
 import { getApiErrorMessage } from "@/src/lib/api/http";
+import { buildTenantFrontendHost } from "@/src/lib/tenant";
 
 import {
   useSuspendTenant,
@@ -718,7 +719,7 @@ export default function DashboardPage() {
                     </p>
                     <p className="mt-1 text-xs text-slate-400">
                       {clinic?.subDomain
-                        ? `${clinic.subDomain}.dental.ilmtech.uz`
+                        ? buildTenantFrontendHost(clinic.subDomain)
                         : "Subdomain mavjud emas"}
                     </p>
                   </div>
@@ -812,7 +813,7 @@ export default function DashboardPage() {
 
                         <p className="mt-1 text-xs text-slate-400">
                           {clinic?.subDomain
-                            ? `${clinic.subDomain}.dental.ilmtech.uz`
+                            ? buildTenantFrontendHost(clinic.subDomain)
                             : "Subdomain mavjud emas"}
                         </p>
                       </td>
@@ -1037,7 +1038,7 @@ function ClinicDetailModal({
 
           <p className="mt-1 text-sm text-slate-400">
             {clinic?.subDomain
-              ? `${clinic.subDomain}.dental.ilmtech.uz`
+              ? buildTenantFrontendHost(clinic.subDomain)
               : "Subdomain mavjud emas"}
           </p>
         </div>
