@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-/* ── Frame manifest — 600 frames, 1280×720 ─────────────── */
+/* ── Frame Manifest ────────────────────────────────────────── */
+
 const FIRST_FRAME = 1;
 const LAST_FRAME = 600;
+
 const FILE_PREFIX = "frame_";
 const FILE_EXT = ".webp";
 const PAD = 5;
@@ -12,51 +14,118 @@ const PAD = 5;
 const FRAME_COUNT = LAST_FRAME - FIRST_FRAME + 1;
 const BATCH_SIZE = 12;
 
-/* ── Scroll timeline ───────────────────────────────────── */
-const OPEN_END = 0.13;
-const CLOSE_START = 0.87;
+/* ── Scroll Timeline ───────────────────────────────────────── */
 
-/* ── 3D pose ───────────────────────────────────────────── */
-const SCENE_TILT_SHUT = 26;   // deg — viewed more from above when closed
-const SCENE_TILT_OPEN = 9;    // settles as it opens
-const LID_SHUT = -74;         // never reaches -90, so it never degenerates
-const DECK_LAY = 68;          // deck lies back into the scene
+const OPEN_END = 0.18;
+const CLOSE_START = 0.88;
+
+/* ── 3D Spatial Geometry ───────────────────────────────────── */
+
+/* Camera / Stage Tilts matching the reference */
+const SCENE_TILT_SHUT = -10; // Viewing the closed lid from above
+const SCENE_TILT_OPEN = 8;   // Natural eye-level look at open display
+
+const DECK_INCLINE = 62;
+
+/*
+ * Lid Angles (Origin: bottom rear hinge)
+ * - Closed: Folds exactly flush onto deck (-118deg)
+ * - Open: Upright at 0deg
+ */
+const LID_SHUT_ANGLE = DECK_INCLINE - 180; // -118deg
+const LID_OPEN_ANGLE = 0;
+
+/* Hardware Proportions */
+const BODY_RATIO = 1.435;
+const PANEL_RATIO = 1.54;
+
+const DECK_FORESHORTEN = Math.cos((DECK_INCLINE * Math.PI) / 180);
+const DECK_MARGIN = -((1 - DECK_FORESHORTEN) / BODY_RATIO) * 100;
+
+const STAGE_DROP = "-6%";
+
+/* ── Helpers ───────────────────────────────────────────────── */
 
 function getFramePath(index: number) {
-  return `/frames/${FILE_PREFIX}${String(index + FIRST_FRAME).padStart(PAD, "0")}${FILE_EXT}`;
+  return `/frames/${FILE_PREFIX}${String(
+    index + FIRST_FRAME
+  ).padStart(PAD, "0")}${FILE_EXT}`;
 }
 
-const clamp01 = (v: number) => Math.min(Math.max(v, 0), 1);
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const easeHinge = (t: number) => 1 - Math.pow(1 - t, 2.4);
+const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
+const lerp = (start: number, end: number, progress: number) =>
+  start + (end - start) * progress;
+const easeCubicHinge = (progress: number) => 1 - Math.pow(1 - progress, 3.2);
 
-type ScenePanel = { title: string; desc?: string };
+/* ── Apple Logo SVG ────────────────────────────────────────── */
+
+function AppleLogo({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 170 170"
+      fill="currentColor"
+      className={`opacity-75 ${className}`}
+    >
+      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.34-6.42-9.78-11.39-20.9-14.93-33.34-3.53-12.44-5.3-23.75-5.3-33.91 0-14.02 3.42-25.75 10.26-35.18 6.84-9.44 15.53-14.28 26.06-14.53 4.9.11 10.19 1.34 15.86 3.69 5.66 2.35 9.4 3.58 11.22 3.69 1.63 0 5.61-1.34 11.93-4.02 6.32-2.68 11.66-3.83 16.03-3.46 12.39 1.09 21.99 5.86 28.78 14.34-11.09 6.74-16.52 16.08-16.3 28.03.22 9.57 3.91 17.5 11.08 23.8 7.17 6.31 15.65 10.01 25.43 11.09-2.18 6.52-4.79 13.04-7.82 19.56m-24.67-111.45c0 6.74-2.5 13.1-7.5 18.09-5 4.99-11.19 8.04-18.57 9.13-.22-1.09-.33-2.17-.33-3.26 0-6.95 2.72-13.69 8.15-20.21 5.43-6.52 12.17-10.21 20.21-11.08.11 2.39-.96 4.83-1.96 7.33z" />
+    </svg>
+  );
+}
+
+/* ── Keycap ────────────────────────────────────────────────── */
+
+function Key({ grow = 1, className = "" }: { grow?: number; className?: string }) {
+  return (
+    <div
+      style={{
+        flexGrow: grow,
+        flexBasis: 0,
+        background: "linear-gradient(180deg,#2a2a2e 0%,#1a1a1d 45%,#111113 100%)",
+        boxShadow:
+          "inset 0 0.5px 0 rgba(255,255,255,0.08), inset 0 -1px 1px rgba(0,0,0,0.8), 0 0.5px 1px rgba(0,0,0,0.4)",
+      }}
+      className={`min-w-0 rounded-[2.5px] ${className}`}
+    />
+  );
+}
+
+/* ── Types ─────────────────────────────────────────────────── */
+
+type ScenePanel = {
+  title: string;
+  desc?: string;
+};
+
+/* ── Component ─────────────────────────────────────────────── */
 
 export default function MacbookFrameScene({
   children,
   panels = [],
-  loaderLabel,
+  loaderLabel = "INITIALIZING HARDWARE DISPLAY...",
+  stageOffsetY = STAGE_DROP,
+  shellMark,
 }: {
   children: ReactNode;
   panels?: ScenePanel[];
   loaderLabel?: string;
+  stageOffsetY?: string;
+  shellMark?: ReactNode;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const machineRef = useRef<HTMLDivElement>(null);
   const lidRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
+  const shellGlareRef = useRef<HTMLDivElement>(null);
   const spillRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
+  const deckShadowRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const lidTRef = useRef(0);
   const pointerRef = useRef({ x: 0, y: 0 });
-
   const imagesRef = useRef<(HTMLImageElement | null)[]>(
-    new Array(FRAME_COUNT).fill(null),
+    new Array(FRAME_COUNT).fill(null)
   );
   const currentFrameRef = useRef(0);
   const drawFrameRef = useRef<(index: number) => void>(() => {});
@@ -66,32 +135,17 @@ export default function MacbookFrameScene({
   const [activePanel, setActivePanel] = useState(-1);
   const [progressPct, setProgressPct] = useState(0);
 
-  /* ── Sticky sanity check ──────────────────────────────── */
-  useEffect(() => {
-    let el: HTMLElement | null = stickyRef.current?.parentElement ?? null;
-    while (el && el !== document.documentElement) {
-      const s = getComputedStyle(el);
-      if (s.overflow !== "visible" || s.overflowX !== "visible") {
-        console.warn(
-          "[MacbookFrameScene] Ancestor overflow != visible disables position:sticky. " +
-            "Use `overflow-x: clip` instead of `hidden` on:",
-          el,
-        );
-        break;
-      }
-      el = el.parentElement;
-    }
-  }, []);
+  /* ── Canvas Engine ────────────────────────────────────────── */
 
-  /* ── Draw ─────────────────────────────────────────────── */
   useEffect(() => {
     drawFrameRef.current = (index: number) => {
       const canvas = canvasRef.current;
       const image = imagesRef.current[index];
+
       if (!canvas || !image) return;
 
-      const context = canvas.getContext("2d", { alpha: false });
-      if (!context) return;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) return;
 
       const container = canvas.parentElement;
       if (!container) return;
@@ -101,32 +155,43 @@ export default function MacbookFrameScene({
       if (!width || !height) return;
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const bw = Math.round(width * dpr);
-      const bh = Math.round(height * dpr);
+      const canvasWidth = Math.round(width * dpr);
+      const canvasHeight = Math.round(height * dpr);
 
-      if (canvas.width !== bw || canvas.height !== bh) {
-        canvas.width = bw;
-        canvas.height = bh;
+      if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
       }
 
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-      const dw = image.naturalWidth * scale;
-      const dh = image.naturalHeight * scale;
+      const scale = Math.max(
+        width / image.naturalWidth,
+        height / image.naturalHeight
+      );
 
-      context.fillStyle = "#08080a";
-      context.fillRect(0, 0, width, height);
-      context.drawImage(image, (width - dw) / 2, (height - dh) / 2, dw, dh);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+
+      ctx.fillStyle = "#020203";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.drawImage(
+        image,
+        (width - drawWidth) / 2,
+        (height - drawHeight) / 2,
+        drawWidth,
+        drawHeight
+      );
     };
   }, []);
 
-  /* ── Load frames ──────────────────────────────────────── */
+  /* ── Load Frames ─────────────────────────────────────────── */
+
   useEffect(() => {
     let cancelled = false;
-
     const firstPath = getFramePath(0);
     const firstImage = new Image();
 
@@ -136,20 +201,26 @@ export default function MacbookFrameScene({
       drawFrameRef.current(0);
       setFirstPainted(true);
     };
+
     firstImage.onerror = () => {
       if (cancelled) return;
-      console.error("[MacbookFrameScene] frame failed to load:", firstPath);
       setLoadError(firstPath);
     };
+
     firstImage.src = firstPath;
 
     const loadFrames = async () => {
       let loaded = 0;
+
       for (let start = 1; start < FRAME_COUNT; start += BATCH_SIZE) {
         if (cancelled) return;
         const batch: Promise<void>[] = [];
 
-        for (let i = start; i < Math.min(start + BATCH_SIZE, FRAME_COUNT); i++) {
+        for (
+          let i = start;
+          i < Math.min(start + BATCH_SIZE, FRAME_COUNT);
+          i++
+        ) {
           batch.push(
             new Promise<void>((resolve) => {
               const image = new Image();
@@ -157,55 +228,64 @@ export default function MacbookFrameScene({
                 loaded += 1;
                 resolve();
               };
+
               image.onload = () => {
                 imagesRef.current[i] = image;
-                if (currentFrameRef.current === i) drawFrameRef.current(i);
+                if (currentFrameRef.current === i) {
+                  drawFrameRef.current(i);
+                }
                 settle();
               };
+
               image.onerror = settle;
               image.src = getFramePath(i);
-            }),
+            })
           );
         }
 
         await Promise.all(batch);
-        if (!cancelled) setProgressPct(Math.round((loaded / (FRAME_COUNT - 1)) * 100));
-        await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+        if (!cancelled) {
+          setProgressPct(Math.round((loaded / (FRAME_COUNT - 1)) * 100));
+        }
+
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => resolve(null));
+        });
       }
     };
 
     loadFrames();
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  /* ── Apply the 3D pose from lidT + pointer ────────────── */
+  /* ── 3D Spatial Angles ───────────────────────────────────── */
+
   const applyPose = () => {
     const lidT = lidTRef.current;
     const { x, y } = pointerRef.current;
 
-    const tilt = lerp(SCENE_TILT_SHUT, SCENE_TILT_OPEN, lidT);
+    const stageTilt = lerp(SCENE_TILT_SHUT, SCENE_TILT_OPEN, lidT);
 
     if (machineRef.current) {
       machineRef.current.style.transform = [
-        `rotateX(${tilt + y * 5}deg)`,
-        `rotateY(${x * 11}deg)`,
-        `translateZ(${lerp(-40, 0, lidT)}px)`,
+        `rotateX(${stageTilt + y * 3.5}deg)`,
+        `rotateY(${x * 6}deg)`,
+        `translateZ(${lerp(-20, 0, lidT)}px)`,
       ].join(" ");
     }
 
     if (lidRef.current) {
-      const angle = lerp(LID_SHUT, 0, lidT);
+      const angle = lerp(LID_SHUT_ANGLE, LID_OPEN_ANGLE, lidT);
       lidRef.current.style.transform = `rotateX(${angle}deg)`;
-      // Clip hides the first sliver of travel, where any rotated plane
-      // reads as a thin artifact rather than a lid.
-      const hide = clamp01((0.16 - lidT) / 0.16);
-      lidRef.current.style.clipPath = `inset(${hide * 100}% 0 0 0)`;
     }
   };
 
-  /* ── Scroll → lid + frame + caption ───────────────────── */
+  /* ── Scroll Animation ────────────────────────────────────── */
+
   useEffect(() => {
     let animationFrame: number | null = null;
 
@@ -217,15 +297,18 @@ export default function MacbookFrameScene({
 
       const rect = section.getBoundingClientRect();
       const scrollDistance = section.offsetHeight - window.innerHeight;
+
       if (scrollDistance <= 0) return;
 
       const progress = clamp01(-rect.top / scrollDistance);
-
       let lidT: number;
-      if (progress < OPEN_END) {
-        lidT = easeHinge(progress / OPEN_END);
-      } else if (progress > CLOSE_START) {
-        lidT = 1 - easeHinge((progress - CLOSE_START) / (1 - CLOSE_START));
+
+      if (progress <= OPEN_END) {
+        lidT = easeCubicHinge(progress / OPEN_END);
+      } else if (progress >= CLOSE_START) {
+        lidT =
+          1 -
+          easeCubicHinge((progress - CLOSE_START) / (1 - CLOSE_START));
       } else {
         lidT = 1;
       }
@@ -233,24 +316,70 @@ export default function MacbookFrameScene({
       lidTRef.current = lidT;
       applyPose();
 
+      /* ── Screen Reveal ── */
       if (screenRef.current) {
-        screenRef.current.style.opacity = String(clamp01((lidT - 0.42) / 0.3));
-      }
-      if (glareRef.current) {
-        const sweep = Math.sin(lidT * Math.PI);
-        glareRef.current.style.opacity = String(0.05 + sweep * 0.45);
-        glareRef.current.style.transform = `translateX(${lerp(-26, 26, lidT)}%)`;
-      }
-      if (spillRef.current) {
-        spillRef.current.style.opacity = String(clamp01((lidT - 0.45) / 0.3) * 0.6);
-      }
-      if (shadowRef.current) {
-        shadowRef.current.style.opacity = String(lerp(0.4, 1, lidT));
-        shadowRef.current.style.transform = `translateY(${lerp(-14, 0, lidT)}px) scaleX(${lerp(0.8, 1, lidT)})`;
+        screenRef.current.style.opacity = String(
+          clamp01((lidT - 0.12) / 0.4)
+        );
       }
 
-      const scrubT = clamp01((progress - OPEN_END) / (CLOSE_START - OPEN_END));
-      const frameIndex = Math.min(FRAME_COUNT - 1, Math.floor(scrubT * (FRAME_COUNT - 1)));
+      /* ── Glare Sweeps ── */
+      if (glareRef.current) {
+        const sweep = Math.sin(lidT * Math.PI);
+        glareRef.current.style.opacity = String(0.02 + sweep * 0.28);
+        glareRef.current.style.transform = `translateX(${lerp(
+          -35,
+          35,
+          lidT
+        )}%) rotate(${lerp(-5, 5, lidT)}deg)`;
+      }
+
+      if (shellGlareRef.current) {
+        shellGlareRef.current.style.opacity = String(lerp(0.85, 0.05, lidT));
+        shellGlareRef.current.style.transform = `translateX(${lerp(
+          -15,
+          15,
+          lidT
+        )}%)`;
+      }
+
+      /* ── Deck Illumination ── */
+      if (spillRef.current) {
+        spillRef.current.style.opacity = String(
+          clamp01((lidT - 0.3) / 0.35) * 0.7
+        );
+      }
+
+      /* ── Deck Shadow ── */
+      if (deckShadowRef.current) {
+        deckShadowRef.current.style.opacity = String(clamp01((1 - lidT) * 0.95));
+      }
+
+      /* ── Floor Shadow ── */
+      if (shadowRef.current) {
+        shadowRef.current.style.opacity = String(lerp(0.45, 0.9, lidT));
+        shadowRef.current.style.transform = `translateY(${lerp(
+          -2,
+          8,
+          lidT
+        )}px) scaleX(${lerp(0.95, 1, lidT)})`;
+      }
+
+      /* ── Frame Timeline ── */
+      let frameIndex = 0;
+      if (progress <= OPEN_END) {
+        frameIndex = 0;
+      } else if (progress < CLOSE_START) {
+        const videoProgress =
+          (progress - OPEN_END) / (CLOSE_START - OPEN_END);
+        frameIndex = Math.min(
+          FRAME_COUNT - 1,
+          Math.floor(videoProgress * (FRAME_COUNT - 1))
+        );
+      } else {
+        frameIndex = FRAME_COUNT - 1;
+      }
+
       currentFrameRef.current = frameIndex;
 
       if (imagesRef.current[frameIndex]) {
@@ -264,17 +393,25 @@ export default function MacbookFrameScene({
         }
       }
 
+      /* ── Panels ── */
       if (panels.length) {
-        const next =
-          progress < OPEN_END || progress > CLOSE_START
-            ? -1
-            : Math.min(panels.length - 1, Math.floor(scrubT * panels.length));
-        setActivePanel((c) => (c === next ? c : next));
+        let next = -1;
+        if (progress > OPEN_END && progress < CLOSE_START) {
+          const panelProgress =
+            (progress - OPEN_END) / (CLOSE_START - OPEN_END);
+          next = Math.min(
+            panels.length - 1,
+            Math.floor(panelProgress * panels.length)
+          );
+        }
+        setActivePanel((current) => (current === next ? current : next));
       }
     };
 
     const onScroll = () => {
-      if (animationFrame === null) animationFrame = requestAnimationFrame(update);
+      if (animationFrame === null) {
+        animationFrame = requestAnimationFrame(update);
+      }
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -284,11 +421,12 @@ export default function MacbookFrameScene({
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (animationFrame !== null) cancelAnimationFrame(animationFrame);
     };
   }, [panels.length]);
 
-  /* ── Pointer parallax (desktop only, respects reduced motion) ── */
+  /* ── Mouse Parallax ───────────────────────────────────────── */
+
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!window.matchMedia("(pointer: fine)").matches) return;
@@ -298,11 +436,13 @@ export default function MacbookFrameScene({
     const onMove = (event: MouseEvent) => {
       const stage = stageRef.current;
       if (!stage) return;
+
       const rect = stage.getBoundingClientRect();
       pointerRef.current = {
         x: clamp01((event.clientX - rect.left) / rect.width) * 2 - 1,
         y: clamp01((event.clientY - rect.top) / rect.height) * 2 - 1,
       };
+
       if (raf === null) {
         raf = requestAnimationFrame(() => {
           raf = null;
@@ -322,230 +462,523 @@ export default function MacbookFrameScene({
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
-      if (raf) cancelAnimationFrame(raf);
+      if (raf !== null) cancelAnimationFrame(raf);
     };
   }, []);
 
   const panel = activePanel >= 0 ? panels[activePanel] : undefined;
 
+  /* ── Render ───────────────────────────────────────────────── */
+
   return (
     <div
       ref={sectionRef}
-      className="relative h-[300vh] w-full bg-[radial-gradient(circle_at_top_left,#e0f7ff,transparent_38%),radial-gradient(circle_at_top_right,#f5d0fe,transparent_30%),linear-gradient(to_bottom,#ffffff,#f8fbff)] sm:h-[380vh]"
+      className="
+        relative
+        h-[350vh]
+        w-full
+        bg-[radial-gradient(circle_at_top_left,#e8f3fa,transparent_40%),radial-gradient(circle_at_top_right,#f3e8f7,transparent_35%),linear-gradient(to_bottom,#ffffff,#f5f8fc)]
+        sm:h-[420vh]
+      "
     >
       <div
-        ref={stickyRef}
-        data-scene-sticky
-        className="sticky top-0 flex h-[100svh] w-full items-center overflow-hidden"
+        className="
+          sticky
+          top-0
+          flex
+          h-[100svh]
+          w-full
+          items-center
+          overflow-hidden
+        "
       >
-        <div className="absolute left-1/2 top-16 h-48 w-48 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-200/40 via-violet-200/40 to-rose-200/40 blur-3xl sm:h-72 sm:w-72" />
+        <div
+          className="
+            mx-auto
+            grid
+            w-full
+            max-w-7xl
+            items-center
+            gap-6
+            px-4
+            py-8
+            sm:gap-10
+            sm:px-6
+            lg:grid-cols-2
+            lg:px-8
+          "
+        >
+          {/* Left Content */}
+          <div className="relative text-center lg:text-left">
+            {children}
+          </div>
 
-        <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 py-8 sm:gap-10 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div className="relative text-center lg:text-left">{children}</div>
-
-          {/* ── 3D stage ────────────────────────────────── */}
+          {/* ── MacBook 3D Stage ── */}
           <div
             ref={stageRef}
-            className="relative mx-auto w-full max-w-[420px] sm:max-w-[500px] lg:max-w-[580px]"
-            style={{ perspective: "1700px", perspectiveOrigin: "50% 62%" }}
+            className="
+              relative
+              mx-auto
+              w-full
+              max-w-[360px]
+              sm:max-w-[430px]
+              lg:max-w-[490px]
+            "
+            style={{
+              perspective: "2200px",
+              perspectiveOrigin: "50% 55%",
+              transform: `translateY(${stageOffsetY})`,
+            }}
           >
             <div
               ref={machineRef}
               className="relative will-change-transform"
               style={{
                 transformStyle: "preserve-3d",
-                transform: `rotateX(${SCENE_TILT_SHUT}deg) translateZ(-40px)`,
-                transition: "none",
+                transform: `rotateX(${SCENE_TILT_SHUT}deg) translateZ(-20px)`,
               }}
             >
-              {/* Lid — hinges on its bottom edge */}
+              {/* ── MACBOOK LID (Origin at bottom/hinge edge) ── */}
               <div
                 ref={lidRef}
-                className="relative origin-bottom will-change-transform"
+                className="
+                  relative
+                  w-full
+                  origin-bottom
+                  will-change-transform
+                "
                 style={{
+                  aspectRatio: String(BODY_RATIO),
                   transformStyle: "preserve-3d",
-                  transform: `rotateX(${LID_SHUT}deg)`,
-                  clipPath: "inset(100% 0 0 0)",
+                  transform: `rotateX(${LID_SHUT_ANGLE}deg)`,
                 }}
               >
-                {/* Aluminium back — visible while the lid is angled away */}
+                {/* ── TOP ALUMINUM SHELL (Outer Lid with Apple Logo) ── */}
                 <div
-                  className="absolute inset-0 rounded-t-[15px] rounded-b-[3px] sm:rounded-t-[19px]"
+                  className="
+                    absolute
+                    inset-0
+                    overflow-hidden
+                    rounded-[16px]
+                  "
                   style={{
-                    transform: "translateZ(-9px)",
+                    transform: "rotateY(180deg) rotateZ(180deg)",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
                     background:
-                      "linear-gradient(168deg,#eaeaee 0%,#d4d4d9 30%,#bcbcc3 62%,#d8d8dd 100%)",
-                    boxShadow: "inset 0 -3px 8px rgba(0,0,0,.2)",
+                      "linear-gradient(175deg, #abb0b9 0%, #9ca1aa 32%, #8e939c 68%, #9ca1aa 88%, #a7acb5 100%)",
+                    boxShadow:
+                      "inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -1.5px 3px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15)",
                   }}
-                />
+                >
+                  {/* Sheen */}
+                  <div
+                    ref={shellGlareRef}
+                    className="
+                      pointer-events-none
+                      absolute
+                      -inset-y-1/2
+                      -inset-x-1/4
+                      will-change-transform
+                    "
+                    style={{
+                      background:
+                        "linear-gradient(108deg, transparent 30%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0.08) 54%, transparent 70%)",
+                    }}
+                  />
 
-                <div className="relative overflow-hidden rounded-t-[15px] rounded-b-[3px] border-[8px] border-b-[15px] border-[#0f0f12] bg-[#0f0f12] shadow-[0_30px_60px_-12px_rgba(15,23,42,.45)] sm:rounded-t-[19px] sm:border-[10px] sm:border-b-[19px]">
-                  <div className="absolute left-1/2 top-[4px] z-20 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#28282e]" />
+                  {/* Apple Logo (Centered & Right Side Up) */}
+                  <div
+                    className="
+                      absolute
+                      left-1/2
+                      top-1/2
+                      flex
+                      aspect-square
+                      w-[12%]
+                      -translate-x-1/2
+                      -translate-y-1/2
+                      items-center
+                      justify-center
+                      text-[#595d65]
+                    "
+                    style={{
+                      filter:
+                        "drop-shadow(0 1px 0 rgba(255,255,255,0.35)) drop-shadow(0 -1px 0 rgba(0,0,0,0.2))",
+                    }}
+                  >
+                    {shellMark ?? <AppleLogo className="h-full w-full" />}
+                  </div>
 
-                  {/* Screen — 16:9, exactly matching the source */}
-                  <div className="relative aspect-video overflow-hidden rounded-[2px] bg-[#08080a]">
-                    <div ref={screenRef} className="h-full w-full" style={{ opacity: 0 }}>
-                      <canvas ref={canvasRef} className="h-full w-full" aria-hidden="true" />
+                  {/* Machined Lip Highlight */}
+                  <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-black/10" />
+                </div>
 
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_54%,rgba(0,0,0,.34)_100%)]" />
+                {/* ── INNER DISPLAY ASSEMBLY (Screen + Camera Notch at Top) ── */}
+                <div
+                  className="
+                    relative
+                    h-full
+                    w-full
+                    overflow-hidden
+                    rounded-[16px]
+                    bg-[#08080a]
+                    p-[4px]
+                    pb-[7px]
+                    shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)]
+                    sm:p-[5px]
+                    sm:pb-[9px]
+                  "
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    background: "#08080a",
+                    border: "1px solid #1a1a1f",
+                  }}
+                >
+                  <div
+                    className="
+                      relative
+                      h-full
+                      w-full
+                      overflow-hidden
+                      rounded-[10px]
+                      bg-[#020203]
+                    "
+                    style={{ aspectRatio: String(PANEL_RATIO) }}
+                  >
+                    {/* Camera Notch at top center of display */}
+                    <div
+                      className="
+                        absolute
+                        left-1/2
+                        top-0
+                        z-30
+                        flex
+                        h-[10px]
+                        w-[13%]
+                        -translate-x-1/2
+                        items-center
+                        justify-center
+                        rounded-b-[5px]
+                        bg-[#08080a]
+                        sm:h-[12px]
+                      "
+                    >
+                      <div className="h-[3px] w-[3px] rounded-full bg-[#030305] ring-1 ring-[#202025]" />
+                    </div>
 
-                      {panel ? (
+                    {/* Canvas Display */}
+                    <div
+                      ref={screenRef}
+                      className="h-full w-full"
+                      style={{ opacity: 0 }}
+                    >
+                      <canvas
+                        ref={canvasRef}
+                        className="h-full w-full"
+                        aria-hidden="true"
+                      />
+
+                      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_8px_rgba(0,0,0,0.8)]" />
+
+                      {/* Information Panel */}
+                      {panel && (
                         <>
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                           <div
                             key={activePanel}
-                            className="pointer-events-none absolute inset-x-0 bottom-0 animate-[fadeUp_.4s_ease-out] p-3 sm:p-4"
+                            className="pointer-events-none absolute inset-x-0 bottom-0 p-3.5 sm:p-4"
                           >
                             <div className="flex items-start gap-2.5">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-[9px] font-black text-white sm:h-9 sm:w-9 sm:text-[11px]">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-[9px] font-bold text-white shadow sm:h-8 sm:w-8 sm:text-[10px]">
                                 {String(activePanel + 1).padStart(2, "0")}
                               </div>
                               <div className="min-w-0 pt-0.5">
-                                <p className="truncate text-[11px] font-black text-white drop-shadow sm:text-base">
+                                <p className="truncate text-xs font-semibold text-white">
                                   {panel.title}
                                 </p>
-                                {panel.desc ? (
-                                  <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-white/70 drop-shadow sm:text-xs">
+                                {panel.desc && (
+                                  <p className="mt-0.5 line-clamp-2 text-[9px] leading-relaxed text-zinc-300 sm:text-[10px]">
                                     {panel.desc}
                                   </p>
-                                ) : null}
+                                )}
                               </div>
                             </div>
                           </div>
                         </>
-                      ) : null}
+                      )}
 
-                      {panels.length && panel ? (
-                        <div className="pointer-events-none absolute right-2.5 top-2.5 rounded-full bg-black/45 px-2 py-0.5 text-[8px] font-black text-white/85 backdrop-blur sm:text-[10px]">
-                          {String(activePanel + 1).padStart(2, "0")}
-                          <span className="text-white/40">
-                            {" "}/ {String(panels.length).padStart(2, "0")}
-                          </span>
+                      {/* Buffering Indicator */}
+                      {progressPct < 100 && (
+                        <div className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[7px] font-medium tracking-wider text-zinc-400 backdrop-blur-md">
+                          BUFFERING {progressPct}%
                         </div>
-                      ) : null}
-
-                      {progressPct < 100 ? (
-                        <div className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-black/45 px-2 py-0.5 text-[8px] font-black text-white/50 backdrop-blur sm:text-[9px]">
-                          {progressPct}%
-                        </div>
-                      ) : null}
+                      )}
                     </div>
 
+                    {/* Glass Reflection */}
                     <div
                       ref={glareRef}
-                      className="pointer-events-none absolute -inset-y-10 -inset-x-1/4 will-change-transform"
+                      className="pointer-events-none absolute -inset-y-16 -inset-x-1/2 will-change-transform"
                       style={{
-                        opacity: 0.05,
+                        opacity: 0.03,
                         background:
-                          "linear-gradient(102deg,transparent 34%,rgba(255,255,255,.13) 45%,rgba(255,255,255,.26) 50%,rgba(255,255,255,.10) 56%,transparent 67%)",
+                          "linear-gradient(112deg, transparent 38%, rgba(255,255,255,0.08) 46%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.03) 54%, transparent 62%)",
                       }}
                     />
 
-                    {loadError ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#08080a] px-6 text-center">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">
-                          Frame not found
+                    {/* Error State */}
+                    {loadError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[#08080a] p-4 text-center">
+                        <p className="text-[9px] font-bold tracking-widest text-red-400">
+                          FRAME ASSET MISSING
                         </p>
-                        <p className="break-all font-mono text-[9px] text-white/45">{loadError}</p>
+                        <p className="max-w-[240px] truncate font-mono text-[8px] text-zinc-500">
+                          {loadError}
+                        </p>
                       </div>
-                    ) : null}
+                    )}
 
-                    {!firstPainted && !loadError && loaderLabel ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 px-6 text-center">
-                        <div className="h-[3px] w-32 overflow-hidden rounded-full bg-white/15 sm:w-44">
-                          <span className="block h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400" />
+                    {/* Loader */}
+                    {!firstPainted && !loadError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-[#020203] p-4 text-center">
+                        <div className="h-[2px] w-28 overflow-hidden rounded-full bg-zinc-800">
+                          <span className="block h-full w-1/3 animate-pulse bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400" />
                         </div>
-                        <p className="text-[9px] uppercase tracking-[0.25em] text-white/35">
+                        <p className="text-[8px] tracking-[0.25em] text-zinc-500">
                           {loaderLabel}
                         </p>
                       </div>
-                    ) : null}
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Hinge barrel */}
+              {/* ── KEYBOARD DECK (Base Clamshell) ── */}
               <div
-                className="relative mx-auto h-[7px] w-[96%] rounded-full sm:h-[8px]"
+                className="
+                  relative
+                  mx-auto
+                  w-full
+                  origin-top
+                  will-change-transform
+                "
                 style={{
-                  transform: "translateZ(2px)",
-                  background: "linear-gradient(180deg,#3c3c42,#1c1c20 42%,#4e4e56)",
-                  boxShadow: "0 1px 3px rgba(0,0,0,.45)",
+                  transform: `rotateX(${DECK_INCLINE}deg)`,
+                  transformStyle: "preserve-3d",
+                  marginBottom: `${DECK_MARGIN}%`,
                 }}
-              />
-
-              {/* Keyboard deck — laid back into the scene */}
-              <div
-                className="relative mx-auto w-[100%] origin-top will-change-transform"
-                style={{ transform: `rotateX(${DECK_LAY}deg)`, transformStyle: "preserve-3d" }}
               >
                 <div
-                  className="relative h-[150px] w-full sm:h-[190px]"
+                  className="relative w-full rounded-[16px]"
                   style={{
+                    aspectRatio: String(BODY_RATIO),
                     background:
-                      "linear-gradient(180deg,#dcdce1 0%,#e9e9ed 12%,#d6d6dc 48%,#c2c2c9 78%,#aeaeb6 100%)",
-                    borderRadius: "3px 3px 16px 16px",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,.85)",
+                      "linear-gradient(180deg, #a7acb5 0%, #9ca1aa 22%, #8e939c 65%, #7f848d 100%)",
+                    boxShadow:
+                      "inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.35), 0 20px 38px -8px rgba(15,23,42,0.45)",
+                    transformStyle: "preserve-3d",
                   }}
                 >
-                  {/* Screen light spilling forward onto the deck */}
+                  {/* Screen Spill */}
                   <div
                     ref={spillRef}
-                    className="pointer-events-none absolute inset-x-[5%] top-0 h-[55%]"
+                    className="
+                      pointer-events-none
+                      absolute
+                      inset-x-[6%]
+                      top-0
+                      h-[65%]
+                      will-change-transform
+                    "
                     style={{
                       opacity: 0,
-                      background: "linear-gradient(180deg,rgba(180,214,255,.95),transparent)",
-                      filter: "blur(10px)",
+                      background:
+                        "linear-gradient(180deg, rgba(160,210,255,0.7), transparent)",
+                      filter: "blur(20px)",
                     }}
                   />
 
-                  {/* Speaker grilles */}
-                  <div className="absolute left-[5%] top-[5%] h-[22%] w-[11%] rounded-sm bg-[#b8b8c0] opacity-70" />
-                  <div className="absolute right-[5%] top-[5%] h-[22%] w-[11%] rounded-sm bg-[#b8b8c0] opacity-70" />
-
-                  {/* Keyboard well */}
+                  {/* ── Keyboard & Speakers ── */}
                   <div
-                    className="absolute inset-x-[18%] top-[5%] h-[40%] rounded-[4px]"
-                    style={{
-                      background: "linear-gradient(180deg,#7e7e86,#9a9aa2)",
-                      boxShadow: "inset 0 2px 5px rgba(0,0,0,.4)",
-                    }}
+                    className="
+                      absolute
+                      inset-x-[3.2%]
+                      top-[3.2%]
+                      flex
+                      h-[47%]
+                      items-stretch
+                      gap-[1.5%]
+                    "
                   >
-                    <div className="grid h-full grid-rows-5 gap-[2px] p-[3px]">
-                      {[14, 14, 13, 12, 8].map((n, r) => (
-                        <div key={r} className="flex gap-[2px]">
-                          {Array.from({ length: n }).map((_, c) => (
-                            <div
-                              key={c}
-                              className="flex-1 rounded-[1.5px] bg-[#26262c]"
-                              style={{ boxShadow: "0 .5px 0 rgba(255,255,255,.18)" }}
-                            />
-                          ))}
+                    {/* Left Speaker */}
+                    <div
+                      className="w-[7.5%] rounded-[3px]"
+                      style={{
+                        background:
+                          "radial-gradient(circle, rgba(20,20,25,0.45) 0.65px, transparent 0.75px) 0 0 / 3.5px 3.5px",
+                      }}
+                    />
+
+                    {/* Keyboard Tray */}
+                    <div
+                      className="
+                        flex
+                        flex-1
+                        flex-col
+                        gap-[1.6%]
+                        rounded-[6px]
+                        p-[3px]
+                      "
+                      style={{
+                        background: "#0c0c0e",
+                        boxShadow:
+                          "inset 0 1px 2px rgba(0,0,0,0.9), 0 0.5px 0 rgba(255,255,255,0.25)",
+                      }}
+                    >
+                      {/* Function row */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 0.68, flexBasis: 0 }}>
+                        <Key grow={1.25} />
+                        {Array.from({ length: 12 }).map((_, i) => (
+                          <Key key={i} />
+                        ))}
+                        <Key grow={1.1} className="!rounded-[4px]" />
+                      </div>
+
+                      {/* Number row */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 1, flexBasis: 0 }}>
+                        {Array.from({ length: 13 }).map((_, i) => (
+                          <Key key={i} />
+                        ))}
+                        <Key grow={1.55} />
+                      </div>
+
+                      {/* Tab row */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 1, flexBasis: 0 }}>
+                        <Key grow={1.5} />
+                        {Array.from({ length: 13 }).map((_, i) => (
+                          <Key key={i} />
+                        ))}
+                        <Key grow={1.05} />
+                      </div>
+
+                      {/* Home row */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 1, flexBasis: 0 }}>
+                        <Key grow={1.75} />
+                        {Array.from({ length: 11 }).map((_, i) => (
+                          <Key key={i} />
+                        ))}
+                        <Key grow={1.8} />
+                      </div>
+
+                      {/* Shift row */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 1, flexBasis: 0 }}>
+                        <Key grow={2.3} />
+                        {Array.from({ length: 10 }).map((_, i) => (
+                          <Key key={i} />
+                        ))}
+                        <Key grow={2.25} />
+                      </div>
+
+                      {/* Bottom row + arrows */}
+                      <div className="flex gap-[2px]" style={{ flexGrow: 1, flexBasis: 0 }}>
+                        <Key />
+                        <Key />
+                        <Key grow={1.15} />
+                        <Key grow={1.35} />
+                        <Key grow={5.6} />
+                        <Key grow={1.35} />
+                        <Key grow={1.15} />
+
+                        <div className="flex gap-[2px]" style={{ flexGrow: 3, flexBasis: 0 }}>
+                          <Key />
+                          <div className="flex flex-1 flex-col gap-[1.5px]">
+                            <Key />
+                            <Key />
+                          </div>
+                          <Key />
                         </div>
-                      ))}
+                      </div>
                     </div>
+
+                    {/* Right Speaker */}
+                    <div
+                      className="w-[7.5%] rounded-[3px]"
+                      style={{
+                        background:
+                          "radial-gradient(circle, rgba(20,20,25,0.45) 0.65px, transparent 0.75px) 0 0 / 3.5px 3.5px",
+                      }}
+                    />
                   </div>
 
-                  {/* Trackpad */}
+                  {/* ── Trackpad ── */}
                   <div
-                    className="absolute inset-x-[33%] top-[52%] h-[34%] rounded-[5px]"
+                    className="
+                      absolute
+                      inset-x-[26%]
+                      bottom-[6%]
+                      top-[55%]
+                      rounded-[8px]
+                    "
                     style={{
-                      background: "linear-gradient(180deg,#cfcfd6,#dedee3)",
-                      boxShadow: "inset 0 1px 3px rgba(0,0,0,.22)",
+                      background:
+                        "linear-gradient(180deg,#9ca1aa 0%,#a7acb5 40%,#b1b6bf 100%)",
+                      boxShadow:
+                        "inset 0 0 0 1px rgba(0,0,0,0.15), inset 0 1.5px 3px rgba(0,0,0,0.18), inset 0 -0.5px 0 rgba(255,255,255,0.7)",
                     }}
                   />
 
-                  {/* Front lip notch */}
-                  <div className="absolute inset-x-[43%] bottom-0 h-[4px] rounded-t-full bg-[#a4a4ac]" />
+                  {/* Lid Shadow Overlay */}
+                  <div
+                    ref={deckShadowRef}
+                    className="
+                      pointer-events-none
+                      absolute
+                      inset-0
+                      z-20
+                      rounded-[inherit]
+                      bg-black/75
+                    "
+                    style={{ opacity: 0 }}
+                  />
+
+                  {/* Machined Thumb Opening Notch */}
+                  <div
+                    className="
+                      absolute
+                      inset-x-[42%]
+                      bottom-0
+                      z-30
+                      h-[1.8%]
+                      rounded-t-[3px]
+                    "
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #595d65 0%, #757a84 100%)",
+                      boxShadow: "inset 0 1px 1px rgba(0,0,0,0.5)",
+                    }}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Contact shadow on the floor */}
+            {/* Floor Contact Shadow */}
             <div
               ref={shadowRef}
-              className="mx-auto h-10 w-[92%] rounded-[50%] bg-slate-900/25 blur-[26px] will-change-transform"
-              style={{ opacity: 0.4, transform: "translateY(-14px) scaleX(0.8)" }}
+              className="
+                mx-auto
+                h-8
+                w-[86%]
+                rounded-[50%]
+                bg-slate-950/35
+                blur-[20px]
+                will-change-transform
+              "
+              style={{
+                opacity: 0.45,
+                transform: "translateY(-2px) scaleX(0.95)",
+              }}
             />
           </div>
         </div>
