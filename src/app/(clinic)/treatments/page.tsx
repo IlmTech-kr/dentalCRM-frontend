@@ -20,6 +20,7 @@ import {
 import DentalLoader from "@/src/components/ui/DentalLoader";
 
 import { useTodayInProgressAppointments } from "@/src/features/treatments/hooks/useTodayInProgressAppointments";
+import { useAuthStore } from "@/src/store/auth.store";
 import type { TreatmentAppointment } from "@/src/types/treatment-appointment.types";
 
 type ViewMode = "CARD" | "LIST";
@@ -125,16 +126,26 @@ export default function TreatmentsPage() {
     }
   }
 
+  const isDoctorUser = useAuthStore((s) => s.isDoctor());
+  const currentUserId = useAuthStore((s) => (s.user as any)?.id || (s.user as any)?._id || "");
+
   const { today, appointments, isLoading, isFetching, error, refetch } =
     useTodayInProgressAppointments();
+
+  // DOCTOR faqat o'z navbatidagi bemorlarni ko'radi — boshqa
+  // shifokorlarning appointmentlari bu ro'yxatda chiqmaydi.
+  const scopedAppointments = useMemo(() => {
+    if (!isDoctorUser) return appointments;
+    return appointments.filter((appointment) => appointment.doctorId === currentUserId);
+  }, [appointments, isDoctorUser, currentUserId]);
 
   // Service allaqachon vaqt bo'yicha to'g'ri sortlagan.
   const filteredAppointments = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    if (!q) return appointments;
+    if (!q) return scopedAppointments;
 
-    return appointments.filter((appointment) => {
+    return scopedAppointments.filter((appointment) => {
       const patientName = getPersonName(appointment.patient, "").toLowerCase();
       const reason = getReason(appointment, "").toLowerCase();
       const appointmentId = getId(appointment).toLowerCase();
@@ -147,7 +158,7 @@ export default function TreatmentsPage() {
         time.includes(q)
       );
     });
-  }, [appointments, search]);
+  }, [scopedAppointments, search]);
 
   function renderQueueActionButton(patientId: string, appointmentId: string) {
     const treatmentHref =
@@ -238,7 +249,7 @@ export default function TreatmentsPage() {
             </div>
 
             <p className="mt-3 text-xl font-black text-emerald-600 sm:text-2xl">
-              {appointments.length}
+              {scopedAppointments.length}
             </p>
           </div>
 
