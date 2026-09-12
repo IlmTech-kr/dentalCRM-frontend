@@ -6,7 +6,8 @@
     "profileSettings": "Настройки профиля",
     "changePassword": "Изменить пароль",
     "loggingOut": "Выход...",
-    "loggedInAs": "Вы вошли как"
+    "loggedInAs": "Вы вошли как",
+    "installApp": "Установить приложение"
   },
   "landingHeader": {
     "navFeatures": "Возможности",

@@ -6,7 +6,8 @@
     "profileSettings": "Profil sozlamalari",
     "changePassword": "Parolni o'zgartirish",
     "loggingOut": "Chiqilmoqda...",
-    "loggedInAs": "Kirgan foydalanuvchi"
+    "loggedInAs": "Kirgan foydalanuvchi",
+    "installApp": "Ilovani o'rnatish"
   },
   "landingHeader": {
     "navFeatures": "Imkoniyatlar",

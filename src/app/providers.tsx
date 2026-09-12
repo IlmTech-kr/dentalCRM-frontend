@@ -36,6 +36,12 @@ export default function Providers({
   }, [hydrateFromStorage, hydrateUiFromStorage]);
 
   useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     if (isHydrated) {
       document.documentElement.lang = locale;
     }

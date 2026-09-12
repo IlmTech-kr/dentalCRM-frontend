@@ -6,7 +6,8 @@
     "profileSettings": "Profile Settings",
     "changePassword": "Change Password",
     "loggingOut": "Logging out...",
-    "loggedInAs": "Logged in as"
+    "loggedInAs": "Logged in as",
+    "installApp": "Install App"
   },
   "landingHeader": {
     "navFeatures": "Features",

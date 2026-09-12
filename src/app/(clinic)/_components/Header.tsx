@@ -5,6 +5,7 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  MonitorDown,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ import { useAuthStore } from "@/src/store/auth.store";
 import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { useUiStore } from "@/src/store/ui.store";
+import { useInstallPrompt } from "@/src/lib/hooks/UseInstallPrompt";
 
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const t = useTranslations("layout");
@@ -28,6 +30,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const logoutMutation = useLogout();
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -131,6 +134,19 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         <div className="relative flex items-center gap-2 sm:gap-4">
+          {canInstall && (
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="hidden h-10 items-center gap-2 rounded-xl border border-primary-blue/20 bg-white/80 px-3 text-xs font-semibold text-primary-blue shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary-blue/40 hover:bg-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue sm:h-11 lg:flex"
+            >
+              <MonitorDown size={16} />
+              <span className="hidden md:inline">
+                {t("header.installApp")}
+              </span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setAiDrawerOpen(true)}
