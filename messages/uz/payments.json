@@ -160,5 +160,62 @@
       "loadFailed": "To'lovlarni yuklashda xatolik",
       "summaryLoadFailed": "Statistikani yuklashda xatolik"
     }
+  },
+
+  "lookup": {
+    "title": "Bemor tarixi",
+    "subtitle": "Telefon raqami orqali bemorni toping — tarixi va to'lovlarini shu yerda ko'ring",
+    "search": {
+      "placeholder": "+998 XX XXX XX XX",
+      "button": "Qidirish",
+      "searching": "Qidirilmoqda..."
+    },
+    "empty": {
+      "title": "Bemorni qidiring",
+      "subtitle": "Tarixi va to'lovlarini ko'rish uchun telefon raqamini to'liq kiriting"
+    },
+    "notFound": {
+      "title": "Bemor topilmadi",
+      "subtitle": "Bu raqam bilan ro'yxatdan o'tgan bemor topilmadi.",
+      "createLink": "Yangi bemor qo'shish"
+    },
+    "patientCard": {
+      "birthDate": "Tug'ilgan sana",
+      "age": "Yosh",
+      "gender": "Jinsi",
+      "openFullChart": "To'liq davolash kartasi"
+    },
+    "courses": {
+      "title": "Davolash kurslari",
+      "totalCourses": "Jami kurslar",
+      "totalVisits": "Jami tashriflar",
+      "untitled": "Nomsiz kurs",
+      "loading": "Kurslar yuklanmoqda...",
+      "empty": "Bu bemorda davolash kursi topilmadi",
+      "total": "Umumiy narx",
+      "remaining": "Qolgan qarz",
+      "selectPrompt": "To'lovlarni ko'rish uchun kursni tanlang",
+      "noVisitsYet": "Hali tashrif bo'lmagan",
+      "visitsSummary": "{count} ta tashrif · Oxirgi: {date}",
+      "ongoing": "hozirgacha",
+      "durationDays": "{count} kun",
+      "status": {
+        "ACTIVE": "Faol",
+        "COMPLETED": "Yakunlangan"
+      },
+      "paymentStatus": {
+        "PAID": "To'langan",
+        "PARTIAL": "Qisman to'langan",
+        "UNPAID": "To'lanmagan"
+      },
+      "detail": {
+        "tabs": {
+          "visits": "Tashriflar",
+          "payments": "To'lovlar"
+        },
+        "visitsEmpty": "Bu kursda hali tashrif qayd etilmagan",
+        "unknownDoctor": "Shifokor noma'lum"
+      }
+    }
   }
 }

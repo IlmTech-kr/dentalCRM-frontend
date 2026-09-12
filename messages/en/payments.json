@@ -160,5 +160,62 @@
       "loadFailed": "Failed to load payments",
       "summaryLoadFailed": "Failed to load summary"
     }
+  },
+
+  "lookup": {
+    "title": "Patient History",
+    "subtitle": "Find a patient by phone number — see their history and payments right here",
+    "search": {
+      "placeholder": "+998 XX XXX XX XX",
+      "button": "Search",
+      "searching": "Searching..."
+    },
+    "empty": {
+      "title": "Search for a patient",
+      "subtitle": "Enter a full phone number to see their history and payments"
+    },
+    "notFound": {
+      "title": "Patient not found",
+      "subtitle": "No patient is registered with this phone number.",
+      "createLink": "Add new patient"
+    },
+    "patientCard": {
+      "birthDate": "Birth date",
+      "age": "Age",
+      "gender": "Gender",
+      "openFullChart": "Open full clinical chart"
+    },
+    "courses": {
+      "title": "Treatment courses",
+      "totalCourses": "Total courses",
+      "totalVisits": "Total visits",
+      "untitled": "Untitled course",
+      "loading": "Loading courses...",
+      "empty": "This patient has no treatment courses",
+      "total": "Total price",
+      "remaining": "Remaining balance",
+      "selectPrompt": "Select a course to view its payments",
+      "noVisitsYet": "No visits yet",
+      "visitsSummary": "{count} visits · Last: {date}",
+      "ongoing": "ongoing",
+      "durationDays": "{count} days",
+      "status": {
+        "ACTIVE": "Active",
+        "COMPLETED": "Completed"
+      },
+      "paymentStatus": {
+        "PAID": "Paid",
+        "PARTIAL": "Partially paid",
+        "UNPAID": "Not paid"
+      },
+      "detail": {
+        "tabs": {
+          "visits": "Visits",
+          "payments": "Payments"
+        },
+        "visitsEmpty": "No visits recorded for this course yet",
+        "unknownDoctor": "Unknown doctor"
+      }
+    }
   }
 }

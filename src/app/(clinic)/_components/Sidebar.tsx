@@ -77,7 +77,15 @@ function buildNavItems(
   items.push({ href: "/calendar", label: t("sidebar.navCalendar"), icon: CalendarRange });
 
   if (!isDoctor) {
-    items.push({ href: "/patients", label: t("sidebar.navPatients"), icon: Users });
+    items.push({
+      href: "/patients",
+      label: t("sidebar.navPatients"),
+      icon: Users,
+      children: [
+        { href: "/patients", label: t("sidebar.navPatientsList"), icon: List },
+        { href: "/patients/history", label: t("sidebar.navPatientPayments"), icon: HandCoins, isNew: true },
+      ],
+    });
   }
 
   if (canSeeDoctorsSection) {

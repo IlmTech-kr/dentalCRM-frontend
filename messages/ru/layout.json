@@ -31,6 +31,8 @@
     "mainMenu": "Главное меню",
     "navDashboard": "Панель управления",
     "navPatients": "Пациенты",
+    "navPatientsList": "Список пациентов",
+    "navPatientPayments": "История пациента",
     "navCalendar": "Календарь",
     "navDoctors": "Врачи",
     "navDoctorsList": "Список врачей",

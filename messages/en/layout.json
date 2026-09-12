@@ -31,6 +31,8 @@
     "mainMenu": "Main menu",
     "navDashboard": "Dashboard",
     "navPatients": "Patients",
+    "navPatientsList": "Patients list",
+    "navPatientPayments": "Patient History",
     "navCalendar": "Calendar",
     "navDoctors": "Doctors",
     "navDoctorsList": "Doctors List",
