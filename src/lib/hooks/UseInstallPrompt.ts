@@ -18,6 +18,11 @@ function isStandalone() {
   );
 }
 
+function isIOS() {
+  if (typeof window === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !("MSStream" in window);
+}
+
 /**
  * Exposes the browser's native "Install app" prompt (Chrome/Edge desktop
  * and Android). Firefox and Safari never fire `beforeinstallprompt` — on
@@ -71,6 +76,9 @@ export function useInstallPrompt() {
 
   return {
     canInstall: Boolean(deferredEvent) && !installed,
+    // Safari (iOS and macOS) never fires `beforeinstallprompt`, so
+    // `canInstall` stays false there forever — surface a manual hint instead.
+    showIOSHint: !installed && isIOS() && !isStandalone(),
     promptInstall,
   };
 }

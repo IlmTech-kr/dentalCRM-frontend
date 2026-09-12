@@ -52,6 +52,12 @@ export const metadata: Metadata = {
 
   manifest: "/site.webmanifest",
 
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Dental CRM",
+  },
+
   openGraph: {
     type: "website",
     locale: "uz_UZ",

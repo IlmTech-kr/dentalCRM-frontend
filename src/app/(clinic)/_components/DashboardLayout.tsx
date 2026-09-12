@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import PlanExpiredOverlay from "./PlanExpiredOverlay";
+import IosInstallHint from "./IosInstallHint";
 import { useGetCurrentPlan } from "@/src/features/subscriptions/hooks/useSubscription";
 import { useUiStore } from "@/src/store/ui.store";
 import ThemeSettingsSync from "@/src/features/settings/ThemeSettingsSync";
@@ -55,6 +56,7 @@ export default function DashboardLayout({
 
       {isLocked && <PlanExpiredOverlay endDate={subscription?.endDate} />}
       {aiDrawerOpen && !isLocked ? <AiDrawer /> : null}
+      {!isLocked && <IosInstallHint />}
     </div>
   );
 }

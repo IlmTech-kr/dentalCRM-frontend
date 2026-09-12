@@ -7,7 +7,9 @@
     "changePassword": "Изменить пароль",
     "loggingOut": "Выход...",
     "loggedInAs": "Вы вошли как",
-    "installApp": "Установить приложение"
+    "installApp": "Установить приложение",
+    "iosInstallHint": "Установите приложение: нажмите «Поделиться», затем «На экран «Домой»».",
+    "iosInstallHintDismiss": "Закрыть"
   },
   "landingHeader": {
     "navFeatures": "Возможности",

@@ -7,7 +7,9 @@
     "changePassword": "Change Password",
     "loggingOut": "Logging out...",
     "loggedInAs": "Logged in as",
-    "installApp": "Install App"
+    "installApp": "Install App",
+    "iosInstallHint": "Install this app: tap Share, then \"Add to Home Screen\".",
+    "iosInstallHintDismiss": "Dismiss"
   },
   "landingHeader": {
     "navFeatures": "Features",

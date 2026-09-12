@@ -7,7 +7,9 @@
     "changePassword": "Parolni o'zgartirish",
     "loggingOut": "Chiqilmoqda...",
     "loggedInAs": "Kirgan foydalanuvchi",
-    "installApp": "Ilovani o'rnatish"
+    "installApp": "Ilovani o'rnatish",
+    "iosInstallHint": "Ilovani o'rnatish: \"Ulashish\" tugmasini bosing, so'ng \"Bosh sahifaga qo'shish\"ni tanlang.",
+    "iosInstallHintDismiss": "Yopish"
   },
   "landingHeader": {
     "navFeatures": "Imkoniyatlar",

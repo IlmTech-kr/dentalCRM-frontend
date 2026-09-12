@@ -138,7 +138,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             <button
               type="button"
               onClick={promptInstall}
-              className="hidden h-10 items-center gap-2 rounded-xl border border-primary-blue/20 bg-white/80 px-3 text-xs font-semibold text-primary-blue shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary-blue/40 hover:bg-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue sm:h-11 lg:flex"
+              className="flex h-10 items-center gap-2 rounded-xl border border-primary-blue/20 bg-white/80 px-3 text-xs font-semibold text-primary-blue shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary-blue/40 hover:bg-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue sm:h-11"
             >
               <MonitorDown size={16} />
               <span className="hidden md:inline">
