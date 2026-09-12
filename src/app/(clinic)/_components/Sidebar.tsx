@@ -20,6 +20,7 @@ import {
   BellRing,
   CreditCard,
   HandCoins,
+  MonitorDown,
   PanelLeftOpen,
   Palette,
   Receipt,
@@ -144,6 +145,7 @@ function buildNavItems(
     { href: "/settings/change-password", label: t("sidebar.navChangePassword"), icon: ShieldCheck },
     { href: "/settings/appearance", label: t("sidebar.navAppearance"), icon: Palette, isNew: true },
     { href: "/settings/socials", label: t("sidebar.navSocials"), icon: Share2, isNew: true },
+    { href: "/settings/install-app", label: t("sidebar.navInstallApp"), icon: MonitorDown, isNew: true },
   ];
 
   if (isStaffAdmin) {

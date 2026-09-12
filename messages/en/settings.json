@@ -234,5 +234,31 @@
       "imageUploadFailed": "Failed to upload photo",
       "imageStillUploading": "Please wait for the photo to finish uploading"
     }
+  },
+  "installApp": {
+    "header": {
+      "title": "Install App",
+      "subtitle": "Get the app on your phone or desktop for quick access, right from the home screen."
+    },
+    "installed": {
+      "title": "Already installed",
+      "description": "You're using the installed app right now — no browser tabs needed."
+    },
+    "android": {
+      "title": "Android / Desktop (Chrome, Edge)",
+      "description": "Tap the button below and confirm the install prompt.",
+      "button": "Install now"
+    },
+    "ios": {
+      "title": "iPhone / iPad (Safari)",
+      "description": "Safari doesn't support one-tap install — add it manually:",
+      "step1": "Tap the Share icon in Safari's toolbar",
+      "step2": "Scroll down and tap “Add to Home Screen”",
+      "step3": "Tap “Add” — the app icon appears on your home screen"
+    },
+    "unsupported": {
+      "title": "Manual install",
+      "description": "Your browser doesn't support one-tap install. Look for an “Install app” or “Add to Home Screen” option in its menu."
+    }
   }
 }

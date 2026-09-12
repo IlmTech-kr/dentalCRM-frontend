@@ -75,6 +75,7 @@ export function useInstallPrompt() {
   }
 
   return {
+    installed,
     canInstall: Boolean(deferredEvent) && !installed,
     // Safari (iOS and macOS) never fires `beforeinstallprompt`, so
     // `canInstall` stays false there forever — surface a manual hint instead.

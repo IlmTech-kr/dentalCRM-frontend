@@ -234,5 +234,31 @@
       "imageUploadFailed": "Rasmni yuklab bo'lmadi",
       "imageStillUploading": "Rasm yuklanib bo'lishini kuting"
     }
+  },
+  "installApp": {
+    "header": {
+      "title": "Ilovani o'rnatish",
+      "subtitle": "Ilovani telefon yoki kompyuterga o'rnating — bosh sahifadan tezkor kirish uchun."
+    },
+    "installed": {
+      "title": "Allaqachon o'rnatilgan",
+      "description": "Siz hozir o'rnatilgan ilovadan foydalanmoqdasiz — brauzer varaqlari kerak emas."
+    },
+    "android": {
+      "title": "Android / Kompyuter (Chrome, Edge)",
+      "description": "Quyidagi tugmani bosing va o'rnatishni tasdiqlang.",
+      "button": "Hozir o'rnatish"
+    },
+    "ios": {
+      "title": "iPhone / iPad (Safari)",
+      "description": "Safari bir bosishda o'rnatishni qo'llamaydi — qo'lda qo'shing:",
+      "step1": "Safari asboblar panelidagi \"Ulashish\" belgisini bosing",
+      "step2": "Pastga tushib, \"Bosh sahifaga qo'shish\"ni bosing",
+      "step3": "\"Qo'shish\"ni bosing — ilova belgisi bosh sahifada paydo bo'ladi"
+    },
+    "unsupported": {
+      "title": "Qo'lda o'rnatish",
+      "description": "Brauzeringiz bir bosishda o'rnatishni qo'llamaydi. Brauzer menyusidan \"Ilovani o'rnatish\" yoki \"Bosh sahifaga qo'shish\" bandini toping."
+    }
   }
 }
