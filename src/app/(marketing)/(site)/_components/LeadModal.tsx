@@ -11,6 +11,8 @@ import { useTranslations } from "next-intl";
 import { X, Phone, User, ArrowRight, CheckCircle2 } from "lucide-react";
 
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
+import { publicMainHttp } from "@/src/lib/api/http";
+import { ENDPOINTS } from "@/src/lib/api/endpoints";
 
 const SHOW_DELAY_MS = 1000;
 
@@ -76,10 +78,18 @@ export default function LeadModal({ open: controlledOpen, onClose }: LeadModalPr
 
     setFormState("loading");
 
-    // TODO: backend ga yuborish
-    await new Promise((res) => setTimeout(res, 1500));
-
-    setFormState("success");
+    try {
+      await publicMainHttp.post(ENDPOINTS.marketing.submitLead, {
+        name: name.trim(),
+        phone: phone.trim(),
+        sourcePath: window.location.pathname,
+        locale: document.documentElement.lang || "uz",
+      });
+      setFormState("success");
+    } catch {
+      setFormState("idle");
+      setError(t("leadModal.errorSubmit"));
+    }
   }
 
   if (!open) return null;

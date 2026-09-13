@@ -19,6 +19,12 @@
     "register": "Регистрация",
     "login": "Войти"
   },
+  "cookieConsent": {
+    "title": "Настройки cookie",
+    "description": "Мы используем анонимную статистику посещений, чтобы улучшать сайт.",
+    "accept": "Принять",
+    "reject": "Отклонить"
+  },
   "superadminHeader": {
     "tenantsTitle": "Клиники",
     "tenantsSubtitle": "Управление клиниками и подписками",
@@ -26,6 +32,8 @@
     "plansSubtitle": "Тарифные планы и активация",
     "statisticsTitle": "Статистика",
     "statisticsSubtitle": "Отчёт по доходам клиник",
+    "marketingLeadsTitle": "Маркетинговые лиды",
+    "marketingLeadsSubtitle": "Статистика посещений и обращений с сайта",
     "defaultTitle": "Панель управления",
     "superAdminFallback": "Супер администратор"
   },
@@ -98,6 +106,7 @@
     "errorInvalidPhone": "Введите корректный номер телефона",
     "submitButton": "Связаться с нами",
     "submitting": "Отправка...",
+    "errorSubmit": "Не удалось отправить данные. Попробуйте ещё раз.",
     "privacyNote": "Ваши данные используются только для связи. Никакого спама."
   }
 }

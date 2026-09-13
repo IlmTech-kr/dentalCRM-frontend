@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CreditCard, LineChart, ShieldCheck, X } from "lucide-react";
+import { Building2, CreditCard, LineChart, ShieldCheck, UserRound, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Tenantlar", icon: Building2 },
   { href: "/dashboard/plans", label: "Tariflar", icon: CreditCard },
   { href: "/dashboard/statistics", label: "Statistika", icon: LineChart },
+  { href: "/dashboard/leads", label: "Leadlar", icon: UserRound },
 ];
 
 export default function Sidebar({
