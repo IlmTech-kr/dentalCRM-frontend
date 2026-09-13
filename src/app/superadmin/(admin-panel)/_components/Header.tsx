@@ -19,6 +19,10 @@ const TITLE_KEYS: Record<string, { titleKey: string; subtitleKey: string }> = {
     titleKey: "superadminHeader.statisticsTitle",
     subtitleKey: "superadminHeader.statisticsSubtitle",
   },
+  "/dashboard/leads": {
+    titleKey: "superadminHeader.marketingLeadsTitle",
+    subtitleKey: "superadminHeader.marketingLeadsSubtitle",
+  },
 };
 
 interface StoredSuperAdminUser {

@@ -19,6 +19,12 @@
     "register": "Sign up",
     "login": "Login"
   },
+  "cookieConsent": {
+    "title": "Cookie settings",
+    "description": "We use anonymous visit analytics to improve the website.",
+    "accept": "Accept",
+    "reject": "Reject"
+  },
   "superadminHeader": {
     "tenantsTitle": "Tenants",
     "tenantsSubtitle": "Manage clinics and subscriptions",
@@ -26,6 +32,8 @@
     "plansSubtitle": "Pricing plans and activation",
     "statisticsTitle": "Statistics",
     "statisticsSubtitle": "Revenue report by clinic",
+    "marketingLeadsTitle": "Marketing leads",
+    "marketingLeadsSubtitle": "Website visits and enquiries analytics",
     "defaultTitle": "Dashboard",
     "superAdminFallback": "Super Admin"
   },
@@ -98,6 +106,7 @@
     "errorInvalidPhone": "Please enter a valid phone number",
     "submitButton": "Contact us",
     "submitting": "Submitting...",
+    "errorSubmit": "We could not send your details. Please try again.",
     "privacyNote": "Your information is used only to contact you. No spam."
   }
 }

@@ -19,6 +19,12 @@
     "register": "Ro'yxatdan o'tish",
     "login": "Kirish"
   },
+  "cookieConsent": {
+    "title": "Cookie sozlamalari",
+    "description": "Sayt faoliyatini yaxshilash uchun anonim tashrif statistikasidan foydalanamiz.",
+    "accept": "Qabul qilish",
+    "reject": "Rad etish"
+  },
   "superadminHeader": {
     "tenantsTitle": "Tenantlar",
     "tenantsSubtitle": "Klinikalar va obunalarni boshqarish",
@@ -26,6 +32,8 @@
     "plansSubtitle": "Tarif rejalari va faollashtirish",
     "statisticsTitle": "Statistika",
     "statisticsSubtitle": "Klinikalar bo'yicha daromad hisoboti",
+    "marketingLeadsTitle": "Marketing leadlar",
+    "marketingLeadsSubtitle": "Sayt tashriflari va murojaatlari statistikasi",
     "defaultTitle": "Dashboard",
     "superAdminFallback": "Super Admin"
   },
@@ -98,6 +106,7 @@
     "errorInvalidPhone": "To'g'ri telefon raqam kiriting",
     "submitButton": "Biz bilan bog'laning",
     "submitting": "Yuborilmoqda...",
+    "errorSubmit": "Ma'lumot yuborilmadi. Iltimos, qayta urinib ko'ring.",
     "privacyNote": "Ma'lumotlaringiz faqat bog'lanish uchun ishlatiladi. Spam yo'q."
   }
 }

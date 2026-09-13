@@ -1,4 +1,12 @@
 export const ENDPOINTS = {
+  marketing: {
+    submitLead: "/api/public/marketing/leads",
+    recordVisit: "/api/public/marketing/visits",
+    leads: "/api/v1/super-admin/marketing/leads",
+    leadStatus: (id: string) => `/api/v1/super-admin/marketing/leads/${id}/status`,
+    statistics: "/api/v1/super-admin/marketing/statistics",
+  },
+
   auth: {
     register: "/api/auth/register",
     login: "/api/auth/login",
