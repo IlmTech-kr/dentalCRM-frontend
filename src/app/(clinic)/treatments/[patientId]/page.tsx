@@ -43,6 +43,7 @@ import { MoneyInput } from "@/src/components/ui/MoneyInput";
 
 import DentalLoader from "@/src/components/ui/DentalLoader";
 import { Dental3DChart } from "@/src/features/treatments/components/Dental3DChart";
+import { MobileToothSelect } from "@/src/features/treatments/components/MobileToothSelect";
 import {
   CoursePaymentsPanel,
   AddPaymentModal,
@@ -2369,8 +2370,30 @@ export default function TreatmentPatientPage() {
                   ))}
                 </div>
 
-                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div className="hidden overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm sm:block">
                   <Dental3DChart
+                    selectedTooth={selectedTooth}
+                    toothMap={toothMap}
+                    onSelectTooth={(toothNumber) => {
+                      setSelectedTooth(toothNumber);
+                      setLocalToothMap((previous) => {
+                        const base =
+                          Object.keys(previous).length > 0
+                            ? previous
+                            : chart?.toothMap || {};
+
+                        return {
+                          ...base,
+                          [toothNumber]:
+                            base[toothNumber] || emptyTooth(),
+                        };
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="sm:hidden">
+                  <MobileToothSelect
                     selectedTooth={selectedTooth}
                     toothMap={toothMap}
                     onSelectTooth={(toothNumber) => {

@@ -216,6 +216,12 @@
     "missingTag": "Missing",
     "oralCavity": "Oral cavity"
   },
+  "toothSelect": {
+    "title": "Select tooth",
+    "subtitle": "Tap a tooth number, then set the diagnosis and condition below.",
+    "upperJaw": "Upper jaw",
+    "lowerJaw": "Lower jaw"
+  },
   "overviewCards": {
     "teeth": "Teeth",
     "stages": "Stages",

@@ -216,6 +216,12 @@
     "missingTag": "Yo'q",
     "oralCavity": "Og'iz bo'shlig'i"
   },
+  "toothSelect": {
+    "title": "Tishni tanlang",
+    "subtitle": "Tish raqamini bosing, so'ng pastda diagnoz va holatni belgilang.",
+    "upperJaw": "Yuqori jag'",
+    "lowerJaw": "Pastki jag'"
+  },
   "overviewCards": {
     "teeth": "Tishlar",
     "stages": "Bosqichlar",

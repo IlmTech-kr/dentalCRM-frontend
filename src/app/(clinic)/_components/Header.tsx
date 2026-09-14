@@ -20,6 +20,7 @@ import { LanguageSwitcher } from "@/src/components/shared/LanguageSwitcher";
 import { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 import { useUiStore } from "@/src/store/ui.store";
 import { useInstallPrompt } from "@/src/lib/hooks/UseInstallPrompt";
+import { LogoMark } from "@/src/components/shared/BrandLogo";
 
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const t = useTranslations("layout");
@@ -122,8 +123,12 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             <Menu size={20} />
           </button>
 
+          <div className="shrink-0 lg:hidden">
+            <LogoMark small />
+          </div>
+
           <div className="min-w-0">
-            <h2 className="truncate bg-gradient-to-r from-dark-navy to-primary-blue bg-clip-text text-lg font-extrabold tracking-tight text-transparent sm:text-2xl">
+            <h2 className="hidden truncate bg-gradient-to-r from-dark-navy to-primary-blue bg-clip-text text-lg font-extrabold tracking-tight text-transparent sm:block sm:text-2xl">
               {t("header.dashboardTitle")}
             </h2>
 

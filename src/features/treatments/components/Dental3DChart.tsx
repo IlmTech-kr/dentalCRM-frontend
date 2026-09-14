@@ -12,7 +12,7 @@ interface Dental3DChartProps {
   onSelectTooth: (toothNumber: string) => void;
 }
 
-const UPPER_TEETH = [
+export const UPPER_TEETH = [
   "18",
   "17",
   "16",
@@ -31,7 +31,7 @@ const UPPER_TEETH = [
   "28",
 ];
 
-const LOWER_TEETH = [
+export const LOWER_TEETH = [
   "48",
   "47",
   "46",
@@ -50,9 +50,9 @@ const LOWER_TEETH = [
   "38",
 ];
 
-type ToothStatus = "clean" | "missing" | "diagnosis" | "treated";
+export type ToothStatus = "clean" | "missing" | "diagnosis" | "treated";
 
-function getToothStatus(item?: ToothItem): ToothStatus {
+export function getToothStatus(item?: ToothItem): ToothStatus {
   if (!item) return "clean";
 
   if (item.states?.includes(ToothCondition.MISSING)) return "missing";
@@ -64,7 +64,7 @@ function getToothStatus(item?: ToothItem): ToothStatus {
   return "clean";
 }
 
-function getToothColor(item?: ToothItem) {
+export function getToothColor(item?: ToothItem) {
   const status = getToothStatus(item);
 
   if (status === "missing") {

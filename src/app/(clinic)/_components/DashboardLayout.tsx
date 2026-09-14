@@ -5,7 +5,7 @@
  * ClinicLayout allaqachon auth tekshirgan — bu yerda faqat UI.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
@@ -31,6 +31,11 @@ export default function DashboardLayout({
   const { data: subscription } = useGetCurrentPlan();
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const aiDrawerOpen = useUiStore((s) => s.aiDrawerOpen);
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   // To'lov sahifasida bloklamaymiz — aks holda foydalanuvchi to'lay olmaydi.
   const isBillingPage = pathname?.startsWith("/settings/plans") ?? false;
@@ -50,7 +55,12 @@ export default function DashboardLayout({
         >
           <Header onMenuClick={() => setSidebarOpen(true)} />
 
-          <main className="flex-1 overflow-y-auto p-4 pt-16 sm:p-6 sm:pt-20 lg:p-8">{children}</main>
+          <main
+            ref={mainRef}
+            className="flex-1 overflow-y-auto p-4 pt-[85px] sm:p-6 sm:pt-[101px] lg:p-8"
+          >
+            {children}
+          </main>
         </div>
       </div>
 
