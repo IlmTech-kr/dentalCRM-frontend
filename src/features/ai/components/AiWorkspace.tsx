@@ -4,12 +4,14 @@ import {
   ArrowUp,
   Bot,
   Clock3,
+  ExternalLink,
   History,
   MessageSquarePlus,
   PanelLeftClose,
   PanelLeftOpen,
   Square,
   Stethoscope,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,7 +63,13 @@ function temporaryMessage(id: string, role: "USER" | "ASSISTANT", content: strin
   };
 }
 
-export function AiWorkspace({ compact = false }: { compact?: boolean }) {
+export function AiWorkspace({
+  compact = false,
+  onClose,
+}: {
+  compact?: boolean;
+  onClose?: () => void;
+}) {
   const router = useRouter();
   const openAction = useAiActionStore((state) => state.openAction);
   const locale = useLocaleStore((state) => state.locale);
@@ -107,6 +115,15 @@ export function AiWorkspace({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: streaming ? "auto" : "smooth", block: "end" });
   }, [messages, streaming]);
+
+  useEffect(() => {
+    if (!compact || !historyOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setHistoryOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [compact, historyOpen]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -271,40 +288,82 @@ export function AiWorkspace({ compact = false }: { compact?: boolean }) {
     }
   }
 
+  const historyPanelContent = (
+    <>
+      <div className="flex items-center justify-between px-2 pb-3 pt-1">
+        <span className="flex items-center gap-2 text-xs font-semibold text-slate-600"><History size={15} /> Chat tarixi</span>
+        <button type="button" onClick={() => setHistoryOpen(false)} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600" aria-label="Tarix panelini yopish"><PanelLeftClose size={16} /></button>
+      </div>
+      <button type="button" onClick={newConversation} disabled={streaming} className="mb-3 flex h-10 items-center justify-center gap-2 rounded-xl bg-white text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:opacity-50">
+        <MessageSquarePlus size={15} /> Yangi suhbat
+      </button>
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="AI chat sessions">
+        {sessions.map((session) => (
+          <button key={session.id} type="button" onClick={() => void selectSession(session.id)} disabled={streaming} className={`w-full rounded-xl px-3 py-2.5 text-left transition ${activeSessionId === session.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}>
+            <span className="block truncate text-xs font-medium">{session.title}</span>
+            <span className={`mt-1 flex items-center gap-1 text-[10px] ${activeSessionId === session.id ? "text-slate-400" : "text-slate-400"}`}><Clock3 size={10} /> {formatSessionDate(session.lastMessageAt, locale)}</span>
+          </button>
+        ))}
+      </nav>
+      {compact ? <Link href="/ai" onClick={() => setHistoryOpen(false)} className="mt-3 rounded-xl px-3 py-2 text-center text-xs font-semibold text-cyan-800 transition hover:bg-white">To‘liq chat sahifasi</Link> : null}
+    </>
+  );
+
   return (
     <section className={`relative flex min-h-0 overflow-hidden bg-[#f7f9fa] font-sans ${compact ? "h-full" : "h-[calc(100dvh-8rem)] min-h-[38rem] rounded-[28px] border border-slate-200/80 shadow-[0_30px_90px_-55px_rgba(15,23,42,.45)]"}`}>
-      {historyOpen ? (
-        <aside className={`${compact ? "absolute inset-y-0 left-0 z-20 w-[82%] max-w-[19rem] shadow-2xl" : "w-64 shrink-0"} flex flex-col border-r border-slate-200 bg-[#eef2f3] p-3`}>
-          <div className="flex items-center justify-between px-2 pb-3 pt-1">
-            <span className="flex items-center gap-2 text-xs font-semibold text-slate-600"><History size={15} /> Chat tarixi</span>
-            <button type="button" onClick={() => setHistoryOpen(false)} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600" aria-label="Tarix panelini yopish"><PanelLeftClose size={16} /></button>
-          </div>
-          <button type="button" onClick={newConversation} disabled={streaming} className="mb-3 flex h-10 items-center justify-center gap-2 rounded-xl bg-white text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:opacity-50">
-            <MessageSquarePlus size={15} /> Yangi suhbat
-          </button>
-          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="AI chat sessions">
-            {sessions.map((session) => (
-              <button key={session.id} type="button" onClick={() => void selectSession(session.id)} disabled={streaming} className={`w-full rounded-xl px-3 py-2.5 text-left transition ${activeSessionId === session.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}>
-                <span className="block truncate text-xs font-medium">{session.title}</span>
-                <span className={`mt-1 flex items-center gap-1 text-[10px] ${activeSessionId === session.id ? "text-slate-400" : "text-slate-400"}`}><Clock3 size={10} /> {formatSessionDate(session.lastMessageAt, locale)}</span>
-              </button>
-            ))}
-          </nav>
-          {compact ? <Link href="/ai" className="mt-3 rounded-xl px-3 py-2 text-center text-xs font-semibold text-cyan-800 transition hover:bg-white">To‘liq chat sahifasi</Link> : null}
+      {compact ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(false)}
+            aria-label="Tarix panelini yopish"
+            tabIndex={historyOpen ? 0 : -1}
+            className={`absolute inset-0 z-10 bg-black/15 backdrop-blur-[2px] transition-opacity duration-200 ease-out ${
+              historyOpen ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+          />
+
+          <aside
+            aria-hidden={!historyOpen}
+            className={`absolute inset-y-0 left-0 z-20 flex w-[85%] flex-col rounded-r-3xl border-r border-slate-200 bg-[#eef2f3] p-3 shadow-2xl transition-transform duration-200 ease-out sm:w-[320px] ${
+              historyOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"
+            }`}
+          >
+            {historyPanelContent}
+          </aside>
+        </>
+      ) : historyOpen ? (
+        <aside className="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-[#eef2f3] p-3">
+          {historyPanelContent}
         </aside>
       ) : null}
 
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[68px] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-xl sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            {!historyOpen ? <button type="button" onClick={() => setHistoryOpen(true)} className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600" aria-label="Chat tarixini ochish"><PanelLeftOpen size={17} /></button> : null}
+        <header className="flex h-[68px] shrink-0 items-center justify-between gap-2 border-b border-slate-200/80 bg-white/80 px-3 backdrop-blur-xl sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            {!historyOpen ? <button type="button" onClick={() => setHistoryOpen(true)} className="shrink-0 rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600" aria-label="Chat tarixini ochish"><PanelLeftOpen size={17} /></button> : null}
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-700 text-white"><Bot size={18} /></div>
             <div className="min-w-0">
               <h1 className="truncate text-sm font-semibold tracking-tight text-slate-950">Dental Copilot</h1>
-              <p className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Clinic ma’lumotlari bilan ishlaydi</p>
+              <p className="flex items-center gap-1.5 truncate text-[11px] text-slate-500"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" /> <span className="truncate">Clinic ma’lumotlari bilan ishlaydi</span></p>
             </div>
           </div>
-          {!compact ? <span className="hidden items-center gap-2 text-[11px] text-slate-400 sm:flex"><Stethoscope size={13} /> Klinik qarorlarni shifokor tasdiqlaydi</span> : null}
+
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            {!compact ? <span className="hidden items-center gap-2 text-[11px] text-slate-400 sm:flex"><Stethoscope size={13} /> Klinik qarorlarni shifokor tasdiqlaydi</span> : null}
+
+            {compact ? (
+              <>
+                <Link href="/ai" onClick={onClose} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 sm:px-3">
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">To‘liq sahifa</span>
+                </Link>
+                <button type="button" onClick={onClose} aria-label="Yopish" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600">
+                  <X size={17} />
+                </button>
+              </>
+            ) : null}
+          </div>
         </header>
 
         <div className="relative min-h-0 flex-1 overflow-y-auto">
