@@ -38,8 +38,42 @@ const STATUS_DOT: Record<string, string> = {
   treated: "bg-emerald-500",
 };
 
-const TOOTH_PATH =
-  "M12 2c-1.1 0-2 .5-2.5 1.3C9 2.5 8.1 2 7 2 4.8 2 3 4 3 6.8c0 2 .7 3.9 1.3 5.6.5 1.5 1 2.9 1.2 4.3.2 1.6.7 3.3 2.5 3.3s2.3-1.7 2.5-3.3c.1-.7.2-1.4.5-2.1.3.7.4 1.4.5 2.1.2 1.6.7 3.3 2.5 3.3s2.3-1.7 2.5-3.3c.2-1.4.7-2.8 1.2-4.3C20.3 10.7 21 8.8 21 6.8 21 4 19.2 2 17 2c-1.1 0-2 .5-2.5 1.3C14 2.5 13.1 2 12 2z";
+type ToothType = "incisor" | "canine" | "premolar" | "molar" | "wisdom";
+
+function getToothType(tooth: string): ToothType {
+  const position = Number(tooth) % 10;
+  if (position <= 2) return "incisor";
+  if (position === 3) return "canine";
+  if (position <= 5) return "premolar";
+  if (position === 8) return "wisdom";
+  return "molar";
+}
+
+const TOOTH_SHAPES: Record<ToothType, string[]> = {
+  // Rounded top, gently tapering down to the neck
+  incisor: [
+    "M6.5 6C6.5 3.8 8.8 2.6 12 2.6C15.2 2.6 17.5 3.8 17.5 6C17.5 11.5 16.4 21 12 21C7.6 21 6.5 11.5 6.5 6Z",
+  ],
+  // Single pointed cusp at the top
+  canine: [
+    "M12 2.2L15.9 6.8C17.1 8.3 17.5 10.3 17.3 12.8C17 16.8 15.1 21 12 21C8.9 21 7 16.8 6.7 12.8C6.5 10.3 6.9 8.3 8.1 6.8Z",
+  ],
+  // Two cusps with a small valley between them
+  premolar: [
+    "M6.5 7C6.5 4.5 8 3 9.5 3C10.5 3 11.2 4.4 12 4.4C12.8 4.4 13.5 3 14.5 3C16 3 17.5 4.5 17.5 7C17.5 12.5 16.2 21 12 21C7.8 21 6.5 12.5 6.5 7Z",
+  ],
+  // Wide crown, two big cusps and a central groove
+  molar: [
+    "M4.5 8C4.5 5.2 6 3.2 8 3.2C9 2.4 10.2 3.7 12 3.7C13.8 3.7 15 2.4 16 3.2C18 3.2 19.5 5.2 19.5 8C19.5 13.5 17.7 20.6 12 20.6C6.3 20.6 4.5 13.5 4.5 8Z",
+  ],
+  // Like a molar, slightly smaller and rounder
+  wisdom: [
+    "M5 8.5C5 5.8 6.4 4 8.2 4C9.1 3.3 10.3 3.4 12 3.4C13.7 3.4 14.9 3.3 15.8 4C17.6 4 19 5.8 19 8.5C19 13 17.4 20 12 20C6.6 20 5 13 5 8.5Z",
+  ],
+};
+
+// Small highlight arc on the upper-left of the crown
+const TOOTH_SHINE = "M7.8 6.2C8.4 4.6 9.8 3.6 11.2 3.4";
 
 function ToothChip({
   tooth,
@@ -53,13 +87,14 @@ function ToothChip({
   onClick: () => void;
 }) {
   const status = getToothStatus(item);
+  const shapes = TOOTH_SHAPES[getToothType(tooth)];
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`
-        relative flex h-12 w-11 shrink-0 items-center justify-center
+        relative flex h-16 w-[58px] shrink-0 items-center justify-center
         transition-all
         ${selected ? "z-10 scale-110" : "active:scale-95"}
       `}
@@ -68,17 +103,28 @@ function ToothChip({
         viewBox="0 0 24 24"
         className="absolute inset-0 h-full w-full drop-shadow-sm"
       >
+        {shapes.map((shape, index) => (
+          <path
+            key={index}
+            d={shape}
+            fill={selected ? "var(--primary-blue)" : STATUS_FILL[status]}
+            stroke={selected ? "var(--primary-blue)" : STATUS_STROKE[status]}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        ))}
         <path
-          d={TOOTH_PATH}
-          fill={selected ? "var(--primary-blue)" : STATUS_FILL[status]}
-          stroke={selected ? "var(--primary-blue)" : STATUS_STROKE[status]}
-          strokeWidth="1.2"
-          strokeLinejoin="round"
+          d={TOOTH_SHINE}
+          fill="none"
+          stroke={selected ? "rgba(255,255,255,0.85)" : "#ffffff"}
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          opacity={0.75}
         />
       </svg>
 
       <span
-        className="relative text-[11px] font-black leading-none"
+        className="relative text-sm font-black leading-none"
         style={{ color: selected ? "#ffffff" : STATUS_TEXT[status] }}
       >
         {tooth}
@@ -86,7 +132,7 @@ function ToothChip({
 
       {status !== "clean" && !selected ? (
         <span
-          className={`absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ring-2 ring-white ${STATUS_DOT[status]}`}
+          className={`absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white ${STATUS_DOT[status]}`}
         />
       ) : null}
     </button>
