@@ -108,5 +108,9 @@
     "submitting": "Yuborilmoqda...",
     "errorSubmit": "Ma'lumot yuborilmadi. Iltimos, qayta urinib ko'ring.",
     "privacyNote": "Ma'lumotlaringiz faqat bog'lanish uchun ishlatiladi. Spam yo'q."
+  },
+  "superadminSidebar": {
+    "tagline": "DentalCRM boshqaruvi",
+    "menu": "Menu"
   }
 }
