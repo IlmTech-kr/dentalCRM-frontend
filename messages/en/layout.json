@@ -108,5 +108,9 @@
     "submitting": "Submitting...",
     "errorSubmit": "We could not send your details. Please try again.",
     "privacyNote": "Your information is used only to contact you. No spam."
+  },
+  "superadminSidebar": {
+    "tagline": "DentalCRM management",
+    "menu": "Menu"
   }
 }

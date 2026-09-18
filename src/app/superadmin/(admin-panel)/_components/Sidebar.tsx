@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Building2, CreditCard, LineChart, ShieldCheck, UserRound, X } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Tenantlar", icon: Building2 },
-  { href: "/dashboard/plans", label: "Tariflar", icon: CreditCard },
-  { href: "/dashboard/statistics", label: "Statistika", icon: LineChart },
-  { href: "/dashboard/leads", label: "Leadlar", icon: UserRound },
+  { href: "/dashboard", labelKey: "superadminHeader.tenantsTitle", icon: Building2 },
+  { href: "/dashboard/plans", labelKey: "superadminHeader.plansTitle", icon: CreditCard },
+  { href: "/dashboard/statistics", labelKey: "superadminHeader.statisticsTitle", icon: LineChart },
+  { href: "/dashboard/leads", labelKey: "superadminHeader.marketingLeadsTitle", icon: UserRound },
 ];
 
 export default function Sidebar({
@@ -18,6 +19,7 @@ export default function Sidebar({
   open?: boolean;
   onClose?: () => void;
 }) {
+  const t = useTranslations("layout");
   const pathname = usePathname();
 
   return (
@@ -51,7 +53,9 @@ export default function Sidebar({
                   Admin
                 </span>
               </h1>
-              <p className="truncate text-[10px] font-medium text-white/50">DentalCRM boshqaruvi</p>
+              <p className="truncate text-[10px] font-medium text-white/50">
+                {t("superadminSidebar.tagline")}
+              </p>
             </div>
           </Link>
 
@@ -65,7 +69,7 @@ export default function Sidebar({
         </div>
 
         <p className="relative z-10 mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-          Menu
+          {t("superadminSidebar.menu")}
         </p>
 
         <nav className="relative z-10 space-y-1">
@@ -84,7 +88,7 @@ export default function Sidebar({
                 }`}
               >
                 <Icon size={20} />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}

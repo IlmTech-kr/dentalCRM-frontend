@@ -54,6 +54,22 @@ export function buildTenantFrontendHost(subDomain: string): string {
   return `${normalizedSubdomain}-${rootDomain}`;
 }
 
+/**
+ * Display-only variant — never throws. Use this wherever an existing
+ * subDomain value (e.g. from stored clinic data) is only being shown to
+ * the user, not used to build a navigation URL. A single malformed
+ * record (legacy data, manual DB edit, etc.) should degrade that one
+ * display, not crash the whole page — see buildTenantFrontendHost for
+ * the strict version used when actually constructing a redirect/API URL.
+ */
+export function tryBuildTenantFrontendHost(subDomain: string): string | null {
+  try {
+    return buildTenantFrontendHost(subDomain);
+  } catch {
+    return null;
+  }
+}
+
 export function resolveHostContext(host: string | null): HostContext {
   const hostname = (host ?? "").split(":")[0].trim().toLowerCase();
   const rootDomain = getRootDomain();
