@@ -1,5 +1,16 @@
 {
   "hero": {
+    "film": {
+      "skip": "Filmni o'tkazib yuborish",
+      "captions": [
+        "Shifokorning ishi bemor bilan.",
+        "Ammo har bir qabul ortida qog'oz karta turadi.",
+        "Jadval, hisob-kitob va qarzdorlik qo'lda yuritiladi.",
+        "IlmTech qog'ozni raqamli tizimga ko'chiradi.",
+        "Qabul, karta, to'lov va hisobot bir joyda."
+      ],
+      "endTitle": "Klinikangiz endi tartibda."
+    },
     "badge": "Stomatologiya klinikalari uchun CRM",
     "title": "Dental klinikangizni bitta zamonaviy tizimda boshqaring",
     "description": "{brand} bemorlar bazasi, qabul jadvali, shifokorlar, dental chart, davolash kurslari, to'lovlar va SMS eslatmalarni bitta platformaga birlashtiradi.",

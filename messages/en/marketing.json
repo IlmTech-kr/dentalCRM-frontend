@@ -1,5 +1,16 @@
 {
   "hero": {
+    "film": {
+      "skip": "Skip the film",
+      "captions": [
+        "A dentist's work is the patient.",
+        "But behind every visit sits a paper file.",
+        "Schedules, billing and debts are kept by hand.",
+        "IlmTech moves the paper into one digital system.",
+        "Appointments, charts, payments and reports in one place."
+      ],
+      "endTitle": "Your clinic, in order."
+    },
     "badge": "CRM for dental clinics",
     "title": "Run your dental clinic in one modern system",
     "description": "{brand} brings your patient database, appointment schedule, doctors, dental chart, treatment courses, payments, and SMS reminders together in one platform.",
