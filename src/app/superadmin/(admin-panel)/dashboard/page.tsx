@@ -9,11 +9,12 @@ import type { ReactNode } from "react";
 
 import {
   Ban,
+  CheckCircle2,
   Info,
   X,
 } from "lucide-react";
 
-import DentalLoader from "@/src/components/ui/DentalLoader";
+import DentalLoader, { DentalLoaderIcon } from "@/src/components/ui/DentalLoader";
 
 import { useToast } from "@/src/lib/hooks/Usetoast";
 import { useConfirm } from "@/src/lib/hooks/Useconfirm";
@@ -21,6 +22,8 @@ import { getApiErrorMessage } from "@/src/lib/api/http";
 import { tryBuildTenantFrontendHost } from "@/src/lib/tenant";
 
 import {
+  useActivateSubscription,
+  usePlans,
   useSuspendTenant,
   useTenantLimits,
   useTenants,
@@ -408,6 +411,14 @@ export default function DashboardPage() {
     null
   );
 
+  const [
+    activateTenant,
+    setActivateTenant,
+  ] = useState<{
+    tenantId: string;
+    clinicName: string;
+  } | null>(null);
+
   /*
    * Subscription tenantlari.
    */
@@ -608,6 +619,21 @@ export default function DashboardPage() {
           className="rounded-lg border border-border-color px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
         >
           Limitlar
+        </button>
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setActivateTenant({
+              tenantId,
+              clinicName,
+            });
+          }}
+          className="flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-600 transition hover:bg-emerald-50"
+        >
+          <CheckCircle2 size={14} />
+          Faollashtirish
         </button>
 
         <button
@@ -960,6 +986,24 @@ export default function DashboardPage() {
           }
           onClose={() =>
             setLimitsTenantId(
+              null
+            )
+          }
+        />
+      )}
+
+      {/* Activate subscription modal */}
+
+      {activateTenant && (
+        <ActivateSubscriptionModal
+          tenantId={
+            activateTenant.tenantId
+          }
+          clinicName={
+            activateTenant.clinicName
+          }
+          onClose={() =>
+            setActivateTenant(
               null
             )
           }
@@ -1352,6 +1396,257 @@ function TenantLimitsEditModal({
           {updateMutation.isPending
             ? "Saqlanmoqda..."
             : "Saqlash"}
+        </button>
+      </div>
+    </ModalContainer>
+  );
+}
+
+/* =====================================================
+ * ACTIVATE SUBSCRIPTION MODAL
+ * ===================================================== */
+
+function ActivateSubscriptionModal({
+  tenantId,
+  clinicName,
+  onClose,
+}: {
+  tenantId: string;
+  clinicName: string;
+  onClose: () => void;
+}) {
+  const toast = useToast();
+
+  const {
+    data: plans = [],
+    isLoading: isPlansLoading,
+  } = usePlans();
+
+  const activateMutation =
+    useActivateSubscription();
+
+  const [planType, setPlanType] =
+    useState("");
+
+  const [
+    durationMonths,
+    setDurationMonths,
+  ] = useState("");
+
+  const [
+    paymentTransactionId,
+    setPaymentTransactionId,
+  ] = useState("");
+
+  useModalBehaviour(onClose);
+
+  const activePlans = plans.filter(
+    (plan) => plan.active
+  );
+
+  function handlePlanChange(
+    value: string
+  ) {
+    setPlanType(value);
+
+    const plan = activePlans.find(
+      (item) =>
+        item.planType === value
+    );
+
+    if (plan?.durationMonths) {
+      setDurationMonths(
+        String(plan.durationMonths)
+      );
+    }
+  }
+
+  async function handleActivate() {
+    if (!planType) {
+      toast.error(
+        "Tarifni tanlang"
+      );
+
+      return;
+    }
+
+    const durationValue = Number(
+      durationMonths
+    );
+
+    if (
+      !durationMonths ||
+      !Number.isFinite(
+        durationValue
+      ) ||
+      durationValue <= 0
+    ) {
+      toast.error(
+        "Muddatni to‘g‘ri kiriting (oy)"
+      );
+
+      return;
+    }
+
+    if (!paymentTransactionId.trim()) {
+      toast.error(
+        "To‘lov tranzaksiya ID sini kiriting"
+      );
+
+      return;
+    }
+
+    try {
+      await activateMutation.mutateAsync({
+        tenantId,
+        planType,
+        paymentTransactionId:
+          paymentTransactionId.trim(),
+        durationMonths: durationValue,
+      });
+
+      toast.success(
+        "Obuna faollashtirildi"
+      );
+
+      onClose();
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Obunani faollashtirib bo‘lmadi")
+      );
+    }
+  }
+
+  return (
+    <ModalContainer
+      onClose={onClose}
+      maxWidth="max-w-lg"
+    >
+      {/* Header */}
+
+      <div className="flex items-center justify-between border-b border-border-color px-4 py-4 sm:px-6 sm:py-5">
+        <div>
+          <h2 className="text-lg font-bold text-dark-navy">
+            Obunani faollashtirish
+          </h2>
+
+          <p className="mt-1 text-xs text-slate-400">
+            {clinicName}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Form */}
+
+      <div className="space-y-4 p-4 sm:p-6">
+        <div>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+            Tarif
+          </label>
+
+          <select
+            value={planType}
+            disabled={isPlansLoading}
+            onChange={(event) =>
+              handlePlanChange(
+                event.target.value
+              )
+            }
+            className="h-11 w-full rounded-xl border border-border-color bg-slate-50 px-3 text-sm text-dark-navy outline-none transition focus:border-primary-blue focus:bg-white"
+          >
+            <option value="">
+              Tanlang...
+            </option>
+
+            {activePlans.map(
+              (plan) => (
+                <option
+                  key={plan.planType}
+                  value={plan.planType}
+                >
+                  {plan.planType}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+            Muddat (oy)
+          </label>
+
+          <input
+            type="number"
+            min={1}
+            value={durationMonths}
+            onChange={(event) =>
+              setDurationMonths(
+                event.target.value
+              )
+            }
+            placeholder="3"
+            className="h-11 w-full rounded-xl border border-border-color bg-slate-50 px-3 text-sm text-dark-navy outline-none transition focus:border-primary-blue focus:bg-white"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+            To‘lov tranzaksiya ID
+          </label>
+
+          <input
+            type="text"
+            value={paymentTransactionId}
+            onChange={(event) =>
+              setPaymentTransactionId(
+                event.target.value
+              )
+            }
+            placeholder="TRANS-PAYME-998877"
+            className="h-11 w-full rounded-xl border border-border-color bg-slate-50 px-3 font-mono text-sm text-dark-navy outline-none transition focus:border-primary-blue focus:bg-white"
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+
+      <div className="flex flex-col-reverse gap-3 border-t border-border-color px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-xl border border-border-color px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
+        >
+          Bekor qilish
+        </button>
+
+        <button
+          type="button"
+          disabled={
+            activateMutation.isPending
+          }
+          onClick={() =>
+            void handleActivate()
+          }
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        >
+          {activateMutation.isPending ? (
+            <DentalLoaderIcon size={16} />
+          ) : (
+            <CheckCircle2 size={16} />
+          )}
+
+          {activateMutation.isPending
+            ? "Faollashtirilmoqda..."
+            : "Faollashtirish"}
         </button>
       </div>
     </ModalContainer>

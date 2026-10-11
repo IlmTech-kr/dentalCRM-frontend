@@ -7,44 +7,42 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  Activity,
   ArrowRight,
-  BarChart3,
-  Building2,
-  CalendarCheck,
-  CheckCircle2,
-  ClipboardList,
+  Check,
   Clock,
   LayoutGrid,
   MessageCircle,
   ShieldCheck,
-  Sparkles,
-  Stethoscope,
-  UserRoundCog,
-  Users,
-  Wallet,
 } from "lucide-react";
-import { BRAND, LogoMark } from "@/src/components/shared/BrandLogo";
+import { BRAND } from "@/src/components/shared/BrandLogo";
+import ConnectedSteps from "./_components/ConnectedSteps";
+import FeatureArt, { WIDE_FEATURES } from "./_components/FeatureArt";
+import FilmHero from "./_components/FilmHero";
 import Footer from "./_components/Footer";
 import LeadModal from "./_components/LeadModal";
-import MacbookFrameScene from "./_components/MacbookFrameScene";
-
-const FEATURE_ICONS = [
-  Users,
-  CalendarCheck,
-  Stethoscope,
-  Activity,
-  ClipboardList,
-  Wallet,
-  BarChart3,
-  Building2,
-];
+import PlanArt from "./_components/PlanArt";
 
 const BENEFIT_ICONS = [Clock, ShieldCheck, LayoutGrid, MessageCircle];
 
-const TARIFF_ICONS = [Sparkles, UserRoundCog, Building2];
+/* ── Shared styles ─────────────────────────────────────────── */
 
-const CHECKLIST_COLORS = ["text-sky-500", "text-violet-500", "text-rose-500", "text-cyan-500"];
+const FOCUS =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500";
+
+const BTN =
+  `inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition sm:px-7 sm:py-3.5 sm:text-base ${FOCUS}`;
+
+/* The sky→violet→rose spectrum is the logo's; it marks the one primary action. */
+const BTN_PRIMARY = `${BTN} bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 text-white hover:brightness-110`;
+const BTN_ON_FILM = `${BTN} border border-white/35 text-white hover:bg-white/10`;
+const BTN_OUTLINE = `${BTN} border border-[#07105f]/20 text-[#07105f] hover:border-[#07105f]/45 hover:bg-white`;
+
+const SECTION = "py-16 sm:py-24";
+const CONTAINER = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+const SECTION_NAME = "text-sm font-medium text-violet-700";
+const H2 =
+  "mt-3 text-balance text-[clamp(1.75rem,3.4vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.025em] text-[#07105f]";
+const LEAD = "text-base leading-relaxed text-slate-600 sm:text-lg";
 
 export default function HomePage() {
   const t = useTranslations("marketing");
@@ -60,140 +58,137 @@ export default function HomePage() {
     items: string[];
   }[];
   const checklist = t.raw("hero.checklist") as string[];
+  const filmCaptions = t.raw("hero.film.captions") as string[];
 
   return (
     <div className="bg-white text-slate-900">
       <main>
-        {/* ── HERO ─────────────────────────────────────────────────── */}
-        <MacbookFrameScene
-          loaderLabel={t("hero.mockup.dashboardLabel")}
-          panels={features.slice(0, 6).map((f) => ({ title: f.title, desc: f.desc }))}
-        >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/75 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur sm:px-4 sm:text-sm">
-            <LogoMark small />
-            {t("hero.badge")}
-          </div>
-
-          <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-[#07105f] sm:text-4xl lg:text-[3.2rem]">
-            {t("hero.title")}
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base lg:mx-0 lg:text-lg">
-            {t("hero.description", { brand: BRAND })}
-          </p>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-3 sm:mt-7 lg:justify-start">
-            <Link
-              href="/subdomains"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-100 transition-all hover:scale-[1.02] sm:px-7 sm:py-3.5 sm:text-base"
-            >
-              {t("hero.loginButton")} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-violet-200 hover:bg-violet-50 sm:px-7 sm:py-3.5 sm:text-base"
-            >
-              {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-5 hidden grid-cols-2 gap-2 text-sm text-slate-600 sm:mt-8 sm:grid">
-            {checklist.map((text, i) => (
-              <div key={text} className="flex items-center justify-center gap-2 lg:justify-start">
-                <CheckCircle2 className={`h-4 w-4 shrink-0 ${CHECKLIST_COLORS[i]}`} />
-                <span className="text-xs sm:text-sm">{text}</span>
-              </div>
-            ))}
-          </div>
-        </MacbookFrameScene>
-
-        {/* ── FEATURES ─────────────────────────────────────────────── */}
-        <section id="features" className="bg-white py-14 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("features.eyebrow")}</p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                {t("features.title")}
-              </h2>
-              <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                {t("features.subtitle")}
+        {/* ── HERO: the film, full screen ──────────────────────────── */}
+        <FilmHero
+          captions={filmCaptions}
+          skipLabel={t("hero.film.skip")}
+          end={
+            <div className="max-w-2xl">
+              <p className="text-balance text-[clamp(1.5rem,3.6vw,3rem)] font-semibold leading-[1.12] tracking-[-0.02em] text-[#07105f]">
+                {t("hero.film.endTitle")}
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href="/register" className={BTN_PRIMARY}>
+                  {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/tariffs" className={BTN_OUTLINE}>
+                  {t("cta.tariffsButton")}
+                </Link>
+              </div>
+            </div>
+          }
+        >
+          <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="max-w-3xl">
+              <p className="text-sm font-medium text-white/80 sm:text-base">
+                {t("hero.badge")}
+              </p>
+              <h1 className="mt-3 text-balance text-[clamp(2rem,5.4vw,4.25rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-white">
+                {t("hero.title")}
+              </h1>
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80 sm:mt-5 sm:text-lg">
+                {t("hero.description", { brand: BRAND })}
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
+                <Link href="/register" className={BTN_PRIMARY}>
+                  {t("hero.registerButton")} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/subdomains" className={BTN_ON_FILM}>
+                  {t("hero.loginButton")}
+                </Link>
+              </div>
             </div>
 
-            <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-              {features.map((f, i) => {
-                const Icon = FEATURE_ICONS[i];
-                return (
-                  <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 sm:rounded-3xl sm:p-6">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-12 sm:w-12">
-                      <Icon className="h-5 w-5 text-violet-700 sm:h-6 sm:w-6" />
-                    </div>
-                    <h3 className="mt-4 text-base font-bold text-slate-900 sm:mt-5 sm:text-lg">{f.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{f.desc}</p>
+            <ul className="hidden space-y-2.5 pb-1 text-sm text-white/85 lg:block">
+              {checklist.map((text) => (
+                <li key={text} className="flex items-center gap-2.5">
+                  <Check className="h-4 w-4 shrink-0 text-sky-300" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </FilmHero>
+
+        {/* ── FEATURES ─────────────────────────────────────────────── */}
+        {/* Opens on the tone of the film's closing card, so the cut is soft. */}
+        <section
+          id="features"
+          className={`scroll-mt-16 bg-[#eef1f6] bg-[linear-gradient(to_bottom,#c3cdd9_0,#eef1f6_16rem)] ${SECTION}`}
+        >
+          <div className={CONTAINER}>
+            <div className="grid gap-5 lg:grid-cols-2 lg:items-end lg:gap-16">
+              <div>
+                <p className={SECTION_NAME}>{t("features.eyebrow")}</p>
+                <h2 className={H2}>{t("features.title")}</h2>
+              </div>
+              <p className={`${LEAD} lg:pb-1`}>{t("features.subtitle")}</p>
+            </div>
+
+            <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+              {features.map((f, i) => (
+                <div
+                  key={f.title}
+                  className={`rounded-3xl bg-white p-3 ${
+                    WIDE_FEATURES.has(i) ? "lg:col-span-2" : ""
+                  }`}
+                >
+                  <FeatureArt index={i} />
+                  <div className="px-3 pb-3 pt-5 sm:px-4">
+                    <h3 className="text-lg font-semibold tracking-[-0.01em] text-[#07105f]">
+                      {f.title}
+                    </h3>
+                    <p className="mt-1.5 max-w-md text-sm leading-6 text-slate-600">{f.desc}</p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* ── HOW IT WORKS ─────────────────────────────────────────── */}
-        <section id="how-it-works" className="bg-gradient-to-b from-white to-slate-50 py-14 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-12">
-              <div className="text-center lg:text-left">
-                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("howItWorks.eyebrow")}</p>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                  {t("howItWorks.title")}
-                </h2>
-                <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                  {t("howItWorks.subtitle")}
-                </p>
-              </div>
+        <section id="how-it-works" className={`scroll-mt-16 bg-white ${SECTION}`}>
+          <div className={CONTAINER}>
+            <div className="max-w-2xl">
+              <p className={SECTION_NAME}>{t("howItWorks.eyebrow")}</p>
+              <h2 className={H2}>{t("howItWorks.title")}</h2>
+              <p className={`mt-4 ${LEAD}`}>{t("howItWorks.subtitle")}</p>
+            </div>
 
-              <div className="grid gap-4 sm:gap-5">
-                {steps.map((step, i) => (
-                  <div key={step.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:rounded-3xl sm:p-6">
-                    <div className="flex gap-4 sm:gap-5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 text-xs font-extrabold text-white sm:h-12 sm:w-12 sm:text-sm">
-                        {String(i + 1).padStart(2, "0")}
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900 sm:text-lg">{step.title}</h3>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{step.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-10 sm:mt-14">
+              <ConnectedSteps steps={steps} />
             </div>
           </div>
         </section>
 
         {/* ── ABOUT ────────────────────────────────────────────────── */}
-        <section id="about" className="bg-white py-14 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-              <div className="text-center lg:text-left">
-                <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("about.eyebrow")}</p>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
+        <section id="about" className={`scroll-mt-16 bg-[#07105f] text-white ${SECTION}`}>
+          <div className={CONTAINER}>
+            <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+              <div>
+                <p className="text-sm font-medium text-sky-300">{t("about.eyebrow")}</p>
+                <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.4vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.025em]">
                   {t("about.title")}
                 </h2>
-                <p className="mt-4 text-sm text-slate-600 sm:mt-5 sm:text-base">
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
                   {t("about.description", { brand: BRAND })}
                 </p>
 
-                <div className="mt-7 grid gap-4 sm:grid-cols-2 sm:mt-8">
+                <div className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2">
                   {benefits.map((b, i) => {
                     const Icon = BENEFIT_ICONS[i];
                     return (
-                      <div key={b.title} className="flex gap-3 text-left">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-violet-100 sm:h-11 sm:w-11">
-                          <Icon className="h-4 w-4 text-violet-700 sm:h-5 sm:w-5" />
-                        </div>
+                      <div key={b.title} className="flex gap-3.5">
+                        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" strokeWidth={1.6} />
                         <div>
-                          <p className="font-bold text-slate-900">{b.title}</p>
-                          <p className="mt-1 text-sm text-slate-600">{b.desc}</p>
+                          <p className="font-semibold">{b.title}</p>
+                          <p className="mt-1 text-sm leading-6 text-white/65">{b.desc}</p>
                         </div>
                       </div>
                     );
@@ -201,24 +196,27 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 p-1 sm:rounded-[2rem]">
-                <div className="rounded-[1.3rem] bg-white p-5 sm:rounded-[1.8rem] sm:p-8">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    {stats.map((stat) => (
-                      <div key={stat.label} className="rounded-2xl bg-slate-50 p-4 text-center sm:rounded-3xl sm:p-6">
-                        <p className="text-2xl font-extrabold text-[#07105f] sm:text-3xl">{stat.value}</p>
-                        <p className="mt-1.5 text-xs text-slate-600 sm:mt-2 sm:text-sm">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
+              <div className="lg:pt-2">
+                <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-white/15 ring-1 ring-white/15">
+                  {stats.map((stat) => (
+                    <div key={stat.label} className="flex flex-col-reverse bg-[#07105f] p-5 sm:p-7">
+                      <dt className="mt-2 text-xs leading-5 text-white/65 sm:text-sm">{stat.label}</dt>
+                      <dd className="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{stat.value}</dd>
+                    </div>
+                  ))}
+                </dl>
 
-                  <div className="mt-4 rounded-2xl bg-[#07105f] p-4 text-white sm:mt-6 sm:rounded-3xl sm:p-6">
-                    <p className="text-base font-bold sm:text-lg">{t("about.cardTitle")}</p>
-                    <p className="mt-1.5 text-xs text-sky-100/75 sm:mt-2 sm:text-sm">{t("about.cardSubtitle")}</p>
-                    <Link href="/tariffs" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-sky-200 sm:mt-5 sm:text-sm">
-                      {t("about.cardLink")} <ArrowRight className="h-4 w-4" />
-                    </Link>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                  <div>
+                    <p className="font-semibold">{t("about.cardTitle")}</p>
+                    <p className="mt-1 text-sm text-white/65">{t("about.cardSubtitle")}</p>
                   </div>
+                  <Link
+                    href="/tariffs"
+                    className="inline-flex items-center gap-2 rounded-full text-sm font-semibold text-sky-300 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+                  >
+                    {t("about.cardLink")} <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -226,57 +224,71 @@ export default function HomePage() {
         </section>
 
         {/* ── TARIFFS PREVIEW ──────────────────────────────────────── */}
-        <section id="tariffs" className="bg-slate-50 py-14 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-violet-600">{t("tariffs.eyebrow")}</p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#07105f] sm:text-3xl lg:text-4xl">
-                {t("tariffs.title")}
-              </h2>
-              <p className="mt-4 text-sm text-slate-600 sm:text-base">
-                {t("tariffs.subtitle")}
-              </p>
+        <section id="tariffs" className={`scroll-mt-16 bg-[#eef1f6] ${SECTION}`}>
+          <div className={CONTAINER}>
+            <div className="grid gap-5 lg:grid-cols-2 lg:items-end lg:gap-16">
+              <div>
+                <p className={SECTION_NAME}>{t("tariffs.eyebrow")}</p>
+                <h2 className={H2}>{t("tariffs.title")}</h2>
+              </div>
+              <p className={`${LEAD} lg:pb-1`}>{t("tariffs.subtitle")}</p>
             </div>
 
-            <div className="mt-10 grid gap-5 sm:mt-14 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+            <div className="mt-10 grid gap-5 sm:mt-14 lg:grid-cols-3 lg:items-stretch">
               {tariffPlans.map((plan, i) => {
-                const Icon = TARIFF_ICONS[i];
+                const featured = plan.name === "PRO";
                 return (
                   <div
                     key={plan.name}
-                    className={`rounded-[1.5rem] border bg-white p-6 shadow-sm sm:rounded-[2rem] sm:p-7 ${
-                      plan.name === "PRO" ? "border-violet-200 shadow-xl shadow-violet-100" : "border-slate-100"
+                    className={`flex flex-col rounded-3xl p-3 ${
+                      featured
+                        ? "bg-[#07105f] text-white lg:-my-4"
+                        : "bg-white text-[#07105f]"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-violet-600 to-rose-500 sm:h-12 sm:w-12">
-                        <Icon className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+                    <PlanArt index={i} featured={featured} />
+
+                    <div className={`flex flex-1 flex-col px-4 pb-4 pt-6 sm:px-5 ${featured ? "lg:pt-8" : ""}`}>
+                      <span
+                        className={`self-start rounded-full px-3 py-1 text-xs font-semibold ${
+                          featured
+                            ? "bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 text-white"
+                            : "bg-[#eef1f6] text-violet-700"
+                        }`}
+                      >
+                        {plan.tag}
+                      </span>
+                      <h3 className="mt-4 text-[2rem] font-semibold leading-none tracking-[-0.03em]">
+                        {plan.name}
+                      </h3>
+                      <p className={`mt-3 text-sm leading-6 ${featured ? "text-white/70" : "text-slate-600"}`}>
+                        {plan.desc}
+                      </p>
+
+                      <ul
+                        className={`mt-6 divide-y border-y text-sm ${
+                          featured
+                            ? "divide-white/12 border-white/12 text-white/90"
+                            : "divide-[#07105f]/10 border-[#07105f]/10 text-slate-700"
+                        }`}
+                      >
+                        {plan.items.map((item) => (
+                          <li key={item} className="flex items-center gap-3 py-3">
+                            <Check className={`h-4 w-4 shrink-0 ${featured ? "text-sky-300" : "text-violet-700"}`} />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-auto pt-7">
+                        <Link
+                          href="/tariffs"
+                          className={`w-full ${featured ? BTN_PRIMARY : BTN_OUTLINE}`}
+                        >
+                          {t("tariffs.viewButton")}
+                        </Link>
                       </div>
-                      <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{plan.tag}</span>
                     </div>
-
-                    <h3 className="mt-5 text-xl font-extrabold text-[#07105f] sm:mt-6 sm:text-2xl">{plan.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{plan.desc}</p>
-
-                    <ul className="mt-5 space-y-2.5 sm:mt-6 sm:space-y-3">
-                      {plan.items.map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
-                          <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-600" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Link
-                      href="/tariffs"
-                      className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all ${
-                        plan.name === "PRO"
-                          ? "bg-gradient-to-r from-sky-500 via-violet-600 to-rose-500 text-white shadow-lg shadow-violet-100"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50"
-                      }`}
-                    >
-                      {t("tariffs.viewButton")} <ArrowRight className="h-4 w-4" />
-                    </Link>
                   </div>
                 );
               })}
@@ -285,30 +297,22 @@ export default function HomePage() {
         </section>
 
         {/* ── CTA ──────────────────────────────────────────────────── */}
-        <section id="contact" className="bg-white py-14 sm:py-20">
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-            <div className="rounded-[1.5rem] bg-gradient-to-br from-[#07105f] via-violet-800 to-rose-600 p-6 text-white shadow-2xl shadow-violet-100 sm:rounded-[2rem] sm:p-12">
-              <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+        <section className={`bg-white ${SECTION}`}>
+          <div className={`${CONTAINER} grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:gap-16`}>
+            <div>
+              <h2 className="text-balance text-[clamp(2rem,4.6vw,3.75rem)] font-semibold leading-[1.04] tracking-[-0.03em] text-[#07105f]">
                 {t("cta.title")}
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-sm text-sky-100/80 sm:text-base">
-                {t("cta.description")}
-              </p>
+              <p className={`mt-5 max-w-xl ${LEAD}`}>{t("cta.description")}</p>
+            </div>
 
-              <div className="mt-7 flex flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
-                <Link
-                  href="/register"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#07105f] transition-all hover:scale-[1.02] sm:w-auto sm:px-7 sm:py-3.5 sm:text-base"
-                >
-                  {t("cta.registerButton")} <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/tariffs"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 sm:w-auto sm:px-7 sm:py-3.5 sm:text-base"
-                >
-                  {t("cta.tariffsButton")} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end lg:pb-1">
+              <Link href="/register" className={BTN_PRIMARY}>
+                {t("cta.registerButton")} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/tariffs" className={BTN_OUTLINE}>
+                {t("cta.tariffsButton")}
+              </Link>
             </div>
           </div>
         </section>
