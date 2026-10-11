@@ -113,6 +113,38 @@
     "registerButton": "Sign up",
     "tariffsButton": "View pricing"
   },
+  "faq": {
+    "eyebrow": "Questions",
+    "title": "What clinics ask before they sign up",
+    "contactPrompt": "Didn't find your question?",
+    "contactLink": "Write to us",
+    "items": [
+      {
+        "q": "Can we move our existing patient records in?",
+        "a": "Our specialist sets the system up together with you. Tell them where your patient records live now (paper cards, Excel or another program) and they will agree with you how to bring them over."
+      },
+      {
+        "q": "Where is the data stored, and who can see it?",
+        "a": "Each clinic runs on its own subdomain in a separate data environment, so other clinics cannot see your data. Inside the clinic, each staff member sees only the sections their role allows."
+      },
+      {
+        "q": "Does it work on a phone?",
+        "a": "Yes. Dental CRM runs in the browser on a phone, tablet or computer, with nothing to install."
+      },
+      {
+        "q": "What happens when the plan limit is reached?",
+        "a": "Each plan sets a number of doctors, a number of staff and an amount of storage. When you need more, you can move to a higher plan at any time and the price difference is calculated."
+      },
+      {
+        "q": "Is there a free trial?",
+        "a": "Yes, after signing up you get 14 days free. No card details are required."
+      },
+      {
+        "q": "How does SMS billing work?",
+        "a": "PRO includes 500 free SMS and ENTERPRISE includes 5000. On START, SMS are paid from a separate balance. You can see your remaining SMS in the plan settings."
+      }
+    ]
+  },
   "tariffsPage": {
     "eyebrow": "Pricing",
     "title": "Choose the plan that fits your clinic's size",

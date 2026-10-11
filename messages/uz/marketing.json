@@ -113,6 +113,38 @@
     "registerButton": "Ro'yxatdan o'tish",
     "tariffsButton": "Tariflarni ko'rish"
   },
+  "faq": {
+    "eyebrow": "Savol-javob",
+    "title": "Ulanishdan oldin klinikalar nimani so'raydi",
+    "contactPrompt": "Savolingizga javob topilmadimi?",
+    "contactLink": "Bizga yozing",
+    "items": [
+      {
+        "q": "Mavjud bemorlar bazamizni ko'chirib o'tsa bo'ladimi?",
+        "a": "Tizimni mutaxassisimiz siz bilan birga sozlaydi. Bemor ma'lumotlari hozir qayerda yuritilishini (qog'oz karta, Excel yoki boshqa dastur) ayting, ko'chirish tartibini siz bilan kelishib oladi."
+      },
+      {
+        "q": "Ma'lumotlar qayerda saqlanadi va ularni kim ko'ra oladi?",
+        "a": "Har bir klinika o'z subdomenida, alohida ma'lumotlar muhitida ishlaydi, boshqa klinikalar ma'lumotlaringizni ko'ra olmaydi. Klinika ichida har bir xodim faqat o'z roliga mos bo'limlarni ko'radi."
+      },
+      {
+        "q": "Telefonda ishlaydimi?",
+        "a": "Ha. Dental CRM telefon, planshet va kompyuter brauzerida ishlaydi, hech narsa o'rnatish shart emas."
+      },
+      {
+        "q": "Tarif limiti tugasa nima bo'ladi?",
+        "a": "Har bir tarifda shifokorlar soni, xodimlar soni va saqlash hajmi belgilangan. Ko'proq kerak bo'lsa, istalgan vaqtda yuqori tarifga o'tasiz, narx farqi hisoblab beriladi."
+      },
+      {
+        "q": "Bepul sinov muddati bormi?",
+        "a": "Ha, ro'yxatdan o'tgach 14 kun bepul foydalanasiz. Karta ma'lumotlari so'ralmaydi."
+      },
+      {
+        "q": "SMS uchun to'lov qanday hisoblanadi?",
+        "a": "PRO tarifida 500 ta, ENTERPRISE tarifida 5000 ta bepul SMS bor. START tarifida SMS alohida balansdan to'lanadi. Qolgan SMS balansini tarif sozlamalarida ko'rasiz."
+      }
+    ]
+  },
   "tariffsPage": {
     "eyebrow": "Tariflar",
     "title": "Klinikangiz hajmiga mos tarifni tanlang",

@@ -12,6 +12,7 @@ import {
   Clock,
   LayoutGrid,
   MessageCircle,
+  Plus,
   ShieldCheck,
 } from "lucide-react";
 import { BRAND } from "@/src/components/shared/BrandLogo";
@@ -59,6 +60,7 @@ export default function HomePage() {
   }[];
   const checklist = t.raw("hero.checklist") as string[];
   const filmCaptions = t.raw("hero.film.captions") as string[];
+  const faqItems = t.raw("faq.items") as { q: string; a: string }[];
 
   return (
     <div className="bg-white text-slate-900">
@@ -296,8 +298,51 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ── FAQ ──────────────────────────────────────────────────── */}
+        <section id="faq" className={`scroll-mt-16 bg-white ${SECTION}`}>
+          <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16`}>
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <p className={SECTION_NAME}>{t("faq.eyebrow")}</p>
+              <h2 className={H2}>{t("faq.title")}</h2>
+              <p className="mt-6 text-sm text-slate-600 sm:text-base">
+                {t("faq.contactPrompt")}{" "}
+                <a
+                  href="#contact"
+                  className={`rounded font-semibold text-violet-700 underline underline-offset-4 hover:text-violet-900 ${FOCUS}`}
+                >
+                  {t("faq.contactLink")}
+                </a>
+              </p>
+            </div>
+
+            {/* Native disclosure: one answer open at a time, no script. */}
+            <div className="border-t border-[#07105f]/15">
+              {faqItems.map((item, i) => (
+                <details
+                  key={item.q}
+                  name="faq"
+                  open={i === 0}
+                  className="group border-b border-[#07105f]/15"
+                >
+                  <summary
+                    className={`flex cursor-pointer list-none items-start justify-between gap-6 rounded-lg py-5 text-lg font-semibold tracking-[-0.01em] text-[#07105f] sm:py-6 sm:text-xl [&::-webkit-details-marker]:hidden ${FOCUS}`}
+                  >
+                    {item.q}
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eef1f6] text-violet-700 transition-[rotate,background-color,color] duration-200 group-open:rotate-45 group-open:bg-violet-600 group-open:text-white">
+                      <Plus className="h-4 w-4" />
+                    </span>
+                  </summary>
+                  <p className="max-w-2xl pb-6 pr-12 text-base leading-relaxed text-slate-600">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── CTA ──────────────────────────────────────────────────── */}
-        <section className={`bg-white ${SECTION}`}>
+        <section className={`bg-[#eef1f6] ${SECTION}`}>
           <div className={`${CONTAINER} grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:gap-16`}>
             <div>
               <h2 className="text-balance text-[clamp(2rem,4.6vw,3.75rem)] font-semibold leading-[1.04] tracking-[-0.03em] text-[#07105f]">
